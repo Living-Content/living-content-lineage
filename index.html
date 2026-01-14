@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lineage Explorer</title>
+  <link rel="stylesheet" href="/src/styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="header">
+      <div class="header-left"></div>
+      <div class="header-right">
+        <button id="toggle-simple" class="icon-btn" title="Toggle simple view">
+          <img src="/icons/simple.svg" alt="Simple view" id="toggle-icon" />
+        </button>
+      </div>
+    </header>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-title">CONTEXT</span>
+        <button class="sidebar-expand-btn" id="sidebar-expand" title="Expand details">↗</button>
+      </div>
+      <div class="sidebar-content" id="sidebar-content">
+        <p class="sidebar-placeholder">Select a node to view details</p>
+      </div>
+    </aside>
+    <main class="graph-container">
+      <div id="sigma-container"></div>
+      <div class="stage-labels" id="stage-labels"></div>
+      <div class="edge-overlay" id="edge-overlay"></div>
+      <div class="icon-overlay" id="icon-overlay"></div>
+    </main>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
