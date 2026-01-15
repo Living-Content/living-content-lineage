@@ -9,27 +9,40 @@ import type { LineageManifest, LineageManifestRecord } from './lineageTypes.js';
 import { mapAssetType } from './assetManifestMapper.js';
 import { computeLayout } from './lineageLayout.js';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
 function buildManifestSummary(
   record?: LineageManifestRecord
 ): LineageManifestSummary | undefined {
   if (!record) return undefined;
+  const claimGeneratorInfo = Array.isArray(record.claim_generator_info)
+    ? record.claim_generator_info.map((info) => ({
+        name: info.name,
+        version: info.version,
+      }))
+    : undefined;
+  const assertions = Array.isArray(record.assertions)
+    ? record.assertions.map((assertion) => ({
+        label: assertion.label,
+        data: assertion.data,
+      }))
+    : undefined;
+  const signatureInfo = isRecord(record.signature_info)
+    ? {
+        alg: String(record.signature_info.alg ?? ''),
+        issuer: String(record.signature_info.issuer ?? ''),
+        time: String(record.signature_info.time ?? ''),
+      }
+    : undefined;
   return {
-    claimGeneratorInfo: record.claim_generator_info.map((info) => ({
-      name: info.name,
-      version: info.version,
-    })),
+    claimGeneratorInfo,
     title: record.title,
     format: record.format,
     instanceId: record.instance_id,
-    assertions: record.assertions.map((assertion) => ({
-      label: assertion.label,
-      data: assertion.data,
-    })),
-    signatureInfo: {
-      alg: record.signature_info.alg,
-      issuer: record.signature_info.issuer,
-      time: record.signature_info.time,
-    },
+    assertions,
+    signatureInfo,
   };
 }
 

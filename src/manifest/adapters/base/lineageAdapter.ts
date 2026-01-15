@@ -6,15 +6,13 @@ import { buildLineageGraph } from './lineageParser.js';
 
 export function getLineageAssetManifestRequests(
   manifest: LineageManifest,
-  baseUrl: string
+  baseUrl: URL
 ): AssetManifestRequest[] {
   return manifest.assets
     .filter((asset) => asset.manifest_url)
     .map((asset) => ({
       assetId: asset.id,
-      url: asset.manifest_url!.startsWith('./')
-        ? `${baseUrl}${asset.manifest_url!.slice(2)}`
-        : asset.manifest_url!,
+      url: new URL(asset.manifest_url!, baseUrl).toString(),
     }));
 }
 

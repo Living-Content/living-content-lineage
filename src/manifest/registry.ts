@@ -10,14 +10,17 @@ const ADAPTERS: ManifestAdapter<unknown>[] = [
   customAdapter,
 ];
 
-export function getManifestType(raw: unknown): ManifestType {
-  if (!raw || typeof raw !== 'object') return 'c2pa';
-  const record = raw as Record<string, unknown>;
-  const value = record.manifest_type ?? record.manifestType;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+export function getManifestType(raw: unknown): ManifestType | null {
+  if (!isRecord(raw)) return null;
+  const value = raw.manifest_type ?? raw.manifestType;
   if (value === 'c2pa' || value === 'eqty' || value === 'custom') {
     return value;
   }
-  return 'c2pa';
+  return null;
 }
 
 export function getAdapter(type: ManifestType): ManifestAdapter<unknown> {
@@ -28,21 +31,35 @@ export function getAdapter(type: ManifestType): ManifestAdapter<unknown> {
   return adapter;
 }
 
+function resolveAdapter(raw: unknown): ManifestAdapter<unknown> {
+  const explicitType = getManifestType(raw);
+  if (explicitType) {
+    const adapter = getAdapter(explicitType);
+    if (!adapter.isCompatible(raw)) {
+      throw new Error(`Manifest did not match adapter for ${explicitType}`);
+    }
+    return adapter;
+  }
+
+  const compatible = ADAPTERS.filter((adapter) => adapter.isCompatible(raw));
+  if (compatible.length === 1) return compatible[0];
+  if (compatible.length === 0) {
+    throw new Error('Manifest type could not be determined');
+  }
+  throw new Error('Manifest matched multiple adapters');
+}
+
 export async function loadManifest(url: string): Promise<LineageGraph> {
-  const response = await fetch(url);
+  const manifestUrl = new URL(url, window.location.href);
+  const response = await fetch(manifestUrl.toString());
   if (!response.ok) {
     throw new Error(`Failed to load manifest: ${response.statusText}`);
   }
 
   const raw = (await response.json()) as unknown;
-  const manifestType = getManifestType(raw);
-  const adapter = getAdapter(manifestType);
+  const adapter = resolveAdapter(raw);
 
-  if (!adapter.isCompatible(raw)) {
-    throw new Error(`Manifest did not match adapter for ${manifestType}`);
-  }
-
-  const baseUrl = url.substring(0, url.lastIndexOf('/') + 1);
+  const baseUrl = new URL('.', manifestUrl);
   const assetRequests = adapter.getAssetManifestRequests(raw, baseUrl);
 
   const assetManifests = new Map<string, unknown>();

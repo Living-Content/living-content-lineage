@@ -12,7 +12,7 @@ export const customAdapter: ManifestAdapter<LineageManifest> = {
   isCompatible(raw: unknown): raw is LineageManifest {
     return isCustomManifest(raw) && isLineageManifest(raw);
   },
-  getAssetManifestRequests(raw: LineageManifest, baseUrl: string) {
+  getAssetManifestRequests(raw: LineageManifest, baseUrl: URL) {
     return getLineageAssetManifestRequests(raw, baseUrl);
   },
   parse(

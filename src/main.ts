@@ -39,7 +39,21 @@ async function main(): Promise<void> {
     return;
   }
 
-  const lineageData = await loadManifest('/data/manifest.json');
+  let lineageData: Awaited<ReturnType<typeof loadManifest>>;
+  try {
+    lineageData = await loadManifest('/data/manifest.json');
+  } catch (error) {
+    console.error('Failed to load lineage manifest', error);
+    const sidebar = document.getElementById('sidebar-content');
+    if (sidebar) {
+      sidebar.innerHTML = '';
+      const message = document.createElement('div');
+      message.className = 'sidebar-placeholder';
+      message.textContent = 'Unable to load manifest data.';
+      sidebar.appendChild(message);
+    }
+    return;
+  }
   const state = initializeGraph(lineageData);
   const { graph } = state;
 
@@ -66,10 +80,16 @@ async function main(): Promise<void> {
   });
 
   const sidebar = createSidebarController();
+  sidebar.renderEmpty();
 
   const lodIcon = document.getElementById(
     'lod-icon'
   ) as HTMLImageElement | null;
+  let overlayVersion = 0;
+  const markOverlayDirty = () => {
+    overlayVersion += 1;
+  };
+
   const lod = setupLodController({
     graph,
     renderer,
@@ -80,6 +100,7 @@ async function main(): Promise<void> {
       lodIcon.src = isSimpleView ? '/icons/simple.svg' : '/icons/detail.svg';
       lodIcon.alt = isSimpleView ? 'Simple view' : 'Detailed view';
     },
+    onGraphUpdate: markOverlayDirty,
   });
 
   const updateOverlays = () => {
@@ -99,7 +120,26 @@ async function main(): Promise<void> {
     renderNodeOverlays(graph, renderer);
   };
 
-  renderer.on('afterRender', updateOverlays);
+  let overlayFrame: number | null = null;
+  let lastOverlayKey = '';
+
+  const scheduleOverlayUpdate = () => {
+    if (overlayFrame !== null) return;
+    overlayFrame = requestAnimationFrame(() => {
+      overlayFrame = null;
+      const camera = renderer.getCamera().getState();
+      const showEdges = camera.ratio < HIDE_EDGES_THRESHOLD;
+      const overlayKey = `${camera.x.toFixed(4)}:${camera.y.toFixed(
+        4
+      )}:${camera.ratio.toFixed(4)}:${showEdges}:${overlayVersion}`;
+      if (overlayKey === lastOverlayKey) return;
+      lastOverlayKey = overlayKey;
+      updateOverlays();
+    });
+  };
+
+  renderer.on('afterRender', scheduleOverlayUpdate);
+  scheduleOverlayUpdate();
 
   renderer.on('clickNode', ({ node }) => {
     const attrs = graph.getNodeAttributes(node);
@@ -185,6 +225,11 @@ async function main(): Promise<void> {
 
   const camera = renderer.getCamera();
   camera.setState({ x: 0.5, y: 0.5, ratio: 0.5 });
+  renderer.refresh();
+  scheduleOverlayUpdate();
+  requestAnimationFrame(() => {
+    document.getElementById('app')?.classList.remove('loading');
+  });
 }
 
 document.addEventListener('DOMContentLoaded', main);

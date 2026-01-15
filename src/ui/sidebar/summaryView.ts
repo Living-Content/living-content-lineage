@@ -1,4 +1,5 @@
 import type { LineageNodeData } from '../../types.js';
+import { isPrimaryContentKey } from './constants.js';
 import { clearElement, createMetaRow, formatTimestamp } from './dom.js';
 import { buildImpactSection } from './impactSection.js';
 
@@ -30,19 +31,22 @@ export function renderSummaryView(
   }
 
   const content = nodeData.assetManifest?.content;
-  if (content?.model) {
+  if (isPrimaryContentKey('model') && content?.model) {
     meta.appendChild(createMetaRow('model', String(content.model)));
   }
-  if (content?.inputTokens !== undefined) {
+  if (isPrimaryContentKey('inputTokens') && content?.inputTokens !== undefined) {
     const outputTokens = content.outputTokens ?? 0;
     meta.appendChild(
       createMetaRow('tokens', `${content.inputTokens} in / ${outputTokens} out`)
     );
   }
-  if (content?.temperature !== undefined) {
+  if (
+    isPrimaryContentKey('temperature') &&
+    content?.temperature !== undefined
+  ) {
     meta.appendChild(createMetaRow('temp', String(content.temperature)));
   }
-  if (content?.responseLength) {
+  if (isPrimaryContentKey('responseLength') && content?.responseLength) {
     meta.appendChild(
       createMetaRow(
         'length',
@@ -50,7 +54,7 @@ export function renderSummaryView(
       )
     );
   }
-  if (content?.durationMs) {
+  if (isPrimaryContentKey('durationMs') && content?.durationMs) {
     meta.appendChild(
       createMetaRow('api time', `${(content.durationMs / 1000).toFixed(2)}s`)
     );

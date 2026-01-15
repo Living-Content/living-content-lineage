@@ -27,6 +27,7 @@ interface LodControllerOptions {
   lineageData: LineageGraph;
   state: GraphState;
   onModeChange?: (isSimpleView: boolean) => void;
+  onGraphUpdate?: () => void;
 }
 
 export function setupLodController({
@@ -35,6 +36,7 @@ export function setupLodController({
   lineageData,
   state,
   onModeChange,
+  onGraphUpdate,
 }: LodControllerOptions) {
   let isAnimating = false;
   let isSimpleView = false;
@@ -106,6 +108,7 @@ export function setupLodController({
         );
       });
 
+      onGraphUpdate?.();
       renderer.refresh();
 
       if (progress < 1) {
@@ -177,6 +180,7 @@ export function setupLodController({
     state.simpleEdges = metaEdges;
     state.showAllEdges = false;
 
+    onGraphUpdate?.();
     animatePositions(animationTargets, 400, () => {
       renderer.refresh();
     });
@@ -209,6 +213,7 @@ export function setupLodController({
     state.simpleEdges = [...originalSimpleEdges];
     state.showAllEdges = true;
 
+    onGraphUpdate?.();
     if (animationTargets.size > 0) {
       animatePositions(animationTargets, 400, () => {
         renderer.refresh();

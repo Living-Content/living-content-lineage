@@ -5,17 +5,16 @@ export function clearElement(element: HTMLElement): void {
 }
 
 export function formatTimestamp(timestamp: string): string {
-  try {
-    const date = new Date(timestamp);
-    return date.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) {
     return timestamp;
   }
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 export function createMetaRow(label: string, value: string): HTMLElement {

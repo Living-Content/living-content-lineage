@@ -18,7 +18,7 @@ export const c2paAdapter: ManifestAdapter<LineageManifest> = {
   isCompatible(raw: unknown): raw is LineageManifest {
     return isC2paManifest(raw);
   },
-  getAssetManifestRequests(raw: LineageManifest, baseUrl: string) {
+  getAssetManifestRequests(raw: LineageManifest, baseUrl: URL) {
     return getLineageAssetManifestRequests(raw, baseUrl);
   },
   parse(

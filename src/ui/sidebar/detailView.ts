@@ -1,5 +1,5 @@
 import type { LineageNodeData } from '../../types.js';
-import { CONTENT_EXCLUDE_KEYS } from './constants.js';
+import { isSecondaryContentKey } from './constants.js';
 import { addSection, clearElement, createMetaRow } from './dom.js';
 
 export function renderDetailView(
@@ -36,7 +36,7 @@ export function renderDetailView(
 
   if (assetManifest.content) {
     const otherFields = Object.entries(assetManifest.content)
-      .filter(([key]) => !CONTENT_EXCLUDE_KEYS.has(key))
+      .filter(([key]) => isSecondaryContentKey(key))
       .filter(([, value]) => value !== undefined && value !== null);
 
     if (otherFields.length > 0) {

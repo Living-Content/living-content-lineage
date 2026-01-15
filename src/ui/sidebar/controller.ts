@@ -16,10 +16,12 @@ export interface SidebarController {
 
 export function createSidebarController(): SidebarController {
   const sidebar = document.getElementById('sidebar-content');
+  const sidebarContainer = document.getElementById('sidebar');
   const sidebarTitle = document.getElementById('sidebar-title');
   const detailPanel = document.getElementById('detail-panel');
   const detailContent = document.getElementById('detail-panel-content');
   let sidebarDetailMode = false;
+  let detailToggle: HTMLButtonElement | null = null;
 
   if (!sidebar) {
     throw new Error('Sidebar container missing');
@@ -29,12 +31,22 @@ export function createSidebarController(): SidebarController {
   function showDetailPanel(): void {
     if (!detailPanel) return;
     sidebarDetailMode = true;
+    sidebarContainer?.classList.add('detail-open');
+    if (detailToggle) {
+      detailToggle.disabled = true;
+      detailToggle.setAttribute('aria-disabled', 'true');
+    }
     detailPanel.classList.add('visible');
   }
 
   function hideDetailPanel(): void {
     if (!detailPanel) return;
     sidebarDetailMode = false;
+    sidebarContainer?.classList.remove('detail-open');
+    if (detailToggle) {
+      detailToggle.disabled = false;
+      detailToggle.removeAttribute('aria-disabled');
+    }
     detailPanel.classList.remove('visible');
   }
 
@@ -48,9 +60,12 @@ export function createSidebarController(): SidebarController {
     if (detailPanel) {
       detailPanel.classList.remove('visible');
     }
+    sidebarContainer?.classList.remove('detail-open');
+    sidebarContainer?.classList.add('hidden');
   }
 
   function renderNode(nodeData: LineageNodeData): void {
+    sidebarContainer?.classList.remove('hidden');
     if (sidebarTitle) sidebarTitle.textContent = nodeData.label;
 
     renderSummaryView(sidebarEl, nodeData);
@@ -68,12 +83,18 @@ export function createSidebarController(): SidebarController {
       detailContent.innerHTML = '';
     }
 
+    detailToggle = null;
     if (hasDetailContent) {
       const link = document.createElement('button');
       link.className = 'view-details-link';
       link.textContent = 'Details';
       link.addEventListener('click', showDetailPanel);
+      if (sidebarDetailMode) {
+        link.disabled = true;
+        link.setAttribute('aria-disabled', 'true');
+      }
       sidebarEl.appendChild(link);
+      detailToggle = link;
     }
 
     if (detailPanel && !sidebarDetailMode) {
@@ -86,11 +107,13 @@ export function createSidebarController(): SidebarController {
     nodes: LineageNodeData[],
     edges: LineageEdgeData[]
   ): void {
+    sidebarContainer?.classList.remove('hidden');
     if (sidebarTitle) sidebarTitle.textContent = stageLabel;
     renderStageOverview(sidebarEl, nodes, edges);
     if (detailPanel) {
       detailPanel.classList.remove('visible');
     }
+    sidebarContainer?.classList.remove('detail-open');
   }
 
   return {

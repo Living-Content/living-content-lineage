@@ -15,7 +15,7 @@ export const eqtyAdapter: ManifestAdapter<LineageManifest> = {
   isCompatible(raw: unknown): raw is LineageManifest {
     return isEqtyManifest(raw) && isLineageManifest(raw);
   },
-  getAssetManifestRequests(raw: LineageManifest, baseUrl: string) {
+  getAssetManifestRequests(raw: LineageManifest, baseUrl: URL) {
     return getLineageAssetManifestRequests(raw, baseUrl);
   },
   parse(

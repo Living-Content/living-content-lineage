@@ -4,6 +4,6 @@ import type { AssetManifestRequest } from './assetManifestRequest.js';
 export interface ManifestAdapter<TRaw> {
   readonly type: ManifestType;
   isCompatible(raw: unknown): raw is TRaw;
-  getAssetManifestRequests(raw: TRaw, baseUrl: string): AssetManifestRequest[];
+  getAssetManifestRequests(raw: TRaw, baseUrl: URL): AssetManifestRequest[];
   parse(raw: TRaw, assetManifests: Map<string, unknown>): LineageGraph;
 }
