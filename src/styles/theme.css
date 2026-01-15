@@ -1,0 +1,39 @@
+ :root {
+  --node-data-color: #ffffff;
+  --node-data-border: #1a1a1a;
+  --node-data-icon: #1a1a1a;
+
+  --node-compute-color: #ffffff;
+  --node-compute-border: #ec4899;
+  --node-compute-icon: #ec4899;
+
+  --node-attestation-color: #ffffff;
+  --node-attestation-border: #22c55e;
+  --node-attestation-icon: #22c55e;
+
+  --node-filter-color: #ffffff;
+  --node-filter-border: #1a1a1a;
+  --node-filter-icon: #1a1a1a;
+
+  --node-join-color: #ffffff;
+  --node-join-border: #1a1a1a;
+  --node-join-icon: #1a1a1a;
+
+  --node-store-color: #fef3c7;
+  --node-store-border: #ec4899;
+  --node-store-icon: #d97706;
+
+  --node-media-color: #ffffff;
+  --node-media-border: #1a1a1a;
+  --node-media-icon: #1a1a1a;
+
+  --node-meta-color: #f0f4f8;
+  --node-meta-border: #3b82f6;
+  --node-meta-icon: #3b82f6;
+
+  --asset-model: #000000;
+  --asset-code: #9ca3af;
+  --asset-document: #22d3ee;
+  --asset-data: #fb923c;
+  --asset-dataset: #3b82f6;
+}

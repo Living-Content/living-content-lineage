@@ -1,6 +1,239 @@
+import DOMPurify from 'dompurify';
+import JSON5 from 'json5';
+import { marked } from 'marked';
 import type { LineageNodeData } from '../../types.js';
 import { isSecondaryContentKey } from './constants.js';
 import { addSection, clearElement, createMetaRow } from './dom.js';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isHttpUrl(value: string): boolean {
+  return value.startsWith('http://') || value.startsWith('https://');
+}
+
+function looksLikeJson(value: string): boolean {
+  const trimmed = value.trim();
+  return (
+    (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+    (trimmed.startsWith('[') && trimmed.endsWith(']'))
+  );
+}
+
+function parseJson(value: string): unknown | null {
+  if (!looksLikeJson(value)) return null;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function tryParseJsonFragment(value: string): {
+  parsed: unknown;
+  prefix: string;
+  suffix: string;
+} | null {
+  const openings = new Set(['{', '[']);
+  const closings: Record<string, string> = { '{': '}', '[': ']' };
+
+  for (let i = 0; i < value.length; i += 1) {
+    const startChar = value[i];
+    if (!openings.has(startChar)) continue;
+
+    const stack: string[] = [startChar];
+    for (let j = i + 1; j < value.length; j += 1) {
+      const ch = value[j];
+      if (openings.has(ch)) {
+        stack.push(ch);
+        continue;
+      }
+      const last = stack[stack.length - 1];
+      if (last && ch === closings[last]) {
+        stack.pop();
+        if (stack.length === 0) {
+          const fragment = value.slice(i, j + 1);
+          try {
+            const parsed = JSON5.parse(fragment);
+            return {
+              parsed,
+              prefix: value.slice(0, i),
+              suffix: value.slice(j + 1),
+            };
+          } catch {
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+function looksLikeMarkdown(value: string): boolean {
+  if (value.includes('```')) return true;
+  if (/^#{1,6}\s/m.test(value)) return true;
+  if (/(\n|^)[*-]\s+/m.test(value)) return true;
+  if (/(\n|^)\d+\.\s+/m.test(value)) return true;
+  if (/\[[^\]]+]\([^)]+\)/.test(value)) return true;
+  if (/\*\*[^*]+\*\*/.test(value)) return true;
+  return false;
+}
+
+function createMarkdownElement(value: string): HTMLElement {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'detail-field-value detail-value-markdown';
+
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'markdown-toggle';
+  toggle.textContent = 'View raw';
+
+  const rendered = document.createElement('div');
+  rendered.className = 'markdown-rendered';
+
+  const raw = document.createElement('pre');
+  raw.className = 'markdown-raw';
+  raw.textContent = value;
+
+  const applyRendered = (html: string) => {
+    rendered.innerHTML = DOMPurify.sanitize(html);
+  };
+
+  const parsed = marked.parse(value);
+  if (typeof parsed === 'string') {
+    applyRendered(parsed);
+  } else {
+    parsed
+      .then((html) => applyRendered(html))
+      .catch(() => {
+        rendered.textContent = value;
+      });
+  }
+
+  toggle.addEventListener('click', () => {
+    const isRaw = wrapper.classList.toggle('show-raw');
+    toggle.textContent = isRaw ? 'View rendered' : 'View raw';
+  });
+
+  wrapper.appendChild(toggle);
+  wrapper.appendChild(rendered);
+  wrapper.appendChild(raw);
+  return wrapper;
+}
+
+function createContentValueElement(value: unknown): HTMLElement {
+  if (Array.isArray(value)) {
+    const list = document.createElement('ul');
+    list.className = 'detail-field-value detail-value-list';
+    value.forEach((item) => {
+      const entry = document.createElement('li');
+      const rendered = createContentValueElement(item);
+      entry.appendChild(rendered);
+      list.appendChild(entry);
+    });
+    return list;
+  }
+
+  if (isRecord(value)) {
+    const pre = document.createElement('pre');
+    pre.className = 'detail-field-value detail-value-pre';
+    pre.textContent = JSON.stringify(value, null, 2);
+    return pre;
+  }
+
+  if (typeof value === 'string') {
+    const parsedJson = parseJson(value);
+    if (parsedJson !== null) {
+      const pre = document.createElement('pre');
+      pre.className = 'detail-field-value detail-value-pre';
+      pre.textContent = JSON.stringify(parsedJson, null, 2);
+      return pre;
+    }
+
+    try {
+      const parsedLoose = JSON5.parse(value);
+      const pre = document.createElement('pre');
+      pre.className = 'detail-field-value detail-value-pre';
+      pre.textContent = JSON.stringify(parsedLoose, null, 2);
+      return pre;
+    } catch {
+      // fall through
+    }
+
+    const fragment = tryParseJsonFragment(value);
+    if (fragment) {
+      const prefix = fragment.prefix.trim();
+      const suffix = fragment.suffix.trim();
+      const fragmentOnly = prefix.length === 0 && suffix.length === 0;
+
+      if (fragmentOnly) {
+        const pre = document.createElement('pre');
+        pre.className = 'detail-field-value detail-value-pre';
+        pre.textContent = JSON.stringify(fragment.parsed, null, 2);
+        return pre;
+      }
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'detail-field-value detail-value-fragment';
+
+      if (prefix.length > 0) {
+        const prefixEl = document.createElement('div');
+        prefixEl.className = 'detail-fragment-context';
+        prefixEl.textContent = fragment.prefix.trim();
+        wrapper.appendChild(prefixEl);
+      }
+
+      const pre = document.createElement('pre');
+      pre.className = 'detail-value-pre detail-fragment-json';
+      pre.textContent = JSON.stringify(fragment.parsed, null, 2);
+      wrapper.appendChild(pre);
+
+      if (suffix.length > 0) {
+        const suffixEl = document.createElement('div');
+        suffixEl.className = 'detail-fragment-context';
+        suffixEl.textContent = fragment.suffix.trim();
+        wrapper.appendChild(suffixEl);
+      }
+
+      return wrapper;
+    }
+
+    if (looksLikeMarkdown(value)) {
+      return createMarkdownElement(value);
+    }
+
+    if (isHttpUrl(value)) {
+      const link = document.createElement('a');
+      link.className = 'detail-field-value detail-value-link';
+      link.href = value;
+      link.target = '_blank';
+      link.rel = 'noreferrer';
+      link.textContent = value;
+      return link;
+    }
+
+    if (value.includes('\n') || value.length > 120) {
+      const pre = document.createElement('pre');
+      pre.className = 'detail-field-value detail-value-pre';
+      pre.textContent = value;
+      return pre;
+    }
+  }
+
+  const span = document.createElement('span');
+  span.className = 'detail-field-value';
+  span.textContent = String(value);
+  return span;
+}
+
+function createContentBlockElement(value: unknown): HTMLElement {
+  const element = createContentValueElement(value);
+  element.classList.add('content-block');
+  return element;
+}
 
 export function renderDetailView(
   container: HTMLElement,
@@ -12,16 +245,12 @@ export function renderDetailView(
   if (!assetManifest) return;
 
   if (assetManifest.content?.query) {
-    const block = document.createElement('div');
-    block.className = 'content-block';
-    block.textContent = String(assetManifest.content.query);
+    const block = createContentBlockElement(assetManifest.content.query);
     addSection(container, 'Query', block);
   }
 
   if (assetManifest.content?.response) {
-    const block = document.createElement('div');
-    block.className = 'content-block';
-    block.textContent = String(assetManifest.content.response);
+    const block = createContentBlockElement(assetManifest.content.response);
     addSection(container, 'Response', block);
   }
 
@@ -51,12 +280,7 @@ export function renderDetailView(
         keyEl.className = 'detail-field-key';
         keyEl.textContent = key;
 
-        const valueEl = document.createElement('span');
-        valueEl.className = 'detail-field-value';
-        valueEl.textContent =
-          typeof value === 'object'
-            ? JSON.stringify(value, null, 2)
-            : String(value);
+        const valueEl = createContentValueElement(value);
 
         field.appendChild(keyEl);
         field.appendChild(valueEl);
@@ -79,9 +303,8 @@ export function renderDetailView(
       label.className = 'assertion-label';
       label.textContent = assertion.label;
 
-      const data = document.createElement('pre');
-      data.className = 'assertion-data';
-      data.textContent = JSON.stringify(assertion.data, null, 2);
+      const data = createContentValueElement(assertion.data);
+      data.classList.add('assertion-data');
 
       block.appendChild(label);
       block.appendChild(data);
