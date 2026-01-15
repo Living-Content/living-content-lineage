@@ -1,0 +1,116 @@
+{
+  "claim_generator": "LivingContent/1.0.0",
+  "claim_generator_info": [{ "name": "Living Content", "version": "1.0.0" }],
+  "title": "Retrieved Documents",
+  "format": "application/json",
+  "instance_id": "urn:uuid:data-retrieved-docs",
+  "assertions": [
+    {
+      "label": "c2pa.actions",
+      "data": {
+        "actions": [{
+          "action": "c2pa.created",
+          "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia",
+          "softwareAgent": { "name": "Living Content Pipeline", "version": "1.0.0" },
+          "when": "2026-01-14T18:15:25Z"
+        }]
+      }
+    }
+  ],
+  "content": {
+    "description": "Data output from Retrieve",
+    "execution_result": {
+      "success": true,
+      "gaps_addressed": ["gap_0", "gap_1", "gap_2"],
+      "chunks_retrieved": 10,
+      "confidence": 0.5
+    },
+    "search_results": [
+      {
+        "query_text": "artworks depicting labor, working class life, social structures",
+        "keywords": [],
+        "use_visual_search": false,
+        "result_count": 10,
+        "avg_score": 0.015
+      }
+    ],
+    "chunks": [
+      {
+        "id": "1ef30cc1-0a4f-4030-8872-163684209a3a_summary",
+        "content": "This 1963 lithograph, \"The Building of the Temple from Franz Kafka's 'Parables and Paradoxes'\" by Lessing Julius Rosenwald and Claire Van Vliet, depicts a grand, domed temple-like structure in grayscale.",
+        "score": 0.0164,
+        "source": "gaim-21feddec-f30e-4547-a0f0-8f12097be6c9/knowledge/sources/1ef30cc1-0a4f-4030-8872-163684209a3a.json",
+        "type": "application/json"
+      },
+      {
+        "id": "143135dc-7f76-4fbc-b709-268561d2b89d_summary",
+        "content": "\"Hero\" (1947) by Alfred Bendiner is a monochromatic lithograph depicting a chaotic bullfight.",
+        "score": 0.0161,
+        "source": "gaim-21feddec-f30e-4547-a0f0-8f12097be6c9/knowledge/sources/143135dc-7f76-4fbc-b709-268561d2b89d.json",
+        "type": "application/json"
+      },
+      {
+        "id": "0b76483a-35d3-4c6d-9b78-b2c0ac7a95dd_summary",
+        "content": "Rudi Lesser's etching, \"Eget Tryk from London,\" captures a dense, bustling urban scene.",
+        "score": 0.0159,
+        "source": "gaim-21feddec-f30e-4547-a0f0-8f12097be6c9/knowledge/sources/0b76483a-35d3-4c6d-9b78-b2c0ac7a95dd.json",
+        "type": "application/json"
+      },
+      {
+        "id": "1a476ebe-a508-4f8f-90d5-1d22b58a4113_summary",
+        "content": "\"Joseph and His Brothers V,\" a 1966 brown engraving by Peter Lipman-Wulf, depicts a dramatic biblical scene.",
+        "score": 0.0156,
+        "source": "gaim-21feddec-f30e-4547-a0f0-8f12097be6c9/knowledge/sources/1a476ebe-a508-4f8f-90d5-1d22b58a4113.json",
+        "type": "application/json"
+      },
+      {
+        "id": "000e3b4e-cecf-4a2c-af8b-98ccaef9035a_summary",
+        "content": "Jose Clemente Orozco's 1928 lithograph \"Flag (Bandera)\" powerfully portrays a cloaked woman observing two men.",
+        "score": 0.0154,
+        "source": "gaim-21feddec-f30e-4547-a0f0-8f12097be6c9/knowledge/sources/000e3b4e-cecf-4a2c-af8b-98ccaef9035a.json",
+        "type": "application/json"
+      },
+      {
+        "id": "01ecb540-f03f-4e2d-85c2-dbda75d0cef2_summary",
+        "content": "\"Children Strolling\" is a monochromatic etching and aquatint by Emilio Sanchez (1921-1999).",
+        "score": 0.0152,
+        "source": "gaim-21feddec-f30e-4547-a0f0-8f12097be6c9/knowledge/sources/01ecb540-f03f-4e2d-85c2-dbda75d0cef2.json",
+        "type": "application/json"
+      },
+      {
+        "id": "088e1f0e-b6ee-4449-a0db-40cd227d7d6b_summary",
+        "content": "\"Two Widows\" by Ivan Mestrovic is a poignant lithograph depicting two nude, sorrowful figures.",
+        "score": 0.0149,
+        "source": "gaim-21feddec-f30e-4547-a0f0-8f12097be6c9/knowledge/sources/088e1f0e-b6ee-4449-a0db-40cd227d7d6b.json",
+        "type": "application/json"
+      },
+      {
+        "id": "1230c4cf-34cd-4f22-8097-d0a10b925087_summary",
+        "content": "Georges Rouault's 1929 lithograph, \"Faubourg des Longues Peines (La Pauvre Eglise),\" shows three somber figures on a dark, winding path.",
+        "score": 0.0147,
+        "source": "gaim-21feddec-f30e-4547-a0f0-8f12097be6c9/knowledge/sources/1230c4cf-34cd-4f22-8097-d0a10b925087.json",
+        "type": "application/json"
+      },
+      {
+        "id": "01110a68-b5b4-40e9-bf0c-ddce3157bf1d_summary",
+        "content": "Jean-Louis Forain's \"The Petitioner\" (c. 1910) is an oil on canvas depicting a somber woman in a dark, hooded cloak.",
+        "score": 0.0145,
+        "source": "gaim-21feddec-f30e-4547-a0f0-8f12097be6c9/knowledge/sources/01110a68-b5b4-40e9-bf0c-ddce3157bf1d.json",
+        "type": "application/json"
+      },
+      {
+        "id": "0f6df3ec-015d-4e3d-834a-2cd5d2f6c240_summary",
+        "content": "A black lithograph by Lessing Julius Rosenwald and Benton Spruance (1957), titled \"Roads of the Earth We Follow You.\"",
+        "score": 0.0143,
+        "source": "gaim-21feddec-f30e-4547-a0f0-8f12097be6c9/knowledge/sources/0f6df3ec-015d-4e3d-834a-2cd5d2f6c240.json",
+        "type": "application/json"
+      }
+    ],
+    "total_chunks": 10
+  },
+  "signature_info": {
+    "alg": "ES256",
+    "issuer": "did:key:zQ3shwc61yUNaJZBX2L9mZd3xhWjTEqD52dA3JxBnZnu78E3d",
+    "time": "2026-01-14T18:15:25Z"
+  }
+}

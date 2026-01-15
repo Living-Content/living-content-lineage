@@ -1,0 +1,44 @@
+{
+  "claim_generator": "LivingContent/1.0.0",
+  "claim_generator_info": [{ "name": "Living Content", "version": "1.0.0" }],
+  "title": "User Query",
+  "format": "text/plain",
+  "instance_id": "urn:uuid:data-user-query",
+
+  "assertions": [
+    {
+      "label": "c2pa.actions",
+      "data": {
+        "actions": [{
+          "action": "c2pa.created",
+          "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/humanEntry",
+          "when": "2026-01-14T18:14:52Z"
+        }]
+      }
+    },
+    {
+      "label": "lco.content",
+      "data": {
+        "type": "Document",
+        "content_hash": "sha256:abc123...",
+        "content_preview": "Whats in the database"
+      }
+    }
+  ],
+
+  "content": {
+    "query": "Whats in the database",
+    "message_count": 1,
+    "client_date_time": {
+      "iso": "2026-01-14T18:14:52.453Z",
+      "local": "1/14/2026, 10:14:52 AM",
+      "timezone": "America/Los_Angeles"
+    }
+  },
+
+  "signature_info": {
+    "alg": "ES256",
+    "issuer": "did:key:zQ3shwc61yUNaJZBX2L9mZd3xhWjTEqD52dA3JxBnZnu78E3d",
+    "time": "2026-01-14T18:14:52Z"
+  }
+}

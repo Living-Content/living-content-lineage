@@ -75,6 +75,48 @@ export interface C2PAManifest {
 }
 
 /**
+ * Rich asset data loaded from individual asset manifests.
+ */
+export interface AssetManifest {
+  claim_generator: string;
+  claim_generator_info: Array<{ name: string; version: string }>;
+  title: string;
+  format: string;
+  instance_id: string;
+  assertions: C2PAAssertion[];
+  signature_info?: {
+    alg: string;
+    issuer: string;
+    time: string;
+  };
+  // Code assets
+  source_code?: string;
+  // Document/Data assets
+  content?: {
+    query?: string;
+    response?: string;
+    response_length?: number;
+    tool_id?: string;
+    model?: string;
+    candidates?: string[];
+    llm_response?: string;
+    input_tokens?: number;
+    output_tokens?: number;
+    total_tokens?: number;
+    temperature?: number;
+    max_tokens?: number;
+    duration_ms?: number;
+    [key: string]: unknown;
+  };
+  // Model assets
+  ingredients?: Array<{
+    title: string;
+    instance_id: string;
+    relationship: string;
+  }>;
+}
+
+/**
  * Node data for sigma.js graph rendering.
  */
 export interface LineageNodeData {
@@ -85,6 +127,7 @@ export interface LineageNodeData {
   shape: NodeShape;
   stage?: string;
   manifest?: C2PAManifest;
+  assetManifest?: AssetManifest;
   description?: string;
   x?: number;
   y?: number;
@@ -96,6 +139,8 @@ export interface LineageNodeData {
   verifiedBy?: string;
   verifiedAt?: string;
   duration?: string;
+  // Token usage for environmental impact
+  tokens?: { input: number; output: number };
 }
 
 /**

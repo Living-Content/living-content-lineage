@@ -57,31 +57,30 @@ export function createSampleLineageGraph(): LineageGraph {
   const ATTEST_ROW_Y = MAIN_ROW_Y - 100; // Attestation nodes below main flow (smaller Y = down)
 
   const nodePositions: Record<string, { x: number; y: number; order: number; stage: string }> = {
-    // INPUT STAGE (x: 120) - Retrieve History inputs stacked
+    // SELECT STAGE (x: 120) - Select Tool inputs stacked
     // In sigma.js: larger Y = UP, smaller Y = DOWN
-    "data-user-query": { x: 120, y: MAIN_ROW_Y + 30, order: 0, stage: "input" },
-    "data-session-context": { x: 120, y: MAIN_ROW_Y - 30, order: 1, stage: "input" },
+    "data-consumed-query": { x: 120, y: MAIN_ROW_Y + 60, order: 0, stage: "select" },
+    "data-select-tool-model": { x: 120, y: MAIN_ROW_Y, order: 1, stage: "select" },
+    "data-select-tool-code": { x: 120, y: MAIN_ROW_Y - 60, order: 2, stage: "select" },
 
-    // RETRIEVE STAGE (x: 280-400)
-    "comp-retrieve-history": { x: 280, y: MAIN_ROW_Y, order: 2, stage: "retrieve" },
-    "data-retrieved-history": { x: 400, y: MAIN_ROW_Y, order: 3, stage: "retrieve" },
+    // RETRIEVE STAGE (x: 280-520)
+    "comp-select-tool": { x: 280, y: MAIN_ROW_Y, order: 3, stage: "retrieve" },
+    "comp-retrieve-history": { x: 400, y: MAIN_ROW_Y, order: 4, stage: "retrieve" },
+    "data-selected-tool": { x: 400, y: MAIN_ROW_Y - 60, order: 5, stage: "retrieve" },
+    "data-retrieved-history": { x: 520, y: MAIN_ROW_Y, order: 6, stage: "retrieve" },
 
-    // GENERATE STAGE (x: 520-760) - Model Config below main flow
-    "data-model-config": { x: 520, y: MAIN_ROW_Y - 60, order: 4, stage: "generate" },
-    "comp-generate-response": { x: 640, y: MAIN_ROW_Y, order: 5, stage: "generate" },
-    "data-generated-response": { x: 760, y: MAIN_ROW_Y, order: 6, stage: "generate" },
+    // GENERATE STAGE (x: 640-880)
+    "data-generate-response-code": { x: 640, y: MAIN_ROW_Y - 60, order: 7, stage: "generate" },
+    "data-generate-response-model": { x: 640, y: MAIN_ROW_Y + 60, order: 8, stage: "generate" },
+    "comp-generate-response": { x: 760, y: MAIN_ROW_Y, order: 9, stage: "generate" },
+    "data-generated-response": { x: 880, y: MAIN_ROW_Y, order: 10, stage: "generate" },
 
-    // IMAGE STAGE (x: 880-1000)
-    "comp-generate-image": { x: 880, y: MAIN_ROW_Y, order: 7, stage: "image" },
-    "data-generated-image": { x: 1000, y: MAIN_ROW_Y, order: 8, stage: "image" },
-
-    // OUTPUT STAGE (x: 1120-1240)
-    "comp-save-output": { x: 1120, y: MAIN_ROW_Y, order: 9, stage: "output" },
-    "data-final-document": { x: 1240, y: MAIN_ROW_Y, order: 10, stage: "output" },
+    // SAVE STAGE (x: 1000-1120)
+    "comp-save-response": { x: 1000, y: MAIN_ROW_Y, order: 11, stage: "save" },
 
     // ATTESTATION NODES - below the data they verify
-    "attest-retrieve": { x: 400, y: ATTEST_ROW_Y, order: 11, stage: "retrieve" },
-    "attest-output": { x: 1240, y: ATTEST_ROW_Y, order: 12, stage: "output" },
+    "attest-retrieve": { x: 520, y: ATTEST_ROW_Y, order: 12, stage: "retrieve" },
+    "attest-generate": { x: 880, y: ATTEST_ROW_Y, order: 13, stage: "generate" },
   };
 
   // Create nodes from computations and their inputs/outputs
@@ -233,11 +232,10 @@ export function createSampleLineageGraph(): LineageGraph {
   });
 
   const stages: Stage[] = [
-    { id: "input", label: "Input", xStart: 60, xEnd: 220 },
+    { id: "select", label: "Select", xStart: 60, xEnd: 220 },
     { id: "retrieve", label: "Retrieve", xStart: 220, xEnd: 460 },
     { id: "generate", label: "Generate", xStart: 460, xEnd: 820 },
-    { id: "image", label: "Image", xStart: 820, xEnd: 1060 },
-    { id: "output", label: "Output", xStart: 1060, xEnd: 1300 },
+    { id: "save", label: "Save", xStart: 820, xEnd: 1060 },
   ];
 
   return { nodes, edges, stages };

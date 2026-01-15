@@ -1,0 +1,70 @@
+{
+  "claim_generator": "LivingContent/1.0.0",
+  "claim_generator_info": [{ "name": "Living Content", "version": "1.0.0" }],
+  "title": "AI Generated Response",
+  "format": "text/markdown",
+  "instance_id": "urn:uuid:data-generated-response",
+
+  "ingredients": [
+    {
+      "title": "User Query",
+      "instance_id": "urn:uuid:data-user-query",
+      "relationship": "inputTo"
+    },
+    {
+      "title": "Response Model",
+      "instance_id": "urn:uuid:model-generate-response",
+      "relationship": "componentOf"
+    },
+    {
+      "title": "Conversation History",
+      "instance_id": "urn:uuid:data-retrieved-history",
+      "relationship": "inputTo"
+    }
+  ],
+
+  "assertions": [
+    {
+      "label": "c2pa.actions",
+      "data": {
+        "actions": [{
+          "action": "c2pa.created",
+          "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia",
+          "softwareAgent": { "name": "Living Content Pipeline", "version": "1.0.0" },
+          "when": "2026-01-14T18:15:30Z"
+        }]
+      }
+    },
+    {
+      "label": "c2pa.ai_generated",
+      "data": {
+        "model": "claude-sonnet-4-5",
+        "provider": "anthropic",
+        "prompt_type": "knowledge_query"
+      }
+    },
+    {
+      "label": "lco.content",
+      "data": {
+        "type": "Document",
+        "computation": "generate_response",
+        "generator": true,
+        "response_length": 1551
+      }
+    }
+  ],
+
+  "content": {
+    "response": "Welcome to the National Gallery of Art collection! I'm delighted to guide you through what we have here.\n\nThis database contains **200 carefully curated artworks** from the National Gallery's Creative Commons Zero library. It's a wonderful cross-section of art history, spanning over five centuries — from Renaissance masterpieces dating back to 1508 all the way through to contemporary works from the late 20th century.\n\n## What You'll Find Here\n\nThe collection includes a rich variety of media:\n- **Paintings** from various periods\n- **Prints** showcasing different printmaking techniques like lithography and etching\n- **Drawings** capturing artistic vision in its most immediate form\n- **Etchings** with intricate detail work\n\n## Notable Highlights\n\nWe have significant holdings from the **Rosenwald Collection** — these are exceptional pieces donated by Lessing Julius Rosenwald. The collection also features both American and European artworks, giving you a transatlantic perspective on artistic development.\n\nEach artwork comes with detailed information including:\n- Artist attributions and creation dates\n- Provenance through credit lines\n- Physical dimensions\n- Unique identifiers and accession numbers\n\nThe range is quite impressive — from a 1508 Renaissance work *Vulcan, Venus, and Eros* to contemporary pieces like Joel Shapiro's 1989 *Untitled* and even works from the 1990s.\n\n**What interests you most?** Are you drawn to a particular period, artistic movement, or medium? I'd love to help you discover pieces that speak to your tastes.",
+    "response_length": 1551,
+    "model": "claude-sonnet-4-5",
+    "max_tokens": 4096,
+    "duration_ms": 12029.63
+  },
+
+  "signature_info": {
+    "alg": "ES256",
+    "issuer": "did:key:zQ3shwc61yUNaJZBX2L9mZd3xhWjTEqD52dA3JxBnZnu78E3d",
+    "time": "2026-01-14T18:15:30Z"
+  }
+}

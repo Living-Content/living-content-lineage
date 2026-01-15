@@ -1,0 +1,50 @@
+{
+  "claim_generator": "LivingContent/1.0.0",
+  "claim_generator_info": [{ "name": "Living Content", "version": "1.0.0" }],
+  "title": "Tool Selection Model",
+  "format": "application/vnd.livingcontent.model",
+  "instance_id": "urn:uuid:model-select-tool",
+
+  "assertions": [
+    {
+      "label": "c2pa.actions",
+      "data": {
+        "actions": [{
+          "action": "c2pa.placed",
+          "softwareAgent": { "name": "Google Vertex AI", "version": "2026-01" },
+          "when": "2026-01-14T18:15:19Z"
+        }]
+      }
+    },
+    {
+      "label": "lco.model",
+      "data": {
+        "provider": "vertex_ai",
+        "model_id": "gemini-2.5-flash-lite",
+        "computation": "select_tool",
+        "parameters": {
+          "max_tokens": 2048,
+          "temperature": 0.3
+        }
+      }
+    },
+    {
+      "label": "lco.usage",
+      "data": {
+        "input_tokens": 132,
+        "output_tokens": 15,
+        "total_tokens": 147,
+        "api_duration_ms": 1867.42,
+        "total_duration_ms": 1868.50,
+        "prompt_length": 528,
+        "response_length": 34
+      }
+    }
+  ],
+
+  "signature_info": {
+    "alg": "ES256",
+    "issuer": "did:key:zQ3shwc61yUNaJZBX2L9mZd3xhWjTEqD52dA3JxBnZnu78E3d",
+    "time": "2026-01-14T18:15:19Z"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "claim_generator": "LivingContent/1.0.0",
+  "claim_generator_info": [{ "name": "Living Content", "version": "1.0.0" }],
+  "title": "Response Generation Model",
+  "format": "application/vnd.livingcontent.model",
+  "instance_id": "urn:uuid:model-generate-response",
+
+  "assertions": [
+    {
+      "label": "c2pa.actions",
+      "data": {
+        "actions": [{
+          "action": "c2pa.placed",
+          "softwareAgent": { "name": "Anthropic API", "version": "2026-01" },
+          "when": "2026-01-14T18:15:30Z"
+        }]
+      }
+    },
+    {
+      "label": "lco.model",
+      "data": {
+        "provider": "anthropic",
+        "model_id": "claude-sonnet-4-5",
+        "computation": "generate_response",
+        "parameters": {
+          "max_tokens": 4096
+        }
+      }
+    },
+    {
+      "label": "lco.usage",
+      "data": {
+        "duration_ms": 12029.63
+      }
+    }
+  ],
+
+  "signature_info": {
+    "alg": "ES256",
+    "issuer": "did:key:zQ3shwc61yUNaJZBX2L9mZd3xhWjTEqD52dA3JxBnZnu78E3d",
+    "time": "2026-01-14T18:15:30Z"
+  }
+}

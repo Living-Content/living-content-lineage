@@ -1,0 +1,48 @@
+{
+  "claim_generator": "LivingContent/1.0.0",
+  "claim_generator_info": [{ "name": "Living Content", "version": "1.0.0" }],
+  "title": "History Retriever",
+  "format": "application/vnd.livingcontent.code+python",
+  "instance_id": "urn:uuid:code-retrieve-history",
+
+  "assertions": [
+    {
+      "label": "c2pa.actions",
+      "data": {
+        "actions": [{
+          "action": "c2pa.created",
+          "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia",
+          "softwareAgent": { "name": "Living Content Pipeline", "version": "1.0.0" },
+          "when": "2026-01-14T18:15:20Z"
+        }]
+      }
+    },
+    {
+      "label": "lco.code",
+      "data": {
+        "function": "get_query_history",
+        "module": "core.lineage.history",
+        "computation": "retrieve_history",
+        "hash": "sha256:def456789abc123def456789abc123def456789abc123def456789abc123def4"
+      }
+    },
+    {
+      "label": "lco.execution",
+      "data": {
+        "execution_start_time": "1768414497.7906082",
+        "execution_end_time": "1768414498.1481078",
+        "execution_duration_ms": 357.50,
+        "previous_function": "select_tool",
+        "next_function": "generate_response"
+      }
+    }
+  ],
+
+  "source_code": "@chain_link(computation=\"retrieve_history\", output_asset_type=\"dataset\")\nasync def get_query_history(query_ctx) -> dict:\n    \"\"\"Retrieve conversation history from content session.\n\n    Returns:\n        Dict with all output data (captured for lineage, used by callers).\n        Callers access _messages for the conversation history list.\n    \"\"\"\n    if not get_config(\"conversations.history.enabled\"):\n        return {\"message_count\": 0, \"_messages\": []}\n\n    message_limit = get_config(\"conversations.history.message_limit\")\n    benchmark = get_current_benchmark()\n\n    if benchmark:\n        benchmark.start_timer(\"history_retrieval\")\n\n    conversation_history = []\n    try:\n        session_data = await query_ctx.content_session_manager.get_content_session_data(\n            query_ctx.user_id, query_ctx.content_session_id\n        )\n        past_queries = session_data.get(\"query\", {}).get(\"queries\", [])\n\n        for query_pair in past_queries[-message_limit:]:\n            for msg in query_pair:\n                conversation_history.append(\n                    {\"role\": msg[\"role\"], \"content\": msg[\"content\"]}\n                )\n\n        if benchmark:\n            benchmark.log_info(\n                f\"Retrieved {len(conversation_history)} messages from conversation history\"\n            )\n    except Exception as e:\n        logger.warning(f\"Could not retrieve conversation history: {e}\")\n\n    if benchmark:\n        history_time = benchmark.stop_timer(\"history_retrieval\")\n        benchmark.log_info(f\"History retrieval took {history_time:.0f}ms\")\n\n    return {\n        \"message_count\": len(conversation_history),\n        \"_messages\": conversation_history,\n    }",
+
+  "signature_info": {
+    "alg": "ES256",
+    "issuer": "did:key:zQ3shwc61yUNaJZBX2L9mZd3xhWjTEqD52dA3JxBnZnu78E3d",
+    "time": "2026-01-14T18:15:20Z"
+  }
+}
