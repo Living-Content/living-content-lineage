@@ -9,18 +9,39 @@ import {
   NODE_STYLES,
 } from '../../ui/theme.js';
 
+interface OverlayEntry {
+  icon: HTMLImageElement;
+  label?: HTMLDivElement;
+}
+
+const overlayCache = new WeakMap<HTMLElement, Map<string, OverlayEntry>>();
+
+function getOverlayCache(container: HTMLElement): Map<string, OverlayEntry> {
+  const cached = overlayCache.get(container);
+  if (cached) return cached;
+  const next = new Map<string, OverlayEntry>();
+  overlayCache.set(container, next);
+  return next;
+}
+
 export function renderNodeOverlays(graph: Graph, renderer: Sigma): void {
   const container = document.getElementById('icon-overlay');
   if (!container) return;
-
-  container.innerHTML = '';
+  const cache = getOverlayCache(container);
 
   const camera = renderer.getCamera();
   const ratio = camera.ratio;
   const showLabels = ratio < 1.2;
 
   graph.forEachNode((nodeId, attrs) => {
-    if (attrs.hidden === true) return;
+    const cached = cache.get(nodeId);
+    if (attrs.hidden === true) {
+      if (cached) {
+        cached.icon.style.display = 'none';
+        if (cached.label) cached.label.style.display = 'none';
+      }
+      return;
+    }
     const nodeType = attrs.nodeType as NodeType;
     const assetType = attrs.assetType as AssetType | undefined;
     const iconPath =
@@ -39,9 +60,20 @@ export function renderNodeOverlays(graph: Graph, renderer: Sigma): void {
     const displayData = renderer.getNodeDisplayData(nodeId);
     const size = displayData?.size ?? DEFAULT_NODE_SIZE;
 
-    const iconEl = document.createElement('img');
-    iconEl.className = 'node-icon';
-    iconEl.src = iconPath;
+    let entry = cached;
+    if (!entry) {
+      const iconEl = document.createElement('img');
+      iconEl.className = 'node-icon';
+      container.appendChild(iconEl);
+      entry = { icon: iconEl };
+      cache.set(nodeId, entry);
+    }
+
+    const iconEl = entry.icon;
+    iconEl.style.display = 'block';
+    if (iconEl.src !== iconPath) {
+      iconEl.src = iconPath;
+    }
     iconEl.style.left = `${pos.x}px`;
     iconEl.style.top = `${pos.y}px`;
     const iconSize = Math.min(size * 1.2, 18);
@@ -50,29 +82,39 @@ export function renderNodeOverlays(graph: Graph, renderer: Sigma): void {
     const defaultIcon = getCssVar('--color-icon-default', '#1a1a1a');
     const accentBlue = getCssVar('--color-icon-accent-blue', '#3b82f6');
     const accentAmber = getCssVar('--color-icon-accent-amber', '#f59e0b');
-    if (style.iconColor !== defaultIcon) {
-      if (style.iconColor === accentBlue) {
-        iconEl.style.filter = getCssVar(
-          '--filter-icon-blue',
-          'invert(45%) sepia(67%) saturate(2000%) hue-rotate(203deg) brightness(97%) contrast(96%)'
-        );
-      } else if (style.iconColor === accentAmber) {
-        iconEl.style.filter = getCssVar(
-          '--filter-icon-amber',
-          'invert(62%) sepia(83%) saturate(1500%) hue-rotate(16deg) brightness(97%) contrast(95%)'
-        );
-      }
+    if (style.iconColor === accentBlue) {
+      iconEl.style.filter = getCssVar(
+        '--filter-icon-blue',
+        'invert(45%) sepia(67%) saturate(2000%) hue-rotate(203deg) brightness(97%) contrast(96%)'
+      );
+    } else if (style.iconColor === accentAmber) {
+      iconEl.style.filter = getCssVar(
+        '--filter-icon-amber',
+        'invert(62%) sepia(83%) saturate(1500%) hue-rotate(16deg) brightness(97%) contrast(95%)'
+      );
+    } else {
+      iconEl.style.filter = '';
     }
-    container.appendChild(iconEl);
 
-    if (!showLabels) return;
+    if (!showLabels) {
+      if (entry.label) entry.label.style.display = 'none';
+      return;
+    }
     const label = attrs.label as string;
-    if (!label) return;
-    const labelEl = document.createElement('div');
-    labelEl.className = 'node-label';
+    if (!label) {
+      if (entry.label) entry.label.style.display = 'none';
+      return;
+    }
+    if (!entry.label) {
+      const labelEl = document.createElement('div');
+      labelEl.className = 'node-label';
+      container.appendChild(labelEl);
+      entry.label = labelEl;
+    }
+    const labelEl = entry.label;
+    labelEl.style.display = 'block';
     labelEl.style.left = `${pos.x}px`;
     labelEl.style.top = `${pos.y + size + 10}px`;
     labelEl.textContent = label;
-    container.appendChild(labelEl);
   });
 }

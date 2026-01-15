@@ -196,6 +196,8 @@ export async function createGraphController({
     });
   };
 
+  const camera = renderer.getCamera();
+  camera.on('updated', scheduleOverlayUpdate);
   renderer.on('afterRender', scheduleOverlayUpdate);
   scheduleOverlayUpdate();
 
@@ -240,7 +242,6 @@ export async function createGraphController({
     callbacks.onHoverEnd();
   });
 
-  const camera = renderer.getCamera();
   camera.setState({ x: 0.5, y: 0.5, ratio: 0.5 });
   renderer.refresh();
   scheduleOverlayUpdate();
