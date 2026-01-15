@@ -1,4 +1,4 @@
-import type { LineageGraph } from '../../types.js';
+import type { LineageGraph } from '../../../types.js';
 import type { ManifestAdapter } from '../manifestAdapter.js';
 import {
   getLineageAssetManifestRequests,

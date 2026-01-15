@@ -24,6 +24,7 @@ export function createSidebarController(): SidebarController {
   if (!sidebar) {
     throw new Error('Sidebar container missing');
   }
+  const sidebarEl = sidebar;
 
   function showDetailPanel(): void {
     if (!detailPanel) return;
@@ -39,11 +40,11 @@ export function createSidebarController(): SidebarController {
 
   function renderEmpty(): void {
     if (sidebarTitle) sidebarTitle.textContent = 'CONTEXT';
-    sidebar.innerHTML = '';
+    sidebarEl.innerHTML = '';
     const placeholder = document.createElement('p');
     placeholder.className = 'sidebar-placeholder';
     placeholder.textContent = 'Select a node to view details';
-    sidebar.appendChild(placeholder);
+    sidebarEl.appendChild(placeholder);
     if (detailPanel) {
       detailPanel.classList.remove('visible');
     }
@@ -52,7 +53,7 @@ export function createSidebarController(): SidebarController {
   function renderNode(nodeData: LineageNodeData): void {
     if (sidebarTitle) sidebarTitle.textContent = nodeData.label;
 
-    renderSummaryView(sidebar, nodeData);
+    renderSummaryView(sidebarEl, nodeData);
 
     const hasDetailContent =
       Boolean(nodeData.assetManifest?.sourceCode) ||
@@ -72,7 +73,7 @@ export function createSidebarController(): SidebarController {
       link.className = 'view-details-link';
       link.textContent = 'Details';
       link.addEventListener('click', showDetailPanel);
-      sidebar.appendChild(link);
+      sidebarEl.appendChild(link);
     }
 
     if (detailPanel && !sidebarDetailMode) {
@@ -86,7 +87,7 @@ export function createSidebarController(): SidebarController {
     edges: LineageEdgeData[]
   ): void {
     if (sidebarTitle) sidebarTitle.textContent = stageLabel;
-    renderStageOverview(sidebar, nodes, edges);
+    renderStageOverview(sidebarEl, nodes, edges);
     if (detailPanel) {
       detailPanel.classList.remove('visible');
     }
