@@ -196,6 +196,21 @@ export async function createGraphController({
     });
   };
 
+  const handleResize = () => {
+    renderer.resize();
+    markOverlayDirty();
+    scheduleOverlayUpdate();
+  };
+  let resizeObserver: ResizeObserver | null = null;
+  if (typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => {
+      handleResize();
+    });
+    resizeObserver.observe(container);
+  } else {
+    window.addEventListener('resize', handleResize);
+  }
+
   const camera = renderer.getCamera();
   camera.on('updated', scheduleOverlayUpdate);
   renderer.on('afterRender', scheduleOverlayUpdate);
@@ -248,6 +263,11 @@ export async function createGraphController({
 
   return {
     destroy: () => {
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      } else {
+        window.removeEventListener('resize', handleResize);
+      }
       renderer.kill();
     },
   };
