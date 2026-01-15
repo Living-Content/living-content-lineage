@@ -16,11 +16,11 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-#app.loading {
+.app-shell.loading {
   opacity: 0;
   pointer-events: none;
 }
 
-#app {
+.app-shell {
   transition: opacity 0.25s ease;
 }

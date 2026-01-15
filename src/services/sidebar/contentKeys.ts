@@ -1,3 +1,6 @@
+/**
+ * Content key classification used for sidebar summary vs detail sections.
+ */
 export type ContentKeyGroup = 'primary' | 'secondary';
 
 export const CONTENT_KEY_GROUPS: Record<string, ContentKeyGroup> = {

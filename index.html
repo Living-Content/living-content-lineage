@@ -4,56 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lineage Explorer</title>
-    <link rel="stylesheet" href="/src/styles/index.css" />
   </head>
   <body>
-    <div id="app" class="loading">
-      <header class="header">
-        <div class="header-left">
-          <img src="/assets/logo.svg" alt="LCO" class="logo" />
-        </div>
-        <div class="header-right">
-          <img
-            src="/icons/detail.svg"
-            alt="Detail level"
-            id="lod-icon"
-            class="lod-indicator"
-          />
-        </div>
-      </header>
-      <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-          <span class="sidebar-title" id="sidebar-title">CONTEXT</span>
-          <button
-            class="sidebar-expand-btn"
-            id="sidebar-expand"
-            title="Toggle floating"
-          >
-            ↗
-          </button>
-        </div>
-        <div class="sidebar-content" id="sidebar-content">
-          <p class="sidebar-placeholder">Select a node to view details</p>
-        </div>
-      </aside>
-      <div class="detail-panel" id="detail-panel">
-        <div class="detail-panel-header">
-          <span class="detail-panel-title">DETAILS</span>
-          <button class="detail-panel-close" id="detail-panel-close">×</button>
-        </div>
-        <div class="detail-panel-content" id="detail-panel-content"></div>
-      </div>
-      <main class="graph-container">
-        <div id="sigma-container"></div>
-        <div class="stage-labels" id="stage-labels"></div>
-        <div class="edge-overlay" id="edge-overlay"></div>
-        <div class="icon-overlay" id="icon-overlay"></div>
-        <div class="node-hover-tooltip" id="node-hover-tooltip">
-          <div class="tooltip-title"></div>
-          <div class="tooltip-type"></div>
-        </div>
-      </main>
-    </div>
+    <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
