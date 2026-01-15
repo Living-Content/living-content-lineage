@@ -733,6 +733,14 @@ body {
   filter: invert(75%) sepia(50%) saturate(500%) hue-rotate(80deg) brightness(95%);
 }
 
+.impact-icon.impact-available {
+  filter: invert(55%) sepia(10%) saturate(700%) hue-rotate(180deg) brightness(95%);
+}
+
+.impact-icon.impact-unknown {
+  filter: grayscale(100%) brightness(90%);
+}
+
 .impact-icon.impact-low {
   filter: invert(70%) sepia(60%) saturate(600%) hue-rotate(50deg) brightness(90%);
 }
@@ -754,6 +762,14 @@ body {
 
 .impact-label.impact-minimal {
   color: #4ade80;
+}
+
+.impact-label.impact-available {
+  color: #4b5563;
+}
+
+.impact-label.impact-unknown {
+  color: #9ca3af;
 }
 
 .impact-label.impact-low {
