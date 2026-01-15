@@ -79,7 +79,6 @@ export function renderNodeOverlays(graph: Graph, renderer: Sigma): void {
     const iconSize = Math.min(size * 1.2, 18);
     iconEl.style.width = `${iconSize}px`;
     iconEl.style.height = `${iconSize}px`;
-    const defaultIcon = getCssVar('--color-icon-default', '#1a1a1a');
     const accentBlue = getCssVar('--color-icon-accent-blue', '#3b82f6');
     const accentAmber = getCssVar('--color-icon-accent-amber', '#f59e0b');
     if (style.iconColor === accentBlue) {

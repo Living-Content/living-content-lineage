@@ -17,9 +17,11 @@
   } from '../stores/uiState.js';
 
   let container: HTMLDivElement | null = null;
-  let tooltip: HTMLDivElement | null = null;
-  let tooltipTitle: HTMLDivElement | null = null;
-  let tooltipType: HTMLDivElement | null = null;
+  let tooltipVisible = false;
+  let tooltipTitle = '';
+  let tooltipType = '';
+  let tooltipLeft = 0;
+  let tooltipTop = 0;
 
   function showTooltip(payload: {
     title: string;
@@ -28,16 +30,15 @@
     screenY: number;
     size: number;
   }): void {
-    if (!tooltip || !tooltipTitle || !tooltipType) return;
-    tooltipTitle.textContent = payload.title;
-    tooltipType.textContent = payload.nodeType;
-    tooltip.style.left = `${payload.screenX}px`;
-    tooltip.style.top = `${payload.screenY - payload.size - 12}px`;
-    tooltip.classList.add('visible');
+    tooltipTitle = payload.title;
+    tooltipType = payload.nodeType;
+    tooltipLeft = payload.screenX;
+    tooltipTop = payload.screenY - payload.size - 12;
+    tooltipVisible = true;
   }
 
   function hideTooltip(): void {
-    tooltip?.classList.remove('visible');
+    tooltipVisible = false;
   }
 
   onMount(() => {
@@ -94,8 +95,14 @@
   <div class="stage-labels" id="stage-labels"></div>
   <div class="edge-overlay" id="edge-overlay"></div>
   <div class="icon-overlay" id="icon-overlay"></div>
-  <div class="node-hover-tooltip" id="node-hover-tooltip" bind:this={tooltip}>
-    <div class="tooltip-title" bind:this={tooltipTitle}></div>
-    <div class="tooltip-type" bind:this={tooltipType}></div>
+  <div
+    class="node-hover-tooltip"
+    class:visible={tooltipVisible}
+    id="node-hover-tooltip"
+    style:left={`${tooltipLeft}px`}
+    style:top={`${tooltipTop}px`}
+  >
+    <div class="tooltip-title">{tooltipTitle}</div>
+    <div class="tooltip-type">{tooltipType}</div>
   </div>
 </main>
