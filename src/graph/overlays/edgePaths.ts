@@ -5,6 +5,7 @@ import {
   OVERLAY_PORT_SIZE,
   OVERLAY_VERTICAL_EDGE_X_TOLERANCE,
 } from '../../config/constants.js';
+import { getCssVar } from '../../ui/theme.js';
 
 export function renderEdgePaths(
   svg: SVGSVGElement,
@@ -13,6 +14,7 @@ export function renderEdgePaths(
 ): void {
   const { graph } = state;
   const edgesToShow = state.showAllEdges ? state.allEdges : state.simpleEdges;
+  const strokeColor = getCssVar('--color-edge', '#1a1a1a');
 
   edgesToShow
     .filter((edge) => !edge.isGate)
@@ -76,7 +78,7 @@ export function renderEdgePaths(
 
       path.setAttribute('d', d);
       path.setAttribute('fill', 'none');
-      path.setAttribute('stroke', '#1a1a1a');
+      path.setAttribute('stroke', strokeColor);
       path.setAttribute('stroke-width', '1');
       path.setAttribute('marker-end', 'url(#arrowhead)');
       svg.appendChild(path);

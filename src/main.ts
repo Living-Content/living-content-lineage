@@ -11,6 +11,7 @@ import {
 import { createSidebarController } from './ui/sidebar/controller.js';
 import { setupLodController } from './graph/lod.js';
 import { HIDE_EDGES_THRESHOLD } from './config/constants.js';
+import { getCssVar } from './ui/theme.js';
 import type { LineageNodeData } from './types.js';
 
 function drawHoverRing(
@@ -28,7 +29,8 @@ function drawHoverRing(
   context.arc(data.x, data.y, size, 0, Math.PI * 2);
   context.closePath();
   context.lineWidth = 2;
-  context.strokeStyle = data.borderColor ?? '#3b82f6';
+  context.strokeStyle =
+    data.borderColor ?? getCssVar('--color-hover-ring', '#3b82f6');
   context.stroke();
 }
 
@@ -68,7 +70,7 @@ async function main(): Promise<void> {
     enableEdgeEvents: false,
     labelRenderedSizeThreshold: Infinity,
     zoomingRatio: 1.2,
-    defaultNodeColor: '#ffffff',
+    defaultNodeColor: getCssVar('--color-node-default', '#ffffff'),
     minCameraRatio: 0.2,
     maxCameraRatio: 4,
     nodeProgramClasses: {

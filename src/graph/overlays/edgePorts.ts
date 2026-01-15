@@ -5,6 +5,7 @@ import {
   OVERLAY_PORT_SIZE,
   OVERLAY_VERTICAL_EDGE_X_TOLERANCE,
 } from '../../config/constants.js';
+import { getCssVar } from '../../ui/theme.js';
 
 export function renderEdgePorts(
   svg: SVGSVGElement,
@@ -14,6 +15,7 @@ export function renderEdgePorts(
   const { graph } = state;
   const renderedOutputPorts = new Set<string>();
   const renderedInputPorts = new Set<string>();
+  const portColor = getCssVar('--color-port', '#4b5563');
 
   const edgesToShow = state.showAllEdges ? state.allEdges : state.simpleEdges;
   edgesToShow
@@ -58,7 +60,7 @@ export function renderEdgePorts(
         sourcePort.setAttribute('width', String(OVERLAY_PORT_SIZE + 4));
         sourcePort.setAttribute('height', String(OVERLAY_PORT_SIZE));
         sourcePort.setAttribute('rx', '2');
-        sourcePort.setAttribute('fill', '#4b5563');
+        sourcePort.setAttribute('fill', portColor);
         svg.appendChild(sourcePort);
         renderedOutputPorts.add(edge.source);
       }
@@ -77,7 +79,7 @@ export function renderEdgePorts(
         targetPort.setAttribute('width', String(OVERLAY_PORT_SIZE + 4));
         targetPort.setAttribute('height', String(OVERLAY_PORT_SIZE));
         targetPort.setAttribute('rx', '2');
-        targetPort.setAttribute('fill', '#4b5563');
+        targetPort.setAttribute('fill', portColor);
         svg.appendChild(targetPort);
         renderedInputPorts.add(edge.target);
       }

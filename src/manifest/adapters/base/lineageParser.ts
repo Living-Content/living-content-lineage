@@ -8,6 +8,7 @@ import type {
 import type { LineageManifest, LineageManifestRecord } from './lineageTypes.js';
 import { mapAssetType } from './assetManifestMapper.js';
 import { computeLayout } from './lineageLayout.js';
+import { getCssVar } from '../../../ui/theme.js';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -146,11 +147,13 @@ export function buildLineageGraph(
     else node.role = 'intermediate';
   });
 
+  const gateColor = getCssVar('--color-edge-gate', '#22c55e');
+  const edgeColor = getCssVar('--color-edge-muted', '#666666');
   const edges: LineageEdgeData[] = edgeList.map((edge, idx) => ({
     id: `e-${idx}`,
     source: edge.source,
     target: edge.target,
-    color: edge.isGate ? '#22c55e' : '#666666',
+    color: edge.isGate ? gateColor : edgeColor,
     isSimple: true,
     isGate: edge.isGate ?? false,
   }));

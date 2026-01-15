@@ -4,6 +4,7 @@ import type { AssetType, NodeType } from '../../types.js';
 import {
   ASSET_TYPE_ICONS,
   DEFAULT_NODE_SIZE,
+  getCssVar,
   NODE_ICON_PATHS,
   NODE_STYLES,
 } from '../../ui/theme.js';
@@ -46,13 +47,20 @@ export function renderNodeOverlays(graph: Graph, renderer: Sigma): void {
     const iconSize = Math.min(size * 1.2, 18);
     iconEl.style.width = `${iconSize}px`;
     iconEl.style.height = `${iconSize}px`;
-    if (style.iconColor !== '#1a1a1a') {
-      if (style.iconColor === '#3b82f6') {
-        iconEl.style.filter =
-          'invert(45%) sepia(67%) saturate(2000%) hue-rotate(203deg) brightness(97%) contrast(96%)';
-      } else if (style.iconColor === '#f59e0b') {
-        iconEl.style.filter =
-          'invert(62%) sepia(83%) saturate(1500%) hue-rotate(16deg) brightness(97%) contrast(95%)';
+    const defaultIcon = getCssVar('--color-icon-default', '#1a1a1a');
+    const accentBlue = getCssVar('--color-icon-accent-blue', '#3b82f6');
+    const accentAmber = getCssVar('--color-icon-accent-amber', '#f59e0b');
+    if (style.iconColor !== defaultIcon) {
+      if (style.iconColor === accentBlue) {
+        iconEl.style.filter = getCssVar(
+          '--filter-icon-blue',
+          'invert(45%) sepia(67%) saturate(2000%) hue-rotate(203deg) brightness(97%) contrast(96%)'
+        );
+      } else if (style.iconColor === accentAmber) {
+        iconEl.style.filter = getCssVar(
+          '--filter-icon-amber',
+          'invert(62%) sepia(83%) saturate(1500%) hue-rotate(16deg) brightness(97%) contrast(95%)'
+        );
       }
     }
     container.appendChild(iconEl);

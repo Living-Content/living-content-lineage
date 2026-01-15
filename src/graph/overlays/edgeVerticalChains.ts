@@ -1,6 +1,7 @@
 import type Sigma from 'sigma';
 import type { GraphState } from '../graphState.js';
 import { OVERLAY_VERTICAL_EDGE_X_TOLERANCE } from '../../config/constants.js';
+import { getCssVar } from '../../ui/theme.js';
 
 export function renderVerticalChains(
   svg: SVGSVGElement,
@@ -9,6 +10,7 @@ export function renderVerticalChains(
 ): void {
   const { graph } = state;
   const edgesToShow = state.showAllEdges ? state.allEdges : state.simpleEdges;
+  const strokeColor = getCssVar('--color-edge', '#1a1a1a');
   const verticalGroups = new Map<
     string,
     Array<{ nodeId: string; x: number; y: number; radius: number }>
@@ -83,7 +85,7 @@ export function renderVerticalChains(
       const d = `M ${lineX} ${startY} L ${lineX} ${endY}`;
       path.setAttribute('d', d);
       path.setAttribute('fill', 'none');
-      path.setAttribute('stroke', '#1a1a1a');
+      path.setAttribute('stroke', strokeColor);
       path.setAttribute('stroke-width', '1');
       svg.appendChild(path);
     }

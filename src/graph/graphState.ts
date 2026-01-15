@@ -4,6 +4,7 @@ import {
   ASSET_TYPE_COLORS,
   ATTESTATION_NODE_SIZE,
   DEFAULT_NODE_SIZE,
+  getCssVar,
   NODE_STYLES,
 } from '../ui/theme.js';
 
@@ -19,9 +20,9 @@ export function initializeGraph(lineageData: LineageGraph): GraphState {
 
   lineageData.nodes.forEach((node) => {
     const style = NODE_STYLES[node.nodeType] ?? {
-      color: '#ffffff',
-      borderColor: '#333333',
-      iconColor: '#333333',
+      color: getCssVar('--color-node-default', '#ffffff'),
+      borderColor: getCssVar('--color-node-border-default', '#333333'),
+      iconColor: getCssVar('--color-node-icon-default', '#333333'),
     };
     const borderColor =
       node.assetType &&

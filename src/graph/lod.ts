@@ -3,7 +3,7 @@ import type Sigma from 'sigma';
 import type { GraphState } from './graphState.js';
 import type { LineageEdgeData, LineageGraph } from '../types.js';
 import { COLLAPSE_THRESHOLD, EXPAND_THRESHOLD } from '../config/constants.js';
-import { META_NODE_SIZE, NODE_STYLES } from '../ui/theme.js';
+import { getCssVar, META_NODE_SIZE, NODE_STYLES } from '../ui/theme.js';
 
 interface OriginalNodeState {
   x: number;
@@ -159,6 +159,7 @@ export function setupLodController({
     });
 
     const metaEdges: LineageEdgeData[] = [];
+    const metaEdgeColor = getCssVar('--color-edge-muted', '#666666');
     stageEdges.forEach((edgeKey) => {
       const [sourceStage, targetStage] = edgeKey.split('->') as [
         string,
@@ -171,7 +172,7 @@ export function setupLodController({
           id: `meta-${sourceStage}-${targetStage}`,
           source: sourceNodes[0],
           target: targetNodes[0],
-          color: '#666666',
+          color: metaEdgeColor,
           isSimple: true,
         });
       }

@@ -1,4 +1,71 @@
- :root {
+:root {
+  --color-white: #ffffff;
+  --color-surface-hover: #f5f5f5;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #333;
+  --color-text-muted: #666;
+  --color-text-light: #888;
+  --color-text-faint: #999;
+  --color-text-subtle: #6b7280;
+  --color-link: #2563eb;
+  --color-border: #ddd;
+  --color-border-light: rgba(0, 0, 0, 0.04);
+  --color-border-soft: rgba(0, 0, 0, 0.06);
+  --color-border-hover: rgba(0, 0, 0, 0.08);
+  --color-border-strong: rgba(0, 0, 0, 0.1);
+  --color-divider: rgba(0, 0, 0, 0.2);
+  --color-surface-subtle: rgba(0, 0, 0, 0.03);
+  --color-overlay: rgba(255, 255, 255, 0.5);
+  --color-overlay-strong: rgba(255, 255, 255, 0.75);
+  --color-overlay-soft: rgba(255, 255, 255, 0.6);
+  --color-overlay-border: rgba(255, 255, 255, 0.5);
+  --color-overlay-border-strong: rgba(255, 255, 255, 0.8);
+  --color-code-bg: rgba(0, 0, 0, 0.04);
+  --color-code-inline-bg: rgba(0, 0, 0, 0.05);
+  --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-2: 0 4px 20px rgba(0, 0, 0, 0.08);
+
+  --color-graph-bg-1: #f0f4f8;
+  --color-graph-bg-2: #e8f4f8;
+  --color-graph-bg-3: #f8e8f0;
+
+  --color-edge: #1a1a1a;
+  --color-edge-muted: #666666;
+  --color-edge-gate: #22c55e;
+  --color-port: #4b5563;
+  --color-node-default: #ffffff;
+  --color-node-border-default: #333333;
+  --color-node-icon-default: #333333;
+  --color-hover-ring: #3b82f6;
+
+  --color-icon-default: #1a1a1a;
+  --color-icon-accent-blue: #3b82f6;
+  --color-icon-accent-amber: #f59e0b;
+  --filter-icon-blue: invert(45%) sepia(67%) saturate(2000%) hue-rotate(203deg)
+    brightness(97%) contrast(96%);
+  --filter-icon-amber: invert(62%) sepia(83%) saturate(1500%) hue-rotate(16deg)
+    brightness(97%) contrast(95%);
+
+  --color-stage-compute: #6366f1;
+  --color-stage-data: #1a1a1a;
+  --color-stage-attestation: #22c55e;
+
+  --color-impact-minimal: #4ade80;
+  --color-impact-available: #4b5563;
+  --color-impact-unknown: #9ca3af;
+  --color-impact-low: #a3e635;
+  --color-impact-moderate: #fbbf24;
+
+  --filter-impact-minimal: invert(75%) sepia(50%) saturate(500%)
+    hue-rotate(80deg) brightness(95%);
+  --filter-impact-available: invert(55%) sepia(10%) saturate(700%)
+    hue-rotate(180deg) brightness(95%);
+  --filter-impact-unknown: grayscale(100%) brightness(90%);
+  --filter-impact-low: invert(70%) sepia(60%) saturate(600%) hue-rotate(50deg)
+    brightness(90%);
+  --filter-impact-moderate: invert(60%) sepia(70%) saturate(700%)
+    hue-rotate(10deg) brightness(95%);
+
   --node-data-color: #ffffff;
   --node-data-border: #1a1a1a;
   --node-data-icon: #1a1a1a;

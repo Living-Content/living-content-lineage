@@ -1,5 +1,6 @@
 import type Sigma from 'sigma';
 import type { GraphState } from '../graphState.js';
+import { getCssVar } from '../../ui/theme.js';
 
 export function renderGateEdges(
   svg: SVGSVGElement,
@@ -8,6 +9,7 @@ export function renderGateEdges(
 ): void {
   const { graph } = state;
   const edgesToShow = state.showAllEdges ? state.allEdges : state.simpleEdges;
+  const gateColor = getCssVar('--color-edge-gate', '#22c55e');
 
   edgesToShow
     .filter((edge) => edge.isGate)
@@ -46,7 +48,7 @@ export function renderGateEdges(
       const d = `M ${sourcePos.x} ${startY} L ${targetPos.x} ${endY}`;
       path.setAttribute('d', d);
       path.setAttribute('fill', 'none');
-      path.setAttribute('stroke', '#22c55e');
+      path.setAttribute('stroke', gateColor);
       path.setAttribute('stroke-width', '1');
       path.setAttribute('stroke-dasharray', '4 3');
       svg.appendChild(path);

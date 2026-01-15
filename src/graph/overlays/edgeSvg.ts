@@ -1,3 +1,5 @@
+import { getCssVar } from '../../ui/theme.js';
+
 export function createEdgeSvgContainer(): SVGSVGElement {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.style.width = '100%';
@@ -10,6 +12,7 @@ export function createEdgeSvgContainer(): SVGSVGElement {
 }
 
 export function addArrowheadMarker(svg: SVGSVGElement): void {
+  const strokeColor = getCssVar('--color-edge', '#1a1a1a');
   const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
   const marker = document.createElementNS(
     'http://www.w3.org/2000/svg',
@@ -29,7 +32,7 @@ export function addArrowheadMarker(svg: SVGSVGElement): void {
   );
   chevron.setAttribute('d', 'M 0 0 L 8 5 L 0 10');
   chevron.setAttribute('fill', 'none');
-  chevron.setAttribute('stroke', '#1a1a1a');
+  chevron.setAttribute('stroke', strokeColor);
   chevron.setAttribute('stroke-width', '1.5');
   chevron.setAttribute('stroke-linecap', 'round');
   chevron.setAttribute('stroke-linejoin', 'round');
