@@ -30,8 +30,10 @@
 
 .liquid-blob {
   position: absolute;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.75);
   border-radius: 50%;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .panel-content-layer {
@@ -48,7 +50,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  position: sticky;
+  top: 0;
+  background: rgba(255, 255, 255, 0.95);
+  margin: -20px -20px 0 -20px;
+  padding: 20px 20px 16px 20px;
+  z-index: 1;
 }
 
 .panel-title {

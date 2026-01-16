@@ -9,7 +9,6 @@
   import {
     fillWithAnimatedBlobs,
     expandBlobsToFill,
-    contractBlobsToFit,
   } from '../../services/liquidBlobs.js';
   import SummaryView from './SummaryView.svelte';
   import StageOverview from './StageOverview.svelte';
@@ -22,6 +21,9 @@
   let showDetailContent = false;
   let wasHidden = true;
   let currentBlobTimeline: gsap.core.Timeline | null = null;
+  let lastWidth = 0;
+  let lastHeight = 0;
+  let resizeObserver: ResizeObserver | null = null;
 
   $: panelTitle = $selectedNode?.label ?? $selectedStage?.label ?? 'CONTEXT';
   $: detailAvailable = $selectedNode ? hasDetailContent($selectedNode) : false;
@@ -46,6 +48,10 @@
 
     const width = wrapperElement.offsetWidth;
     const height = wrapperElement.offsetHeight;
+
+    // Track size for resize detection
+    lastWidth = width;
+    lastHeight = height;
 
     // Scaling is automatic based on container size
     currentBlobTimeline = fillWithAnimatedBlobs(
@@ -121,7 +127,7 @@
     if (isAnimating) return;
     isAnimating = true;
 
-    // Fade out content
+    // Fade out content, shrink container, fade in - blobs already fill the space
     gsap.to(contentLayer, {
       opacity: 0,
       duration: 0.15,
@@ -132,24 +138,11 @@
         closeDetailPanel();
 
         tick().then(() => {
-          const newWidth = wrapperElement.offsetWidth;
-          const newHeight = wrapperElement.offsetHeight;
-
-          // Contract blobs to fit smaller container
-          currentBlobTimeline = contractBlobsToFit(
-            blobContainer,
-            newWidth,
-            newHeight
-          );
-
-          // Fade in content after blobs finish contracting
-          currentBlobTimeline.then(() => {
-            gsap.to(contentLayer, {
-              opacity: 1,
-              duration: 0.25,
-              ease: 'power2.out',
-              onComplete: () => { isAnimating = false; },
-            });
+          gsap.to(contentLayer, {
+            opacity: 1,
+            duration: 0.25,
+            ease: 'power2.out',
+            onComplete: () => { isAnimating = false; },
           });
         });
       },
@@ -164,11 +157,52 @@
     }
   }
 
+  function handleResize(width: number, height: number): void {
+    // Skip if animating or panel is hidden
+    if (isAnimating || panelHidden || !blobContainer) return;
+
+    // Skip small changes (less than 10px)
+    const widthDiff = Math.abs(width - lastWidth);
+    const heightDiff = Math.abs(height - lastHeight);
+    if (widthDiff < 10 && heightDiff < 10) return;
+
+    // Only expand if size increased (shrinking is handled by overflow:hidden)
+    if (width > lastWidth || height > lastHeight) {
+      if (currentBlobTimeline) {
+        currentBlobTimeline.kill();
+      }
+
+      currentBlobTimeline = expandBlobsToFill(
+        blobContainer,
+        width,
+        height,
+        { ease: 'elastic.out(1, 0.6)' }
+      );
+    }
+
+    lastWidth = width;
+    lastHeight = height;
+  }
+
   onMount(() => {
+    resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        handleResize(width, height);
+      }
+    });
+
+    if (wrapperElement) {
+      resizeObserver.observe(wrapperElement);
+    }
+
     return () => {
       gsap.killTweensOf(contentLayer);
       if (currentBlobTimeline) {
         currentBlobTimeline.kill();
+      }
+      if (resizeObserver) {
+        resizeObserver.disconnect();
       }
     };
   });

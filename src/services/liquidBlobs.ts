@@ -189,9 +189,16 @@ export function calculateBlobs(
   // Sample spacing for coverage check - smaller = more accurate but slower
   const sampleSpacing = minRadius * 0.8;
 
-  // First blob at random position within container
-  const startX = randomBetween(width * 0.2, width * 0.8);
-  const startY = randomBetween(height * 0.2, height * 0.8);
+  // Starting position depends on layout:
+  // Desktop (>900px): left side, vertically centered
+  // Mobile (<=900px): horizontally centered, at bottom
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 900;
+  const startX = isMobile
+    ? randomBetween(width * 0.4, width * 0.6)  // middle horizontally
+    : randomBetween(width * 0.1, width * 0.3); // left side
+  const startY = isMobile
+    ? randomBetween(height * 0.1, height * 0.3) // bottom (low Y = bottom with bottom positioning)
+    : randomBetween(height * 0.4, height * 0.6); // middle vertically
 
   blobs.push({
     x: startX,
@@ -243,13 +250,25 @@ export function calculateBlobs(
 }
 
 /**
+ * Check if current viewport is mobile layout.
+ */
+function isMobileLayout(): boolean {
+  return typeof window !== 'undefined' && window.innerWidth <= 900;
+}
+
+/**
  * Create DOM elements for blobs inside a container.
+ * Desktop: positioned relative to vertical center (stays centered on resize)
+ * Mobile: positioned from bottom (stays at bottom on resize)
  */
 export function createBlobElements(
   container: HTMLElement,
-  blobs: Blob[]
+  blobs: Blob[],
+  containerHeight: number
 ): HTMLElement[] {
   container.innerHTML = '';
+  const isMobile = isMobileLayout();
+  const centerY = containerHeight / 2;
 
   return blobs.map((blob) => {
     const el = document.createElement('div');
@@ -257,7 +276,17 @@ export function createBlobElements(
     el.style.width = `${blob.r * 2}px`;
     el.style.height = `${blob.r * 2}px`;
     el.style.left = `${blob.x - blob.r}px`;
-    el.style.top = `${blob.y - blob.r}px`;
+    el.dataset.y = String(blob.y); // Store Y for reading later
+
+    if (isMobile) {
+      // Position from bottom
+      el.style.bottom = `${blob.y - blob.r}px`;
+    } else {
+      // Position relative to vertical center: calc(50% + offset)
+      const offsetFromCenter = blob.y - centerY;
+      el.style.top = `calc(50% + ${offsetFromCenter - blob.r}px)`;
+    }
+
     container.appendChild(el);
     blob.element = el;
     return el;
@@ -282,10 +311,12 @@ const defaultExpansionConfig: ExpansionConfig = {
 /**
  * Animate blobs expanding outward like foam.
  * Each blob has randomized scale, duration, and timing for organic feel.
+ * Animation proceeds from bottom to top (bottom blobs appear first).
  */
 export function animateBlobExpansion(
   container: HTMLElement,
   blobs: Blob[],
+  containerHeight: number,
   config: Partial<ExpansionConfig> = {}
 ): gsap.core.Timeline {
   const { staggerDelay, blobDuration, ease, fromScale, onComplete } = {
@@ -294,19 +325,14 @@ export function animateBlobExpansion(
   };
 
   // Clear and create elements
-  const elements = createBlobElements(container, blobs);
+  const elements = createBlobElements(container, blobs, containerHeight);
 
-  // Calculate center for distance sorting
-  const centerX = blobs[0]?.x ?? 0;
-  const centerY = blobs[0]?.y ?? 0;
-
-  // Sort by distance from center (first blob)
+  // Desktop: sort by X (left to right)
+  // Mobile: sort by Y (bottom to top, low Y = near bottom)
+  const isMobile = isMobileLayout();
   const sortedIndices = blobs
-    .map((blob, i) => ({
-      index: i,
-      dist: Math.sqrt((blob.x - centerX) ** 2 + (blob.y - centerY) ** 2),
-    }))
-    .sort((a, b) => a.dist - b.dist)
+    .map((blob, i) => ({ index: i, x: blob.x, y: blob.y }))
+    .sort((a, b) => isMobile ? a.y - b.y : a.x - b.x)
     .map((item) => item.index);
 
   // Create timeline
@@ -361,156 +387,8 @@ export function animateBlobExpansion(
 }
 
 /**
- * Animate blobs collapsing inward (reverse of expansion).
- */
-export function animateBlobCollapse(
-  container: HTMLElement,
-  config: Partial<ExpansionConfig> = {}
-): gsap.core.Timeline {
-  const { staggerDelay, blobDuration, ease, onComplete } = {
-    ...defaultExpansionConfig,
-    ...config,
-    ease: config.ease ?? 'power2.in',
-  };
-
-  const elements = Array.from(container.querySelectorAll('.liquid-blob')) as HTMLElement[];
-
-  if (elements.length === 0) {
-    const tl = gsap.timeline({ onComplete });
-    return tl;
-  }
-
-  // Get container bounds for center calculation
-  const containerRect = container.getBoundingClientRect();
-  const centerX = containerRect.width / 2;
-  const centerY = containerRect.height / 2;
-
-  // Sort by distance from center (furthest first for collapse)
-  const sorted = elements
-    .map((el) => {
-      const rect = el.getBoundingClientRect();
-      const elCenterX = rect.left - containerRect.left + rect.width / 2;
-      const elCenterY = rect.top - containerRect.top + rect.height / 2;
-      const dist = Math.sqrt((elCenterX - centerX) ** 2 + (elCenterY - centerY) ** 2);
-      return { el, dist };
-    })
-    .sort((a, b) => b.dist - a.dist); // Furthest first
-
-  const tl = gsap.timeline({ onComplete });
-
-  sorted.forEach(({ el }, i) => {
-    tl.to(
-      el,
-      {
-        scale: 0,
-        duration: blobDuration * 0.7,
-        ease,
-      },
-      i * staggerDelay * 0.5
-    );
-  });
-
-  return tl;
-}
-
-/**
- * Read existing blob positions from container DOM elements.
- */
-function readExistingBlobs(container: HTMLElement): Blob[] {
-  const elements = Array.from(container.querySelectorAll('.liquid-blob')) as HTMLElement[];
-  return elements.map((el) => ({
-    x: parseFloat(el.style.left) + parseFloat(el.style.width) / 2,
-    y: parseFloat(el.style.top) + parseFloat(el.style.height) / 2,
-    r: parseFloat(el.style.width) / 2,
-    element: el,
-  }));
-}
-
-/**
- * Calculate additional blobs needed to fill expanded area.
- * Uses point sampling to verify actual coverage.
- */
-function calculateAdditionalBlobs(
-  existingBlobs: Blob[],
-  newWidth: number,
-  newHeight: number,
-  config: BlobConfig
-): Blob[] {
-  const { minRadius, maxRadius, mergeThreshold } = config;
-
-  // Target area (match overflow from calculateBlobs)
-  const overflow = LIQUID_CONFIG.edgeOverflow;
-  const targetMinX = -overflow;
-  const targetMaxX = newWidth + overflow;
-  const targetMinY = -overflow;
-  const targetMaxY = newHeight + overflow;
-
-  // Sample spacing for guaranteed coverage verification
-  const sampleSpacing = minRadius * 0.8;
-
-  const allBlobs = [...existingBlobs];
-  const newBlobs: Blob[] = [];
-  const maxBlobs = 500;
-
-  // Keep adding blobs until all sampled points are covered
-  while (allBlobs.length < maxBlobs) {
-    const uncoveredPoint = findUncoveredPoint(
-      allBlobs,
-      targetMinX,
-      targetMaxX,
-      targetMinY,
-      targetMaxY,
-      sampleSpacing
-    );
-
-    if (!uncoveredPoint) {
-      break;
-    }
-
-    const parent = findNearestBlob(uncoveredPoint.x, uncoveredPoint.y, allBlobs);
-    const dx = uncoveredPoint.x - parent.x;
-    const dy = uncoveredPoint.y - parent.y;
-    const angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.3;
-
-    const r = randomBetween(minRadius, maxRadius);
-    const dist = parent.r + r - mergeThreshold;
-
-    const newBlob: Blob = {
-      x: parent.x + Math.cos(angle) * dist,
-      y: parent.y + Math.sin(angle) * dist,
-      r,
-    };
-
-    allBlobs.push(newBlob);
-    newBlobs.push(newBlob);
-  }
-
-  return newBlobs;
-}
-
-/**
- * Find edge blobs (outermost) to use as expansion origins.
- */
-function findEdgeBlobs(blobs: Blob[], count: number): Blob[] {
-  if (blobs.length <= count) return blobs;
-
-  // Calculate centroid
-  const cx = blobs.reduce((sum, b) => sum + b.x, 0) / blobs.length;
-  const cy = blobs.reduce((sum, b) => sum + b.y, 0) / blobs.length;
-
-  // Sort by distance from centroid (furthest first)
-  const sorted = [...blobs].sort((a, b) => {
-    const distA = Math.sqrt((a.x - cx) ** 2 + (a.y - cy) ** 2);
-    const distB = Math.sqrt((b.x - cx) ** 2 + (b.y - cy) ** 2);
-    return distB - distA;
-  });
-
-  return sorted.slice(0, count);
-}
-
-/**
- * Expand blobs to fill a larger container.
- * Animates from multiple edge points simultaneously for organic growth.
+ * Regenerate blobs for a larger container.
+ * Clears existing blobs and creates fresh ones for proper coverage.
  */
 export function expandBlobsToFill(
   container: HTMLElement,
@@ -518,196 +396,10 @@ export function expandBlobsToFill(
   newHeight: number,
   expansionConfig: Partial<ExpansionConfig> = {}
 ): gsap.core.Timeline {
-  const scaledBlobConfig = getScaledBlobConfig(newWidth, newHeight);
-  const scaledExpansionConfig = getScaledExpansionConfig(newWidth, newHeight);
-  const finalExpansionConfig = { ...scaledExpansionConfig, ...expansionConfig };
-
-  const { staggerDelay, blobDuration, ease, onComplete } = {
-    ...defaultExpansionConfig,
-    ...finalExpansionConfig,
-  };
-
-  // Read existing blobs and find edge points to expand from
-  const existingBlobs = readExistingBlobs(container);
-  const edgeBlobs = findEdgeBlobs(existingBlobs, 4); // 4 expansion origins
-
-  // Calculate new blobs needed
-  const newBlobs = calculateAdditionalBlobs(
-    existingBlobs,
-    newWidth,
-    newHeight,
-    scaledBlobConfig
-  );
-
-  // Create elements for new blobs
-  const newElements = newBlobs.map((blob) => {
-    const el = document.createElement('div');
-    el.className = 'liquid-blob';
-    el.style.width = `${blob.r * 2}px`;
-    el.style.height = `${blob.r * 2}px`;
-    el.style.left = `${blob.x - blob.r}px`;
-    el.style.top = `${blob.y - blob.r}px`;
-    gsap.set(el, { scale: 0, transformOrigin: 'center center' });
-    container.appendChild(el);
-    return el;
-  });
-
-  // Group blobs by nearest edge blob (expansion origin)
-  const blobGroups: Map<Blob, Array<{ blob: Blob; el: HTMLElement; dist: number }>> = new Map();
-  edgeBlobs.forEach((edge) => blobGroups.set(edge, []));
-
-  newBlobs.forEach((blob, i) => {
-    // Find nearest edge blob
-    let nearestEdge = edgeBlobs[0];
-    let minDist = Infinity;
-    edgeBlobs.forEach((edge) => {
-      const dist = Math.sqrt((blob.x - edge.x) ** 2 + (blob.y - edge.y) ** 2);
-      if (dist < minDist) {
-        minDist = dist;
-        nearestEdge = edge;
-      }
-    });
-    blobGroups.get(nearestEdge)!.push({ blob, el: newElements[i], dist: minDist });
-  });
-
-  // Sort each group by distance from its edge origin
-  blobGroups.forEach((group) => {
-    group.sort((a, b) => a.dist - b.dist);
-  });
-
-  // Animate all groups simultaneously
-  const tl = gsap.timeline({ onComplete });
-  const variation = LIQUID_CONFIG.timingVariation;
-  const overshoot = LIQUID_CONFIG.scaleOvershoot;
-  const translateRatio = LIQUID_CONFIG.translationRatio;
-
-  blobGroups.forEach((group) => {
-    group.forEach(({ blob, el }, i) => {
-      const finalScale = 1.0 + Math.random() * overshoot;
-      const duration = blobDuration * (1 - variation / 2 + Math.random() * variation);
-      const staggerTime = i * staggerDelay * (1 - variation / 2 + Math.random() * variation);
-
-      // Random starting offset
-      const translateDist = blob.r * translateRatio;
-      const angle = Math.random() * Math.PI * 2;
-      gsap.set(el, { x: Math.cos(angle) * translateDist, y: Math.sin(angle) * translateDist });
-
-      tl.to(
-        el,
-        {
-          scale: finalScale,
-          x: 0,
-          y: 0,
-          duration,
-          ease,
-        },
-        staggerTime // All groups start at same base time
-      );
-    });
-  });
-
-  return tl;
-}
-
-/**
- * Contract blobs to fit a smaller container.
- * Collapses old blobs and regenerates new ones for guaranteed coverage.
- */
-export function contractBlobsToFit(
-  container: HTMLElement,
-  newWidth: number,
-  newHeight: number,
-  expansionConfig: Partial<ExpansionConfig> = {}
-): gsap.core.Timeline {
-  const scaledBlobConfig = getScaledBlobConfig(newWidth, newHeight);
-  const scaledExpansionConfig = getScaledExpansionConfig(newWidth, newHeight);
-  const finalExpansionConfig = { ...scaledExpansionConfig, ...expansionConfig };
-
-  const { staggerDelay, blobDuration, ease, onComplete } = {
-    ...defaultExpansionConfig,
-    ...finalExpansionConfig,
-  };
-
-  const elements = Array.from(container.querySelectorAll('.liquid-blob')) as HTMLElement[];
-  const centerX = newWidth / 2;
-  const centerY = newHeight / 2;
-
-  const tl = gsap.timeline();
-
-  // Sort elements by distance from new center (furthest first for collapse)
-  const sortedElements = elements
-    .map((el) => {
-      const x = parseFloat(el.style.left) + parseFloat(el.style.width) / 2;
-      const y = parseFloat(el.style.top) + parseFloat(el.style.height) / 2;
-      const dist = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
-      return { el, dist };
-    })
-    .sort((a, b) => b.dist - a.dist);
-
-  // Collapse all old blobs (furthest first)
-  const collapseTime = sortedElements.length * staggerDelay * 0.3;
-  sortedElements.forEach(({ el }, i) => {
-    tl.to(
-      el,
-      {
-        scale: 0,
-        duration: blobDuration * 0.5,
-        ease: 'power2.in',
-        onComplete: () => el.remove(),
-      },
-      i * staggerDelay * 0.3
-    );
-  });
-
-  // Generate new blobs for smaller container with guaranteed coverage
-  const newBlobs = calculateBlobs(newWidth, newHeight, scaledBlobConfig);
-
-  // Create and animate new blobs after collapse
-  const variation = LIQUID_CONFIG.timingVariation;
-  const overshoot = LIQUID_CONFIG.scaleOvershoot;
-  const translateRatio = LIQUID_CONFIG.translationRatio;
-
-  newBlobs.forEach((blob, i) => {
-    const el = document.createElement('div');
-    el.className = 'liquid-blob';
-    el.style.width = `${blob.r * 2}px`;
-    el.style.height = `${blob.r * 2}px`;
-    el.style.left = `${blob.x - blob.r}px`;
-    el.style.top = `${blob.y - blob.r}px`;
-
-    const translateDist = blob.r * translateRatio;
-    const angle = Math.random() * Math.PI * 2;
-    gsap.set(el, {
-      scale: 0,
-      transformOrigin: 'center center',
-      x: Math.cos(angle) * translateDist,
-      y: Math.sin(angle) * translateDist,
-    });
-
-    container.appendChild(el);
-
-    const finalScale = 1.0 + Math.random() * overshoot;
-    const duration = blobDuration * (1 - variation / 2 + Math.random() * variation);
-    const startTime = collapseTime + i * staggerDelay * (1 - variation / 2 + Math.random() * variation);
-
-    tl.to(
-      el,
-      {
-        scale: finalScale,
-        x: 0,
-        y: 0,
-        duration,
-        ease,
-      },
-      startTime
-    );
-  });
-
-  if (onComplete) {
-    tl.call(onComplete);
-  }
-
-  return tl;
+  // Clear existing blobs and generate fresh ones for the new size
+  container.innerHTML = '';
+  const blobs = calculateBlobs(newWidth, newHeight);
+  return animateBlobExpansion(container, blobs, newHeight, expansionConfig);
 }
 
 /**
@@ -730,7 +422,7 @@ export function fillWithAnimatedBlobs(
   const finalExpansionConfig = { ...scaledExpansionConfig, ...expansionConfig };
 
   const blobs = calculateBlobs(width, height, finalBlobConfig);
-  return animateBlobExpansion(container, blobs, finalExpansionConfig);
+  return animateBlobExpansion(container, blobs, height, finalExpansionConfig);
 }
 
 /**
@@ -743,6 +435,6 @@ export function fillWithBlobs(
   config: Partial<BlobConfig> = {}
 ): Blob[] {
   const blobs = calculateBlobs(width, height, config);
-  createBlobElements(container, blobs);
+  createBlobElements(container, blobs, height);
   return blobs;
 }
