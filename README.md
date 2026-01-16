@@ -1,23 +1,29 @@
 # Living Content Lineage
 
-A proof-of-concept visualization for content lineage and provenance using [Sigma.js](https://www.sigmajs.org/), aligned with the [C2PA (Coalition for Content Provenance and Authenticity)](https://c2pa.org/) standard.
+Interactive visualization for content lineage and provenance, aligned with the
+[C2PA (Coalition for Content Provenance and Authenticity)](https://c2pa.org/)
+standard.
 
 ## Overview
 
-This project visualizes data provenance pipelines as interactive directed graphs. Each node represents a data asset or computation, with edges showing data flow and transformations. The visualization supports:
+Visualizes data provenance pipelines as interactive directed graphs. Each node
+represents a data asset, computation, or attestation, with edges showing data
+flow and transformations.
 
-- **Multiple node types**: Data, Compute, Attestation, Filter, Join, Store, and Media
-- **Stage-based grouping**: Nodes are organized into pipeline stages (Input, Retrieve, Generate, Image, Output)
-- **C2PA metadata**: Nodes carry C2PA-aligned manifest data including signatures and assertions
-- **Interactive features**: Click nodes to view metadata, pan/zoom navigation, toggle between simple and detailed views
-- **Attestation visualization**: Special "gate" connectors show verification relationships
+**Features:**
+
+- **Node types** — Data, Process, Attestation, with visual distinction by color
+- **Stage grouping** — Nodes organized into pipeline stages (Consume, Retrieve, Generate, etc.)
+- **C2PA metadata** — Nodes carry manifest data including signatures and assertions
+- **Level-of-detail** — Zoom out to see collapsed stage view, zoom in for full detail
+- **Environmental impact** — Displays CO2 and energy metrics when available
+- **Attestation edges** — Green "gate" connectors show cryptographic verification
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
-- npm
 
 ### Installation
 
@@ -31,7 +37,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173 in your browser.
+Open [http://localhost:5173](http://localhost:5173)
 
 ### Build
 
@@ -39,15 +45,72 @@ Open http://localhost:5173 in your browser.
 npm run build
 ```
 
+### Lint & Format
+
+```bash
+npm run lint
+npm run format
+```
+
 ## Architecture
 
 ```
 src/
-├── main.ts          # Entry point, Sigma.js setup, rendering logic
-├── types.ts         # C2PA-aligned TypeScript types
-├── sampleData.ts    # Graph construction from mock lineage data
-└── mockLineage.ts   # Sample provenance data
+├── main.ts                    # Entry point
+├── App.svelte                 # Root shell component
+├── types.ts                   # Core type definitions
+├── config/
+│   └── constants.ts           # Rendering constants
+├── stores/
+│   ├── lineageState.ts        # Graph data and selection state
+│   └── uiState.ts             # Loading, panels, errors
+├── manifest/
+│   ├── registry.ts            # Manifest adapter resolution
+│   └── adapters/
+│       ├── manifestAdapter.ts # Adapter interface
+│       ├── c2pa/              # C2PA standard adapter
+│       ├── eqty/              # EQTY variant adapter
+│       └── custom/            # Custom manifest adapter
+├── services/
+│   └── graph/
+│       ├── graphController.ts # Main orchestrator
+│       ├── nodeRenderer.ts    # Pill-shaped node rendering
+│       ├── edgeRenderer.ts    # Edge and arrow rendering
+│       ├── metaEdgeRenderer.ts# Collapsed view edges
+│       ├── stageLabelRenderer.ts # Stage header labels
+│       ├── viewport.ts        # Zoom/pan transforms
+│       ├── lodController.ts   # Level-of-detail state
+│       └── titleOverlay.ts    # Collapsed view title
+├── components/
+│   ├── GraphView.svelte       # Canvas container
+│   ├── Header.svelte          # Top navigation
+│   └── sidebar/
+│       ├── SidebarPanel.svelte
+│       ├── DetailView.svelte
+│       ├── SummaryView.svelte
+│       └── ...
+└── styles/                    # CSS stylesheets
 ```
+
+## Tech Stack
+
+- **Svelte 5** — UI framework
+- **Pixi.js 8** — WebGL rendering
+- **GSAP** — Animations
+- **TypeScript** — Type safety
+- **Vite** — Build tooling
+
+## Data Format
+
+The visualization consumes manifest JSON files with:
+
+- **stages** — Pipeline phases with position bounds
+- **assets** — Data nodes (documents, models, code)
+- **computations** — Processing steps with inputs/outputs
+- **attestations** — Cryptographic verification records
+- **manifests** — C2PA metadata (signatures, assertions)
+
+See `public/data/manifest.json` for an example.
 
 ## License
 
