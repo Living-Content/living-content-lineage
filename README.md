@@ -54,7 +54,7 @@ npm run format
 
 ## Architecture
 
-```
+```text
 src/
 ├── main.ts                    # Entry point
 ├── App.svelte                 # Root shell component
