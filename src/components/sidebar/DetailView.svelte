@@ -35,9 +35,7 @@
 
   {#if assetManifest.sourceCode}
     <DetailSection title="Source Code">
-      <pre class="code-block">
-        <code>{assetManifest.sourceCode}</code>
-      </pre>
+      <pre class="code-block"><code>{assetManifest.sourceCode}</code></pre>
     </DetailSection>
   {/if}
 

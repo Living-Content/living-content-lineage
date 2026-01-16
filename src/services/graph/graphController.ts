@@ -15,7 +15,7 @@ import { renderStageLabels, type TopNodeInfo } from './stageLabelRenderer.js';
 import { createViewportState, createViewportHandlers } from './viewport.js';
 import { createLODController, type LODLayers } from './lodController.js';
 import { createTitleOverlay } from './titleOverlay.js';
-import { LOD_THRESHOLD, META_NODE_SCALE } from '../../config/constants.js';
+import { LOD_THRESHOLD, META_NODE_SCALE, FADED_NODE_ALPHA } from '../../config/constants.js';
 
 interface HoverPayload {
   title: string;
@@ -28,7 +28,6 @@ interface HoverPayload {
 interface GraphControllerCallbacks {
   onNodeSelect: (nodeData: LineageNodeData) => void;
   onStageSelect: (stageLabel: string, nodes: LineageNodeData[], edges: LineageGraph['edges']) => void;
-  onSelectionClear: () => void;
   onSimpleViewChange: (isSimple: boolean) => void;
   onHover: (payload: HoverPayload) => void;
   onHoverEnd: () => void;
@@ -38,6 +37,7 @@ interface GraphControllerCallbacks {
 
 export interface GraphController {
   destroy: () => void;
+  clearSelection: () => void;
 }
 
 interface GraphControllerOptions {
@@ -103,6 +103,53 @@ export async function createGraphController({
   const metaNodeMap = new Map<string, PillNode>();
   let selectedNodeId: string | null = null;
 
+  const nodePositions = new Map<string, { x: number; y: number }>();
+  for (const node of lineageData.nodes) {
+    nodePositions.set(node.id, { x: node.x ?? 0.5, y: node.y ?? 0.5 });
+  }
+
+  const verticalAdjacencyMap = new Map<string, Set<string>>();
+  for (const edge of lineageData.edges) {
+    const sourcePos = nodePositions.get(edge.source);
+    const targetPos = nodePositions.get(edge.target);
+    if (!sourcePos || !targetPos) continue;
+
+    const dx = Math.abs(targetPos.x - sourcePos.x);
+    const dy = Math.abs(targetPos.y - sourcePos.y);
+    const isVertical = dy > dx;
+
+    if (isVertical) {
+      if (!verticalAdjacencyMap.has(edge.source)) verticalAdjacencyMap.set(edge.source, new Set());
+      if (!verticalAdjacencyMap.has(edge.target)) verticalAdjacencyMap.set(edge.target, new Set());
+      verticalAdjacencyMap.get(edge.source)!.add(edge.target);
+      verticalAdjacencyMap.get(edge.target)!.add(edge.source);
+    }
+  }
+
+  function getVerticallyConnectedNodeIds(nodeId: string): Set<string> {
+    const connected = new Set<string>();
+    const visited = new Set<string>();
+    const queue = [nodeId];
+
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      if (visited.has(current)) continue;
+      visited.add(current);
+
+      const neighbors = verticalAdjacencyMap.get(current);
+      if (neighbors) {
+        for (const neighbor of neighbors) {
+          connected.add(neighbor);
+          if (!visited.has(neighbor)) {
+            queue.push(neighbor);
+          }
+        }
+      }
+    }
+
+    return connected;
+  }
+
   const animatingNodes = new Map<string, number>();
   let nodeAlphaAnimationId: number | null = null;
 
@@ -135,22 +182,40 @@ export async function createGraphController({
     }
   }
 
+  function applySelectionHighlight(selectedId: string): void {
+    const verticallyConnected = getVerticallyConnectedNodeIds(selectedId);
+    nodeMap.forEach((_, nodeId) => {
+      if (nodeId === selectedId || verticallyConnected.has(nodeId)) {
+        setNodeAlpha(nodeId, 1);
+      } else {
+        setNodeAlpha(nodeId, FADED_NODE_ALPHA);
+      }
+    });
+    renderEdges(edgeLayer, lineageData.edges, nodeMap, selectedId, verticallyConnected);
+  }
+
+  function clearSelectionHighlight(): void {
+    selectedNodeId = null;
+    nodeMap.forEach((_, nodeId) => {
+      setNodeAlpha(nodeId, DEFAULT_NODE_ALPHA);
+    });
+    renderEdges(edgeLayer, lineageData.edges, nodeMap, null, null);
+  }
+
   const nodeCreationPromises: Promise<void>[] = [];
 
   for (const node of lineageData.nodes) {
     const nodeCallbacks = {
       onClick: () => {
-        if (selectedNodeId && selectedNodeId !== node.id) {
-          setNodeAlpha(selectedNodeId, DEFAULT_NODE_ALPHA);
-        }
         selectedNodeId = node.id;
-        setNodeAlpha(node.id, 1);
-        callbacks.onSelectionClear();
+        applySelectionHighlight(node.id);
         callbacks.onNodeSelect(node);
       },
       onHover: () => {
         container.style.cursor = 'pointer';
-        setNodeAlpha(node.id, 1);
+        if (!selectedNodeId) {
+          setNodeAlpha(node.id, 1);
+        }
         const renderedNode = nodeMap.get(node.id);
         if (renderedNode) {
           const bounds = renderedNode.getBounds();
@@ -166,7 +231,7 @@ export async function createGraphController({
       },
       onHoverEnd: () => {
         container.style.cursor = 'grab';
-        if (selectedNodeId !== node.id) {
+        if (!selectedNodeId) {
           setNodeAlpha(node.id, DEFAULT_NODE_ALPHA);
         }
         callbacks.onHoverEnd();
@@ -276,7 +341,10 @@ export async function createGraphController({
   function cullAndRender(): void {
     if (lodController.state.isCollapsed) return;
     Culler.shared.cull(nodeLayer, app.screen);
-    renderEdges(edgeLayer, lineageData.edges, nodeMap);
+    const verticallyConnected = selectedNodeId
+      ? getVerticallyConnectedNodeIds(selectedNodeId)
+      : null;
+    renderEdges(edgeLayer, lineageData.edges, nodeMap, selectedNodeId, verticallyConnected);
   }
 
   cullAndRender();
@@ -316,5 +384,6 @@ export async function createGraphController({
       nodeMap.forEach((node) => node.destroy());
       app.destroy(true, { children: true });
     },
+    clearSelection: clearSelectionHighlight,
   };
 }

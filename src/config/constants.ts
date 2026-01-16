@@ -18,6 +18,9 @@ export const LOD_ANIMATION_MS = 300;
 // Meta nodes
 export const META_NODE_SCALE = 2.0;
 
+// Selection highlighting
+export const FADED_NODE_ALPHA = 0.25;
+
 // Edges
 export const EDGE_WIDTH = 2;
 export const EDGE_ARROW_SIZE = 8;

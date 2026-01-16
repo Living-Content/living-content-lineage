@@ -107,6 +107,7 @@
 .detail-value-markdown {
   font-size: 13px;
   line-height: 1.45;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .markdown-toggle {

@@ -11,6 +11,7 @@ import {
   EDGE_ARROW_SIZE,
   EDGE_ARROW_GAP,
   EDGE_GRADIENT_STEPS,
+  FADED_NODE_ALPHA,
 } from '../../config/constants.js';
 
 const NODE_COLOR_VARS: Record<NodeType, string> = {
@@ -105,17 +106,25 @@ function lerpColor(color1: number, color2: number, t: number): number {
  * Render edges with gradient colors.
  * Regular edges gradient from source node color to dark.
  * Attestation edges (isGate) gradient from green to source node color.
+ * When a node is selected, edges not connected to it are faded.
  * Only renders edges where at least one endpoint node is visible (not culled).
  */
 export function renderEdges(
   edgeLayer: Container,
   edges: LineageGraph['edges'],
-  nodeMap: Map<string, PillNode>
+  nodeMap: Map<string, PillNode>,
+  selectedNodeId: string | null = null,
+  highlightedNodeIds: Set<string> | null = null
 ): void {
   edgeLayer.removeChildren();
   const graphics = new Graphics();
+  const fadedGraphics = new Graphics();
   const edgeEndColor = getEdgeColorCached();
   const attestationColor = getNodeColorCached('attestation');
+
+  const allHighlighted = highlightedNodeIds
+    ? new Set([selectedNodeId!, ...highlightedNodeIds])
+    : null;
 
   for (const edge of edges) {
     const sourceNode = nodeMap.get(edge.source);
@@ -123,6 +132,13 @@ export function renderEdges(
     if (!sourceNode || !targetNode) continue;
 
     if (sourceNode.culled && targetNode.culled) continue;
+
+    const isHighlighted = selectedNodeId === null ||
+      (allHighlighted !== null &&
+        allHighlighted.has(edge.source) &&
+        allHighlighted.has(edge.target));
+
+    const targetGraphics = isHighlighted ? graphics : fadedGraphics;
 
     const sx = sourceNode.position.x;
     const sy = sourceNode.position.y;
@@ -144,7 +160,7 @@ export function renderEdges(
 
     if (isMainlyHorizontal) {
       renderHorizontalEdge(
-        graphics,
+        targetGraphics,
         sx, sy, tx, ty,
         sourceHalfW, targetHalfW,
         startColor,
@@ -153,7 +169,7 @@ export function renderEdges(
       );
     } else {
       renderVerticalEdge(
-        graphics,
+        targetGraphics,
         sx, sy, tx, ty,
         sourceHalfH, targetHalfH,
         startColor,
@@ -163,6 +179,8 @@ export function renderEdges(
     }
   }
 
+  fadedGraphics.alpha = FADED_NODE_ALPHA;
+  edgeLayer.addChild(fadedGraphics);
   edgeLayer.addChild(graphics);
 }
 

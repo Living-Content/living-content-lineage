@@ -36,26 +36,18 @@
     {/each}
   </ul>
 {:else if isRecord(value)}
-  <pre class="detail-field-value detail-value-pre">
-    {JSON.stringify(value, null, 2)}
-  </pre>
+  <pre class="detail-field-value detail-value-pre">{JSON.stringify(value, null, 2)}</pre>
 {:else if typeof value === 'string'}
   {#if parsedJson !== null}
-    <pre class="detail-field-value detail-value-pre">
-      {JSON.stringify(parsedJson, null, 2)}
-    </pre>
+    <pre class="detail-field-value detail-value-pre">{JSON.stringify(parsedJson, null, 2)}</pre>
   {:else if parsedLoose !== null}
-    <pre class="detail-field-value detail-value-pre">
-      {JSON.stringify(parsedLoose, null, 2)}
-    </pre>
+    <pre class="detail-field-value detail-value-pre">{JSON.stringify(parsedLoose, null, 2)}</pre>
   {:else if fragment}
     <div class="detail-field-value detail-value-fragment">
       {#if fragment?.prefix?.trim().length}
         <div class="detail-fragment-context">{fragment.prefix.trim()}</div>
       {/if}
-      <pre class="detail-value-pre detail-fragment-json">
-        {JSON.stringify(fragment?.parsed, null, 2)}
-      </pre>
+      <pre class="detail-value-pre detail-fragment-json">{JSON.stringify(fragment?.parsed, null, 2)}</pre>
       {#if fragment?.suffix?.trim().length}
         <div class="detail-fragment-context">{fragment.suffix.trim()}</div>
       {/if}

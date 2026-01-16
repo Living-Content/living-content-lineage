@@ -4,12 +4,12 @@
   import { createGraphController } from '../services/graph/graphController.js';
   import {
     clearSelection,
+    selectedNode,
     selectNode,
     selectStage,
     setLineageData,
   } from '../stores/lineageState.js';
   import {
-    closeDetailPanel,
     setLoadError,
     setLoading,
     setSimpleView,
@@ -21,6 +21,12 @@
     let controller: GraphController | null = null;
     let isCancelled = false;
 
+    const unsubscribeSelectedNode = selectedNode.subscribe((node) => {
+      if (node === null && controller) {
+        controller.clearSelection();
+      }
+    });
+
     const start = async () => {
       if (!container || isCancelled) return;
       setLoading(true);
@@ -29,16 +35,10 @@
         manifestUrl: '/data/manifest.json',
         callbacks: {
           onNodeSelect: (nodeData) => {
-            closeDetailPanel();
             selectNode(nodeData);
           },
           onStageSelect: (stageLabel, nodes, edges) => {
-            closeDetailPanel();
             selectStage({ label: stageLabel, nodes, edges });
-          },
-          onSelectionClear: () => {
-            closeDetailPanel();
-            clearSelection();
           },
           onSimpleViewChange: (simple) => setSimpleView(simple),
           onHover: () => {
@@ -53,7 +53,6 @@
           },
           onError: (message) => {
             setLoadError(message);
-            closeDetailPanel();
             clearSelection();
           },
         },
@@ -65,6 +64,7 @@
 
     return () => {
       isCancelled = true;
+      unsubscribeSelectedNode();
       controller?.destroy();
     };
   });

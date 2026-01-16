@@ -12,7 +12,9 @@
     try {
       const parsed = marked.parse(input);
       const html = typeof parsed === 'string' ? parsed : await parsed;
-      rendered = DOMPurify.sanitize(html);
+      // Remove whitespace between tags to prevent rendering as text nodes
+      const stripped = html.replace(/>\s+</g, '><');
+      rendered = DOMPurify.sanitize(stripped);
     } catch {
       rendered = '';
     }
