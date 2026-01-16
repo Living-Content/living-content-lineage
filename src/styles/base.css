@@ -24,3 +24,7 @@ body {
 .app-shell {
   transition: opacity 0.25s ease;
 }
+
+.liquid {
+  filter: url(#liquid);
+}
