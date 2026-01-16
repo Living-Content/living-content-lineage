@@ -1,29 +1,26 @@
 <script lang="ts">
   // Sidebar panel with liquid blob background.
-  // Container sizes instantly, then blobs animate outward like expanding foam.
   import { onMount, tick } from 'svelte';
   import gsap from 'gsap';
   import { clearSelection, selectedNode, selectedStage } from '../../stores/lineageState.js';
   import { isDetailOpen, loadError, setDetailOpen, closeDetailPanel } from '../../stores/uiState.js';
   import { hasDetailContent } from '../../services/sidebar/detailContent.js';
-  import {
-    fillWithAnimatedBlobs,
-    expandBlobsToFill,
-  } from '../../services/liquidBlobs.js';
+  import { createBlobManager, type BlobManager } from '../../services/liquidBlobs.js';
+  import { expandTo, contractTo } from '../../services/panelExpand.js';
   import SummaryView from './SummaryView.svelte';
   import StageOverview from './StageOverview.svelte';
   import DetailView from './DetailView.svelte';
 
   let wrapperElement: HTMLElement;
   let contentLayer: HTMLElement;
+  let scrollArea: HTMLElement;
   let blobContainer: HTMLElement;
+  let blobManager: BlobManager | null = null;
   let isAnimating = false;
   let showDetailContent = false;
   let wasHidden = true;
-  let currentBlobTimeline: gsap.core.Timeline | null = null;
-  let lastWidth = 0;
-  let lastHeight = 0;
-  let resizeObserver: ResizeObserver | null = null;
+  let baseWidth = 0;
+  let baseHeight = 0;
 
   $: panelTitle = $selectedNode?.label ?? $selectedStage?.label ?? 'CONTEXT';
   $: detailAvailable = $selectedNode ? hasDetailContent($selectedNode) : false;
@@ -38,115 +35,72 @@
     wasHidden = true;
   }
 
-  function animateBlobsIn(): gsap.core.Timeline | null {
-    if (!blobContainer || !wrapperElement) return null;
-
-    // Kill any running blob animation
-    if (currentBlobTimeline) {
-      currentBlobTimeline.kill();
-    }
-
-    const width = wrapperElement.offsetWidth;
-    const height = wrapperElement.offsetHeight;
-
-    // Track size for resize detection
-    lastWidth = width;
-    lastHeight = height;
-
-    // Scaling is automatic based on container size
-    currentBlobTimeline = fillWithAnimatedBlobs(
-      blobContainer,
-      width,
-      height,
-      {},
-      { ease: 'elastic.out(1, 0.6)' }
-    );
-
-    return currentBlobTimeline;
-  }
-
   async function animateEntrance(): Promise<void> {
     wasHidden = false;
     await tick();
 
-    // Start with content hidden
+    if (!blobManager && blobContainer) {
+      blobManager = createBlobManager(blobContainer);
+    }
+
     gsap.set(contentLayer, { opacity: 0 });
 
-    // Animate blobs expanding outward, then fade in content
-    const timeline = animateBlobsIn();
-    if (timeline) {
-      timeline.then(() => {
-        gsap.to(contentLayer, { opacity: 1, duration: 0.3, ease: 'power2.out' });
-      });
-    } else {
+    baseWidth = wrapperElement.offsetWidth;
+    baseHeight = wrapperElement.offsetHeight;
+
+    const timeline = blobManager?.fill(baseWidth, baseHeight, 'elastic.out(1, 0.6)');
+    timeline?.then(() => {
       gsap.to(contentLayer, { opacity: 1, duration: 0.3, ease: 'power2.out' });
-    }
-  }
-
-  function openDetails(): void {
-    if (isAnimating) return;
-    isAnimating = true;
-
-    // Fade out content
-    gsap.to(contentLayer, {
-      opacity: 0,
-      duration: 0.15,
-      ease: 'power2.in',
-      onComplete: () => {
-        showDetailContent = true;
-        wrapperElement.classList.add('expanded');
-        setDetailOpen(true);
-
-        tick().then(() => {
-          const newWidth = wrapperElement.offsetWidth;
-          const newHeight = wrapperElement.offsetHeight;
-
-          // Expand existing blobs to fill larger container
-          currentBlobTimeline = expandBlobsToFill(
-            blobContainer,
-            newWidth,
-            newHeight,
-            { ease: 'elastic.out(1, 0.6)' }
-          );
-
-          // Fade in content after blobs finish expanding
-          currentBlobTimeline.then(() => {
-            gsap.to(contentLayer, {
-              opacity: 1,
-              duration: 0.25,
-              ease: 'power2.out',
-              onComplete: () => { isAnimating = false; },
-            });
-          });
-        });
-      },
     });
   }
 
-  function closeDetails(): void {
+  async function openDetails(): Promise<void> {
+    if (isAnimating) return;
+    isAnimating = true;
+    setDetailOpen(true);
+
+    // Fade out scroll content, keep header visible
+    await gsap.to(scrollArea, { opacity: 0, duration: 0.12, ease: 'power2.in' });
+
+    // Now change content and wait for render
+    showDetailContent = true;
+    await tick();
+
+    // Get target dimensions from expanded CSS
+    wrapperElement.classList.add('expanded');
+    const targetWidth = wrapperElement.offsetWidth;
+    const targetHeight = wrapperElement.offsetHeight;
+    wrapperElement.classList.remove('expanded');
+
+    // Animate to expanded size, then fade in
+    await expandTo(wrapperElement, targetWidth, targetHeight);
+    wrapperElement.classList.add('expanded');
+    await gsap.to(scrollArea, { opacity: 1, duration: 0.2, ease: 'power2.out' });
+    isAnimating = false;
+  }
+
+  async function closeDetails(): Promise<void> {
     if (isAnimating) return;
     isAnimating = true;
 
-    // Fade out content, shrink container, fade in - blobs already fill the space
-    gsap.to(contentLayer, {
-      opacity: 0,
-      duration: 0.15,
-      ease: 'power2.in',
-      onComplete: () => {
-        showDetailContent = false;
-        wrapperElement.classList.remove('expanded');
-        closeDetailPanel();
+    // Fade out scroll content, keep header visible
+    await gsap.to(scrollArea, { opacity: 0, duration: 0.12, ease: 'power2.in' });
 
-        tick().then(() => {
-          gsap.to(contentLayer, {
-            opacity: 1,
-            duration: 0.25,
-            ease: 'power2.out',
-            onComplete: () => { isAnimating = false; },
-          });
-        });
-      },
-    });
+    // Change content back to summary
+    showDetailContent = false;
+    await tick();
+
+    // Animate back to base size
+    await contractTo(wrapperElement, baseWidth, baseHeight);
+    wrapperElement.classList.remove('expanded');
+    closeDetailPanel();
+
+    // Clear inline styles from animation
+    wrapperElement.style.width = '';
+    wrapperElement.style.height = '';
+
+    await gsap.to(scrollArea, { opacity: 1, duration: 0.2, ease: 'power2.out' });
+    isAnimating = false;
   }
 
   function handleClose(): void {
@@ -157,53 +111,12 @@
     }
   }
 
-  function handleResize(width: number, height: number): void {
-    // Skip if animating or panel is hidden
-    if (isAnimating || panelHidden || !blobContainer) return;
-
-    // Skip small changes (less than 10px)
-    const widthDiff = Math.abs(width - lastWidth);
-    const heightDiff = Math.abs(height - lastHeight);
-    if (widthDiff < 10 && heightDiff < 10) return;
-
-    // Only expand if size increased (shrinking is handled by overflow:hidden)
-    if (width > lastWidth || height > lastHeight) {
-      if (currentBlobTimeline) {
-        currentBlobTimeline.kill();
-      }
-
-      currentBlobTimeline = expandBlobsToFill(
-        blobContainer,
-        width,
-        height,
-        { ease: 'elastic.out(1, 0.6)' }
-      );
-    }
-
-    lastWidth = width;
-    lastHeight = height;
-  }
-
   onMount(() => {
-    resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect;
-        handleResize(width, height);
-      }
-    });
-
-    if (wrapperElement) {
-      resizeObserver.observe(wrapperElement);
-    }
-
     return () => {
       gsap.killTweensOf(contentLayer);
-      if (currentBlobTimeline) {
-        currentBlobTimeline.kill();
-      }
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-      }
+      gsap.killTweensOf(scrollArea);
+      gsap.killTweensOf(wrapperElement);
+      blobManager?.kill();
     };
   });
 </script>
@@ -226,27 +139,29 @@
       {/if}
     </div>
 
-    <div class="panel-content">
-      {#if showDetailContent && detailAvailable && $selectedNode}
-        <DetailView node={$selectedNode} />
-      {:else if $loadError}
-        <p class="panel-placeholder">{$loadError}</p>
-      {:else if $selectedNode}
-        <SummaryView node={$selectedNode} />
-        {#if detailAvailable}
-          <button
-            class="view-details-link"
-            disabled={isAnimating}
-            on:click={openDetails}
-          >
-            Details
-          </button>
+    <div class="panel-scroll-area" bind:this={scrollArea}>
+      <div class="panel-content">
+        {#if showDetailContent && detailAvailable && $selectedNode}
+          <DetailView node={$selectedNode} />
+        {:else if $loadError}
+          <p class="panel-placeholder">{$loadError}</p>
+        {:else if $selectedNode}
+          <SummaryView node={$selectedNode} />
+          {#if detailAvailable}
+            <button
+              class="view-details-link"
+              disabled={isAnimating}
+              on:click={openDetails}
+            >
+              Details
+            </button>
+          {/if}
+        {:else if $selectedStage}
+          <StageOverview nodes={$selectedStage.nodes} edges={$selectedStage.edges} />
+        {:else}
+          <p class="panel-placeholder">Select a node to view details</p>
         {/if}
-      {:else if $selectedStage}
-        <StageOverview nodes={$selectedStage.nodes} edges={$selectedStage.edges} />
-      {:else}
-        <p class="panel-placeholder">Select a node to view details</p>
-      {/if}
+      </div>
     </div>
   </aside>
 </div>
