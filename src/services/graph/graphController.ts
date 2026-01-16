@@ -215,7 +215,6 @@ export async function createGraphController({
   }
 
   renderMetaEdges();
-  renderEdges(edgeLayer, lineageData.edges, nodeMap);
 
   function renderMetaEdges(): void {
     metaEdgeLayer.removeChildren();
@@ -242,13 +241,16 @@ export async function createGraphController({
   }
 
   const lodLayers: LODLayers = { nodeLayer, edgeLayer, metaNodeLayer, metaEdgeLayer, stageLayer };
+
   const lodController = createLODController(nodeMap, metaNodeMap, lineageData.stages, lodLayers, {
     onCollapseEnd: () => {
       titleOverlay.setVisible(true);
       updateTitlePosition();
     },
-    onExpandStart: () => {
+    onExpandEnd: () => {
       titleOverlay.setVisible(false);
+      renderStageLabels();
+      cullAndRender();
     },
   });
 
@@ -319,28 +321,36 @@ export async function createGraphController({
 
   renderStageLabels();
 
-  function cullNodes(): void {
+  function cullAndRender(): void {
     if (lodController.state.isCollapsed) return;
     Culler.shared.cull(nodeLayer, app.screen);
+    renderEdges(edgeLayer, lineageData.edges, nodeMap);
   }
 
-  cullNodes();
+  cullAndRender();
 
   const viewportHandlers = createViewportHandlers(app.canvas, viewport, container, viewportState, {
     onZoom: (scale) => {
-      renderStageLabels();
       lodController.checkThreshold(scale);
-      cullNodes();
-      if (lodController.state.isCollapsed) updateTitlePosition();
+      if (!lodController.state.isCollapsed && !lodController.state.isAnimating) {
+        renderStageLabels();
+        cullAndRender();
+      } else if (lodController.state.isCollapsed) {
+        updateTitlePosition();
+      }
       callbacks.onSimpleViewChange(scale < LOD_THRESHOLD);
     },
     onPan: () => {
-      renderStageLabels();
-      cullNodes();
-      if (lodController.state.isCollapsed) updateTitlePosition();
+      if (!lodController.state.isCollapsed && !lodController.state.isAnimating) {
+        renderStageLabels();
+        cullAndRender();
+      } else if (lodController.state.isCollapsed) {
+        updateTitlePosition();
+      }
     },
     onPanStart: () => {},
     onPanEnd: () => {},
+    isZoomBlocked: () => lodController.state.isAnimating,
   });
 
   const resizeObserver = new ResizeObserver(() => app.resize());

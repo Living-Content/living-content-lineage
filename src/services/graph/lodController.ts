@@ -1,13 +1,22 @@
 /**
- * Level-of-detail controller with animated transitions.
+ * Level-of-detail controller with GSAP animations.
  * Manages collapse to meta nodes and expand to detail view.
+ *
+ * Animation locks zoom input via state.isAnimating - viewport should check this.
  */
 import { Container } from 'pixi.js';
+import * as PIXI from 'pixi.js';
+import gsap from 'gsap';
+import { PixiPlugin } from 'gsap/PixiPlugin';
 import type { PillNode } from './nodeRenderer.js';
 import type { Stage } from '../../types.js';
-import { LOD_THRESHOLD } from '../../config/constants.js';
 
-const ANIMATION_DURATION_MS = 300;
+// Register GSAP PixiPlugin
+gsap.registerPlugin(PixiPlugin);
+PixiPlugin.registerPIXI(PIXI);
+
+const LOD_THRESHOLD = 0.7;
+const DURATION = 0.2;
 
 export interface LODState {
   isCollapsed: boolean;
@@ -23,26 +32,19 @@ export interface LODLayers {
 }
 
 export interface LODCallbacks {
-  onCollapseStart?: () => void;
   onCollapseEnd?: () => void;
-  onExpandStart?: () => void;
   onExpandEnd?: () => void;
 }
 
 export interface LODController {
   checkThreshold: (scale: number) => void;
-  collapse: () => void;
-  expand: () => void;
   readonly state: LODState;
 }
 
-/**
- * Create LOD controller for managing detail levels.
- */
 export function createLODController(
   nodeMap: Map<string, PillNode>,
   metaNodeMap: Map<string, PillNode>,
-  stages: Stage[],
+  _stages: Stage[],
   layers: LODLayers,
   callbacks: LODCallbacks
 ): LODController {
@@ -51,6 +53,7 @@ export function createLODController(
     isAnimating: false,
   };
 
+  // Cache original positions at creation time
   const originalPositions = new Map<string, { x: number; y: number }>();
   nodeMap.forEach((node, id) => {
     originalPositions.set(id, { x: node.position.x, y: node.position.y });
@@ -61,129 +64,125 @@ export function createLODController(
     return metaNode ? { x: metaNode.position.x, y: metaNode.position.y } : null;
   }
 
-  function animateCollapse(): void {
+  function collapse(): void {
     if (state.isAnimating) return;
     state.isAnimating = true;
-    callbacks.onCollapseStart?.();
+    state.isCollapsed = true;
 
+    // Hide detail layers
     layers.edgeLayer.visible = false;
     layers.stageLayer.visible = false;
 
-    const startTime = performance.now();
-
-    const animate = (): void => {
-      const elapsed = performance.now() - startTime;
-      const progress = Math.min(elapsed / ANIMATION_DURATION_MS, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-
-      nodeMap.forEach((node) => {
-        const nodeData = node.nodeData;
-        const original = originalPositions.get(nodeData.id);
-        const metaPos = getMetaPosition(nodeData.stage || '');
-
-        if (original && metaPos) {
-          node.position.x = original.x + (metaPos.x - original.x) * eased;
-          node.position.y = original.y + (metaPos.y - original.y) * eased;
-          node.alpha = 1 - eased;
-        }
-      });
-
-      metaNodeMap.forEach((node) => {
-        node.alpha = eased;
-      });
-
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        layers.nodeLayer.visible = false;
-        layers.metaNodeLayer.visible = true;
-        layers.metaEdgeLayer.visible = true;
-        state.isAnimating = false;
-        callbacks.onCollapseEnd?.();
-      }
-    };
-
+    // Prepare meta layer
     layers.metaNodeLayer.visible = true;
     metaNodeMap.forEach((node) => {
       node.alpha = 0;
+      node.scale.set(0.5);
     });
 
-    requestAnimationFrame(animate);
+    // Get nodes sorted by x for stagger effect
+    const nodes = Array.from(nodeMap.values()).sort(
+      (a, b) => originalPositions.get(a.nodeData.id)!.x - originalPositions.get(b.nodeData.id)!.x
+    );
+
+    const tl = gsap.timeline({
+      onComplete: () => {
+        layers.nodeLayer.visible = false;
+        layers.metaEdgeLayer.visible = true;
+        state.isAnimating = false;
+        callbacks.onCollapseEnd?.();
+      },
+    });
+
+    // Animate nodes to meta positions
+    nodes.forEach((node, i) => {
+      const metaPos = getMetaPosition(node.nodeData.stage || '');
+      if (!metaPos) return;
+
+      const delay = i * 0.01;
+      tl.to(node.position, { x: metaPos.x, y: metaPos.y, duration: DURATION, ease: 'power2.in' }, delay);
+      tl.to(node, { alpha: 0, duration: DURATION * 0.6, ease: 'power2.in' }, delay);
+    });
+
+    // Animate meta nodes in
+    const metaNodes = Array.from(metaNodeMap.values());
+    metaNodes.forEach((node, i) => {
+      const delay = DURATION * 0.4 + i * 0.04;
+      tl.to(node, { alpha: 1, duration: DURATION * 0.6, ease: 'power2.out' }, delay);
+      tl.to(node, { pixi: { scaleX: 1, scaleY: 1 }, duration: DURATION * 0.8, ease: 'back.out(1.4)' }, delay);
+    });
   }
 
-  function animateExpand(): void {
+  function expand(): void {
     if (state.isAnimating) return;
     state.isAnimating = true;
-    callbacks.onExpandStart?.();
+    state.isCollapsed = false;
 
+    // Hide meta edges
     layers.metaEdgeLayer.visible = false;
 
-    const startTime = performance.now();
-
+    // Reset nodes to meta positions before animating
     nodeMap.forEach((node) => {
-      const nodeData = node.nodeData;
-      const metaPos = getMetaPosition(nodeData.stage || '');
+      const metaPos = getMetaPosition(node.nodeData.stage || '');
       if (metaPos) {
         node.position.x = metaPos.x;
         node.position.y = metaPos.y;
       }
       node.alpha = 0;
+      node.scale.set(0.5);
     });
 
     layers.nodeLayer.visible = true;
 
-    const animate = (): void => {
-      const elapsed = performance.now() - startTime;
-      const progress = Math.min(elapsed / ANIMATION_DURATION_MS, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
+    // Sort by original x position for stagger
+    const nodes = Array.from(nodeMap.values()).sort(
+      (a, b) => originalPositions.get(a.nodeData.id)!.x - originalPositions.get(b.nodeData.id)!.x
+    );
 
-      nodeMap.forEach((node) => {
-        const nodeData = node.nodeData;
-        const original = originalPositions.get(nodeData.id);
-        const metaPos = getMetaPosition(nodeData.stage || '');
-
-        if (original && metaPos) {
-          node.position.x = metaPos.x + (original.x - metaPos.x) * eased;
-          node.position.y = metaPos.y + (original.y - metaPos.y) * eased;
-          node.alpha = eased;
-        }
-      });
-
-      metaNodeMap.forEach((node) => {
-        node.alpha = 1 - eased;
-      });
-
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      } else {
+    const tl = gsap.timeline({
+      onComplete: () => {
         layers.metaNodeLayer.visible = false;
         layers.edgeLayer.visible = true;
         layers.stageLayer.visible = true;
         state.isAnimating = false;
         callbacks.onExpandEnd?.();
-      }
-    };
+      },
+    });
 
-    requestAnimationFrame(animate);
+    // Fade out meta nodes
+    const metaNodes = Array.from(metaNodeMap.values());
+    metaNodes.forEach((node, i) => {
+      tl.to(node, { alpha: 0, duration: DURATION * 0.3, ease: 'power2.in' }, i * 0.02);
+      tl.to(node, { pixi: { scaleX: 0.5, scaleY: 0.5 }, duration: DURATION * 0.3, ease: 'power2.in' }, i * 0.02);
+    });
+
+    // Animate nodes to original positions
+    nodes.forEach((node, i) => {
+      const original = originalPositions.get(node.nodeData.id);
+      if (!original) return;
+
+      const delay = DURATION * 0.15 + i * 0.01;
+      tl.to(node.position, { x: original.x, y: original.y, duration: DURATION, ease: 'power2.out' }, delay);
+      tl.to(node, { alpha: 1, duration: DURATION * 0.5, ease: 'power2.out' }, delay);
+      tl.to(node, { pixi: { scaleX: 1, scaleY: 1 }, duration: DURATION * 0.6, ease: 'back.out(1.2)' }, delay);
+    });
   }
 
   function checkThreshold(scale: number): void {
-    const shouldCollapse = scale < LOD_THRESHOLD;
-    if (shouldCollapse === state.isCollapsed || state.isAnimating) return;
+    if (state.isAnimating) return;
 
-    state.isCollapsed = shouldCollapse;
+    const shouldCollapse = scale < LOD_THRESHOLD;
+    if (shouldCollapse === state.isCollapsed) return;
 
     if (shouldCollapse) {
-      animateCollapse();
+      collapse();
     } else {
-      animateExpand();
+      expand();
     }
   }
 
   return {
     checkThreshold,
-    collapse: animateCollapse,
-    expand: animateExpand,
     get state() {
       return state;
     },

@@ -102,7 +102,8 @@ function lerpColor(color1: number, color2: number, t: number): number {
 }
 
 /**
- * Render all edges with gradient colors.
+ * Render edges with gradient colors.
+ * Only renders edges where at least one endpoint node is visible (not culled).
  */
 export function renderEdges(
   edgeLayer: Container,
@@ -117,6 +118,9 @@ export function renderEdges(
     const sourceNode = nodeMap.get(edge.source);
     const targetNode = nodeMap.get(edge.target);
     if (!sourceNode || !targetNode) continue;
+
+    // Skip edges where both endpoints are culled (off-screen)
+    if (sourceNode.culled && targetNode.culled) continue;
 
     const sx = sourceNode.position.x;
     const sy = sourceNode.position.y;
