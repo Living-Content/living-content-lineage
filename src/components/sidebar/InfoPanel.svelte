@@ -126,7 +126,7 @@
   class={`liquid-wrapper${panelHidden ? ' hidden' : ''}`}
 >
   <div class="shape-layer">
-    <div class="blob-container liquid" bind:this={blobContainer}></div>
+    <div class="blob-container" bind:this={blobContainer}></div>
   </div>
 
   <aside class="panel-content-layer" bind:this={contentLayer}>

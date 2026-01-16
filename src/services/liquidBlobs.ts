@@ -159,7 +159,7 @@ export class BlobManager {
   }
 
   /**
-   * Fill container with animated blobs, then solidify with blur.
+   * Fill container with animated blobs, then blur, then solidify.
    */
   fill(width: number, height: number, ease?: string): gsap.core.Timeline {
     this.kill();
@@ -171,19 +171,20 @@ export class BlobManager {
     const tl = gsap.timeline();
     const blobTl = this.animateBlobsInternal(this.baseBlobs, width, height, ease);
     tl.add(blobTl);
+    tl.to(this.container, {
+      backdropFilter: 'blur(20px)',
+      webkitBackdropFilter: 'blur(20px)',
+      duration: 0.3,
+      ease: 'power2.out',
+    });
     tl.add(() => this.solidifyInternal());
-    tl.fromTo(
-      this.container,
-      { backdropFilter: 'blur(0px)', webkitBackdropFilter: 'blur(0px)' },
-      { backdropFilter: 'blur(20px)', webkitBackdropFilter: 'blur(20px)', duration: 0.3, ease: 'power2.out' }
-    );
 
     this.timeline = tl;
     return tl;
   }
 
   /**
-   * Expand to fill larger container, then solidify with blur.
+   * Expand to fill larger container, then blur, then solidify.
    */
   expand(width: number, height: number, ease?: string): gsap.core.Timeline {
     this.kill();
@@ -195,19 +196,20 @@ export class BlobManager {
     const tl = gsap.timeline();
     const blobTl = this.animateBlobsInternal(this.expansionBlobs, width, height, ease);
     tl.add(blobTl);
+    tl.to(this.container, {
+      backdropFilter: 'blur(20px)',
+      webkitBackdropFilter: 'blur(20px)',
+      duration: 0.3,
+      ease: 'power2.out',
+    });
     tl.add(() => this.solidifyInternal());
-    tl.fromTo(
-      this.container,
-      { backdropFilter: 'blur(0px)', webkitBackdropFilter: 'blur(0px)' },
-      { backdropFilter: 'blur(20px)', webkitBackdropFilter: 'blur(20px)', duration: 0.3, ease: 'power2.out' }
-    );
 
     this.timeline = tl;
     return tl;
   }
 
   /**
-   * Contract back to base size, then solidify with blur.
+   * Contract back to base size, then blur, then solidify.
    */
   contract(): gsap.core.Timeline {
     this.kill();
@@ -222,12 +224,13 @@ export class BlobManager {
       });
     }
 
+    tl.to(this.container, {
+      backdropFilter: 'blur(20px)',
+      webkitBackdropFilter: 'blur(20px)',
+      duration: 0.3,
+      ease: 'power2.out',
+    });
     tl.add(() => this.solidifyInternal());
-    tl.fromTo(
-      this.container,
-      { backdropFilter: 'blur(0px)', webkitBackdropFilter: 'blur(0px)' },
-      { backdropFilter: 'blur(20px)', webkitBackdropFilter: 'blur(20px)', duration: 0.3, ease: 'power2.out' }
-    );
 
     this.timeline = tl;
     return tl;
@@ -235,6 +238,7 @@ export class BlobManager {
 
   private solidifyInternal(): void {
     if (this.isSolid) return;
+    this.container.classList.remove('liquid');
     this.container.style.background = 'rgba(255, 255, 255, 0.75)';
     this.container.style.filter = 'none';
     this.container.innerHTML = '';
@@ -247,6 +251,7 @@ export class BlobManager {
     this.container.style.setProperty('-webkit-backdrop-filter', '');
     this.container.style.filter = '';
     this.container.innerHTML = '';
+    this.container.classList.add('liquid');
     this.isSolid = false;
   }
 
