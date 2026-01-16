@@ -1,3 +1,39 @@
+/**
+ * Graph visualization constants.
+ * Colors come from CSS variables in theme.css
+ */
+
+// Zoom
+export const ZOOM_MIN = 0.3;
+export const ZOOM_MAX = 2.0;
+export const ZOOM_DEFAULT = 0.8;
+export const ZOOM_FACTOR = 0.95;
+
+// LOD (Level of Detail)
+export const LOD_THRESHOLD = 0.7;
+export const LOD_ANIMATION_MS = 300;
+
+// Meta nodes
+export const META_NODE_SCALE = 2.0;
+
+// Edges
+export const EDGE_WIDTH = 2;
+export const EDGE_ARROW_SIZE = 8;
+export const EDGE_ARROW_GAP = 8;
+export const EDGE_GRADIENT_STEPS = 10;
+
+// Meta edges (collapsed view)
+export const META_EDGE_WIDTH = 3;
+export const META_ARROW_SIZE = 12;
+
+// Stage labels
+export const STAGE_LABEL_FONT_SIZE = 20;
+export const STAGE_LABEL_TOP_PADDING = 80;
+export const STAGE_LABEL_LINE_START = 30;
+export const STAGE_DIVIDER_DASH = 6;
+export const STAGE_DIVIDER_GAP = 4;
+
+// Legacy exports for overlays (to be removed)
 export const HIDE_EDGES_THRESHOLD = 1.2;
 export const COLLAPSE_THRESHOLD = 0.75;
 export const EXPAND_THRESHOLD = 0.5;

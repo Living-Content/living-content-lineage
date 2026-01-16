@@ -134,6 +134,7 @@ export interface Stage {
 }
 
 export interface LineageGraph {
+  title?: string;
   nodes: LineageNodeData[];
   edges: LineageEdgeData[];
   stages: Stage[];

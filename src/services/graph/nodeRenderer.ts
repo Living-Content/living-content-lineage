@@ -28,13 +28,17 @@ const NODE_FALLBACK_COLORS: Record<NodeType, string> = {
   meta: '#4d96ff',
 };
 
-const HOVER_SCALE = 1.05;
+export const DEFAULT_NODE_ALPHA = 0.75;
+
+const NODE_FONT_SIZE = 15;
+const NODE_FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif';
 
 const measureCanvas = document.createElement('canvas');
 const measureCtx = measureCanvas.getContext('2d')!;
-measureCtx.font = '600 15px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif';
+measureCtx.font = `600 ${NODE_FONT_SIZE}px ${NODE_FONT_FAMILY}`;
 
-function measureText(text: string): number {
+function measureText(text: string, scale = 1): number {
+  measureCtx.font = `600 ${NODE_FONT_SIZE * scale}px ${NODE_FONT_FAMILY}`;
   return measureCtx.measureText(text).width;
 }
 
@@ -52,6 +56,7 @@ export interface PillNode extends Container {
   nodeData: LineageNodeData;
   pillWidth: number;
   pillHeight: number;
+  baseScale: number;
 }
 
 interface NodeCallbacks {
@@ -64,14 +69,15 @@ function createKnockoutPillTexture(
   label: string,
   color: string,
   width: number,
-  height: number
+  height: number,
+  fontSize: number
 ): Texture {
-  const scale = 2;
+  const retinaScale = 2;
   const canvas = document.createElement('canvas');
-  canvas.width = width * scale;
-  canvas.height = height * scale;
+  canvas.width = width * retinaScale;
+  canvas.height = height * retinaScale;
   const ctx = canvas.getContext('2d')!;
-  ctx.scale(scale, scale);
+  ctx.scale(retinaScale, retinaScale);
 
   const radius = height / 2;
   ctx.beginPath();
@@ -80,13 +86,17 @@ function createKnockoutPillTexture(
   ctx.fill();
 
   ctx.globalCompositeOperation = 'destination-out';
-  ctx.font = '600 15px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif';
+  ctx.font = `600 ${fontSize}px ${NODE_FONT_FAMILY}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#000000';
   ctx.fillText(label, width / 2, height / 2);
 
   return Texture.from(canvas);
+}
+
+interface CreatePillNodeOptions {
+  scale?: number;
 }
 
 /**
@@ -96,17 +106,20 @@ export function createPillNode(
   node: LineageNodeData,
   graphScale: number,
   _ticker: Ticker,
-  callbacks: NodeCallbacks
+  callbacks: NodeCallbacks,
+  options: CreatePillNodeOptions = {}
 ): PillNode {
   const group = new Container() as PillNode;
   group.label = node.id;
 
+  const nodeScale = options.scale ?? 1;
   const color = getNodeColorHex(node.nodeType);
-  const textWidth = measureText(node.label);
-  const pillWidth = textWidth + 56;
-  const pillHeight = 40;
+  const fontSize = NODE_FONT_SIZE * nodeScale;
+  const textWidth = measureText(node.label, nodeScale);
+  const pillWidth = textWidth + 56 * nodeScale;
+  const pillHeight = 40 * nodeScale;
 
-  const texture = createKnockoutPillTexture(node.label, color, pillWidth, pillHeight);
+  const texture = createKnockoutPillTexture(node.label, color, pillWidth, pillHeight, fontSize);
   const sprite = new Sprite(texture);
   sprite.anchor.set(0.5, 0.5);
   sprite.width = pillWidth;
@@ -120,21 +133,22 @@ export function createPillNode(
   group.nodeData = node;
   group.pillWidth = pillWidth;
   group.pillHeight = pillHeight;
+  group.baseScale = 1;
+  group.alpha = DEFAULT_NODE_ALPHA;
 
   group.eventMode = 'static';
   group.cursor = 'pointer';
+  group.cullable = true;
 
   group.on('pointerdown', () => {
     callbacks.onClick();
   });
 
   group.on('pointerenter', () => {
-    group.scale.set(HOVER_SCALE);
     callbacks.onHover();
   });
 
   group.on('pointerleave', () => {
-    group.scale.set(1);
     callbacks.onHoverEnd();
   });
 
