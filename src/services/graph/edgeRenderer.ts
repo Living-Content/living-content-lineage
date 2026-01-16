@@ -103,6 +103,8 @@ function lerpColor(color1: number, color2: number, t: number): number {
 
 /**
  * Render edges with gradient colors.
+ * Regular edges gradient from source node color to dark.
+ * Attestation edges (isGate) gradient from green to source node color.
  * Only renders edges where at least one endpoint node is visible (not culled).
  */
 export function renderEdges(
@@ -113,13 +115,13 @@ export function renderEdges(
   edgeLayer.removeChildren();
   const graphics = new Graphics();
   const edgeEndColor = getEdgeColorCached();
+  const attestationColor = getNodeColorCached('attestation');
 
   for (const edge of edges) {
     const sourceNode = nodeMap.get(edge.source);
     const targetNode = nodeMap.get(edge.target);
     if (!sourceNode || !targetNode) continue;
 
-    // Skip edges where both endpoints are culled (off-screen)
     if (sourceNode.culled && targetNode.culled) continue;
 
     const sx = sourceNode.position.x;
@@ -137,21 +139,26 @@ export function renderEdges(
     const dy = ty - sy;
     const isMainlyHorizontal = Math.abs(dx) > Math.abs(dy);
 
+    const startColor = edge.isGate ? attestationColor : sourceColor;
+    const endColor = edge.isGate ? sourceColor : edgeEndColor;
+
     if (isMainlyHorizontal) {
       renderHorizontalEdge(
         graphics,
         sx, sy, tx, ty,
         sourceHalfW, targetHalfW,
-        sourceColor,
-        edgeEndColor
+        startColor,
+        endColor,
+        edge.isGate ?? false
       );
     } else {
       renderVerticalEdge(
         graphics,
         sx, sy, tx, ty,
         sourceHalfH, targetHalfH,
-        sourceColor,
-        edgeEndColor
+        startColor,
+        endColor,
+        edge.isGate ?? false
       );
     }
   }
@@ -164,8 +171,9 @@ function renderHorizontalEdge(
   sx: number, sy: number,
   tx: number, ty: number,
   sourceHalfW: number, targetHalfW: number,
-  sourceColor: number,
-  endColor: number
+  startColor: number,
+  endColor: number,
+  isGate: boolean
 ): void {
   const goingRight = tx > sx;
   const lineStartX = goingRight ? sx + sourceHalfW : sx - sourceHalfW;
@@ -178,13 +186,15 @@ function renderHorizontalEdge(
     const y1 = sy + (ty - sy) * t1;
     const x2 = lineStartX + (lineEndX - lineStartX) * t2;
     const y2 = sy + (ty - sy) * t2;
-    const color = lerpColor(sourceColor, endColor, t1);
+    const gradientT = isGate ? 1 - t1 : t1;
+    const color = lerpColor(startColor, endColor, gradientT);
 
     graphics.moveTo(x1, y1);
     graphics.lineTo(x2, y2);
     graphics.stroke({ width: EDGE_WIDTH, color });
   }
 
+  const arrowColor = isGate ? startColor : endColor;
   if (goingRight) {
     graphics.moveTo(lineEndX - EDGE_ARROW_SIZE, ty - EDGE_ARROW_SIZE / 2);
     graphics.lineTo(lineEndX, ty);
@@ -194,7 +204,7 @@ function renderHorizontalEdge(
     graphics.lineTo(lineEndX, ty);
     graphics.lineTo(lineEndX + EDGE_ARROW_SIZE, ty + EDGE_ARROW_SIZE / 2);
   }
-  graphics.stroke({ width: EDGE_WIDTH, color: endColor });
+  graphics.stroke({ width: EDGE_WIDTH, color: arrowColor });
 }
 
 function renderVerticalEdge(
@@ -202,8 +212,9 @@ function renderVerticalEdge(
   sx: number, sy: number,
   tx: number, ty: number,
   sourceHalfH: number, targetHalfH: number,
-  sourceColor: number,
-  endColor: number
+  startColor: number,
+  endColor: number,
+  isGate: boolean
 ): void {
   const goingDown = ty > sy;
   const startY = goingDown ? sy + sourceHalfH : sy - sourceHalfH;
@@ -216,7 +227,8 @@ function renderVerticalEdge(
     const y1 = startY + (endY - startY) * t1;
     const x2 = sx + (tx - sx) * t2;
     const y2 = startY + (endY - startY) * t2;
-    const color = lerpColor(sourceColor, endColor, t1);
+    const gradientT = isGate ? 1 - t1 : t1;
+    const color = lerpColor(startColor, endColor, gradientT);
 
     graphics.moveTo(x1, y1);
     graphics.lineTo(x2, y2);

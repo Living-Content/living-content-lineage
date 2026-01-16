@@ -70,5 +70,29 @@ export const ASSET_TYPE_ICONS: Partial<Record<AssetType, string>> = {
 };
 
 export const DEFAULT_NODE_SIZE = 14;
-export const ATTESTATION_NODE_SIZE = 16;
 export const META_NODE_SIZE = 14;
+
+/**
+ * Configuration for icon-based node rendering.
+ * Nodes with entries here render as icons instead of text pills.
+ */
+export const ICON_NODE_CONFIG: Partial<Record<NodeType, { size: number }>> = {
+  attestation: { size: 56 },
+};
+
+/**
+ * Returns true if the node type should render as an icon.
+ */
+export function isIconNode(nodeType: NodeType): boolean {
+  return nodeType in ICON_NODE_CONFIG;
+}
+
+/**
+ * Returns the icon configuration for a node type, or null if it uses pill rendering.
+ */
+export function getIconNodeConfig(nodeType: NodeType): { size: number; iconPath: string } | null {
+  const config = ICON_NODE_CONFIG[nodeType];
+  if (!config) return null;
+  const iconPath = NODE_ICON_PATHS[nodeType];
+  return { ...config, iconPath };
+}

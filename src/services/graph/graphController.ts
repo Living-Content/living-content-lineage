@@ -7,7 +7,9 @@ import { Application, Container, Culler } from 'pixi.js';
 import { loadManifest } from '../../manifest/registry.js';
 import type { LineageGraph, LineageNodeData } from '../../types.js';
 import { createPillNode, type PillNode, DEFAULT_NODE_ALPHA } from './nodeRenderer.js';
+import { createIconNode } from './iconNodeRenderer.js';
 import { renderEdges } from './edgeRenderer.js';
+import { getIconNodeConfig } from '../../ui/theme.js';
 import { renderMetaEdges } from './metaEdgeRenderer.js';
 import { renderStageLabels, type TopNodeInfo } from './stageLabelRenderer.js';
 import { createViewportState, createViewportHandlers } from './viewport.js';
@@ -133,8 +135,10 @@ export async function createGraphController({
     }
   }
 
+  const nodeCreationPromises: Promise<void>[] = [];
+
   for (const node of lineageData.nodes) {
-    const pillNode = createPillNode(node, graphScale, app.ticker, {
+    const nodeCallbacks = {
       onClick: () => {
         if (selectedNodeId && selectedNodeId !== node.id) {
           setNodeAlpha(selectedNodeId, DEFAULT_NODE_ALPHA);
@@ -147,14 +151,18 @@ export async function createGraphController({
       onHover: () => {
         container.style.cursor = 'pointer';
         setNodeAlpha(node.id, 1);
-        const bounds = pillNode.getBounds();
-        callbacks.onHover({
-          title: node.label,
-          nodeType: node.nodeType,
-          screenX: bounds.x + bounds.width / 2,
-          screenY: bounds.y,
-          size: 28,
-        });
+        const renderedNode = nodeMap.get(node.id);
+        if (renderedNode) {
+          const bounds = renderedNode.getBounds();
+          const hoverIconConfig = getIconNodeConfig(node.nodeType);
+          callbacks.onHover({
+            title: node.label,
+            nodeType: node.nodeType,
+            screenX: bounds.x + bounds.width / 2,
+            screenY: bounds.y,
+            size: hoverIconConfig?.size ?? 28,
+          });
+        }
       },
       onHoverEnd: () => {
         container.style.cursor = 'grab';
@@ -163,10 +171,26 @@ export async function createGraphController({
         }
         callbacks.onHoverEnd();
       },
-    });
-    nodeLayer.addChild(pillNode);
-    nodeMap.set(node.id, pillNode);
+    };
+
+    const iconConfig = getIconNodeConfig(node.nodeType);
+    if (iconConfig) {
+      const promise = createIconNode(node, graphScale, app.ticker, nodeCallbacks, {
+        iconPath: iconConfig.iconPath,
+        size: iconConfig.size,
+      }).then((iconNode) => {
+        nodeLayer.addChild(iconNode);
+        nodeMap.set(node.id, iconNode);
+      });
+      nodeCreationPromises.push(promise);
+    } else {
+      const pillNode = createPillNode(node, graphScale, app.ticker, nodeCallbacks);
+      nodeLayer.addChild(pillNode);
+      nodeMap.set(node.id, pillNode);
+    }
   }
+
+  await Promise.all(nodeCreationPromises);
 
   for (const stage of lineageData.stages) {
     const stageNodes = lineageData.nodes.filter((n) => n.stage === stage.id);
