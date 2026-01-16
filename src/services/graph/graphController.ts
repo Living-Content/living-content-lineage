@@ -3,24 +3,17 @@
  * Orchestrates viewport, LOD, and rendering modules.
  * Nodes use Pixi's built-in cullable property for automatic off-screen culling.
  */
-import { Application, Container, Graphics, Text, TextStyle, Culler } from 'pixi.js';
+import { Application, Container, Culler } from 'pixi.js';
 import { loadManifest } from '../../manifest/registry.js';
 import type { LineageGraph, LineageNodeData } from '../../types.js';
 import { createPillNode, type PillNode, DEFAULT_NODE_ALPHA } from './nodeRenderer.js';
 import { renderEdges } from './edgeRenderer.js';
+import { renderMetaEdges } from './metaEdgeRenderer.js';
+import { renderStageLabels, type TopNodeInfo } from './stageLabelRenderer.js';
 import { createViewportState, createViewportHandlers } from './viewport.js';
 import { createLODController, type LODLayers } from './lodController.js';
 import { createTitleOverlay } from './titleOverlay.js';
-import {
-  LOD_THRESHOLD,
-  META_NODE_SCALE,
-  EDGE_ARROW_GAP,
-  META_EDGE_WIDTH,
-  META_ARROW_SIZE,
-  STAGE_LABEL_FONT_SIZE,
-  STAGE_LABEL_TOP_PADDING,
-  STAGE_LABEL_LINE_START,
-} from '../../config/constants.js';
+import { LOD_THRESHOLD, META_NODE_SCALE } from '../../config/constants.js';
 
 interface HoverPayload {
   title: string;
@@ -214,31 +207,7 @@ export async function createGraphController({
     metaNodeMap.set(stage.id, pillNode);
   }
 
-  renderMetaEdges();
-
-  function renderMetaEdges(): void {
-    metaEdgeLayer.removeChildren();
-    const graphics = new Graphics();
-    const edgeColor = 0x1a1a1a;
-    const stageOrder = lineageData.stages.map((s) => s.id);
-    for (let i = 0; i < stageOrder.length - 1; i++) {
-      const sourceNode = metaNodeMap.get(stageOrder[i]);
-      const targetNode = metaNodeMap.get(stageOrder[i + 1]);
-      if (!sourceNode || !targetNode) continue;
-      const sx = sourceNode.position.x + sourceNode.pillWidth / 2;
-      const sy = sourceNode.position.y;
-      const tx = targetNode.position.x - targetNode.pillWidth / 2 - EDGE_ARROW_GAP;
-      const ty = targetNode.position.y;
-      graphics.moveTo(sx, sy);
-      graphics.lineTo(tx, ty);
-      graphics.stroke({ width: META_EDGE_WIDTH, color: edgeColor });
-      graphics.moveTo(tx - META_ARROW_SIZE, ty - META_ARROW_SIZE / 2);
-      graphics.lineTo(tx, ty);
-      graphics.lineTo(tx - META_ARROW_SIZE, ty + META_ARROW_SIZE / 2);
-      graphics.stroke({ width: META_EDGE_WIDTH, color: edgeColor });
-    }
-    metaEdgeLayer.addChild(graphics);
-  }
+  renderMetaEdges(metaEdgeLayer, lineageData.stages, metaNodeMap);
 
   const lodLayers: LODLayers = { nodeLayer, edgeLayer, metaNodeLayer, metaEdgeLayer, stageLayer };
 
@@ -249,7 +218,7 @@ export async function createGraphController({
     },
     onExpandEnd: () => {
       titleOverlay.setVisible(false);
-      renderStageLabels();
+      updateStageLabels();
       cullAndRender();
     },
   });
@@ -262,64 +231,23 @@ export async function createGraphController({
     titleOverlay.updatePosition(leftmostNode, viewportState);
   }
 
-  let cachedTopNodeWorldY: number | null = null;
-  let cachedTopNodeHalfHeight = 0;
-  let minWorldY = Infinity;
-  nodeMap.forEach((pillNode) => {
-    if (pillNode.position.y < minWorldY) {
-      minWorldY = pillNode.position.y;
-      cachedTopNodeHalfHeight = pillNode.pillHeight / 2;
-    }
-  });
-  cachedTopNodeWorldY = minWorldY === Infinity ? null : minWorldY;
-
-  function renderStageLabels(): void {
-    stageLayer.removeChildren();
-    const style = new TextStyle({
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
-      fontSize: STAGE_LABEL_FONT_SIZE,
-      fontWeight: '600',
-      fill: 0x666666,
-      letterSpacing: -0.5,
-    });
-    const topPadding = STAGE_LABEL_TOP_PADDING;
-    const lineStartY = STAGE_LABEL_LINE_START;
-    const dotSize = 2;
-    const dotGap = 4;
-    const globalTopY = cachedTopNodeWorldY !== null
-      ? viewportState.y + cachedTopNodeWorldY * viewportState.scale - cachedTopNodeHalfHeight * viewportState.scale
-      : Infinity;
-
-    for (const stage of lineageData.stages) {
-      const worldX = (((stage.xStart + stage.xEnd) / 2) - 0.5) * graphScale;
-      const screenX = viewportState.x + worldX * viewportState.scale;
-      const label = new Text({ text: stage.label, style });
-      label.anchor.set(0.5, 0);
-      label.position.set(screenX, topPadding);
-      stageLayer.addChild(label);
-
-      if (globalTopY === Infinity) continue;
-      const startY = topPadding + lineStartY;
-      const endY = globalTopY;
-      const fadeDistance = (endY - startY) * 0.6;
-      const fadeStartY = startY + fadeDistance;
-      const lineGraphics = new Graphics();
-      let currentY = startY;
-      while (currentY < endY) {
-        let alpha = 1;
-        if (currentY > fadeStartY) {
-          const fadeProgress = (currentY - fadeStartY) / (endY - fadeStartY);
-          alpha = 1 - Math.pow(fadeProgress, 2);
-        }
-        lineGraphics.circle(screenX, currentY, dotSize / 2);
-        lineGraphics.fill({ color: 0x000000, alpha });
-        currentY += dotSize + dotGap;
+  const topNodeInfo: TopNodeInfo | null = (() => {
+    let minWorldY = Infinity;
+    let halfHeight = 0;
+    nodeMap.forEach((pillNode) => {
+      if (pillNode.position.y < minWorldY) {
+        minWorldY = pillNode.position.y;
+        halfHeight = pillNode.pillHeight / 2;
       }
-      stageLayer.addChild(lineGraphics);
-    }
+    });
+    return minWorldY === Infinity ? null : { worldY: minWorldY, halfHeight };
+  })();
+
+  function updateStageLabels(): void {
+    renderStageLabels(stageLayer, lineageData.stages, viewportState, graphScale, topNodeInfo);
   }
 
-  renderStageLabels();
+  updateStageLabels();
 
   function cullAndRender(): void {
     if (lodController.state.isCollapsed) return;
@@ -333,7 +261,7 @@ export async function createGraphController({
     onZoom: (scale) => {
       lodController.checkThreshold(scale);
       if (!lodController.state.isCollapsed && !lodController.state.isAnimating) {
-        renderStageLabels();
+        updateStageLabels();
         cullAndRender();
       } else if (lodController.state.isCollapsed) {
         updateTitlePosition();
@@ -342,7 +270,7 @@ export async function createGraphController({
     },
     onPan: () => {
       if (!lodController.state.isCollapsed && !lodController.state.isAnimating) {
-        renderStageLabels();
+        updateStageLabels();
         cullAndRender();
       } else if (lodController.state.isCollapsed) {
         updateTitlePosition();
