@@ -1,30 +1,24 @@
 .sidebar {
   position: fixed;
-  top: 48px;
-  left: 0;
+  top: 50%;
+  left: 25px;
+  transform: translateY(-50%);
   width: 320px;
-  height: calc(100vh - 48px);
+  height: auto;
+  max-height: calc(100vh - 100px);
   background: var(--color-overlay);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   padding: 20px;
   overflow-y: auto;
   z-index: 10;
-  border-right: 1px solid var(--color-border-light);
+  border-radius: 12px;
+  border: 1px solid var(--color-overlay-border);
+  transition: opacity 0.25s ease;
 }
 
 .sidebar.hidden {
   display: none;
-}
-
-.sidebar.floating {
-  top: 50%;
-  left: 25px;
-  transform: translateY(-50%);
-  height: auto;
-  max-height: calc(100vh - 100px);
-  border-radius: 12px;
-  border: 1px solid var(--color-overlay-border);
 }
 
 .sidebar-header {
@@ -41,12 +35,6 @@
   color: var(--color-text-primary);
 }
 
-.sidebar-header-buttons {
-  display: flex;
-  gap: 4px;
-}
-
-.sidebar-expand-btn,
 .sidebar-close-btn {
   background: transparent;
   border: none;
@@ -57,7 +45,6 @@
   border-radius: 4px;
 }
 
-.sidebar-expand-btn:hover,
 .sidebar-close-btn:hover {
   background: var(--color-border-hover);
   color: var(--color-text-secondary);
@@ -206,73 +193,47 @@
 }
 
 .view-details-link::after {
-  content: '→';
+  content: '↔';
   font-size: 14px;
   transition: transform 0.15s ease;
   display: inline-block;
+  transform: rotate(-45deg);
 }
 
 .view-details-link:hover::after {
-  transform: translateX(2px);
+  transform: rotate(-45deg) scale(1.05);
 }
 
-.sidebar.detail-open .view-details-link,
-.sidebar.detail-open .view-details-link::after {
-  color: var(--color-text-faint);
-}
-
-.sidebar.detail-open .view-details-link {
+.sidebar.detail-open {
+  opacity: 0;
   pointer-events: none;
 }
 
 .detail-panel {
   position: fixed;
-  top: 48px;
-  left: 320px;
-  width: calc(100vw - 320px);
-  height: calc(100vh - 48px);
+  top: 50%;
+  left: 25px;
+  width: calc(100vw - 50px);
+  min-height: 200px;
+  max-height: calc(100vh - 100px);
   background: var(--color-overlay);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-right: 1px solid var(--color-border-soft);
-  z-index: 9;
+  border-radius: 12px;
+  border: 1px solid var(--color-overlay-border);
+  z-index: 13;
   display: flex;
   flex-direction: column;
-  transform: translateX(-100%);
+  transform: translateX(-100%) translateY(-50%);
   opacity: 0;
   pointer-events: none;
   transition: transform 0.25s ease, opacity 0.25s ease;
 }
 
 .detail-panel.visible {
-  transform: translateX(0);
+  transform: translateX(0) translateY(-50%);
   opacity: 1;
   pointer-events: auto;
-}
-
-.sidebar.floating ~ .detail-panel {
-  top: 50%;
-  left: 25px;
-  width: calc(100vw - 50px);
-  height: auto;
-  max-height: calc(100vh - 100px);
-  border-radius: 12px;
-  border: 1px solid var(--color-overlay-border);
-  transform: translateX(-100%) translateY(-50%);
-  z-index: 13;
-}
-
-.sidebar.floating ~ .detail-panel.visible {
-  transform: translateX(0) translateY(-50%);
-}
-
-.sidebar.floating .view-details-link::after {
-  content: '↔';
-  transform: rotate(-45deg);
-}
-
-.sidebar.floating .view-details-link:hover::after {
-  transform: rotate(-45deg) scale(1.05);
 }
 
 .detail-panel-header {
@@ -285,10 +246,10 @@
 }
 
 .detail-panel-title {
-  font-size: 11px;
+  font-size: 18px;
   font-weight: 600;
-  letter-spacing: 0.5px;
-  color: var(--color-text-light);
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
 }
 
 .detail-panel-close {
@@ -316,25 +277,13 @@
     width: 100%;
     height: auto;
     max-height: 40vh;
+    left: 0;
     bottom: 0;
     top: auto;
-    border-right: none;
+    transform: none;
+    border-radius: 0;
+    border: none;
     border-top: 1px solid var(--color-border-strong);
-  }
-
-  .detail-panel {
-    left: 0;
-    width: 100%;
-    top: auto;
-    bottom: 40vh;
-    height: 50vh;
-    border-right: none;
-    border-bottom: 1px solid var(--color-border-strong);
-    transform: translateY(100%);
-  }
-
-  .detail-panel.visible {
-    transform: translateY(0);
   }
 }
 

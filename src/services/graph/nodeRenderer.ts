@@ -70,7 +70,8 @@ function createKnockoutPillTexture(
   color: string,
   width: number,
   height: number,
-  fontSize: number
+  fontSize: number,
+  badgeCount?: number
 ): Texture {
   const retinaScale = 2;
   const canvas = document.createElement('canvas');
@@ -87,10 +88,30 @@ function createKnockoutPillTexture(
 
   ctx.globalCompositeOperation = 'destination-out';
   ctx.font = `600 ${fontSize}px ${NODE_FONT_FAMILY}`;
-  ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#000000';
-  ctx.fillText(label, width / 2, height / 2);
+
+  if (badgeCount !== undefined) {
+    const badgeRadius = height * 0.32;
+    const badgeFontSize = fontSize * 0.75;
+    const rightPadding = 16;
+    const badgeCenterX = width - rightPadding - badgeRadius;
+
+    ctx.textAlign = 'center';
+    ctx.fillText(label, (width - badgeRadius * 2 - rightPadding) / 2, height / 2);
+
+    ctx.beginPath();
+    ctx.arc(badgeCenterX, height / 2, badgeRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = color;
+    ctx.font = `600 ${badgeFontSize}px ${NODE_FONT_FAMILY}`;
+    ctx.fillText(String(badgeCount), badgeCenterX, height / 2);
+  } else {
+    ctx.textAlign = 'center';
+    ctx.fillText(label, width / 2, height / 2);
+  }
 
   return Texture.from(canvas);
 }
@@ -116,10 +137,16 @@ export function createPillNode(
   const color = getNodeColorHex(node.nodeType);
   const fontSize = NODE_FONT_SIZE * nodeScale;
   const textWidth = measureText(node.label, nodeScale);
-  const pillWidth = textWidth + 56 * nodeScale;
   const pillHeight = 40 * nodeScale;
 
-  const texture = createKnockoutPillTexture(node.label, color, pillWidth, pillHeight, fontSize);
+  let pillWidth = textWidth + 56 * nodeScale;
+  if (node.badgeCount !== undefined) {
+    const badgeRadius = pillHeight * 0.32;
+    const rightPadding = 16;
+    pillWidth = textWidth + 56 * nodeScale + badgeRadius * 2 + rightPadding;
+  }
+
+  const texture = createKnockoutPillTexture(node.label, color, pillWidth, pillHeight, fontSize, node.badgeCount);
   const sprite = new Sprite(texture);
   sprite.anchor.set(0.5, 0.5);
   sprite.width = pillWidth;

@@ -1,13 +1,7 @@
 <script lang="ts">
   // Sidebar container that renders summary or stage overview.
   import { clearSelection, selectedNode, selectedStage } from '../../stores/lineageState.js';
-  import {
-    isDetailOpen,
-    isSidebarFloating,
-    loadError,
-    setDetailOpen,
-    toggleSidebarFloating,
-  } from '../../stores/uiState.js';
+  import { isDetailOpen, loadError, setDetailOpen } from '../../stores/uiState.js';
   import { hasDetailContent } from '../../services/sidebar/detailContent.js';
   import SummaryView from './SummaryView.svelte';
   import StageOverview from './StageOverview.svelte';
@@ -19,32 +13,20 @@
 </script>
 
 <aside
-  class={`sidebar${$isSidebarFloating ? ' floating' : ''}${
-    sidebarHidden ? ' hidden' : ''
-  }${$isDetailOpen ? ' detail-open' : ''}`}
+  class={`sidebar${sidebarHidden ? ' hidden' : ''}${$isDetailOpen ? ' detail-open' : ''}`}
   id="sidebar"
 >
   <div class="sidebar-header">
     <span class="sidebar-title" id="sidebar-title">{sidebarTitle}</span>
-    <div class="sidebar-header-buttons">
+    {#if showCloseButton}
       <button
-        class="sidebar-expand-btn"
-        id="sidebar-expand"
-        title="Toggle floating"
-        on:click={toggleSidebarFloating}
+        class="sidebar-close-btn"
+        title="Close"
+        on:click={clearSelection}
       >
-        {$isSidebarFloating ? '↙' : '↗'}
+        ×
       </button>
-      {#if showCloseButton}
-        <button
-          class="sidebar-close-btn"
-          title="Close"
-          on:click={clearSelection}
-        >
-          ×
-        </button>
-      {/if}
-    </div>
+    {/if}
   </div>
 
   <div class="sidebar-content" id="sidebar-content">

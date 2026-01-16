@@ -7,11 +7,12 @@
 
   $: detailAvailable = $selectedNode ? hasDetailContent($selectedNode) : false;
   $: showPanel = detailAvailable && $isDetailOpen;
+  $: panelTitle = $selectedNode?.label ?? 'DETAILS';
 </script>
 
 <div class={`detail-panel${showPanel ? ' visible' : ''}`} id="detail-panel">
   <div class="detail-panel-header">
-    <span class="detail-panel-title">DETAILS</span>
+    <span class="detail-panel-title">{panelTitle}</span>
     <button class="detail-panel-close" id="detail-panel-close" on:click={closeDetailPanel}>
       ×
     </button>

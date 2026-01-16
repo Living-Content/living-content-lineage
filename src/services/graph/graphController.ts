@@ -261,12 +261,13 @@ export async function createGraphController({
     const stageNodes = lineageData.nodes.filter((n) => n.stage === stage.id);
     const metaNode: LineageNodeData = {
       id: `meta-${stage.id}`,
-      label: `${stage.label} (${stageNodes.length})`,
+      label: stage.label,
       nodeType: 'meta',
       shape: 'circle',
       stage: stage.id,
       x: (stage.xStart + stage.xEnd) / 2,
       y: 0.5,
+      badgeCount: stageNodes.length,
     };
 
     const pillNode = createPillNode(metaNode, graphScale, app.ticker, {

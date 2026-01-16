@@ -115,6 +115,7 @@ export interface LineageNodeData {
   verifiedBy?: string;
   verifiedAt?: string;
   duration?: string;
+  badgeCount?: number;
 }
 
 export interface LineageEdgeData {
