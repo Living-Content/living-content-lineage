@@ -1,12 +1,12 @@
 import type {
   AssetManifest,
+  AssetType,
   LineageEdgeData,
   LineageGraph,
   LineageManifestSummary,
   LineageNodeData,
 } from '../../../types.js';
 import type { LineageManifest, LineageManifestRecord } from './lineageTypes.js';
-import { mapAssetType } from './assetManifestMapper.js';
 import { computeLayout } from './lineageLayout.js';
 import { getCssVar } from '../../../ui/theme.js';
 
@@ -47,9 +47,11 @@ function buildManifestSummary(
   };
 }
 
+// Builds the renderable graph using adapter-provided asset type mapping.
 export function buildLineageGraph(
   manifest: LineageManifest,
-  assetManifests: Map<string, AssetManifest>
+  assetManifests: Map<string, AssetManifest>,
+  mapAssetType: (assetType: string) => AssetType
 ): LineageGraph {
   const activeManifestId = manifest.active_manifest;
   const activeManifest = manifest.manifests[activeManifestId];
@@ -88,15 +90,15 @@ export function buildLineageGraph(
     nodes.push({
       id: comp.id,
       label: comp.label,
-      nodeType: 'compute',
-      assetType: 'Computation',
+      nodeType: 'process',
+      assetType: 'Action',
       shape: 'circle',
       x: pos.x,
       y: pos.y,
       stage: pos.stage,
       humanDescription: comp.description,
       duration: comp.duration,
-      role: 'compute',
+      role: 'process',
     });
   });
 
@@ -119,10 +121,61 @@ export function buildLineageGraph(
   const edgeList: Array<{ source: string; target: string; isGate?: boolean }> =
     [];
 
+  // Build a set of computation IDs for filtering
+  const compSet = new Set(manifest.computations.map((c) => c.id));
+
+  // Build asset type map
+  const assetTypes = new Map<string, string>();
+  manifest.assets.forEach((asset) => {
+    assetTypes.set(asset.id, asset.asset_type);
+  });
+
+  // Track which assets are produced by computations
+  const assetProducer = new Map<string, string>();
   manifest.computations.forEach((comp) => {
-    comp.inputs.forEach((inputId) => {
+    comp.outputs.forEach((id) => assetProducer.set(id, comp.id));
+  });
+
+  manifest.computations.forEach((comp) => {
+    // Separate inputs into categories
+    const dataInputs = comp.inputs.filter((id) => !compSet.has(id));
+    const sourceInputs = dataInputs.filter((id) => !assetProducer.has(id));
+
+    // Auxiliary inputs (models, code) - these stack vertically below the computation
+    const auxiliaryInputs = sourceInputs.filter((id) => {
+      const type = assetTypes.get(id);
+      return type === 'Code' || type === 'Model';
+    });
+
+    // Regular data inputs - connect directly to computation
+    const regularInputs = dataInputs.filter(
+      (id) => !auxiliaryInputs.includes(id)
+    );
+
+    // Regular inputs connect directly to computation
+    regularInputs.forEach((inputId) => {
       edgeList.push({ source: inputId, target: comp.id });
     });
+
+    // Chain auxiliary inputs: bottom → ... → top → computation
+    // Layout places index 0 closest to computation (top), higher indices below
+    if (auxiliaryInputs.length > 0) {
+      // First auxiliary (closest to comp) connects to computation
+      edgeList.push({
+        source: auxiliaryInputs[0],
+        target: comp.id,
+      });
+
+      // Chain remaining: each connects to the one above it
+      for (let i = 1; i < auxiliaryInputs.length; i++) {
+        edgeList.push({
+          source: auxiliaryInputs[i],
+          target: auxiliaryInputs[i - 1],
+        });
+      }
+    }
+
+    // Outputs connect from computation
     comp.outputs.forEach((outputId) => {
       edgeList.push({ source: comp.id, target: outputId });
     });

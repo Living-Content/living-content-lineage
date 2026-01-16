@@ -1,4 +1,4 @@
-import type { AssetManifest, LineageGraph } from '../../../types.js';
+import type { AssetManifest, AssetType, LineageGraph } from '../../../types.js';
 import type { AssetManifestRequest } from '../assetManifestRequest.js';
 import type { LineageManifest } from './lineageTypes.js';
 import { normalizeAssetManifest } from './assetManifestMapper.js';
@@ -16,9 +16,11 @@ export function getLineageAssetManifestRequests(
     }));
 }
 
+// Parses a lineage manifest using an adapter-provided asset type mapping.
 export function parseLineageManifest(
   manifest: LineageManifest,
-  assetManifests: Map<string, unknown>
+  assetManifests: Map<string, unknown>,
+  mapAssetType: (assetType: string) => AssetType
 ): LineageGraph {
   const normalizedManifests = new Map<string, AssetManifest>();
   assetManifests.forEach((rawManifest, assetId) => {
@@ -28,5 +30,5 @@ export function parseLineageManifest(
     }
   });
 
-  return buildLineageGraph(manifest, normalizedManifests);
+  return buildLineageGraph(manifest, normalizedManifests, mapAssetType);
 }

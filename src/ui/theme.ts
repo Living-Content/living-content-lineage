@@ -1,79 +1,61 @@
 import type { AssetType, NodeType } from '../types.js';
 
-export function getCssVar(name: string, fallback: string): string {
+export function getCssVar(name: string, fallback?: string): string {
   if (typeof window === 'undefined') {
-    return fallback;
+    return fallback ?? '';
   }
   const value = getComputedStyle(document.documentElement)
     .getPropertyValue(name)
     .trim();
-  return value || fallback;
+  return value || fallback || '';
 }
 
 export const NODE_STYLES: Record<
   NodeType,
   {
     color: string;
-    borderColor: string;
-    iconColor: string;
     borderStyle?: string;
   }
 > = {
   data: {
-    color: getCssVar('--node-data-color', '#ffffff'),
-    borderColor: getCssVar('--node-data-border', '#1a1a1a'),
-    iconColor: getCssVar('--node-data-icon', '#1a1a1a'),
+    color: getCssVar('--node-data-color'),
   },
-  compute: {
-    color: getCssVar('--node-compute-color', '#ffffff'),
-    borderColor: getCssVar('--node-compute-border', '#ec4899'),
-    iconColor: getCssVar('--node-compute-icon', '#ec4899'),
+  process: {
+    color: getCssVar('--node-compute-color'),
     borderStyle: 'dashed',
   },
   attestation: {
-    color: getCssVar('--node-attestation-color', '#ffffff'),
-    borderColor: getCssVar('--node-attestation-border', '#22c55e'),
-    iconColor: getCssVar('--node-attestation-icon', '#22c55e'),
+    color: getCssVar('--node-attestation-color'),
   },
   filter: {
-    color: getCssVar('--node-filter-color', '#ffffff'),
-    borderColor: getCssVar('--node-filter-border', '#1a1a1a'),
-    iconColor: getCssVar('--node-filter-icon', '#1a1a1a'),
+    color: getCssVar('--node-filter-color'),
   },
   join: {
-    color: getCssVar('--node-join-color', '#ffffff'),
-    borderColor: getCssVar('--node-join-border', '#1a1a1a'),
-    iconColor: getCssVar('--node-join-icon', '#1a1a1a'),
+    color: getCssVar('--node-join-color'),
   },
   store: {
-    color: getCssVar('--node-store-color', '#fef3c7'),
-    borderColor: getCssVar('--node-store-border', '#ec4899'),
-    iconColor: getCssVar('--node-store-icon', '#d97706'),
+    color: getCssVar('--node-store-color'),
     borderStyle: 'solid',
   },
   media: {
-    color: getCssVar('--node-media-color', '#ffffff'),
-    borderColor: getCssVar('--node-media-border', '#1a1a1a'),
-    iconColor: getCssVar('--node-media-icon', '#1a1a1a'),
+    color: getCssVar('--node-media-color'),
   },
   meta: {
-    color: getCssVar('--node-meta-color', '#f0f4f8'),
-    borderColor: getCssVar('--node-meta-border', '#3b82f6'),
-    iconColor: getCssVar('--node-meta-icon', '#3b82f6'),
+    color: getCssVar('--node-meta-color'),
   },
 };
 
 export const ASSET_TYPE_COLORS: Partial<Record<AssetType, string>> = {
-  Model: getCssVar('--asset-model', '#000000'),
-  Code: getCssVar('--asset-code', '#9ca3af'),
-  Document: getCssVar('--asset-document', '#22d3ee'),
-  Data: getCssVar('--asset-data', '#fb923c'),
-  Dataset: getCssVar('--asset-dataset', '#3b82f6'),
+  Model: getCssVar('--asset-model'),
+  Code: getCssVar('--asset-code'),
+  Document: getCssVar('--asset-document'),
+  Data: getCssVar('--asset-data'),
+  Dataset: getCssVar('--asset-dataset'),
 };
 
 export const NODE_ICON_PATHS: Record<NodeType, string> = {
   data: '/icons/data.svg',
-  compute: '/icons/compute.svg',
+  process: '/icons/compute.svg',
   attestation: '/icons/attestation.svg',
   filter: '/icons/filter.svg',
   join: '/icons/join.svg',
@@ -89,4 +71,4 @@ export const ASSET_TYPE_ICONS: Partial<Record<AssetType, string>> = {
 
 export const DEFAULT_NODE_SIZE = 14;
 export const ATTESTATION_NODE_SIZE = 16;
-export const META_NODE_SIZE = 24;
+export const META_NODE_SIZE = 14;

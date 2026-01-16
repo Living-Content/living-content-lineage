@@ -41,7 +41,7 @@
   flex-shrink: 0;
 }
 
-.stage-node-icon.compute {
+.stage-node-icon.process {
   background: var(--color-stage-compute);
 }
 

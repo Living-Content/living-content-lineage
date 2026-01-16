@@ -1,6 +1,6 @@
 <script lang="ts">
   // Sidebar container that renders summary or stage overview.
-  import { selectedNode, selectedStage } from '../../stores/lineageState.js';
+  import { clearSelection, selectedNode, selectedStage } from '../../stores/lineageState.js';
   import {
     isDetailOpen,
     isSidebarFloating,
@@ -14,8 +14,8 @@
 
   $: sidebarTitle = $selectedNode?.label ?? $selectedStage?.label ?? 'CONTEXT';
   $: detailAvailable = $selectedNode ? hasDetailContent($selectedNode) : false;
-  $: sidebarHidden =
-    !$selectedNode && !$selectedStage && !$loadError;
+  $: sidebarHidden = !$selectedNode && !$selectedStage && !$loadError;
+  $: showCloseButton = $selectedNode || $selectedStage;
 </script>
 
 <aside
@@ -26,14 +26,25 @@
 >
   <div class="sidebar-header">
     <span class="sidebar-title" id="sidebar-title">{sidebarTitle}</span>
-    <button
-      class="sidebar-expand-btn"
-      id="sidebar-expand"
-      title="Toggle floating"
-      on:click={toggleSidebarFloating}
-    >
-      {$isSidebarFloating ? '↙' : '↗'}
-    </button>
+    <div class="sidebar-header-buttons">
+      <button
+        class="sidebar-expand-btn"
+        id="sidebar-expand"
+        title="Toggle floating"
+        on:click={toggleSidebarFloating}
+      >
+        {$isSidebarFloating ? '↙' : '↗'}
+      </button>
+      {#if showCloseButton}
+        <button
+          class="sidebar-close-btn"
+          title="Close"
+          on:click={clearSelection}
+        >
+          ×
+        </button>
+      {/if}
+    </div>
   </div>
 
   <div class="sidebar-content" id="sidebar-content">

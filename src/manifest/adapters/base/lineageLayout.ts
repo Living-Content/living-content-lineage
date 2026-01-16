@@ -1,17 +1,29 @@
 import type { Stage } from '../../../types.js';
 import type { LineageManifest } from './lineageTypes.js';
+import { measureLabels } from '../../../graph/textMeasure.js';
 
 export interface LayoutResult {
   positions: Map<string, { x: number; y: number; stage: string }>;
   stages: Stage[];
 }
 
+// Consistent spacing constants
+const HORIZONTAL_GAP = 0.06; // Gap between columns
+const VERTICAL_SPACING = 0.07; // Vertical gap between stacked nodes
+const AUX_VERTICAL_OFFSET = 0.08; // First aux node offset from main line
+const COLUMN_WIDTH = 0.12; // Base column width
+
 export function computeLayout(manifest: LineageManifest): LayoutResult {
   const positions = new Map<string, { x: number; y: number; stage: string }>();
 
-  const nodeSpacingX = 0.08;
-  const nodeSpacingY = 0.06;
-  const attestOffset = 0.1;
+  const attestOffset = -0.08; // Above the node (negative Y)
+
+  // Measure all labels to get actual pill dimensions
+  const allLabels = [
+    ...manifest.assets.map((a) => ({ id: a.id, label: a.label })),
+    ...manifest.computations.map((c) => ({ id: c.id, label: c.label })),
+  ];
+  const pillDimensions = measureLabels(allLabels);
 
   const compSet = new Set(manifest.computations.map((comp) => comp.id));
 
@@ -25,7 +37,22 @@ export function computeLayout(manifest: LineageManifest): LayoutResult {
     assetTypes.set(asset.id, asset.asset_type);
   });
 
-  let currentX = 0.05;
+  // Calculate column width based on widest pill in each column
+  function getColumnWidth(ids: string[]): number {
+    if (ids.length === 0) return 0;
+    let maxWidth = COLUMN_WIDTH;
+    for (const id of ids) {
+      const dims = pillDimensions.get(id);
+      if (dims) {
+        // Convert pixel width to normalized units (approximate)
+        const normalizedWidth = dims.width / 800; // Assuming ~800px reference
+        maxWidth = Math.max(maxWidth, normalizedWidth + HORIZONTAL_GAP);
+      }
+    }
+    return Math.min(maxWidth, 0.20); // Cap at 0.20
+  }
+
+  let currentX = 0.08;
   const placedAssets = new Set<string>();
 
   manifest.computations.forEach((comp) => {
@@ -43,54 +70,58 @@ export function computeLayout(manifest: LineageManifest): LayoutResult {
       return type !== 'Code' && type !== 'Model';
     });
 
+    // Place data source inputs in a column before the computation
     if (dataSourceInputs.length > 0) {
-      const totalHeight = (dataSourceInputs.length - 1) * nodeSpacingY;
+      const totalHeight = (dataSourceInputs.length - 1) * VERTICAL_SPACING;
       const startY = 0.5 - totalHeight / 2;
 
       dataSourceInputs.forEach((inputId, idx) => {
         positions.set(inputId, {
           x: currentX,
-          y: startY + idx * nodeSpacingY,
+          y: startY + idx * VERTICAL_SPACING,
           stage: comp.stage,
         });
         placedAssets.add(inputId);
       });
-      currentX += nodeSpacingX;
+      currentX += getColumnWidth(dataSourceInputs);
     }
 
-    if (auxiliaryInputs.length > 0) {
-      const auxSpacing = 0.04;
-      auxiliaryInputs.forEach((inputId, idx) => {
-        positions.set(inputId, {
-          x: currentX,
-          y: 0.5 - 0.05 - idx * auxSpacing,
-          stage: comp.stage,
-        });
-        placedAssets.add(inputId);
-      });
-    }
-
+    // Place computation node at center line
     positions.set(comp.id, {
       x: currentX,
       y: 0.5,
       stage: comp.stage,
     });
-    currentX += nodeSpacingX;
 
+    // Place auxiliary inputs below the computation (stacked vertically)
+    if (auxiliaryInputs.length > 0) {
+      auxiliaryInputs.forEach((inputId, idx) => {
+        positions.set(inputId, {
+          x: currentX,
+          y: 0.5 + AUX_VERTICAL_OFFSET + idx * VERTICAL_SPACING,
+          stage: comp.stage,
+        });
+        placedAssets.add(inputId);
+      });
+    }
+
+    currentX += getColumnWidth([comp.id]);
+
+    // Place outputs in a column after the computation
     const outputs = comp.outputs.filter((id) => !placedAssets.has(id));
     if (outputs.length > 0) {
-      const totalHeight = (outputs.length - 1) * nodeSpacingY;
+      const totalHeight = (outputs.length - 1) * VERTICAL_SPACING;
       const startY = 0.5 - totalHeight / 2;
 
       outputs.forEach((outputId, idx) => {
         positions.set(outputId, {
           x: currentX,
-          y: startY + idx * nodeSpacingY,
+          y: startY + idx * VERTICAL_SPACING,
           stage: comp.stage,
         });
         placedAssets.add(outputId);
       });
-      currentX += nodeSpacingX;
+      currentX += getColumnWidth(outputs);
     }
   });
 
@@ -119,7 +150,7 @@ export function computeLayout(manifest: LineageManifest): LayoutResult {
     }
   });
 
-  const padding = nodeSpacingX / 2;
+  const padding = 0.04;
   const stages: Stage[] = manifest.stages.map((stage) => {
     const minX = stageMinX.get(stage.id) ?? 0;
     const maxX = stageMaxX.get(stage.id) ?? 0;

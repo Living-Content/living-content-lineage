@@ -3,7 +3,7 @@ export type ManifestType = "c2pa" | "eqty" | "custom";
 export type AssetType =
   | "Model"
   | "Code"
-  | "Computation"
+  | "Action"
   | "Data"
   | "Document"
   | "Dataset"
@@ -11,7 +11,7 @@ export type AssetType =
 
 export type NodeType =
   | "data"
-  | "compute"
+  | "process"
   | "attestation"
   | "filter"
   | "join"
@@ -19,7 +19,7 @@ export type NodeType =
   | "media"
   | "meta";
 
-export type NodeRole = "source" | "sink" | "intermediate" | "compute";
+export type NodeRole = "source" | "sink" | "intermediate" | "process";
 
 export type NodeShape = "circle" | "square" | "dashed-circle" | "connector";
 
@@ -143,8 +143,8 @@ export function assetTypeToNodeType(assetType: AssetType): NodeType {
   switch (assetType) {
     case "Model":
     case "Code":
-    case "Computation":
-      return "compute";
+    case "Action":
+      return "process";
     case "Data":
     case "Document":
       return "data";

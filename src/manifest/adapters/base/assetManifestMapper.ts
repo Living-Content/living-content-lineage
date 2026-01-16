@@ -1,4 +1,4 @@
-import type { AssetManifest, AssetType } from '../../../types.js';
+import type { AssetManifest } from '../../../types.js';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -8,19 +8,6 @@ function toCamelCase(value: string): string {
   return value.replace(/_([a-z])/g, (_, letter: string) =>
     letter.toUpperCase()
   );
-}
-
-export function mapAssetType(assetType: string): AssetType {
-  const mapping: Record<string, AssetType> = {
-    Model: 'Model',
-    Code: 'Code',
-    Computation: 'Computation',
-    Data: 'Data',
-    Document: 'Document',
-    Dataset: 'Dataset',
-    Media: 'Media',
-  };
-  return mapping[assetType] ?? 'Data';
 }
 
 function normalizeAssetContent(

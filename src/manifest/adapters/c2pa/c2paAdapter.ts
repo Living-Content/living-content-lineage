@@ -1,4 +1,4 @@
-import type { LineageGraph } from '../../../types.js';
+import type { AssetType, LineageGraph } from '../../../types.js';
 import type { ManifestAdapter } from '../manifestAdapter.js';
 import {
   getLineageAssetManifestRequests,
@@ -13,6 +13,25 @@ function isC2paManifest(raw: unknown): raw is LineageManifest {
   return true;
 }
 
+// Maps C2PA asset type identifiers and internal labels into AssetType.
+function mapAssetType(assetType: string): AssetType {
+  if (assetType.startsWith('c2pa.types.model')) return 'Model';
+  if (assetType.startsWith('c2pa.types.dataset')) return 'Dataset';
+
+  switch (assetType) {
+    case 'Model':
+    case 'Code':
+    case 'Action':
+    case 'Data':
+    case 'Document':
+    case 'Dataset':
+    case 'Media':
+      return assetType;
+    default:
+      throw new Error(`Unsupported asset_type: ${assetType}`);
+  }
+}
+
 export const c2paAdapter: ManifestAdapter<LineageManifest> = {
   type: 'c2pa',
   isCompatible(raw: unknown): raw is LineageManifest {
@@ -25,6 +44,6 @@ export const c2paAdapter: ManifestAdapter<LineageManifest> = {
     raw: LineageManifest,
     assetManifests: Map<string, unknown>
   ): LineageGraph {
-    return parseLineageManifest(raw, assetManifests);
+    return parseLineageManifest(raw, assetManifests, mapAssetType);
   },
 };

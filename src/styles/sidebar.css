@@ -41,7 +41,13 @@
   color: var(--color-text-primary);
 }
 
-.sidebar-expand-btn {
+.sidebar-header-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.sidebar-expand-btn,
+.sidebar-close-btn {
   background: transparent;
   border: none;
   color: var(--color-text-muted);
@@ -51,7 +57,8 @@
   border-radius: 4px;
 }
 
-.sidebar-expand-btn:hover {
+.sidebar-expand-btn:hover,
+.sidebar-close-btn:hover {
   background: var(--color-border-hover);
   color: var(--color-text-secondary);
 }

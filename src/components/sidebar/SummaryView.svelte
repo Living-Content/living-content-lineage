@@ -5,6 +5,7 @@
   import { formatTimestamp } from '../../services/sidebar/dateFormat.js';
   import ImpactSection from './ImpactSection.svelte';
   import MetaRow from './MetaRow.svelte';
+  import { formatAssetTypeLabel } from '../../services/labels.js';
 
   export let node: LineageNodeData;
 
@@ -19,7 +20,7 @@
 </script>
 
 {#if node.assetType}
-  <div class="sidebar-type-badge">{node.assetType}</div>
+  <div class="sidebar-type-badge">{formatAssetTypeLabel(node.assetType)}</div>
 {/if}
 
 {#if node.humanDescription}

@@ -1,16 +1,17 @@
 <script lang="ts">
   // Summary view for a selected stage.
   import type { LineageEdgeData, LineageNodeData } from '../../types.js';
+  import { formatAssetTypeLabel } from '../../services/labels.js';
 
   export let nodes: LineageNodeData[];
   export let edges: LineageEdgeData[];
 
-  $: computeNodes = nodes.filter((node) => node.nodeType === 'compute');
+  $: processNodes = nodes.filter((node) => node.nodeType === 'process');
   $: dataNodes = nodes.filter((node) => node.nodeType === 'data');
   $: attestNodes = nodes.filter((node) => node.nodeType === 'attestation');
 
   $: groups = [
-    { label: 'Computations', nodes: computeNodes },
+    { label: 'Processes', nodes: processNodes },
     { label: 'Data', nodes: dataNodes },
     { label: 'Attestations', nodes: attestNodes },
   ];
@@ -44,7 +45,9 @@
             {#if node.duration}
               <span class="stage-node-meta">{node.duration}</span>
             {:else if node.assetType}
-              <span class="stage-node-meta">{node.assetType}</span>
+              <span class="stage-node-meta">
+                {formatAssetTypeLabel(node.assetType)}
+              </span>
             {/if}
           </div>
         {/each}

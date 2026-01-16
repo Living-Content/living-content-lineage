@@ -1,4 +1,4 @@
-import type { LineageGraph } from '../../../types.js';
+import type { AssetType, LineageGraph } from '../../../types.js';
 import type { ManifestAdapter } from '../manifestAdapter.js';
 import {
   getLineageAssetManifestRequests,
@@ -6,6 +6,22 @@ import {
 } from '../base/lineageAdapter.js';
 import { isLineageManifest, type LineageManifest } from '../base/lineageTypes.js';
 import { isCustomManifest } from './customTypes.js';
+
+// Maps manifest asset_type strings to internal AssetType values.
+function mapAssetType(assetType: string): AssetType {
+  switch (assetType) {
+    case 'Model':
+    case 'Code':
+    case 'Action':
+    case 'Data':
+    case 'Document':
+    case 'Dataset':
+    case 'Media':
+      return assetType;
+    default:
+      throw new Error(`Unsupported asset_type: ${assetType}`);
+  }
+}
 
 export const customAdapter: ManifestAdapter<LineageManifest> = {
   type: 'custom',
@@ -19,6 +35,6 @@ export const customAdapter: ManifestAdapter<LineageManifest> = {
     raw: LineageManifest,
     assetManifests: Map<string, unknown>
   ): LineageGraph {
-    return parseLineageManifest(raw, assetManifests);
+    return parseLineageManifest(raw, assetManifests, mapAssetType);
   },
 };
