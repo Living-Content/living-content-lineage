@@ -1,6 +1,6 @@
 /**
  * Level-of-detail controller with GSAP animations.
- * Manages collapse to meta nodes and expand to detail view.
+ * Manages collapse to stage nodes and expand to detail view.
  *
  * Animation locks zoom input via state.isAnimating - viewport should check this.
  */
@@ -26,8 +26,8 @@ export interface LODState {
 export interface LODLayers {
   nodeLayer: Container;
   edgeLayer: Container;
-  metaNodeLayer: Container;
-  metaEdgeLayer: Container;
+  stageNodeLayer: Container;
+  stageEdgeLayer: Container;
   stageLayer: Container;
 }
 
@@ -43,7 +43,7 @@ export interface LODController {
 
 export function createLODController(
   nodeMap: Map<string, PillNode>,
-  metaNodeMap: Map<string, PillNode>,
+  stageNodeMap: Map<string, PillNode>,
   _stages: Stage[],
   layers: LODLayers,
   callbacks: LODCallbacks
@@ -53,15 +53,14 @@ export function createLODController(
     isAnimating: false,
   };
 
-  // Cache original positions at creation time
   const originalPositions = new Map<string, { x: number; y: number }>();
   nodeMap.forEach((node, id) => {
     originalPositions.set(id, { x: node.position.x, y: node.position.y });
   });
 
-  function getMetaPosition(stageId: string): { x: number; y: number } | null {
-    const metaNode = metaNodeMap.get(stageId);
-    return metaNode ? { x: metaNode.position.x, y: metaNode.position.y } : null;
+  function getStagePosition(stageId: string): { x: number; y: number } | null {
+    const stageNode = stageNodeMap.get(stageId);
+    return stageNode ? { x: stageNode.position.x, y: stageNode.position.y } : null;
   }
 
   function collapse(): void {
@@ -69,18 +68,15 @@ export function createLODController(
     state.isAnimating = true;
     state.isCollapsed = true;
 
-    // Hide detail layers
     layers.edgeLayer.visible = false;
     layers.stageLayer.visible = false;
 
-    // Prepare meta layer
-    layers.metaNodeLayer.visible = true;
-    metaNodeMap.forEach((node) => {
+    layers.stageNodeLayer.visible = true;
+    stageNodeMap.forEach((node) => {
       node.alpha = 0;
       node.scale.set(0.5);
     });
 
-    // Get nodes sorted by x for stagger effect
     const nodes = Array.from(nodeMap.values()).sort(
       (a, b) => originalPositions.get(a.nodeData.id)!.x - originalPositions.get(b.nodeData.id)!.x
     );
@@ -88,25 +84,23 @@ export function createLODController(
     const tl = gsap.timeline({
       onComplete: () => {
         layers.nodeLayer.visible = false;
-        layers.metaEdgeLayer.visible = true;
+        layers.stageEdgeLayer.visible = true;
         state.isAnimating = false;
         callbacks.onCollapseEnd?.();
       },
     });
 
-    // Animate nodes to meta positions
     nodes.forEach((node, i) => {
-      const metaPos = getMetaPosition(node.nodeData.stage || '');
-      if (!metaPos) return;
+      const stagePos = getStagePosition(node.nodeData.stage || '');
+      if (!stagePos) return;
 
       const delay = i * 0.01;
-      tl.to(node.position, { x: metaPos.x, y: metaPos.y, duration: DURATION, ease: 'power2.in' }, delay);
+      tl.to(node.position, { x: stagePos.x, y: stagePos.y, duration: DURATION, ease: 'power2.in' }, delay);
       tl.to(node, { alpha: 0, duration: DURATION * 0.6, ease: 'power2.in' }, delay);
     });
 
-    // Animate meta nodes in
-    const metaNodes = Array.from(metaNodeMap.values());
-    metaNodes.forEach((node, i) => {
+    const stageNodes = Array.from(stageNodeMap.values());
+    stageNodes.forEach((node, i) => {
       const delay = DURATION * 0.4 + i * 0.04;
       tl.to(node, { alpha: 1, duration: DURATION * 0.6, ease: 'power2.out' }, delay);
       tl.to(node, { pixi: { scaleX: 1, scaleY: 1 }, duration: DURATION * 0.8, ease: 'back.out(1.4)' }, delay);
@@ -118,15 +112,13 @@ export function createLODController(
     state.isAnimating = true;
     state.isCollapsed = false;
 
-    // Hide meta edges
-    layers.metaEdgeLayer.visible = false;
+    layers.stageEdgeLayer.visible = false;
 
-    // Reset nodes to meta positions before animating
     nodeMap.forEach((node) => {
-      const metaPos = getMetaPosition(node.nodeData.stage || '');
-      if (metaPos) {
-        node.position.x = metaPos.x;
-        node.position.y = metaPos.y;
+      const stagePos = getStagePosition(node.nodeData.stage || '');
+      if (stagePos) {
+        node.position.x = stagePos.x;
+        node.position.y = stagePos.y;
       }
       node.alpha = 0;
       node.scale.set(0.5);
@@ -134,14 +126,13 @@ export function createLODController(
 
     layers.nodeLayer.visible = true;
 
-    // Sort by original x position for stagger
     const nodes = Array.from(nodeMap.values()).sort(
       (a, b) => originalPositions.get(a.nodeData.id)!.x - originalPositions.get(b.nodeData.id)!.x
     );
 
     const tl = gsap.timeline({
       onComplete: () => {
-        layers.metaNodeLayer.visible = false;
+        layers.stageNodeLayer.visible = false;
         layers.edgeLayer.visible = true;
         layers.stageLayer.visible = true;
         state.isAnimating = false;
@@ -149,14 +140,12 @@ export function createLODController(
       },
     });
 
-    // Fade out meta nodes
-    const metaNodes = Array.from(metaNodeMap.values());
-    metaNodes.forEach((node, i) => {
+    const stageNodes = Array.from(stageNodeMap.values());
+    stageNodes.forEach((node, i) => {
       tl.to(node, { alpha: 0, duration: DURATION * 0.3, ease: 'power2.in' }, i * 0.02);
       tl.to(node, { pixi: { scaleX: 0.5, scaleY: 0.5 }, duration: DURATION * 0.3, ease: 'power2.in' }, i * 0.02);
     });
 
-    // Animate nodes to original positions
     nodes.forEach((node, i) => {
       const original = originalPositions.get(node.nodeData.id);
       if (!original) return;

@@ -10,22 +10,18 @@ const NODE_COLOR_VARS: Record<NodeType, string> = {
   data: '--node-data-color',
   process: '--node-compute-color',
   attestation: '--node-attestation-color',
-  filter: '--node-filter-color',
-  join: '--node-join-color',
   store: '--node-store-color',
   media: '--node-media-color',
-  meta: '--node-meta-color',
+  stage: '--node-stage-color',
 };
 
 const NODE_FALLBACK_COLORS: Record<NodeType, string> = {
   data: '#4d96ff',
   process: '#ff6b6b',
   attestation: '#6bcb77',
-  filter: '#4d96ff',
-  join: '#ffd93d',
   store: '#ffd93d',
   media: '#4d96ff',
-  meta: '#4d96ff',
+  stage: '#4d96ff',
 };
 
 export const DEFAULT_NODE_ALPHA = 0.75;

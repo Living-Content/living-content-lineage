@@ -13,19 +13,23 @@ function isC2paManifest(raw: unknown): raw is LineageManifest {
   return true;
 }
 
-// Maps C2PA asset type identifiers and internal labels into AssetType.
+/**
+ * Maps C2PA asset type identifiers and internal labels into AssetType.
+ */
 function mapAssetType(assetType: string): AssetType {
   if (assetType.startsWith('c2pa.types.model')) return 'Model';
   if (assetType.startsWith('c2pa.types.dataset')) return 'Dataset';
 
   switch (assetType) {
-    case 'Model':
-    case 'Code':
-    case 'Action':
-    case 'Data':
-    case 'Document':
-    case 'Dataset':
     case 'Media':
+    case 'Document':
+    case 'DataObject':
+    case 'Dataset':
+    case 'Code':
+    case 'Model':
+    case 'Action':
+    case 'Attestation':
+    case 'Credential':
       return assetType;
     default:
       throw new Error(`Unsupported asset_type: ${assetType}`);

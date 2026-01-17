@@ -96,9 +96,9 @@
   --node-media-border: var(--node-media-color);
   --node-media-icon: var(--node-media-color);
 
-  --node-meta-color: rgb(77, 150, 255);
-  --node-meta-border: var(--node-meta-color);
-  --node-meta-icon: var(--node-meta-color);
+  --node-stage-color: rgb(77, 150, 255);
+  --node-stage-border: var(--node-stage-color);
+  --node-stage-icon: var(--node-stage-color);
 
   --asset-model: rgb(77, 150, 255);
   --asset-code: rgb(77, 150, 255);

@@ -15,8 +15,8 @@ export const LOD_EXPAND_THRESHOLD = 0.75;   // Expand when zooming in past this
 export const LOD_THRESHOLD = 0.7;           // Legacy - use for callbacks
 export const LOD_ANIMATION_MS = 300;
 
-// Meta nodes
-export const META_NODE_SCALE = 2.0;
+// Stage nodes (collapsed view)
+export const STAGE_NODE_SCALE = 2.0;
 
 // Selection highlighting
 export const FADED_NODE_ALPHA = 0.25;
@@ -27,9 +27,9 @@ export const EDGE_ARROW_SIZE = 8;
 export const EDGE_ARROW_GAP = 8;
 export const EDGE_GRADIENT_STEPS = 10;
 
-// Meta edges (collapsed view)
-export const META_EDGE_WIDTH = 3;
-export const META_ARROW_SIZE = 12;
+// Stage edges (collapsed view)
+export const STAGE_EDGE_WIDTH = 3;
+export const STAGE_ARROW_SIZE = 12;
 
 // Stage labels
 export const STAGE_LABEL_FONT_SIZE = 20;

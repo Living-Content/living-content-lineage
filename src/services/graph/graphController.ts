@@ -10,12 +10,12 @@ import { createPillNode, type PillNode, DEFAULT_NODE_ALPHA } from './nodeRendere
 import { createIconNode } from './iconNodeRenderer.js';
 import { renderEdges } from './edgeRenderer.js';
 import { getIconNodeConfig } from '../../ui/theme.js';
-import { renderMetaEdges } from './metaEdgeRenderer.js';
+import { renderStageEdges } from './stageEdgeRenderer.js';
 import { renderStageLabels, type TopNodeInfo } from './stageLabelRenderer.js';
 import { createViewportState, createViewportHandlers } from './viewport.js';
 import { createLODController, type LODLayers } from './lodController.js';
 import { createTitleOverlay } from './titleOverlay.js';
-import { LOD_THRESHOLD, META_NODE_SCALE, FADED_NODE_ALPHA } from '../../config/constants.js';
+import { LOD_THRESHOLD, STAGE_NODE_SCALE, FADED_NODE_ALPHA } from '../../config/constants.js';
 
 interface HoverPayload {
   title: string;
@@ -81,14 +81,14 @@ export async function createGraphController({
 
   const edgeLayer = new Container();
   const nodeLayer = new Container();
-  const metaNodeLayer = new Container();
-  const metaEdgeLayer = new Container();
+  const stageNodeLayer = new Container();
+  const stageEdgeLayer = new Container();
   viewport.addChild(edgeLayer);
   viewport.addChild(nodeLayer);
-  viewport.addChild(metaNodeLayer);
-  viewport.addChild(metaEdgeLayer);
-  metaNodeLayer.visible = false;
-  metaEdgeLayer.visible = false;
+  viewport.addChild(stageNodeLayer);
+  viewport.addChild(stageEdgeLayer);
+  stageNodeLayer.visible = false;
+  stageEdgeLayer.visible = false;
 
   const stageLayer = new Container();
   app.stage.addChild(stageLayer);
@@ -100,7 +100,7 @@ export async function createGraphController({
   viewport.position.set(viewportState.x, viewportState.y);
 
   const nodeMap = new Map<string, PillNode>();
-  const metaNodeMap = new Map<string, PillNode>();
+  const stageNodeMap = new Map<string, PillNode>();
   let selectedNodeId: string | null = null;
 
   const nodePositions = new Map<string, { x: number; y: number }>();
@@ -259,10 +259,10 @@ export async function createGraphController({
 
   for (const stage of lineageData.stages) {
     const stageNodes = lineageData.nodes.filter((n) => n.stage === stage.id);
-    const metaNode: LineageNodeData = {
-      id: `meta-${stage.id}`,
+    const stageNodeData: LineageNodeData = {
+      id: `stage-${stage.id}`,
       label: stage.label,
-      nodeType: 'meta',
+      nodeType: 'stage',
       shape: 'circle',
       stage: stage.id,
       x: (stage.xStart + stage.xEnd) / 2,
@@ -270,7 +270,7 @@ export async function createGraphController({
       badgeCount: stageNodes.length,
     };
 
-    const pillNode = createPillNode(metaNode, graphScale, app.ticker, {
+    const pillNode = createPillNode(stageNodeData, graphScale, app.ticker, {
       onClick: () => {
         const stageEdges = lineageData.edges.filter(
           (e) => stageNodes.some((n) => n.id === e.source) || stageNodes.some((n) => n.id === e.target)
@@ -282,7 +282,7 @@ export async function createGraphController({
         const bounds = pillNode.getBounds();
         callbacks.onHover({
           title: stage.label,
-          nodeType: 'meta',
+          nodeType: 'stage',
           screenX: bounds.x + bounds.width / 2,
           screenY: bounds.y,
           size: 40,
@@ -292,16 +292,16 @@ export async function createGraphController({
         container.style.cursor = 'grab';
         callbacks.onHoverEnd();
       },
-    }, { scale: META_NODE_SCALE });
-    metaNodeLayer.addChild(pillNode);
-    metaNodeMap.set(stage.id, pillNode);
+    }, { scale: STAGE_NODE_SCALE });
+    stageNodeLayer.addChild(pillNode);
+    stageNodeMap.set(stage.id, pillNode);
   }
 
-  renderMetaEdges(metaEdgeLayer, lineageData.stages, metaNodeMap);
+  renderStageEdges(stageEdgeLayer, lineageData.stages, stageNodeMap);
 
-  const lodLayers: LODLayers = { nodeLayer, edgeLayer, metaNodeLayer, metaEdgeLayer, stageLayer };
+  const lodLayers: LODLayers = { nodeLayer, edgeLayer, stageNodeLayer, stageEdgeLayer, stageLayer };
 
-  const lodController = createLODController(nodeMap, metaNodeMap, lineageData.stages, lodLayers, {
+  const lodController = createLODController(nodeMap, stageNodeMap, lineageData.stages, lodLayers, {
     onCollapseEnd: () => {
       titleOverlay.setVisible(true);
       updateTitlePosition();
@@ -316,7 +316,7 @@ export async function createGraphController({
   function updateTitlePosition(): void {
     const firstStage = lineageData.stages[0];
     if (!firstStage) return;
-    const leftmostNode = metaNodeMap.get(firstStage.id);
+    const leftmostNode = stageNodeMap.get(firstStage.id);
     if (!leftmostNode) return;
     titleOverlay.updatePosition(leftmostNode, viewportState);
   }

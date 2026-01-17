@@ -36,15 +36,15 @@
   },
 
   "stages": [
-    { "id": "consume", "label": "Consume" },
-    { "id": "select", "label": "Select" },
-    { "id": "retrieve", "label": "Retrieve" },
-    { "id": "reflect", "label": "Reflect" },
-    { "id": "plan", "label": "Plan" },
-    { "id": "search", "label": "Search" },
-    { "id": "evaluate", "label": "Evaluate" },
-    { "id": "generate", "label": "Generate" },
-    { "id": "save", "label": "Save" }
+    { "id": "consume", "label": "Consume", "type": "consume", "phase": "Acquisition" },
+    { "id": "select", "label": "Select", "type": "select", "phase": "Preparation" },
+    { "id": "retrieve", "label": "Retrieve", "type": "retrieve", "phase": "Retrieval" },
+    { "id": "reflect", "label": "Reflect", "type": "reflect", "phase": "Reasoning" },
+    { "id": "plan", "label": "Plan", "type": "plan", "phase": "Reasoning" },
+    { "id": "search", "label": "Search", "type": "search", "phase": "Retrieval" },
+    { "id": "evaluate", "label": "Evaluate", "type": "evaluate", "phase": "Reasoning" },
+    { "id": "generate", "label": "Generate", "type": "generate", "phase": "Generation" },
+    { "id": "save", "label": "Save", "type": "save", "phase": "Persistence" }
   ],
 
   "computations": [
@@ -53,7 +53,7 @@
       "label": "Consume Query",
       "stage": "consume",
       "description": "Receives and validates the user's question, preparing it for the AI pipeline.",
-      "duration": "21s",
+      "duration": "21ms",
       "inputs": ["data-user-query"],
       "outputs": ["data-consumed-query"]
     },
@@ -142,34 +142,34 @@
     {
       "id": "data-consumed-query",
       "label": "Processed Query",
-      "asset_type": "Document",
+      "asset_type": "DataObject",
       "description": "The user's question after parsing and validation, ready for processing."
     },
     {
       "id": "model-select-tool",
-      "label": "Gemini 2.5 Flash",
+      "label": "Tool Selection Model",
       "asset_type": "Model",
-      "description": "Google's lightweight model optimized for speed. Fast inference with low latency, ideal for quick classification tasks.",
+      "description": "Gemini 2.5 Flash - Google's lightweight model optimized for speed. Fast inference with low latency, ideal for quick classification tasks.",
       "manifest_url": "./assets/model-select-tool.json",
       "tokens": { "input": 132, "output": 15 }
     },
     {
       "id": "code-select-tool",
-      "label": "Tool Selector",
+      "label": "Tool Selection Code",
       "asset_type": "Code",
       "description": "Analyzes the query and chooses the best tool to answer it. Selected the knowledge query tool.",
       "manifest_url": "./assets/code-select-tool.json"
     },
     {
       "id": "data-selected-tool",
-      "label": "Selected Tool",
-      "asset_type": "Document",
+      "label": "Tool Selection Result",
+      "asset_type": "DataObject",
       "description": "The decision to use the knowledge query tool for answering this question.",
       "manifest_url": "./assets/data-selected-tool.json"
     },
     {
       "id": "code-retrieve-history",
-      "label": "History Retriever",
+      "label": "History Retrieval Code",
       "asset_type": "Code",
       "description": "Fetches previous messages from the conversation for context.",
       "manifest_url": "./assets/code-retrieve-history.json"
@@ -182,14 +182,14 @@
     },
     {
       "id": "model-reflect",
-      "label": "Gemini 2.5 Flash",
+      "label": "Reflection Model",
       "asset_type": "Model",
-      "description": "Google's lightweight model optimized for speed. Cost-effective for high-volume analysis tasks.",
+      "description": "Gemini 2.5 Flash - Google's lightweight model optimized for speed. Cost-effective for high-volume analysis tasks.",
       "tokens": { "input": 245, "output": 89 }
     },
     {
       "id": "code-reflect",
-      "label": "Reflector",
+      "label": "Reflection Code",
       "asset_type": "Code",
       "description": "Examines the query to identify the user's underlying intent and information needs.",
       "manifest_url": "./assets/code-reflect.json"
@@ -197,20 +197,20 @@
     {
       "id": "data-reflection",
       "label": "Query Analysis",
-      "asset_type": "Document",
+      "asset_type": "DataObject",
       "description": "Determined that the user wants to explore and understand the database contents.",
       "manifest_url": "./assets/data-reflection.json"
     },
     {
       "id": "model-plan",
-      "label": "Gemini 2.5 Flash",
+      "label": "Planning Model",
       "asset_type": "Model",
-      "description": "Google's lightweight model optimized for speed. Efficient for structured planning and reasoning tasks.",
+      "description": "Gemini 2.5 Flash - Google's lightweight model optimized for speed. Efficient for structured planning and reasoning tasks.",
       "tokens": { "input": 312, "output": 156 }
     },
     {
       "id": "code-plan",
-      "label": "Planner",
+      "label": "Planning Code",
       "asset_type": "Code",
       "description": "Develops a step-by-step plan for searching and retrieving knowledge.",
       "manifest_url": "./assets/code-plan.json"
@@ -218,13 +218,13 @@
     {
       "id": "data-plan",
       "label": "Execution Plan",
-      "asset_type": "Document",
+      "asset_type": "DataObject",
       "description": "The search strategy: query the knowledge base for database content overview.",
       "manifest_url": "./assets/data-plan.json"
     },
     {
       "id": "code-retrieve",
-      "label": "Knowledge Retriever",
+      "label": "Knowledge Retrieval Code",
       "asset_type": "Code",
       "description": "Searches the knowledge base using the planned strategy.",
       "manifest_url": "./assets/code-retrieve.json"
@@ -238,48 +238,48 @@
     },
     {
       "id": "model-evaluate",
-      "label": "Claude Sonnet 4.5",
+      "label": "Evaluation Model",
       "asset_type": "Model",
-      "description": "Anthropic's standard-tier model. Balances capability and cost, strong at nuanced evaluation and judgment tasks.",
+      "description": "Claude Sonnet 4.5 - Anthropic's standard-tier model. Balances capability and cost, strong at nuanced evaluation and judgment tasks.",
       "tokens": { "input": 1847, "output": 312 }
     },
     {
       "id": "code-evaluate",
-      "label": "Evaluator",
+      "label": "Evaluation Code",
       "asset_type": "Code",
       "description": "Scores and ranks the retrieved documents based on relevance to the question."
     },
     {
       "id": "data-evaluation",
       "label": "Relevance Assessment",
-      "asset_type": "Document",
+      "asset_type": "DataObject",
       "description": "The ranked list of documents deemed most useful for answering the question."
     },
     {
       "id": "model-generate-response",
-      "label": "Claude Sonnet 4.5",
+      "label": "Response Generation Model",
       "asset_type": "Model",
-      "description": "Anthropic's standard-tier model. Excellent at synthesis and natural language generation with nuanced understanding.",
+      "description": "Claude Sonnet 4.5 - Anthropic's standard-tier model. Excellent at synthesis and natural language generation with nuanced understanding.",
       "manifest_url": "./assets/model-generate-response.json",
       "tokens": { "input": 2156, "output": 847 }
     },
     {
       "id": "code-generate-response",
-      "label": "Response Generator",
+      "label": "Response Generation Code",
       "asset_type": "Code",
       "description": "Synthesizes the evaluated information into a coherent, helpful response.",
       "manifest_url": "./assets/code-generate-response.json"
     },
     {
       "id": "data-generated-response",
-      "label": "Response",
+      "label": "Generated Response",
       "asset_type": "Document",
       "description": "The complete answer explaining what's in the database - a collection of digital art.",
       "manifest_url": "./assets/data-generated-response.json"
     },
     {
       "id": "code-save-response",
-      "label": "Response Saver",
+      "label": "Persistence Code",
       "asset_type": "Code",
       "description": "Records the response and its lineage for future reference and auditing.",
       "manifest_url": "./assets/code-save-response.json"
@@ -287,7 +287,7 @@
     {
       "id": "data-saved-response",
       "label": "Saved Response",
-      "asset_type": "Document",
+      "asset_type": "DataObject",
       "description": "The response has been saved to the conversation history for continuity."
     }
   ],
@@ -295,7 +295,7 @@
   "attestations": [
     {
       "id": "attest-generate",
-      "label": "Attest",
+      "label": "Generation Attestation",
       "stage": "generate",
       "verifies": ["data-generated-response"],
       "description": "Cryptographic proof that this response was generated in a secure, tamper-proof environment."

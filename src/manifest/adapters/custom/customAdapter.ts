@@ -7,16 +7,20 @@ import {
 import { isLineageManifest, type LineageManifest } from '../base/lineageTypes.js';
 import { isCustomManifest } from './customTypes.js';
 
-// Maps manifest asset_type strings to internal AssetType values.
+/**
+ * Maps manifest asset_type strings to internal AssetType values.
+ */
 function mapAssetType(assetType: string): AssetType {
   switch (assetType) {
-    case 'Model':
-    case 'Code':
-    case 'Action':
-    case 'Data':
-    case 'Document':
-    case 'Dataset':
     case 'Media':
+    case 'Document':
+    case 'DataObject':
+    case 'Dataset':
+    case 'Code':
+    case 'Model':
+    case 'Action':
+    case 'Attestation':
+    case 'Credential':
       return assetType;
     default:
       throw new Error(`Unsupported asset_type: ${assetType}`);

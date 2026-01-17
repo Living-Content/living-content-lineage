@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://livingcontent.org/schemas/lineage.schema.json",
+  "title": "Living Content Lineage Schema",
+  "description": "Schema definitions for workflow stages and asset types in Living Content lineage graphs",
+
+  "$defs": {
+    "WorkflowPhase": {
+      "description": "High-level workflow phase grouping related stage types",
+      "type": "string",
+      "enum": ["Acquisition", "Preparation", "Retrieval", "Reasoning", "Generation", "Persistence"]
+    },
+    "WorkflowStageType": {
+      "description": "Specific workflow stage operation type",
+      "type": "string",
+      "enum": [
+        "consume", "ingest", "receive", "import",
+        "select", "filter", "transform", "validate",
+        "retrieve", "search", "query", "lookup",
+        "reflect", "plan", "evaluate", "analyze",
+        "generate", "synthesize", "create", "compose",
+        "save", "store", "publish", "export"
+      ]
+    },
+    "AssetCategory": {
+      "description": "High-level category grouping related asset types",
+      "type": "string",
+      "enum": ["Content", "Process", "Verification"]
+    },
+    "AssetType": {
+      "description": "Specific asset content or process type",
+      "type": "string",
+      "enum": [
+        "Media", "Document", "DataObject", "Dataset",
+        "Code", "Model", "Action",
+        "Attestation", "Credential"
+      ]
+    },
+    "NodeType": {
+      "description": "Visual node category for rendering",
+      "type": "string",
+      "enum": ["data", "process", "attestation", "store", "media", "stage"]
+    },
+    "WorkflowStage": {
+      "description": "A workflow stage definition",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique stage identifier"
+        },
+        "type": {
+          "$ref": "#/$defs/WorkflowStageType",
+          "description": "Standard stage operation type"
+        },
+        "phase": {
+          "$ref": "#/$defs/WorkflowPhase",
+          "description": "Workflow phase this stage belongs to"
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable display name"
+        }
+      },
+      "required": ["id", "label"]
+    },
+    "LineageAsset": {
+      "description": "An asset flowing through the workflow",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique asset identifier"
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable display name"
+        },
+        "asset_type": {
+          "$ref": "#/$defs/AssetType",
+          "description": "Asset content or process type"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional asset description"
+        },
+        "manifest_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the asset's detailed manifest"
+        }
+      },
+      "required": ["id", "label", "asset_type"]
+    }
+  }
+}

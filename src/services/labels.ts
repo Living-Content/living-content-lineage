@@ -4,21 +4,21 @@ export const NODE_TYPE_LABELS: Record<NodeType, string> = {
   data: 'Data',
   process: 'Process',
   attestation: 'Verification',
-  filter: 'Filter',
-  join: 'Merge',
   store: 'Storage',
   media: 'Media',
-  meta: 'Stage',
+  stage: 'Stage',
 };
 
-export const ASSET_TYPE_LABELS: Partial<Record<AssetType, string>> = {
-  Model: 'Model',
-  Code: 'Code',
-  Action: 'Action',
-  Data: 'Data',
-  Document: 'Document',
-  Dataset: 'Dataset',
+export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   Media: 'Media',
+  Document: 'Document',
+  DataObject: 'Data Object',
+  Dataset: 'Dataset',
+  Code: 'Code',
+  Model: 'Model',
+  Action: 'Action',
+  Attestation: 'Attestation',
+  Credential: 'Credential',
 };
 
 export function formatNodeTypeLabel(nodeType: NodeType): string {

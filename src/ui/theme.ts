@@ -27,12 +27,6 @@ export const NODE_STYLES: Record<
   attestation: {
     color: getCssVar('--node-attestation-color'),
   },
-  filter: {
-    color: getCssVar('--node-filter-color'),
-  },
-  join: {
-    color: getCssVar('--node-join-color'),
-  },
   store: {
     color: getCssVar('--node-store-color'),
     borderStyle: 'solid',
@@ -40,8 +34,8 @@ export const NODE_STYLES: Record<
   media: {
     color: getCssVar('--node-media-color'),
   },
-  meta: {
-    color: getCssVar('--node-meta-color'),
+  stage: {
+    color: getCssVar('--node-stage-color'),
   },
 };
 
@@ -49,7 +43,7 @@ export const ASSET_TYPE_COLORS: Partial<Record<AssetType, string>> = {
   Model: getCssVar('--asset-model'),
   Code: getCssVar('--asset-code'),
   Document: getCssVar('--asset-document'),
-  Data: getCssVar('--asset-data'),
+  DataObject: getCssVar('--asset-data'),
   Dataset: getCssVar('--asset-dataset'),
 };
 
@@ -57,11 +51,9 @@ export const NODE_ICON_PATHS: Record<NodeType, string> = {
   data: '/icons/data.svg',
   process: '/icons/compute.svg',
   attestation: '/icons/attestation.svg',
-  filter: '/icons/filter.svg',
-  join: '/icons/join.svg',
   store: '/icons/store.svg',
   media: '/icons/media.svg',
-  meta: '/icons/collection.svg',
+  stage: '/icons/collection.svg',
 };
 
 export const ASSET_TYPE_ICONS: Partial<Record<AssetType, string>> = {

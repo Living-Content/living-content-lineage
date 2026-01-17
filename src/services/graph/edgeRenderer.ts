@@ -18,22 +18,18 @@ const NODE_COLOR_VARS: Record<NodeType, string> = {
   data: '--node-data-color',
   process: '--node-compute-color',
   attestation: '--node-attestation-color',
-  filter: '--node-filter-color',
-  join: '--node-join-color',
   store: '--node-store-color',
   media: '--node-media-color',
-  meta: '--node-meta-color',
+  stage: '--node-stage-color',
 };
 
 const NODE_FALLBACK_COLORS: Record<NodeType, number> = {
   data: 0x4d96ff,
   process: 0xff6b6b,
   attestation: 0x6bcb77,
-  filter: 0x4d96ff,
-  join: 0xffd93d,
   store: 0xffd93d,
   media: 0x4d96ff,
-  meta: 0x4d96ff,
+  stage: 0x4d96ff,
 };
 
 let cachedEdgeColor: number | null = null;

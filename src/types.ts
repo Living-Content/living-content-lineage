@@ -1,23 +1,74 @@
 export type ManifestType = "c2pa" | "eqty" | "custom";
 
-export type AssetType =
-  | "Model"
-  | "Code"
-  | "Action"
-  | "Data"
-  | "Document"
-  | "Dataset"
-  | "Media";
+/**
+ * High-level workflow phase grouping related stage types.
+ * Phases represent logical workflow segments from input to output.
+ */
+export type WorkflowPhase =
+  | "Acquisition"
+  | "Preparation"
+  | "Retrieval"
+  | "Reasoning"
+  | "Generation"
+  | "Persistence";
 
+/**
+ * Specific workflow stage operation type.
+ * Each stage type belongs to a single phase.
+ */
+export type WorkflowStageType =
+  // Acquisition - Getting input data into the pipeline
+  | "consume" | "ingest" | "receive" | "import"
+  // Preparation - Selecting, filtering, transforming inputs
+  | "select" | "filter" | "transform" | "validate"
+  // Retrieval - Fetching additional context/data
+  | "retrieve" | "search" | "query" | "lookup"
+  // Reasoning - AI/ML processing and analysis
+  | "reflect" | "plan" | "evaluate" | "analyze"
+  // Generation - Creating new content/outputs
+  | "generate" | "synthesize" | "create" | "compose"
+  // Persistence - Storing/publishing results
+  | "save" | "store" | "publish" | "export";
+
+/**
+ * A workflow stage definition.
+ */
+export interface WorkflowStage {
+  id: string;
+  type: WorkflowStageType;
+  phase: WorkflowPhase;
+  label: string;
+}
+
+/**
+ * High-level category grouping related asset types.
+ */
+export type AssetCategory = "Content" | "Process" | "Verification";
+
+/**
+ * Specific asset content or process type.
+ * - Content: Data flowing through the pipeline (Media, Document, DataObject, Dataset)
+ * - Process: Transformations/computations (Code, Model, Action)
+ * - Verification: Trust/attestation (Attestation, Credential)
+ */
+export type AssetType =
+  // Content
+  | "Media" | "Document" | "DataObject" | "Dataset"
+  // Process
+  | "Code" | "Model" | "Action"
+  // Verification
+  | "Attestation" | "Credential";
+
+/**
+ * Visual node category for rendering in the lineage graph.
+ */
 export type NodeType =
   | "data"
   | "process"
   | "attestation"
-  | "filter"
-  | "join"
   | "store"
   | "media"
-  | "meta";
+  | "stage";
 
 export type NodeRole = "source" | "sink" | "intermediate" | "process";
 
@@ -141,20 +192,82 @@ export interface LineageGraph {
   stages: Stage[];
 }
 
+/**
+ * Maps an asset type to its corresponding node type for rendering.
+ */
 export function assetTypeToNodeType(assetType: AssetType): NodeType {
   switch (assetType) {
     case "Model":
     case "Code":
     case "Action":
       return "process";
-    case "Data":
+    case "DataObject":
     case "Document":
       return "data";
     case "Dataset":
       return "store";
     case "Media":
       return "media";
-    default:
-      return "data";
+    case "Attestation":
+    case "Credential":
+      return "attestation";
+  }
+}
+
+/**
+ * Maps a workflow stage type to its workflow phase.
+ */
+export function workflowStageTypeToPhase(stageType: WorkflowStageType): WorkflowPhase {
+  switch (stageType) {
+    case "consume":
+    case "ingest":
+    case "receive":
+    case "import":
+      return "Acquisition";
+    case "select":
+    case "filter":
+    case "transform":
+    case "validate":
+      return "Preparation";
+    case "retrieve":
+    case "search":
+    case "query":
+    case "lookup":
+      return "Retrieval";
+    case "reflect":
+    case "plan":
+    case "evaluate":
+    case "analyze":
+      return "Reasoning";
+    case "generate":
+    case "synthesize":
+    case "create":
+    case "compose":
+      return "Generation";
+    case "save":
+    case "store":
+    case "publish":
+    case "export":
+      return "Persistence";
+  }
+}
+
+/**
+ * Maps an asset type to its category.
+ */
+export function assetTypeToCategory(assetType: AssetType): AssetCategory {
+  switch (assetType) {
+    case "Media":
+    case "Document":
+    case "DataObject":
+    case "Dataset":
+      return "Content";
+    case "Code":
+    case "Model":
+    case "Action":
+      return "Process";
+    case "Attestation":
+    case "Credential":
+      return "Verification";
   }
 }

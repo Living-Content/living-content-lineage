@@ -108,7 +108,7 @@ export function buildLineageGraph(
       id: attest.id,
       label: attest.label,
       nodeType: 'attestation',
-      assetType: 'Data',
+      assetType: 'Attestation',
       shape: 'circle',
       x: pos.x,
       y: pos.y,

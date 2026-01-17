@@ -1,6 +1,12 @@
+/**
+ * A workflow stage as defined in the manifest.
+ * Stages represent processing steps in the workflow pipeline.
+ */
 export interface LineageStage {
   id: string;
   label: string;
+  type?: string;
+  phase?: string;
 }
 
 export interface LineageComputation {

@@ -1,6 +1,6 @@
 /**
  * Workflow title overlay with UUID, date, and username.
- * Only visible in collapsed (meta) view.
+ * Only visible in collapsed (stage) view.
  */
 import { Container, Text, TextStyle } from 'pixi.js';
 import type { PillNode } from './nodeRenderer.js';
