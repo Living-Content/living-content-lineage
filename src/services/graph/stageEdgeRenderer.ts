@@ -1,21 +1,47 @@
 /**
  * Renders edges between stage nodes in the collapsed LOD view.
- * Draws simple horizontal lines with arrowheads connecting stage nodes.
+ * Uses phase colors matching the source stage node.
+ * Edges have dots at both ends.
  */
 import { Container, Graphics } from 'pixi.js';
-import type { Stage } from '../../types.js';
+import type { Stage, WorkflowPhase } from '../../types.js';
 import type { PillNode } from './nodeRenderer.js';
+import { PHASE_COLORS } from '../../ui/theme.js';
 import {
-  EDGE_ARROW_GAP,
   STAGE_EDGE_WIDTH,
-  STAGE_ARROW_SIZE,
+  STAGE_DOT_RADIUS,
 } from '../../config/constants.js';
 
-const STAGE_EDGE_COLOR = 0x1a1a1a;
+const cachedPhaseColors = new Map<WorkflowPhase, number>();
+
+function parseColor(colorString: string): number {
+  if (!colorString) return 0x666666;
+  if (colorString.startsWith('#')) {
+    return parseInt(colorString.slice(1), 16);
+  }
+  return 0x666666;
+}
+
+function getPhaseColorCached(phase: WorkflowPhase): number {
+  let color = cachedPhaseColors.get(phase);
+  if (color === undefined) {
+    const hexColor = PHASE_COLORS[phase];
+    color = hexColor ? parseColor(hexColor) : 0x666666;
+    cachedPhaseColors.set(phase, color);
+  }
+  return color;
+}
+
+function drawDot(graphics: Graphics, x: number, y: number, color: number): void {
+  graphics.circle(x, y, STAGE_DOT_RADIUS);
+  graphics.fill({ color });
+  graphics.circle(x, y, STAGE_DOT_RADIUS);
+  graphics.stroke({ width: 1, color: 0x000000 });
+}
 
 /**
  * Renders edges connecting stage nodes in order.
- * Each edge is a horizontal line with an arrowhead pointing to the target.
+ * Each edge uses the phase color of its source stage.
  */
 export function renderStageEdges(
   layer: Container,
@@ -27,23 +53,24 @@ export function renderStageEdges(
   const stageOrder = stages.map((s) => s.id);
 
   for (let i = 0; i < stageOrder.length - 1; i++) {
+    const stage = stages[i];
     const sourceNode = stageNodeMap.get(stageOrder[i]);
     const targetNode = stageNodeMap.get(stageOrder[i + 1]);
     if (!sourceNode || !targetNode) continue;
 
-    const sx = sourceNode.position.x + sourceNode.pillWidth / 2;
-    const sy = sourceNode.position.y;
-    const tx = targetNode.position.x - targetNode.pillWidth / 2 - EDGE_ARROW_GAP;
-    const ty = targetNode.position.y;
+    const color = stage.phase ? getPhaseColorCached(stage.phase) : 0x666666;
 
-    graphics.moveTo(sx, sy);
-    graphics.lineTo(tx, ty);
-    graphics.stroke({ width: STAGE_EDGE_WIDTH, color: STAGE_EDGE_COLOR });
+    const startX = sourceNode.position.x + sourceNode.pillWidth / 2;
+    const startY = sourceNode.position.y;
+    const endX = targetNode.position.x - targetNode.pillWidth / 2;
+    const endY = targetNode.position.y;
 
-    graphics.moveTo(tx - STAGE_ARROW_SIZE, ty - STAGE_ARROW_SIZE / 2);
-    graphics.lineTo(tx, ty);
-    graphics.lineTo(tx - STAGE_ARROW_SIZE, ty + STAGE_ARROW_SIZE / 2);
-    graphics.stroke({ width: STAGE_EDGE_WIDTH, color: STAGE_EDGE_COLOR });
+    graphics.moveTo(startX, startY);
+    graphics.lineTo(endX, endY);
+    graphics.stroke({ width: STAGE_EDGE_WIDTH, color });
+
+    drawDot(graphics, startX, startY, color);
+    drawDot(graphics, endX, endY, color);
   }
 
   layer.addChild(graphics);

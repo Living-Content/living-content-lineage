@@ -3,27 +3,9 @@
  * Shows asset type icon on left, with type label and optional main label.
  */
 import { Container, Sprite, Texture, Ticker } from 'pixi.js';
-import { getCssVar, ASSET_TYPE_ICON_PATHS, PHASE_ICON_PATHS } from '../../ui/theme.js';
-import type { AssetType, LineageNodeData, NodeType, WorkflowPhase } from '../../types.js';
+import { ASSET_TYPE_ICON_PATHS, PHASE_COLORS } from '../../ui/theme.js';
+import type { AssetType, LineageNodeData, WorkflowPhase } from '../../types.js';
 import { ASSET_TYPE_LABELS } from '../labels.js';
-
-const NODE_COLOR_VARS: Record<NodeType, string> = {
-  data: '--node-data-color',
-  process: '--node-compute-color',
-  attestation: '--node-attestation-color',
-  store: '--node-store-color',
-  media: '--node-media-color',
-  stage: '--node-stage-color',
-};
-
-const NODE_FALLBACK_COLORS: Record<NodeType, string> = {
-  data: '#4d96ff',
-  process: '#ff6b6b',
-  attestation: '#6bcb77',
-  store: '#ffd93d',
-  media: '#4d96ff',
-  stage: '#4d96ff',
-};
 
 export const DEFAULT_NODE_ALPHA = 0.75;
 
@@ -48,14 +30,8 @@ function measureText(text: string, fontSize: number, fontWeight = '600'): number
   return measureCtx.measureText(text).width;
 }
 
-function getNodeColorHex(nodeType: NodeType): string {
-  const cssVar = NODE_COLOR_VARS[nodeType];
-  if (!cssVar) return NODE_FALLBACK_COLORS[nodeType] ?? '#666666';
-
-  const color = getCssVar(cssVar);
-  if (!color) return NODE_FALLBACK_COLORS[nodeType] ?? '#666666';
-
-  return color;
+function getNodeColorHex(phase: WorkflowPhase): string {
+  return PHASE_COLORS[phase];
 }
 
 export interface PillNode extends Container {
@@ -300,7 +276,7 @@ export function createPillNode(
   group.label = node.id;
 
   const nodeScale = options.scale ?? 1;
-  const color = getNodeColorHex(node.nodeType);
+  const color = getNodeColorHex(node.phase!);
   const dims = getScaledDimensions(nodeScale);
 
   // Determine render mode based on node type and options

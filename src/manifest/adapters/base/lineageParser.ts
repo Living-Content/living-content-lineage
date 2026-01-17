@@ -5,6 +5,7 @@ import type {
   LineageGraph,
   LineageManifestSummary,
   LineageNodeData,
+  WorkflowPhase,
 } from '../../../types.js';
 import type { LineageManifest, LineageManifestRecord } from './lineageTypes.js';
 import { computeLayout } from './lineageLayout.js';
@@ -60,9 +61,18 @@ export function buildLineageGraph(
   const { positions, stages } = computeLayout(manifest);
   const nodes: LineageNodeData[] = [];
 
+  // Build stage-to-phase mapping
+  const stagePhaseMap = new Map<string, WorkflowPhase>();
+  manifest.stages.forEach((stage) => {
+    if (stage.phase) {
+      stagePhaseMap.set(stage.id, stage.phase as WorkflowPhase);
+    }
+  });
+
   manifest.assets.forEach((asset) => {
     const pos = positions.get(asset.id) ?? { x: 0, y: 200, stage: 'unknown' };
     const assetManifest = assetManifests.get(asset.id);
+    const phase = stagePhaseMap.get(pos.stage);
     nodes.push({
       id: asset.id,
       label: asset.label,
@@ -72,6 +82,7 @@ export function buildLineageGraph(
       x: pos.x,
       y: pos.y,
       stage: pos.stage,
+      phase,
       humanDescription: asset.description,
       assetManifest,
       tokens: asset.tokens,
@@ -87,6 +98,7 @@ export function buildLineageGraph(
 
   manifest.computations.forEach((comp) => {
     const pos = positions.get(comp.id) ?? { x: 0, y: 200, stage: 'unknown' };
+    const phase = stagePhaseMap.get(pos.stage);
     nodes.push({
       id: comp.id,
       label: comp.label,
@@ -96,6 +108,7 @@ export function buildLineageGraph(
       x: pos.x,
       y: pos.y,
       stage: pos.stage,
+      phase,
       humanDescription: comp.description,
       duration: comp.duration,
       role: 'process',
@@ -104,6 +117,7 @@ export function buildLineageGraph(
 
   manifest.attestations.forEach((attest) => {
     const pos = positions.get(attest.id) ?? { x: 0, y: 100, stage: 'unknown' };
+    const phase = stagePhaseMap.get(pos.stage);
     nodes.push({
       id: attest.id,
       label: attest.label,
@@ -113,6 +127,7 @@ export function buildLineageGraph(
       x: pos.x,
       y: pos.y,
       stage: pos.stage,
+      phase,
       humanDescription: attest.description,
       role: 'sink',
     });

@@ -68,6 +68,15 @@ export const PHASE_ICON_PATHS: Record<WorkflowPhase, string> = {
   Persistence: '/icons/phases/persistence.svg',
 };
 
+export const PHASE_COLORS: Record<WorkflowPhase, string> = {
+  Acquisition: '#EF2D2D',
+  Preparation: '#FF595E',
+  Retrieval: '#FFCA3A',
+  Reasoning: '#8AC926',
+  Generation: '#1982C4',
+  Persistence: '#0054AF',
+};
+
 export const DEFAULT_NODE_SIZE = 14;
 export const META_NODE_SIZE = 14;
 

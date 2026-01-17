@@ -49,9 +49,7 @@
     baseHeight = wrapperElement.offsetHeight;
 
     const timeline = blobManager?.fill(baseWidth, baseHeight, 'elastic.out(1, 0.6)');
-    timeline?.then(() => {
-      gsap.to(contentLayer, { opacity: 1, duration: 0.3, ease: 'power2.out' });
-    });
+    timeline?.to(contentLayer, { opacity: 1, duration: 0.3, ease: 'power2.out' }, '-=0.5');
   }
 
   async function openDetails(): Promise<void> {

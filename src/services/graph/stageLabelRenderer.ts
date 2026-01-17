@@ -1,28 +1,45 @@
 /**
  * Renders stage labels at the top of the graph view.
  * Each label has a dotted vertical line extending down toward the nodes.
+ * Labels and lines are color-coded by phase.
  */
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
-import type { Stage } from '../../types.js';
+import type { Stage, WorkflowPhase } from '../../types.js';
 import type { ViewportState } from './viewport.js';
+import { PHASE_COLORS } from '../../ui/theme.js';
 import {
   STAGE_LABEL_FONT_SIZE,
   STAGE_LABEL_TOP_PADDING,
   STAGE_LABEL_LINE_START,
 } from '../../config/constants.js';
 
-const LABEL_COLOR = 0x666666;
-const LINE_COLOR = 0x000000;
 const DOT_SIZE = 2;
 const DOT_GAP = 4;
+const DEFAULT_COLOR = 0x666666;
 
-const labelStyle = new TextStyle({
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
-  fontSize: STAGE_LABEL_FONT_SIZE,
-  fontWeight: '600',
-  fill: LABEL_COLOR,
-  letterSpacing: -0.5,
-});
+function parseColor(colorString: string): number {
+  if (!colorString) return DEFAULT_COLOR;
+  if (colorString.startsWith('#')) {
+    return parseInt(colorString.slice(1), 16);
+  }
+  return DEFAULT_COLOR;
+}
+
+function getPhaseColor(phase?: WorkflowPhase): number {
+  if (!phase) return DEFAULT_COLOR;
+  const hexColor = PHASE_COLORS[phase];
+  return hexColor ? parseColor(hexColor) : DEFAULT_COLOR;
+}
+
+function createLabelStyle(color: number): TextStyle {
+  return new TextStyle({
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+    fontSize: STAGE_LABEL_FONT_SIZE,
+    fontWeight: '600',
+    fill: color,
+    letterSpacing: -0.5,
+  });
+}
 
 export interface TopNodeInfo {
   worldY: number;
@@ -52,17 +69,15 @@ export function renderStageLabels(
   for (const stage of stages) {
     const worldX = (((stage.xStart + stage.xEnd) / 2) - 0.5) * graphScale;
     const screenX = viewportState.x + worldX * viewportState.scale;
+    const color = getPhaseColor(stage.phase);
 
-    // Render label text
-    const label = new Text({ text: stage.label, style: labelStyle });
+    const label = new Text({ text: stage.label, style: createLabelStyle(color) });
     label.anchor.set(0.5, 0);
     label.position.set(screenX, topPadding);
     layer.addChild(label);
 
-    // Skip dotted line if no nodes exist
     if (globalTopY === Infinity) continue;
 
-    // Render dotted vertical line with fade
     const startY = topPadding + lineStartY;
     const endY = globalTopY;
     const fadeDistance = (endY - startY) * 0.6;
@@ -78,7 +93,7 @@ export function renderStageLabels(
         alpha = 1 - Math.pow(fadeProgress, 2);
       }
       lineGraphics.circle(screenX, currentY, DOT_SIZE / 2);
-      lineGraphics.fill({ color: LINE_COLOR, alpha });
+      lineGraphics.fill({ color, alpha });
       currentY += DOT_SIZE + DOT_GAP;
     }
 

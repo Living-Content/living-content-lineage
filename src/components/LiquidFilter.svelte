@@ -1,19 +1,11 @@
 <script lang="ts">
   // Global SVG filter for liquid effects.
   // Apply with CSS: filter: url(#liquid)
-  import { setLiquidFilterElement } from '../services/liquidAnimation.js';
-  import { onMount } from 'svelte';
-
-  let filterElement: SVGFilterElement;
-
-  onMount(() => {
-    setLiquidFilterElement(filterElement);
-  });
 </script>
 
 <svg class="liquid-filter-svg" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <filter id="liquid" bind:this={filterElement}>
+    <filter id="liquid">
       <!-- Higher blur = more fluid merging between blobs -->
       <feGaussianBlur in="SourceGraphic" stdDeviation="14" result="blur" />
       <!-- Alpha contrast: lower values = softer, more fluid edges -->

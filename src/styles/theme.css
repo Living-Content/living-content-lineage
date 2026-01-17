@@ -25,9 +25,9 @@
   --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.1);
   --shadow-2: 0 4px 20px rgba(0, 0, 0, 0.08);
 
-  --color-graph-bg-1: #e6eef7;
-  --color-graph-bg-2: #e0f2f8;
-  --color-graph-bg-3: #f4e0ea;
+  --color-graph-bg-1: #000000;
+  --color-graph-bg-2: #000000;
+  --color-graph-bg-3: #000000;
 
   --color-edge: #1a1a1a;
   --color-edge-muted: #666666;

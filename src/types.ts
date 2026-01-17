@@ -154,6 +154,7 @@ export interface LineageNodeData {
   assetType?: AssetType;
   shape: NodeShape;
   stage?: string;
+  phase?: WorkflowPhase;
   manifest?: LineageManifestSummary;
   assetManifest?: AssetManifest;
   description?: string;

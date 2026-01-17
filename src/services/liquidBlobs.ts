@@ -239,7 +239,7 @@ export class BlobManager {
   private solidifyInternal(): void {
     if (this.isSolid) return;
     this.container.classList.remove('liquid');
-    this.container.style.background = 'rgba(255, 255, 255, 0.75)';
+    this.container.style.background = 'rgb(255, 255, 255)';
     this.container.style.filter = 'none';
     this.container.innerHTML = '';
     this.isSolid = true;

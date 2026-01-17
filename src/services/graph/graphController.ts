@@ -81,10 +81,12 @@ export async function createGraphController({
 
   const edgeLayer = new Container();
   const nodeLayer = new Container();
+  const dotLayer = new Container();
   const stageNodeLayer = new Container();
   const stageEdgeLayer = new Container();
   viewport.addChild(edgeLayer);
   viewport.addChild(nodeLayer);
+  viewport.addChild(dotLayer);
   viewport.addChild(stageNodeLayer);
   viewport.addChild(stageEdgeLayer);
   stageNodeLayer.visible = false;
@@ -191,7 +193,7 @@ export async function createGraphController({
         setNodeAlpha(nodeId, FADED_NODE_ALPHA);
       }
     });
-    renderEdges(edgeLayer, lineageData.edges, nodeMap, selectedId, verticallyConnected);
+    renderEdges(edgeLayer, dotLayer, lineageData.edges, nodeMap, selectedId, verticallyConnected);
   }
 
   function clearSelectionHighlight(): void {
@@ -199,7 +201,7 @@ export async function createGraphController({
     nodeMap.forEach((_, nodeId) => {
       setNodeAlpha(nodeId, DEFAULT_NODE_ALPHA);
     });
-    renderEdges(edgeLayer, lineageData.edges, nodeMap, null, null);
+    renderEdges(edgeLayer, dotLayer, lineageData.edges, nodeMap, null, null);
   }
 
   const nodeCreationPromises: Promise<void>[] = [];
@@ -265,6 +267,7 @@ export async function createGraphController({
       nodeType: 'stage',
       shape: 'circle',
       stage: stage.id,
+      phase: stage.phase,
       x: (stage.xStart + stage.xEnd) / 2,
       y: 0.5,
     };
@@ -309,7 +312,7 @@ export async function createGraphController({
 
   renderStageEdges(stageEdgeLayer, lineageData.stages, stageNodeMap);
 
-  const lodLayers: LODLayers = { nodeLayer, edgeLayer, stageNodeLayer, stageEdgeLayer, stageLayer };
+  const lodLayers: LODLayers = { nodeLayer, edgeLayer, dotLayer, stageNodeLayer, stageEdgeLayer, stageLayer };
 
   const lodController = createLODController(nodeMap, stageNodeMap, lineageData.stages, lodLayers, {
     onCollapseEnd: () => {
@@ -355,7 +358,7 @@ export async function createGraphController({
     const verticallyConnected = selectedNodeId
       ? getVerticallyConnectedNodeIds(selectedNodeId)
       : null;
-    renderEdges(edgeLayer, lineageData.edges, nodeMap, selectedNodeId, verticallyConnected);
+    renderEdges(edgeLayer, dotLayer, lineageData.edges, nodeMap, selectedNodeId, verticallyConnected);
   }
 
   cullAndRender();

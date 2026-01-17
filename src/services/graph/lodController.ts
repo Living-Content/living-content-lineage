@@ -26,6 +26,7 @@ export interface LODState {
 export interface LODLayers {
   nodeLayer: Container;
   edgeLayer: Container;
+  dotLayer: Container;
   stageNodeLayer: Container;
   stageEdgeLayer: Container;
   stageLayer: Container;
@@ -69,6 +70,7 @@ export function createLODController(
     state.isCollapsed = true;
 
     layers.edgeLayer.visible = false;
+    layers.dotLayer.visible = false;
     layers.stageLayer.visible = false;
 
     layers.stageNodeLayer.visible = true;
@@ -134,6 +136,7 @@ export function createLODController(
       onComplete: () => {
         layers.stageNodeLayer.visible = false;
         layers.edgeLayer.visible = true;
+        layers.dotLayer.visible = true;
         layers.stageLayer.visible = true;
         state.isAnimating = false;
         callbacks.onExpandEnd?.();
