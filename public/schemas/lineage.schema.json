@@ -14,12 +14,12 @@
       "description": "Specific workflow stage operation type",
       "type": "string",
       "enum": [
-        "consume", "ingest", "receive", "import",
-        "select", "filter", "transform", "validate",
-        "retrieve", "search", "query", "lookup",
-        "reflect", "plan", "evaluate", "analyze",
-        "generate", "synthesize", "create", "compose",
-        "save", "store", "publish", "export"
+        "ingest",
+        "select", "transform", "validate",
+        "retrieve", "search",
+        "reflect", "plan", "evaluate",
+        "generate",
+        "store", "publish"
       ]
     },
     "AssetCategory": {
@@ -64,7 +64,7 @@
       },
       "required": ["id", "label"]
     },
-    "LineageAsset": {
+    "Asset": {
       "description": "An asset flowing through the workflow",
       "type": "object",
       "properties": {

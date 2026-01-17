@@ -1,4 +1,4 @@
-import type { Stage } from '../../../types.js';
+import type { Stage, WorkflowPhase } from '../../../types.js';
 import type { LineageManifest } from './lineageTypes.js';
 import { measureLabels } from '../../../graph/textMeasure.js';
 
@@ -157,6 +157,7 @@ export function computeLayout(manifest: LineageManifest): LayoutResult {
     return {
       id: stage.id,
       label: stage.label,
+      phase: stage.phase as WorkflowPhase | undefined,
       xStart: minX - padding,
       xEnd: maxX + padding,
     };

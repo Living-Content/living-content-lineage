@@ -6,10 +6,10 @@
 import { Application, Container, Culler } from 'pixi.js';
 import { loadManifest } from '../../manifest/registry.js';
 import type { LineageGraph, LineageNodeData } from '../../types.js';
-import { createPillNode, type PillNode, DEFAULT_NODE_ALPHA } from './nodeRenderer.js';
+import { createPillNode, type PillNode, type PillRenderOptions, DEFAULT_NODE_ALPHA } from './nodeRenderer.js';
 import { createIconNode } from './iconNodeRenderer.js';
 import { renderEdges } from './edgeRenderer.js';
-import { getIconNodeConfig } from '../../ui/theme.js';
+import { getIconNodeConfig, PHASE_ICON_PATHS } from '../../ui/theme.js';
 import { renderStageEdges } from './stageEdgeRenderer.js';
 import { renderStageLabels, type TopNodeInfo } from './stageLabelRenderer.js';
 import { createViewportState, createViewportHandlers } from './viewport.js';
@@ -267,7 +267,17 @@ export async function createGraphController({
       stage: stage.id,
       x: (stage.xStart + stage.xEnd) / 2,
       y: 0.5,
-      badgeCount: stageNodes.length,
+    };
+
+    // Get phase icon path, defaulting to Reasoning if no phase specified
+    const phaseIconPath = stage.phase
+      ? PHASE_ICON_PATHS[stage.phase]
+      : PHASE_ICON_PATHS.Reasoning;
+
+    const stageRenderOptions: PillRenderOptions = {
+      mode: 'simple',
+      iconPath: phaseIconPath,
+      typeLabel: stage.label,
     };
 
     const pillNode = createPillNode(stageNodeData, graphScale, app.ticker, {
@@ -292,7 +302,7 @@ export async function createGraphController({
         container.style.cursor = 'grab';
         callbacks.onHoverEnd();
       },
-    }, { scale: STAGE_NODE_SCALE });
+    }, { scale: STAGE_NODE_SCALE, renderOptions: stageRenderOptions });
     stageNodeLayer.addChild(pillNode);
     stageNodeMap.set(stage.id, pillNode);
   }

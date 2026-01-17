@@ -1,4 +1,4 @@
-import type { AssetType, NodeType } from '../types.js';
+import type { AssetType, NodeType, WorkflowPhase } from '../types.js';
 
 export function getCssVar(name: string, fallback?: string): string {
   if (typeof window === 'undefined') {
@@ -47,18 +47,25 @@ export const ASSET_TYPE_COLORS: Partial<Record<AssetType, string>> = {
   Dataset: getCssVar('--asset-dataset'),
 };
 
-export const NODE_ICON_PATHS: Record<NodeType, string> = {
-  data: '/icons/data.svg',
-  process: '/icons/compute.svg',
-  attestation: '/icons/attestation.svg',
-  store: '/icons/store.svg',
-  media: '/icons/media.svg',
-  stage: '/icons/collection.svg',
+export const ASSET_TYPE_ICON_PATHS: Record<AssetType, string> = {
+  Media: '/icons/assets/media.svg',
+  Document: '/icons/assets/document.svg',
+  DataObject: '/icons/assets/dataobject.svg',
+  Dataset: '/icons/assets/dataset.svg',
+  Code: '/icons/assets/code.svg',
+  Model: '/icons/assets/model.svg',
+  Action: '/icons/assets/action.svg',
+  Attestation: '/icons/assets/attestation.svg',
+  Credential: '/icons/assets/credential.svg',
 };
 
-export const ASSET_TYPE_ICONS: Partial<Record<AssetType, string>> = {
-  Code: '/icons/code.svg',
-  Document: '/icons/document.svg',
+export const PHASE_ICON_PATHS: Record<WorkflowPhase, string> = {
+  Acquisition: '/icons/phases/acquisition.svg',
+  Preparation: '/icons/phases/preparation.svg',
+  Retrieval: '/icons/phases/retrieval.svg',
+  Reasoning: '/icons/phases/reasoning.svg',
+  Generation: '/icons/phases/generation.svg',
+  Persistence: '/icons/phases/persistence.svg',
 };
 
 export const DEFAULT_NODE_SIZE = 14;
@@ -68,8 +75,8 @@ export const META_NODE_SIZE = 14;
  * Configuration for icon-based node rendering.
  * Nodes with entries here render as icons instead of text pills.
  */
-export const ICON_NODE_CONFIG: Partial<Record<NodeType, { size: number }>> = {
-  attestation: { size: 56 },
+export const ICON_NODE_CONFIG: Partial<Record<NodeType, { size: number; iconPath: string }>> = {
+  attestation: { size: 56, iconPath: ASSET_TYPE_ICON_PATHS.Attestation },
 };
 
 /**
@@ -83,8 +90,5 @@ export function isIconNode(nodeType: NodeType): boolean {
  * Returns the icon configuration for a node type, or null if it uses pill rendering.
  */
 export function getIconNodeConfig(nodeType: NodeType): { size: number; iconPath: string } | null {
-  const config = ICON_NODE_CONFIG[nodeType];
-  if (!config) return null;
-  const iconPath = NODE_ICON_PATHS[nodeType];
-  return { ...config, iconPath };
+  return ICON_NODE_CONFIG[nodeType] ?? null;
 }

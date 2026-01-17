@@ -19,7 +19,7 @@ export interface LineageComputation {
   outputs: string[];
 }
 
-export interface LineageAsset {
+export interface Asset {
   id: string;
   label: string;
   asset_type: string;
@@ -56,7 +56,7 @@ export interface LineageManifest {
   manifests: Record<string, LineageManifestRecord>;
   stages: LineageStage[];
   computations: LineageComputation[];
-  assets: LineageAsset[];
+  assets: Asset[];
   attestations: LineageAttestation[];
 }
 

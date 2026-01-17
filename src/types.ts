@@ -18,17 +18,19 @@ export type WorkflowPhase =
  */
 export type WorkflowStageType =
   // Acquisition - Getting input data into the pipeline
-  | "consume" | "ingest" | "receive" | "import"
-  // Preparation - Selecting, filtering, transforming inputs
-  | "select" | "filter" | "transform" | "validate"
+  | "ingest"
+  // Preparation - Selecting, transforming, validating inputs
+  | "select" | "transform" | "validate"
   // Retrieval - Fetching additional context/data
-  | "retrieve" | "search" | "query" | "lookup"
+  | "retrieve"  // internal: getting known data
+  | "search"    // external: finding data outside
   // Reasoning - AI/ML processing and analysis
-  | "reflect" | "plan" | "evaluate" | "analyze"
+  | "reflect" | "plan" | "evaluate"
   // Generation - Creating new content/outputs
-  | "generate" | "synthesize" | "create" | "compose"
+  | "generate"
   // Persistence - Storing/publishing results
-  | "save" | "store" | "publish" | "export";
+  | "store"     // internal persistence
+  | "publish";  // external distribution
 
 /**
  * A workflow stage definition.
@@ -181,6 +183,7 @@ export interface LineageEdgeData {
 export interface Stage {
   id: string;
   label: string;
+  phase?: WorkflowPhase;
   xStart: number;
   xEnd: number;
 }
@@ -219,35 +222,23 @@ export function assetTypeToNodeType(assetType: AssetType): NodeType {
  */
 export function workflowStageTypeToPhase(stageType: WorkflowStageType): WorkflowPhase {
   switch (stageType) {
-    case "consume":
     case "ingest":
-    case "receive":
-    case "import":
       return "Acquisition";
     case "select":
-    case "filter":
     case "transform":
     case "validate":
       return "Preparation";
     case "retrieve":
     case "search":
-    case "query":
-    case "lookup":
       return "Retrieval";
     case "reflect":
     case "plan":
     case "evaluate":
-    case "analyze":
       return "Reasoning";
     case "generate":
-    case "synthesize":
-    case "create":
-    case "compose":
       return "Generation";
-    case "save":
     case "store":
     case "publish":
-    case "export":
       return "Persistence";
   }
 }
