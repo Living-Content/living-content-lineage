@@ -3,8 +3,9 @@
  * Renders circular nodes with SVG icons instead of text labels.
  * Uses texture caching for performance.
  */
-import { Container, Sprite, Texture, Ticker } from 'pixi.js';
-import { PHASE_COLORS } from '../../ui/theme.js';
+import { Container, Graphics, Sprite, Texture, Ticker } from 'pixi.js';
+import gsap from 'gsap';
+import { PHASE_COLORS, getColor } from '../../ui/theme.js';
 import type { LineageNodeData, WorkflowPhase } from '../../types.js';
 import { DEFAULT_NODE_ALPHA, type PillNode } from './nodeRenderer.js';
 
@@ -22,6 +23,7 @@ interface NodeCallbacks {
 interface CreateIconNodeOptions {
   size?: number;
   iconPath: string;
+  selectionLayer?: Container;
 }
 
 function getNodeColorHex(phase: WorkflowPhase): string {
@@ -138,6 +140,58 @@ export async function createIconNode(
   group.pillHeight = size;
   group.baseScale = 1;
   group.alpha = DEFAULT_NODE_ALPHA;
+
+  // Create selection ring with draw animation
+  const selectionRing = new Graphics();
+  selectionRing.alpha = 0;
+  if (options.selectionLayer) {
+    selectionRing.position.set(x, y);
+    options.selectionLayer.addChild(selectionRing);
+  } else {
+    group.addChildAt(selectionRing, 0);
+  }
+  group.selectionRing = selectionRing;
+
+  const ringPadding = 6;
+  const ringRadius = (size + ringPadding * 2) / 2;
+
+  function drawSelectionRing(progress: number): void {
+    selectionRing.clear();
+    if (progress <= 0) return;
+
+    // Draw circle arc progressively
+    const endAngle = -Math.PI / 2 + (2 * Math.PI * Math.min(progress, 1));
+    selectionRing.arc(0, 0, ringRadius, -Math.PI / 2, endAngle);
+    selectionRing.stroke({ width: 3, color: getColor('--color-selection-ring'), cap: 'round' });
+  }
+
+  const animState = { progress: 0 };
+
+  group.setSelected = (selected: boolean) => {
+    gsap.killTweensOf(animState);
+    gsap.killTweensOf(selectionRing);
+
+    if (selected) {
+      animState.progress = 0;
+      selectionRing.clear();
+      selectionRing.alpha = 1;
+
+      gsap.to(animState, {
+        progress: 1,
+        duration: 0.5,
+        ease: 'power2.out',
+        onUpdate: () => {
+          drawSelectionRing(animState.progress);
+        },
+      });
+    } else {
+      gsap.to(selectionRing, {
+        alpha: 0,
+        duration: 0.15,
+        ease: 'power2.out',
+      });
+    }
+  };
 
   group.eventMode = 'static';
   group.cursor = 'pointer';

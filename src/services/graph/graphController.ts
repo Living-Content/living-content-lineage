@@ -79,11 +79,13 @@ export async function createGraphController({
   const viewport = new Container();
   app.stage.addChild(viewport);
 
+  const selectionLayer = new Container();
   const edgeLayer = new Container();
   const nodeLayer = new Container();
   const dotLayer = new Container();
   const stageNodeLayer = new Container();
   const stageEdgeLayer = new Container();
+  viewport.addChild(selectionLayer);
   viewport.addChild(edgeLayer);
   viewport.addChild(nodeLayer);
   viewport.addChild(dotLayer);
@@ -189,11 +191,16 @@ export async function createGraphController({
 
   function applySelectionHighlight(selectedId: string): void {
     const verticallyConnected = getVerticallyConnectedNodeIds(selectedId);
-    nodeMap.forEach((_, nodeId) => {
-      if (nodeId === selectedId || verticallyConnected.has(nodeId)) {
+    nodeMap.forEach((node, nodeId) => {
+      if (nodeId === selectedId) {
         setNodeAlpha(nodeId, 1);
+        node.setSelected(true);
+      } else if (verticallyConnected.has(nodeId)) {
+        setNodeAlpha(nodeId, 1);
+        node.setSelected(false);
       } else {
         setNodeAlpha(nodeId, FADED_NODE_ALPHA);
+        node.setSelected(false);
       }
     });
     renderEdges(edgeLayer, dotLayer, lineageData.edges, nodeMap, selectedId, verticallyConnected);
@@ -201,8 +208,9 @@ export async function createGraphController({
 
   function clearSelectionHighlight(): void {
     selectedNodeId = null;
-    nodeMap.forEach((_, nodeId) => {
+    nodeMap.forEach((node, nodeId) => {
       setNodeAlpha(nodeId, DEFAULT_NODE_ALPHA);
+      node.setSelected(false);
     });
     renderEdges(edgeLayer, dotLayer, lineageData.edges, nodeMap, null, null);
   }
@@ -248,13 +256,14 @@ export async function createGraphController({
       const promise = createIconNode(node, graphScale, app.ticker, nodeCallbacks, {
         iconPath: iconConfig.iconPath,
         size: iconConfig.size,
+        selectionLayer,
       }).then((iconNode) => {
         nodeLayer.addChild(iconNode);
         nodeMap.set(node.id, iconNode);
       });
       nodeCreationPromises.push(promise);
     } else {
-      const pillNode = createPillNode(node, graphScale, app.ticker, nodeCallbacks);
+      const pillNode = createPillNode(node, graphScale, app.ticker, nodeCallbacks, { selectionLayer });
       nodeLayer.addChild(pillNode);
       nodeMap.set(node.id, pillNode);
     }
@@ -295,6 +304,10 @@ export async function createGraphController({
     // Move all nodes in group to new x
     for (const node of group) {
       node.position.x = newX;
+      // Update selection ring position if it's in the separate layer
+      if (node.selectionRing) {
+        node.selectionRing.position.x = newX;
+      }
     }
 
     rightEdge = newX + maxHalfWidth;

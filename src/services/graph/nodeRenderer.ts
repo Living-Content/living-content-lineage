@@ -2,12 +2,13 @@
  * Pill-shaped node rendering with icon circle and knockout text effect.
  * Shows asset type icon on left, with type label and optional main label.
  */
-import { Container, Sprite, Texture, Ticker } from 'pixi.js';
-import { ASSET_TYPE_ICON_PATHS, PHASE_COLORS, getCssVar } from '../../ui/theme.js';
+import { Container, Graphics, Sprite, Texture, Ticker } from 'pixi.js';
+import gsap from 'gsap';
+import { ASSET_TYPE_ICON_PATHS, PHASE_COLORS, getCssVar, getColor } from '../../ui/theme.js';
 import type { AssetType, LineageNodeData, WorkflowPhase } from '../../types.js';
 import { ASSET_TYPE_LABELS } from '../labels.js';
 
-export const DEFAULT_NODE_ALPHA = 0.75;
+export const DEFAULT_NODE_ALPHA = 1;
 
 function getNodeFontFamily(): string {
   return getCssVar('--font-sans', '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif');
@@ -41,6 +42,8 @@ export interface PillNode extends Container {
   pillWidth: number;
   pillHeight: number;
   baseScale: number;
+  setSelected: (selected: boolean) => void;
+  selectionRing?: Graphics;
 }
 
 interface NodeCallbacks {
@@ -253,6 +256,7 @@ function calculatePillWidth(options: PillRenderOptions, dims: ScaledDimensions, 
 interface CreatePillNodeOptions {
   scale?: number;
   renderOptions?: PillRenderOptions;
+  selectionLayer?: Container;
 }
 
 function getAssetTypeLabel(assetType?: AssetType): string {
@@ -388,6 +392,101 @@ export function createPillNode(
   group.nodeData = node;
   group.baseScale = 1;
   group.alpha = DEFAULT_NODE_ALPHA;
+
+  // Create selection ring with draw animation
+  const selectionRing = new Graphics();
+  selectionRing.alpha = 0;
+  if (options.selectionLayer) {
+    selectionRing.position.set(x, y);
+    options.selectionLayer.addChild(selectionRing);
+  } else {
+    group.addChildAt(selectionRing, 0);
+  }
+  group.selectionRing = selectionRing;
+
+  const ringPadding = 6;
+  const ringWidth = group.pillWidth + ringPadding * 2;
+  const ringHeight = group.pillHeight + ringPadding * 2;
+  const ringRadius = ringHeight / 2;
+
+  function drawSelectionRing(progress: number): void {
+    selectionRing.clear();
+    if (progress <= 0) return;
+
+    // Draw a rounded rect progressively by tracing its path
+    const hw = ringWidth / 2;
+    const hh = ringHeight / 2;
+    const r = ringRadius;
+
+    // Total perimeter: 2 straight sections + 2 half circles
+    const straightLength = ringWidth - ringHeight;
+    const curveLength = Math.PI * r;
+    const totalLength = 2 * straightLength + 2 * curveLength;
+    const drawLength = totalLength * Math.min(progress, 1);
+
+    selectionRing.moveTo(-hw + r, -hh);
+
+    let remaining = drawLength;
+
+    // Top edge (left to right)
+    if (remaining > 0) {
+      const segLen = Math.min(remaining, straightLength);
+      selectionRing.lineTo(-hw + r + segLen, -hh);
+      remaining -= segLen;
+    }
+
+    // Right curve
+    if (remaining > 0) {
+      const arcLen = Math.min(remaining, curveLength);
+      const arcAngle = (arcLen / curveLength) * Math.PI;
+      selectionRing.arc(hw - r, 0, r, -Math.PI / 2, -Math.PI / 2 + arcAngle);
+      remaining -= arcLen;
+    }
+
+    // Bottom edge (right to left)
+    if (remaining > 0) {
+      const segLen = Math.min(remaining, straightLength);
+      selectionRing.lineTo(hw - r - segLen, hh);
+      remaining -= segLen;
+    }
+
+    // Left curve
+    if (remaining > 0) {
+      const arcLen = Math.min(remaining, curveLength);
+      const arcAngle = (arcLen / curveLength) * Math.PI;
+      selectionRing.arc(-hw + r, 0, r, Math.PI / 2, Math.PI / 2 + arcAngle);
+    }
+
+    selectionRing.stroke({ width: 3, color: getColor('--color-selection-ring'), cap: 'round', join: 'round' });
+  }
+
+  const animState = { progress: 0 };
+
+  group.setSelected = (selected: boolean) => {
+    gsap.killTweensOf(animState);
+    gsap.killTweensOf(selectionRing);
+
+    if (selected) {
+      animState.progress = 0;
+      selectionRing.clear();
+      selectionRing.alpha = 1;
+
+      gsap.to(animState, {
+        progress: 1,
+        duration: 0.5,
+        ease: 'power2.out',
+        onUpdate: () => {
+          drawSelectionRing(animState.progress);
+        },
+      });
+    } else {
+      gsap.to(selectionRing, {
+        alpha: 0,
+        duration: 0.15,
+        ease: 'power2.out',
+      });
+    }
+  };
 
   group.eventMode = 'static';
   group.cursor = 'pointer';

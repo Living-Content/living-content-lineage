@@ -25,7 +25,7 @@ export interface TitleOverlayData {
  */
 export function createTitleOverlay(stage: Container, data: TitleOverlayData): TitleOverlay {
   const container = new Container();
-  container.visible = false;
+  container.eventMode = 'passive';
   stage.addChild(container);
 
   const dateStr = new Date()
@@ -87,13 +87,13 @@ export function createTitleOverlay(stage: Container, data: TitleOverlayData): Ti
     fadeAnimationId = requestAnimationFrame(animateAlpha);
   }
 
-  titleText.eventMode = 'static';
-  titleText.cursor = 'pointer';
-  titleText.on('pointerenter', () => {
+  container.eventMode = 'static';
+  container.cursor = 'pointer';
+  container.on('pointerenter', () => {
     targetAlpha = 1;
     if (!fadeAnimationId) fadeAnimationId = requestAnimationFrame(animateAlpha);
   });
-  titleText.on('pointerleave', () => {
+  container.on('pointerleave', () => {
     targetAlpha = 0.5;
     if (!fadeAnimationId) fadeAnimationId = requestAnimationFrame(animateAlpha);
   });
