@@ -1,0 +1,61 @@
+/**
+ * Component-specific theme variables.
+ * Scoped variables for specific UI components.
+ */
+:root {
+  /* Icon colors */
+  --color-icon-default: #1a1a1a;
+  --color-icon-muted: #666666;
+  --color-icon-accent-blue: #3b82f6;
+  --color-icon-accent-amber: #f59e0b;
+
+  /* Icon filters for SVG coloring */
+  --filter-icon-blue: invert(45%) sepia(67%) saturate(2000%) hue-rotate(203deg)
+    brightness(97%) contrast(96%);
+  --filter-icon-amber: invert(62%) sepia(83%) saturate(1500%) hue-rotate(16deg)
+    brightness(97%) contrast(95%);
+
+  /* Stage colors */
+  --color-stage-compute: #6366f1;
+  --color-stage-data: #1a1a1a;
+  --color-stage-attestation: #22c55e;
+
+  /* Impact indicator colors */
+  --color-impact-minimal: #4ade80;
+  --color-impact-available: #4b5563;
+  --color-impact-unknown: #9ca3af;
+  --color-impact-low: #a3e635;
+  --color-impact-moderate: #fbbf24;
+
+  /* Impact indicator filters */
+  --filter-impact-minimal: invert(75%) sepia(50%) saturate(500%)
+    hue-rotate(80deg) brightness(95%);
+  --filter-impact-available: invert(55%) sepia(10%) saturate(700%)
+    hue-rotate(180deg) brightness(95%);
+  --filter-impact-unknown: grayscale(100%) brightness(90%);
+  --filter-impact-low: invert(70%) sepia(60%) saturate(600%) hue-rotate(50deg)
+    brightness(90%);
+  --filter-impact-moderate: invert(60%) sepia(70%) saturate(700%)
+    hue-rotate(10deg) brightness(95%);
+
+  /* Pill/badge colors */
+  --color-pill-text: rgb(255, 255, 255);
+  --color-pill-bg: var(--color-text-muted);
+
+  /* Detail panel metric card */
+  --metric-card-bg: var(--color-surface-subtle);
+  --metric-card-border: var(--color-border-soft);
+  --metric-value-color: var(--color-text-primary);
+  --metric-label-color: var(--color-text-light);
+  --metric-unit-color: var(--color-text-muted);
+
+  /* Code block styling */
+  --code-block-bg: var(--color-code-bg);
+  --code-block-border: var(--color-border-light);
+  --code-text-color: var(--color-text-secondary);
+  --code-line-number-color: var(--color-text-faint);
+
+  /* Collapsible sections */
+  --section-header-color: var(--color-text-secondary);
+  --section-border-color: var(--color-border-soft);
+}

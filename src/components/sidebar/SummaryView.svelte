@@ -7,10 +7,8 @@
     formatContentValue,
     isSummaryValue
   } from '../../services/sidebar/contentKeys.js';
-  import { formatTimestamp } from '../../services/sidebar/dateFormat.js';
   import ImpactSection from './ImpactSection.svelte';
   import MetaRow from './MetaRow.svelte';
-  import { formatAssetTypeLabel } from '../../services/labels.js';
 
   export let node: LineageNodeData;
 
@@ -18,7 +16,7 @@
   $: contentEntries = content
     ? Object.entries(content).filter(
         ([key, value]) =>
-          shouldDisplayKey(key) && isSummaryValue(value) && value !== undefined && value !== null
+          shouldDisplayKey(key) && isSummaryValue(value) && value !== undefined && value !== null && key !== 'description'
       )
     : [];
   $: codeAssertion = node.assetManifest?.assertions?.find(
@@ -30,15 +28,8 @@
       : null;
 </script>
 
-{#if node.assetType}
-  <div class="sidebar-type-badge">{formatAssetTypeLabel(node.assetType)}</div>
-{/if}
-
-{#if node.humanDescription}
-  <div class="sidebar-description">{node.humanDescription}</div>
-{/if}
-
-<div class="sidebar-meta">
+<div class="summary-view">
+  <div class="sidebar-meta">
   {#if node.duration}
     <MetaRow label="duration" value={node.duration} />
   {/if}
@@ -51,12 +42,21 @@
   {#if codeData?.function}
     <MetaRow label="function" value={codeData.function} />
   {/if}
-  {#if node.assetManifest?.signatureInfo?.time}
-    <MetaRow
-      label="signed"
-      value={formatTimestamp(node.assetManifest.signatureInfo.time)}
-    />
-  {/if}
+  </div>
+
+  <ImpactSection node={node} />
 </div>
 
-<ImpactSection node={node} />
+<style>
+  .summary-view {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md, 12px);
+  }
+
+  .sidebar-meta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs, 4px);
+  }
+</style>

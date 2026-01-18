@@ -84,7 +84,7 @@ export function buildLineageGraph(
       y: pos.y,
       stage: pos.stage,
       phase,
-      humanDescription: asset.description,
+      description: asset.description,
       assetManifest,
       tokens: asset.tokens,
       environmentalImpact: assetManifest?.environmentalImpact,
@@ -111,7 +111,7 @@ export function buildLineageGraph(
       y: pos.y,
       stage: pos.stage,
       phase,
-      humanDescription: comp.description,
+      description: comp.description,
       duration: comp.duration,
       role: 'process',
     });
@@ -131,7 +131,7 @@ export function buildLineageGraph(
       y: pos.y,
       stage: pos.stage,
       phase,
-      humanDescription: attest.description,
+      description: attest.description,
       role: 'sink',
     });
   });

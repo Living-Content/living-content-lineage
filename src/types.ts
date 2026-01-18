@@ -86,10 +86,20 @@ export interface ManifestAssertion {
   data: unknown;
 }
 
+/** Signature mechanism type */
+export type SignatureType = 'merkle' | 'certificate' | 'tee';
+
+/** Signature provider/standard */
+export type SignatureProvider = 'EQTY' | 'C2PA' | 'LCO';
+
 export interface ManifestSignatureInfo {
   alg: string;
   issuer: string;
   time: string;
+  /** Type of signature: merkle tree, certificate chain, or TEE attestation */
+  type?: SignatureType;
+  /** Provider/standard that created the signature */
+  provider?: SignatureProvider;
 }
 
 export interface ManifestIngredient {
@@ -151,7 +161,6 @@ export interface LineageNodeData {
   role?: NodeRole;
   environmentalImpact?: EnvironmentalImpact;
   tokens?: { input: number; output: number };
-  humanDescription?: string;
   humanInputs?: string[];
   humanOutputs?: string[];
   verifiedBy?: string;

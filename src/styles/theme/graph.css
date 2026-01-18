@@ -1,0 +1,66 @@
+/**
+ * Graph-specific colors and variables.
+ * Colors for nodes, edges, and graph canvas elements.
+ */
+:root {
+  /* Graph canvas background */
+  --color-graph-bg-1: #000000;
+  --color-graph-bg-2: #000000;
+  --color-graph-bg-3: #000000;
+
+  /* Edge colors */
+  --color-edge: #1a1a1a;
+  --color-edge-muted: #666666;
+  --color-edge-default: rgb(102, 102, 102);
+  --color-edge-stroke: rgb(0, 0, 0);
+  --color-edge-gate: rgb(107, 203, 119);
+
+  /* Port colors */
+  --color-port: #4b5563;
+
+  /* Node base colors */
+  --color-node-default: #ffffff;
+  --color-node-bg: rgba(255, 255, 255, 0.7);
+  --color-node-border-default: rgb(77, 150, 255);
+  --color-node-icon-default: rgb(77, 150, 255);
+  --color-hover-ring: rgb(77, 150, 255);
+  --color-node-selected: rgb(77, 150, 255);
+  --color-selection-ring: rgb(255, 255, 255);
+
+  /* Node type colors - by visual category */
+  --node-data-color: rgb(77, 150, 255);
+  --node-data-border: var(--node-data-color);
+  --node-data-icon: var(--node-data-color);
+
+  --node-compute-color: rgb(255, 107, 107);
+  --node-compute-border: var(--node-compute-color);
+  --node-compute-icon: var(--node-compute-color);
+
+  --node-attestation-color: rgb(107, 203, 119);
+  --node-attestation-border: var(--node-attestation-color);
+  --node-attestation-icon: var(--node-attestation-color);
+
+  --node-filter-color: rgb(77, 150, 255);
+  --node-filter-border: var(--node-filter-color);
+  --node-filter-icon: var(--node-filter-color);
+
+  --node-join-color: rgb(255, 217, 61);
+  --node-join-border: var(--node-join-color);
+  --node-join-icon: var(--node-join-color);
+
+  --node-store-color: rgb(255, 217, 61);
+  --node-store-border: var(--node-store-color);
+  --node-store-icon: var(--node-store-color);
+
+  --node-media-color: rgb(77, 150, 255);
+  --node-media-border: var(--node-media-color);
+  --node-media-icon: var(--node-media-color);
+
+  --node-stage-color: rgb(77, 150, 255);
+  --node-stage-border: var(--node-stage-color);
+  --node-stage-icon: var(--node-stage-color);
+
+  /* Stage title colors */
+  --color-title-primary: rgb(51, 51, 51);
+  --color-title-secondary: rgb(136, 136, 136);
+}

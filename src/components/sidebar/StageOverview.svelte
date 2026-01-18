@@ -81,3 +81,105 @@
     </div>
   </div>
 {/if}
+
+<style>
+  .sidebar-type-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    background: var(--color-border-soft);
+    padding: 3px 10px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+  }
+
+  .stage-summary {
+    font-size: 13px;
+    color: var(--color-text-muted);
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--color-border-soft);
+  }
+
+  .stage-group {
+    margin-bottom: 20px;
+  }
+
+  .stage-group-header {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--color-text-light);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .stage-node-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .stage-node-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--color-surface-subtle);
+    border-radius: 6px;
+  }
+
+  .stage-node-icon {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .stage-node-icon.process {
+    background: var(--color-stage-compute);
+  }
+
+  .stage-node-icon.data {
+    background: var(--color-stage-data);
+  }
+
+  .stage-node-icon.attestation {
+    background: var(--color-stage-attestation);
+  }
+
+  .stage-node-label {
+    flex: 1;
+    font-size: 13px;
+    color: var(--color-text-primary);
+    font-weight: 500;
+  }
+
+  .stage-node-meta {
+    font-size: 11px;
+    color: var(--color-text-light);
+    font-family: var(--font-mono);
+  }
+
+  .stage-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .flow-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+
+  .flow-arrow {
+    color: var(--color-text-light);
+    font-size: 14px;
+  }
+</style>

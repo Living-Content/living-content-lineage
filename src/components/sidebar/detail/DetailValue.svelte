@@ -66,3 +66,54 @@
 {:else}
   <span class="detail-field-value">{String(value)}</span>
 {/if}
+
+<style>
+  .detail-field-value {
+    font-size: 12px;
+    color: var(--color-text-primary);
+    font-family: var(--font-mono);
+    word-break: break-all;
+    line-height: 1.4;
+  }
+
+  .detail-value-pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0;
+  }
+
+  .detail-value-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .detail-value-list li {
+    margin: 0;
+  }
+
+  .detail-value-link {
+    color: var(--color-link);
+    text-decoration: underline;
+    word-break: break-word;
+  }
+
+  .detail-value-fragment {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .detail-fragment-context {
+    font-size: 12px;
+    color: var(--color-text-subtle);
+    white-space: pre-wrap;
+  }
+
+  .detail-fragment-json {
+    margin: 0;
+  }
+</style>

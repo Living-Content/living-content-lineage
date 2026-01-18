@@ -1,0 +1,34 @@
+/**
+ * Workflow phase colors.
+ * Each workflow phase has a distinct accent color used for
+ * stage backgrounds, asset accents, and detail view highlights.
+ */
+:root {
+  /* Phase accent colors - vibrant for visual distinction */
+  --phase-acquisition: rgb(239, 45, 45);    /* Red - data input */
+  --phase-preparation: rgb(255, 89, 94);    /* Coral - data prep */
+  --phase-retrieval: rgb(255, 202, 58);     /* Yellow - fetching data */
+  --phase-reasoning: rgb(138, 201, 38);     /* Green - AI processing */
+  --phase-generation: rgb(25, 130, 196);    /* Blue - content creation */
+  --phase-persistence: rgb(0, 84, 175);     /* Dark blue - storage */
+
+  /* Phase colors with transparency for backgrounds */
+  --phase-acquisition-bg: rgba(239, 45, 45, 0.1);
+  --phase-preparation-bg: rgba(255, 89, 94, 0.1);
+  --phase-retrieval-bg: rgba(255, 202, 58, 0.1);
+  --phase-reasoning-bg: rgba(138, 201, 38, 0.1);
+  --phase-generation-bg: rgba(25, 130, 196, 0.1);
+  --phase-persistence-bg: rgba(0, 84, 175, 0.1);
+
+  /* Phase colors - muted for subtle accents */
+  --phase-acquisition-muted: rgba(239, 45, 45, 0.6);
+  --phase-preparation-muted: rgba(255, 89, 94, 0.6);
+  --phase-retrieval-muted: rgba(255, 202, 58, 0.6);
+  --phase-reasoning-muted: rgba(138, 201, 38, 0.6);
+  --phase-generation-muted: rgba(25, 130, 196, 0.6);
+  --phase-persistence-muted: rgba(0, 84, 175, 0.6);
+
+  /* Phase text colors - for use on colored backgrounds */
+  --phase-text-light: #ffffff;
+  --phase-text-dark: #1a1a1a;
+}

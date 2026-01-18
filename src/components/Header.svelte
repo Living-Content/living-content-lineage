@@ -1,6 +1,9 @@
 <script lang="ts">
-  // Header with logo and detail level indicator.
+  /**
+   * Header with logo, theme toggle, and detail level indicator.
+   */
   import { isSimpleView } from '../stores/uiState.js';
+  import ThemeToggle from './ThemeToggle.svelte';
 </script>
 
 <header class="header">
@@ -13,6 +16,7 @@
     </svg>
   </div>
   <div class="header-right">
+    <ThemeToggle />
     <img
       src={$isSimpleView ? '/icons/simple.svg' : '/icons/detail.svg'}
       alt={$isSimpleView ? 'Simple view' : 'Detailed view'}
@@ -21,3 +25,40 @@
     />
   </div>
 </header>
+
+<style>
+  .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--panel-margin) var(--panel-margin) 0;
+    z-index: 20;
+  }
+
+  .header-left,
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .logo {
+    height: 48px;
+    width: 126px;
+    color: white;
+    mix-blend-mode: difference;
+  }
+
+  .lod-indicator {
+    width: 28px;
+    height: 28px;
+    filter: invert(1);
+    mix-blend-mode: difference;
+    transition: opacity 0.2s ease;
+  }
+</style>

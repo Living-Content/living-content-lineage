@@ -1,7 +1,2 @@
-@import './theme.css';
+@import './theme/index.css';
 @import './base.css';
-@import './header.css';
-@import './infopanel.css';
-@import './detail.css';
-@import './stage.css';
-@import './graph.css';
