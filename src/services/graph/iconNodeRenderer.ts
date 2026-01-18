@@ -197,8 +197,27 @@ export async function createIconNode(
   group.cursor = 'pointer';
   group.cullable = true;
 
-  group.on('pointerdown', () => {
-    callbacks.onClick();
+  // Track pointer for click vs drag detection
+  let pointerStart: { x: number; y: number } | null = null;
+  const CLICK_THRESHOLD = 5;
+
+  group.on('pointerdown', (e) => {
+    pointerStart = { x: e.globalX, y: e.globalY };
+  });
+
+  group.on('pointerup', (e) => {
+    if (!pointerStart) return;
+    const dx = Math.abs(e.globalX - pointerStart.x);
+    const dy = Math.abs(e.globalY - pointerStart.y);
+    pointerStart = null;
+    // Only trigger click if pointer didn't move much (not a drag)
+    if (dx < CLICK_THRESHOLD && dy < CLICK_THRESHOLD) {
+      callbacks.onClick();
+    }
+  });
+
+  group.on('pointerupoutside', () => {
+    pointerStart = null;
   });
 
   group.on('pointerenter', () => {

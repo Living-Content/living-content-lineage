@@ -413,7 +413,6 @@ export function createPillNode(
     selectionRing.clear();
     if (progress <= 0) return;
 
-    // Draw a rounded rect progressively by tracing its path
     const hw = ringWidth / 2;
     const hh = ringHeight / 2;
     const r = ringRadius;
@@ -424,9 +423,17 @@ export function createPillNode(
     const totalLength = 2 * straightLength + 2 * curveLength;
     const drawLength = totalLength * Math.min(progress, 1);
 
-    selectionRing.moveTo(-hw + r, -hh);
-
     let remaining = drawLength;
+    const halfCurve = curveLength / 2;
+
+    // Left curve upper half: 9 o'clock (π) → 12 o'clock (3π/2)
+    // No moveTo - let arc define the start point directly
+    if (remaining > 0) {
+      const arcLen = Math.min(remaining, halfCurve);
+      const arcAngle = (arcLen / halfCurve) * (Math.PI / 2);
+      selectionRing.arc(-hw + r, 0, r, Math.PI, Math.PI + arcAngle);
+      remaining -= arcLen;
+    }
 
     // Top edge (left to right)
     if (remaining > 0) {
@@ -435,7 +442,7 @@ export function createPillNode(
       remaining -= segLen;
     }
 
-    // Right curve
+    // Right curve: 12 o'clock (-π/2) → 6 o'clock (π/2)
     if (remaining > 0) {
       const arcLen = Math.min(remaining, curveLength);
       const arcAngle = (arcLen / curveLength) * Math.PI;
@@ -450,10 +457,10 @@ export function createPillNode(
       remaining -= segLen;
     }
 
-    // Left curve
+    // Left curve lower half: 6 o'clock (π/2) → 9 o'clock (π)
     if (remaining > 0) {
-      const arcLen = Math.min(remaining, curveLength);
-      const arcAngle = (arcLen / curveLength) * Math.PI;
+      const arcLen = Math.min(remaining, halfCurve);
+      const arcAngle = (arcLen / halfCurve) * (Math.PI / 2);
       selectionRing.arc(-hw + r, 0, r, Math.PI / 2, Math.PI / 2 + arcAngle);
     }
 
@@ -474,7 +481,7 @@ export function createPillNode(
       gsap.to(animState, {
         progress: 1,
         duration: 0.5,
-        ease: 'power2.out',
+        ease: 'power2.inOut',
         onUpdate: () => {
           drawSelectionRing(animState.progress);
         },
@@ -492,8 +499,27 @@ export function createPillNode(
   group.cursor = 'pointer';
   group.cullable = true;
 
-  group.on('pointerdown', () => {
-    callbacks.onClick();
+  // Track pointer for click vs drag detection
+  let pointerStart: { x: number; y: number } | null = null;
+  const CLICK_THRESHOLD = 5;
+
+  group.on('pointerdown', (e) => {
+    pointerStart = { x: e.globalX, y: e.globalY };
+  });
+
+  group.on('pointerup', (e) => {
+    if (!pointerStart) return;
+    const dx = Math.abs(e.globalX - pointerStart.x);
+    const dy = Math.abs(e.globalY - pointerStart.y);
+    pointerStart = null;
+    // Only trigger click if pointer didn't move much (not a drag)
+    if (dx < CLICK_THRESHOLD && dy < CLICK_THRESHOLD) {
+      callbacks.onClick();
+    }
+  });
+
+  group.on('pointerupoutside', () => {
+    pointerStart = null;
   });
 
   group.on('pointerenter', () => {
