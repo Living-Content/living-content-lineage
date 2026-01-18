@@ -10,24 +10,24 @@ const EXCLUDED_KEYS = new Set(['id', 'type', 'nodeType', 'shape', 'x', 'y']);
 /**
  * Check if a key should be displayed in the content list.
  */
-export function shouldDisplayKey(key: string): boolean {
+export const shouldDisplayKey = (key: string): boolean => {
   return !EXCLUDED_KEYS.has(key);
-}
+};
 
 /**
  * Format a key for display (convert camelCase to readable label).
  */
-export function formatKeyLabel(key: string): string {
+export const formatKeyLabel = (key: string): string => {
   return key
     .replace(/([A-Z])/g, ' $1')
     .replace(/^./, (str) => str.toLowerCase())
     .trim();
-}
+};
 
 /**
  * Format a content value for display.
  */
-export function formatContentValue(value: unknown): string {
+export const formatContentValue = (value: unknown): string => {
   if (value === null || value === undefined) {
     return '';
   }
@@ -44,12 +44,12 @@ export function formatContentValue(value: unknown): string {
     return JSON.stringify(value);
   }
   return String(value);
-}
+};
 
 /**
  * Check if a value is suitable for summary display (simple, short values).
  */
-export function isSummaryValue(value: unknown): boolean {
+export const isSummaryValue = (value: unknown): boolean => {
   if (value === null || value === undefined) {
     return false;
   }
@@ -60,4 +60,4 @@ export function isSummaryValue(value: unknown): boolean {
     return true;
   }
   return false;
-}
+};

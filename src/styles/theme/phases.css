@@ -29,6 +29,6 @@
   --phase-persistence-muted: rgba(0, 84, 175, 0.6);
 
   /* Phase text colors - for use on colored backgrounds */
-  --phase-text-light: #ffffff;
-  --phase-text-dark: #1a1a1a;
+  --phase-text-light: rgb(255, 255, 255);
+  --phase-text-dark: rgb(26, 26, 26);
 }

@@ -11,13 +11,13 @@ import type { LineageManifest, LineageManifestRecord } from './lineageTypes.js';
 import { computeLayout } from './lineageLayout.js';
 import { getCssVar } from '../../../ui/theme.js';
 
-function isRecord(value: unknown): value is Record<string, unknown> {
+const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === 'object' && value !== null;
-}
+};
 
-function buildManifestSummary(
+const buildManifestSummary = (
   record?: LineageManifestRecord
-): LineageManifestSummary | undefined {
+): LineageManifestSummary | undefined => {
   if (!record) return undefined;
   const claimGeneratorInfo = Array.isArray(record.claim_generator_info)
     ? record.claim_generator_info.map((info) => ({
@@ -46,14 +46,14 @@ function buildManifestSummary(
     assertions,
     signatureInfo,
   };
-}
+};
 
 // Builds the renderable graph using adapter-provided asset type mapping.
-export function buildLineageGraph(
+export const buildLineageGraph = (
   manifest: LineageManifest,
   assetManifests: Map<string, AssetManifest>,
   mapAssetType: (assetType: string) => AssetType
-): LineageGraph {
+): LineageGraph => {
   const activeManifestId = manifest.active_manifest;
   const activeManifest = manifest.manifests[activeManifestId];
   const manifestSummary = buildManifestSummary(activeManifest);

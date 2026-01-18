@@ -17,9 +17,9 @@ export interface LabelDimensions {
  * Measures all labels and returns their pill dimensions.
  * Used for layout calculations before rendering.
  */
-export function measureLabels(
+export const measureLabels = (
   labels: Array<{ id: string; label: string }>
-): Map<string, LabelDimensions> {
+): Map<string, LabelDimensions> => {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d')!;
   ctx.font = PILL_FONT;
@@ -37,4 +37,4 @@ export function measureLabels(
   }
 
   return measurements;
-}
+};

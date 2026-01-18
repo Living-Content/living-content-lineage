@@ -8,22 +8,22 @@ export const isDetailOpen = writable(false);
 export const isSimpleView = writable(false);
 export const loadError = writable<string | null>(null);
 
-export function setLoading(loading: boolean): void {
+export const setLoading = (loading: boolean): void => {
   isLoading.set(loading);
-}
+};
 
-export function setDetailOpen(open: boolean): void {
+export const setDetailOpen = (open: boolean): void => {
   isDetailOpen.set(open);
-}
+};
 
-export function closeDetailPanel(): void {
+export const closeDetailPanel = (): void => {
   isDetailOpen.set(false);
-}
+};
 
-export function setSimpleView(simple: boolean): void {
+export const setSimpleView = (simple: boolean): void => {
   isSimpleView.set(simple);
-}
+};
 
-export function setLoadError(message: string | null): void {
+export const setLoadError = (message: string | null): void => {
   loadError.set(message);
-}
+};

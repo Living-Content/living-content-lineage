@@ -20,29 +20,29 @@ export interface ViewportCallbacks {
   isZoomBlocked?: () => boolean;
 }
 
-export function screenToWorld(
+export const screenToWorld = (
   screenX: number,
   screenY: number,
   state: ViewportState
-): { x: number; y: number } {
+): { x: number; y: number } => {
   return {
     x: (screenX - state.x) / state.scale,
     y: (screenY - state.y) / state.scale,
   };
-}
+};
 
-export function worldToScreen(
+export const worldToScreen = (
   worldX: number,
   worldY: number,
   state: ViewportState
-): { x: number; y: number } {
+): { x: number; y: number } => {
   return {
     x: state.x + worldX * state.scale,
     y: state.y + worldY * state.scale,
   };
-}
+};
 
-export function createViewportState(width: number, height: number): ViewportState {
+export const createViewportState = (width: number, height: number): ViewportState => {
   return {
     x: width / 2,
     y: height / 2,
@@ -50,15 +50,15 @@ export function createViewportState(width: number, height: number): ViewportStat
     width,
     height,
   };
-}
+};
 
-export function createViewportHandlers(
+export const createViewportHandlers = (
   canvas: HTMLCanvasElement,
   viewport: Container,
   container: HTMLElement,
   state: ViewportState,
   callbacks: ViewportCallbacks
-): { destroy: () => void } {
+): { destroy: () => void } => {
   let isDragging = false;
   let lastPointerPos = { x: 0, y: 0 };
 
@@ -136,4 +136,4 @@ export function createViewportHandlers(
       window.removeEventListener('pointerup', handlePointerUp);
     },
   };
-}
+};

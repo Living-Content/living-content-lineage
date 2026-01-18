@@ -10,7 +10,7 @@ export interface LayoutResult {
 const HORIZONTAL_GAP = 0.2;
 const VERTICAL_GAP = 0.08;
 
-export function computeLayout(manifest: LineageManifest): LayoutResult {
+export const computeLayout = (manifest: LineageManifest): LayoutResult => {
   const positions = new Map<string, { x: number; y: number; stage: string }>();
 
   const compSet = new Set(manifest.computations.map((comp) => comp.id));
@@ -139,4 +139,4 @@ export function computeLayout(manifest: LineageManifest): LayoutResult {
   });
 
   return { positions, stages };
-}
+};

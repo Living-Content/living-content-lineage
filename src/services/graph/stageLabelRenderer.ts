@@ -17,12 +17,12 @@ import {
 const DOT_SIZE = 2;
 const DOT_GAP = 4;
 
-function getStageColor(phase?: WorkflowPhase): number {
+const getStageColor = (phase?: WorkflowPhase): number => {
   if (!phase) return getColor('--color-edge-default');
   return getColor(`--phase-${phase.toLowerCase()}`);
-}
+};
 
-function createLabelStyle(color: number): TextStyle {
+const createLabelStyle = (color: number): TextStyle => {
   return new TextStyle({
     fontFamily: getCssVar('--font-sans'),
     fontSize: STAGE_LABEL_FONT_SIZE,
@@ -30,7 +30,7 @@ function createLabelStyle(color: number): TextStyle {
     fill: color,
     letterSpacing: -0.5,
   });
-}
+};
 
 export interface TopNodeInfo {
   worldY: number;

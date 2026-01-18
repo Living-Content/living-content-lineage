@@ -1,9 +1,8 @@
 <script lang="ts">
   /**
-   * Header with logo, theme toggle, and detail level indicator.
+   * Header with logo and detail level indicator.
    */
   import { isSimpleView } from '../stores/uiState.js';
-  import ThemeToggle from './ThemeToggle.svelte';
 </script>
 
 <header class="header">
@@ -16,7 +15,6 @@
     </svg>
   </div>
   <div class="header-right">
-    <ThemeToggle />
     <img
       src={$isSimpleView ? '/icons/simple.svg' : '/icons/detail.svg'}
       alt={$isSimpleView ? 'Simple view' : 'Detailed view'}

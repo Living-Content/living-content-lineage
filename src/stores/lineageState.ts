@@ -17,21 +17,21 @@ export const lineageData = writable<LineageGraph | null>(null);
 export const selectedNode = writable<LineageNodeData | null>(null);
 export const selectedStage = writable<StageSelection | null>(null);
 
-export function setLineageData(data: LineageGraph): void {
+export const setLineageData = (data: LineageGraph): void => {
   lineageData.set(data);
-}
+};
 
-export function selectNode(node: LineageNodeData): void {
+export const selectNode = (node: LineageNodeData): void => {
   selectedStage.set(null);
   selectedNode.set(node);
-}
+};
 
-export function selectStage(selection: StageSelection): void {
+export const selectStage = (selection: StageSelection): void => {
   selectedNode.set(null);
   selectedStage.set(selection);
-}
+};
 
-export function clearSelection(): void {
+export const clearSelection = (): void => {
   selectedNode.set(null);
   selectedStage.set(null);
-}
+};

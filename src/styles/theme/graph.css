@@ -4,22 +4,22 @@
  */
 :root {
   /* Graph canvas background */
-  --color-graph-bg-1: #000000;
-  --color-graph-bg-2: #000000;
-  --color-graph-bg-3: #000000;
+  --color-graph-bg-1: rgb(0, 0, 0);
+  --color-graph-bg-2: rgb(0, 0, 0);
+  --color-graph-bg-3: rgb(0, 0, 0);
 
   /* Edge colors */
-  --color-edge: #1a1a1a;
-  --color-edge-muted: #666666;
+  --color-edge: rgb(26, 26, 26);
+  --color-edge-muted: rgb(102, 102, 102);
   --color-edge-default: rgb(102, 102, 102);
   --color-edge-stroke: rgb(0, 0, 0);
   --color-edge-gate: rgb(107, 203, 119);
 
   /* Port colors */
-  --color-port: #4b5563;
+  --color-port: rgb(75, 85, 99);
 
   /* Node base colors */
-  --color-node-default: #ffffff;
+  --color-node-default: rgb(255, 255, 255);
   --color-node-bg: rgba(255, 255, 255, 0.7);
   --color-node-border-default: rgb(77, 150, 255);
   --color-node-icon-default: rgb(77, 150, 255);

@@ -87,7 +87,7 @@ export interface ParsedAssertionData {
 /**
  * Parse lco.model assertion data.
  */
-export function parseLcoModel(data: unknown): LcoModelData | undefined {
+export const parseLcoModel = (data: unknown): LcoModelData | undefined => {
   if (!data || typeof data !== 'object') return undefined;
   const d = data as Record<string, unknown>;
   return {
@@ -98,20 +98,20 @@ export function parseLcoModel(data: unknown): LcoModelData | undefined {
       ? parseParameters(d.parameters as Record<string, unknown>)
       : undefined,
   };
-}
+};
 
-function parseParameters(params: Record<string, unknown>): LcoModelData['parameters'] {
+const parseParameters = (params: Record<string, unknown>): LcoModelData['parameters'] => {
   return {
     maxTokens: typeof params.max_tokens === 'number' ? params.max_tokens : undefined,
     temperature: typeof params.temperature === 'number' ? params.temperature : undefined,
     ...params,
   };
-}
+};
 
 /**
  * Parse lco.code assertion data.
  */
-export function parseLcoCode(data: unknown): LcoCodeData | undefined {
+export const parseLcoCode = (data: unknown): LcoCodeData | undefined => {
   if (!data || typeof data !== 'object') return undefined;
   const d = data as Record<string, unknown>;
   return {
@@ -120,12 +120,12 @@ export function parseLcoCode(data: unknown): LcoCodeData | undefined {
     computation: typeof d.computation === 'string' ? d.computation : undefined,
     hash: typeof d.hash === 'string' ? d.hash : undefined,
   };
-}
+};
 
 /**
  * Parse lco.execution assertion data.
  */
-export function parseLcoExecution(data: unknown): LcoExecutionData | undefined {
+export const parseLcoExecution = (data: unknown): LcoExecutionData | undefined => {
   if (!data || typeof data !== 'object') return undefined;
   const d = data as Record<string, unknown>;
   const durationMs = typeof d.execution_duration_ms === 'number'
@@ -140,12 +140,12 @@ export function parseLcoExecution(data: unknown): LcoExecutionData | undefined {
     previousFunction: typeof d.previous_function === 'string' ? d.previous_function : undefined,
     nextFunction: typeof d.next_function === 'string' ? d.next_function : undefined,
   };
-}
+};
 
 /**
  * Parse lco.usage assertion data.
  */
-export function parseLcoUsage(data: unknown): LcoUsageData | undefined {
+export const parseLcoUsage = (data: unknown): LcoUsageData | undefined => {
   if (!data || typeof data !== 'object') return undefined;
   const d = data as Record<string, unknown>;
   const durationMs = typeof d.duration_ms === 'number'
@@ -156,12 +156,12 @@ export function parseLcoUsage(data: unknown): LcoUsageData | undefined {
   return {
     durationMs,
   };
-}
+};
 
 /**
  * Parse lco.content assertion data.
  */
-export function parseLcoContent(data: unknown): LcoContentData | undefined {
+export const parseLcoContent = (data: unknown): LcoContentData | undefined => {
   if (!data || typeof data !== 'object') return undefined;
   const d = data as Record<string, unknown>;
   return {
@@ -169,12 +169,12 @@ export function parseLcoContent(data: unknown): LcoContentData | undefined {
     contentHash: typeof d.content_hash === 'string' ? d.content_hash : undefined,
     contentPreview: typeof d.content_preview === 'string' ? d.content_preview : undefined,
   };
-}
+};
 
 /**
  * Parse c2pa.actions assertion data.
  */
-export function parseC2paActions(data: unknown): C2paActionsData | undefined {
+export const parseC2paActions = (data: unknown): C2paActionsData | undefined => {
   if (!data || typeof data !== 'object') return undefined;
   const d = data as Record<string, unknown>;
   if (!Array.isArray(d.actions)) return { actions: [] };
@@ -196,12 +196,12 @@ export function parseC2paActions(data: unknown): C2paActionsData | undefined {
       };
     }),
   };
-}
+};
 
 /**
  * Extract all typed assertion data from a list of assertions.
  */
-export function extractAssertionData(assertions: ManifestAssertion[] | undefined): ParsedAssertionData {
+export const extractAssertionData = (assertions: ManifestAssertion[] | undefined): ParsedAssertionData => {
   const result: ParsedAssertionData = {};
   if (!assertions) return result;
 
@@ -228,29 +228,29 @@ export function extractAssertionData(assertions: ManifestAssertion[] | undefined
     }
   }
   return result;
-}
+};
 
 /**
  * Format duration in milliseconds to a human-readable string.
  */
-export function formatDuration(ms: number | undefined): string {
+export const formatDuration = (ms: number | undefined): string => {
   if (ms === undefined) return '-';
   if (ms < 1000) return `${ms.toFixed(0)}ms`;
   return `${(ms / 1000).toFixed(1)}s`;
-}
+};
 
 /**
  * Format a number with appropriate precision.
  */
-export function formatNumber(value: number | undefined, decimals = 2): string {
+export const formatNumber = (value: number | undefined, decimals = 2): string => {
   if (value === undefined) return '-';
   return value.toFixed(decimals);
-}
+};
 
 /**
  * Format a percentage value.
  */
-export function formatPercent(value: number | undefined): string {
+export const formatPercent = (value: number | undefined): string => {
   if (value === undefined) return '-';
   return `${(value * 100).toFixed(0)}%`;
-}
+};

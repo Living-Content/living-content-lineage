@@ -19,12 +19,12 @@ import { drawDot } from './rendererUtils.js';
  * Each edge uses the phase color of its source stage.
  * When a stage is selected, only edges connected to it are fully visible.
  */
-export function renderStageEdges(
+export const renderStageEdges = (
   layer: Container,
   stages: Stage[],
   stageNodeMap: Map<string, PillNode>,
   selectedStageId: string | null = null
-): void {
+): void => {
   layer.removeChildren();
   const graphics = new Graphics();
   const stageOrder = stages.map((s) => s.id);
@@ -61,4 +61,4 @@ export function renderStageEdges(
   }
 
   layer.addChild(graphics);
-}
+};

@@ -10,28 +10,28 @@ const ADAPTERS: ManifestAdapter<unknown>[] = [
   customAdapter,
 ];
 
-function isRecord(value: unknown): value is Record<string, unknown> {
+const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === 'object' && value !== null;
-}
+};
 
-export function getManifestType(raw: unknown): ManifestType | null {
+export const getManifestType = (raw: unknown): ManifestType | null => {
   if (!isRecord(raw)) return null;
   const value = raw.manifest_type ?? raw.manifestType;
   if (value === 'c2pa' || value === 'eqty' || value === 'custom') {
     return value;
   }
   return null;
-}
+};
 
-export function getAdapter(type: ManifestType): ManifestAdapter<unknown> {
+export const getAdapter = (type: ManifestType): ManifestAdapter<unknown> => {
   const adapter = ADAPTERS.find((candidate) => candidate.type === type);
   if (!adapter) {
     throw new Error(`Unsupported manifest type: ${type}`);
   }
   return adapter;
-}
+};
 
-function resolveAdapter(raw: unknown): ManifestAdapter<unknown> {
+const resolveAdapter = (raw: unknown): ManifestAdapter<unknown> => {
   const explicitType = getManifestType(raw);
   if (explicitType) {
     const adapter = getAdapter(explicitType);
@@ -47,9 +47,9 @@ function resolveAdapter(raw: unknown): ManifestAdapter<unknown> {
     throw new Error('Manifest type could not be determined');
   }
   throw new Error('Manifest matched multiple adapters');
-}
+};
 
-export async function loadManifest(url: string): Promise<LineageGraph> {
+export const loadManifest = async (url: string): Promise<LineageGraph> => {
   const manifestUrl = new URL(url, window.location.href);
   const response = await fetch(manifestUrl.toString());
   if (!response.ok) {
@@ -83,4 +83,4 @@ export async function loadManifest(url: string): Promise<LineageGraph> {
   await Promise.all(fetchPromises);
 
   return adapter.parse(raw, assetManifests);
-}
+};

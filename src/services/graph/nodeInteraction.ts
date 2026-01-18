@@ -16,7 +16,7 @@ export interface NodeCallbacks {
  * Attaches click/hover handlers to a node container with drag detection.
  * Click only fires if pointer didn't move beyond threshold (not a drag).
  */
-export function attachNodeInteraction(node: Container, callbacks: NodeCallbacks): void {
+export const attachNodeInteraction = (node: Container, callbacks: NodeCallbacks): void => {
   let pointerStart: { x: number; y: number } | null = null;
 
   node.eventMode = 'static';
@@ -48,7 +48,7 @@ export function attachNodeInteraction(node: Container, callbacks: NodeCallbacks)
   node.on('pointerleave', () => {
     callbacks.onHoverEnd();
   });
-}
+};
 
 /**
  * Creates a selection animator that handles the draw-on/fade-out animation.
@@ -56,10 +56,10 @@ export function attachNodeInteraction(node: Container, callbacks: NodeCallbacks)
  * @param drawRing Function that draws the ring at the given progress (0-1)
  * @returns A function to call when selection state changes
  */
-export function createSelectionAnimator(
+export const createSelectionAnimator = (
   selectionRing: Graphics,
   drawRing: (progress: number) => void
-): (selected: boolean) => void {
+): ((selected: boolean) => void) => {
   const animState = { progress: 0 };
 
   return (selected: boolean) => {
@@ -85,4 +85,4 @@ export function createSelectionAnimator(
       });
     }
   };
-}
+};

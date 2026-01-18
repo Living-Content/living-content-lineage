@@ -37,15 +37,15 @@ interface AnimConfig {
   ease: string;
 }
 
-function randomBetween(min: number, max: number): number {
+const randomBetween = (min: number, max: number): number => {
   return min + Math.random() * (max - min);
-}
+};
 
-function isMobile(): boolean {
+const isMobile = (): boolean => {
   return typeof window !== 'undefined' && window.innerWidth <= 900;
-}
+};
 
-function getBlobConfig(width: number, height: number): BlobConfig {
+const getBlobConfig = (width: number, height: number): BlobConfig => {
   const base = Math.min(width, height);
   const minRadius = Math.round(base * LIQUID_CONFIG.minRadiusRatio);
   const maxRadius = Math.round(base * LIQUID_CONFIG.maxRadiusRatio);
@@ -54,9 +54,9 @@ function getBlobConfig(width: number, height: number): BlobConfig {
     maxRadius,
     mergeThreshold: Math.round(((minRadius + maxRadius) / 2) * LIQUID_CONFIG.mergeThresholdRatio),
   };
-}
+};
 
-function getAnimConfig(width: number, height: number): AnimConfig {
+const getAnimConfig = (width: number, height: number): AnimConfig => {
   const area = width * height;
   const areaFactor = 1 + (Math.sqrt(area / 100000) - 1) * LIQUID_CONFIG.areaSizeSlowdown;
   const speedFactor = LIQUID_CONFIG.speedMultiplier * areaFactor;
@@ -65,32 +65,32 @@ function getAnimConfig(width: number, height: number): AnimConfig {
     blobDuration: LIQUID_CONFIG.baseBlobDuration * speedFactor,
     ease: 'elastic.out(1, 0.5)',
   };
-}
+};
 
-function isPointCovered(x: number, y: number, blobs: Blob[]): boolean {
+const isPointCovered = (x: number, y: number, blobs: Blob[]): boolean => {
   for (const blob of blobs) {
     const dx = x - blob.x;
     const dy = y - blob.y;
     if (dx * dx + dy * dy < blob.r * blob.r) return true;
   }
   return false;
-}
+};
 
-function findUncoveredPoint(
+const findUncoveredPoint = (
   blobs: Blob[],
   minX: number, maxX: number,
   minY: number, maxY: number,
   spacing: number
-): { x: number; y: number } | null {
+): { x: number; y: number } | null => {
   for (let x = minX; x <= maxX; x += spacing) {
     for (let y = minY; y <= maxY; y += spacing) {
       if (!isPointCovered(x, y, blobs)) return { x, y };
     }
   }
   return null;
-}
+};
 
-function findNearestBlob(x: number, y: number, blobs: Blob[]): Blob {
+const findNearestBlob = (x: number, y: number, blobs: Blob[]): Blob => {
   let nearest = blobs[0];
   let minDist = Infinity;
   for (const blob of blobs) {
@@ -103,13 +103,13 @@ function findNearestBlob(x: number, y: number, blobs: Blob[]): Blob {
     }
   }
   return nearest;
-}
+};
 
-function calculateBlobs(
+const calculateBlobs = (
   width: number,
   height: number,
   existingBlobs: Blob[] = []
-): Blob[] {
+): Blob[] => {
   const { minRadius, maxRadius, mergeThreshold } = getBlobConfig(width, height);
   const overflow = LIQUID_CONFIG.edgeOverflow;
   const spacing = minRadius * 0.8;
@@ -142,7 +142,7 @@ function calculateBlobs(
   }
 
   return blobs;
-}
+};
 
 /**
  * Manages blob lifecycle with caching and incremental updates.

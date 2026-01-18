@@ -197,7 +197,7 @@ export interface LineageGraph {
 /**
  * Maps an asset type to its corresponding node type for rendering.
  */
-export function assetTypeToNodeType(assetType: AssetType): NodeType {
+export const assetTypeToNodeType = (assetType: AssetType): NodeType => {
   switch (assetType) {
     case "Model":
     case "Code":
@@ -214,12 +214,12 @@ export function assetTypeToNodeType(assetType: AssetType): NodeType {
     case "Credential":
       return "attestation";
   }
-}
+};
 
 /**
  * Maps a workflow stage type to its workflow phase.
  */
-export function workflowStageTypeToPhase(stageType: WorkflowStageType): WorkflowPhase {
+export const workflowStageTypeToPhase = (stageType: WorkflowStageType): WorkflowPhase => {
   switch (stageType) {
     case "ingest":
       return "Acquisition";
@@ -240,12 +240,12 @@ export function workflowStageTypeToPhase(stageType: WorkflowStageType): Workflow
     case "publish":
       return "Persistence";
   }
-}
+};
 
 /**
  * Maps an asset type to its category.
  */
-export function assetTypeToCategory(assetType: AssetType): AssetCategory {
+export const assetTypeToCategory = (assetType: AssetType): AssetCategory => {
   switch (assetType) {
     case "Media":
     case "Document":
@@ -260,4 +260,4 @@ export function assetTypeToCategory(assetType: AssetType): AssetCategory {
     case "Credential":
       return "Verification";
   }
-}
+};

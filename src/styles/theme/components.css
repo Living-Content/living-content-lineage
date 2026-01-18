@@ -4,10 +4,10 @@
  */
 :root {
   /* Icon colors */
-  --color-icon-default: #1a1a1a;
-  --color-icon-muted: #666666;
-  --color-icon-accent-blue: #3b82f6;
-  --color-icon-accent-amber: #f59e0b;
+  --color-icon-default: rgb(26, 26, 26);
+  --color-icon-muted: rgb(102, 102, 102);
+  --color-icon-accent-blue: rgb(59, 130, 246);
+  --color-icon-accent-amber: rgb(245, 158, 11);
 
   /* Icon filters for SVG coloring */
   --filter-icon-blue: invert(45%) sepia(67%) saturate(2000%) hue-rotate(203deg)
@@ -16,16 +16,16 @@
     brightness(97%) contrast(95%);
 
   /* Stage colors */
-  --color-stage-compute: #6366f1;
-  --color-stage-data: #1a1a1a;
-  --color-stage-attestation: #22c55e;
+  --color-stage-compute: rgb(99, 102, 241);
+  --color-stage-data: rgb(26, 26, 26);
+  --color-stage-attestation: rgb(34, 197, 94);
 
   /* Impact indicator colors */
-  --color-impact-minimal: #4ade80;
-  --color-impact-available: #4b5563;
-  --color-impact-unknown: #9ca3af;
-  --color-impact-low: #a3e635;
-  --color-impact-moderate: #fbbf24;
+  --color-impact-minimal: rgb(74, 222, 128);
+  --color-impact-available: rgb(75, 85, 99);
+  --color-impact-unknown: rgb(156, 163, 175);
+  --color-impact-low: rgb(163, 230, 53);
+  --color-impact-moderate: rgb(251, 191, 36);
 
   /* Impact indicator filters */
   --filter-impact-minimal: invert(75%) sepia(50%) saturate(500%)

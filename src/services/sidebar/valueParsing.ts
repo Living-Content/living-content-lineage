@@ -3,47 +3,47 @@ import JSON5 from 'json5';
 /**
  * Returns true when a value string looks like JSON.
  */
-export function looksLikeJson(value: string): boolean {
+export const looksLikeJson = (value: string): boolean => {
   const trimmed = value.trim();
   return (
     (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
     (trimmed.startsWith('[') && trimmed.endsWith(']'))
   );
-}
+};
 
 /**
  * Parses strict JSON when it appears to be valid.
  */
-export function parseJson(value: string): unknown | null {
+export const parseJson = (value: string): unknown | null => {
   if (!looksLikeJson(value)) return null;
   try {
     return JSON.parse(value);
   } catch {
     return null;
   }
-}
+};
 
 /**
  * Parses JSON5 input if possible.
  */
-export function parseLooseJson(value: string): unknown | null {
+export const parseLooseJson = (value: string): unknown | null => {
   try {
     return JSON5.parse(value);
   } catch {
     return null;
   }
-}
+};
 
 /**
  * Extracts and parses the first JSON fragment in a string.
  */
-export function tryParseJsonFragment(
+export const tryParseJsonFragment = (
   value: string
 ): {
   parsed: unknown;
   prefix: string;
   suffix: string;
-} | null {
+} | null => {
   const openings = new Set(['{', '[']);
   const closings: Record<string, string> = { '{': '}', '[': ']' };
 
@@ -79,19 +79,19 @@ export function tryParseJsonFragment(
   }
 
   return null;
-}
+};
 
 /**
  * Detects URLs so they can be rendered as links.
  */
-export function isHttpUrl(value: string): boolean {
+export const isHttpUrl = (value: string): boolean => {
   return value.startsWith('http://') || value.startsWith('https://');
-}
+};
 
 /**
  * Detects if a string likely contains Markdown.
  */
-export function looksLikeMarkdown(value: string): boolean {
+export const looksLikeMarkdown = (value: string): boolean => {
   if (value.includes('```')) return true;
   if (/^#{1,6}\s/m.test(value)) return true;
   if (/(\n|^)[*-]\s+/m.test(value)) return true;
@@ -99,4 +99,4 @@ export function looksLikeMarkdown(value: string): boolean {
   if (/\[[^\]]+]\([^)]+\)/.test(value)) return true;
   if (/\*\*[^*]+\*\*/.test(value)) return true;
   return false;
-}
+};

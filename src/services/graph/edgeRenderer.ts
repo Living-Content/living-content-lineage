@@ -18,14 +18,14 @@ import { drawDot } from './rendererUtils.js';
  * Render edges with solid colors matching source node.
  * Lines go in edgeLayer (behind nodes), dots go in dotLayer (in front).
  */
-export function renderEdges(
+export const renderEdges = (
   edgeLayer: Container,
   dotLayer: Container,
   edges: LineageGraph['edges'],
   nodeMap: Map<string, PillNode>,
   selectedNodeId: string | null = null,
   highlightedNodeIds: Set<string> | null = null
-): void {
+): void => {
   edgeLayer.removeChildren();
   dotLayer.removeChildren();
 
@@ -99,16 +99,16 @@ export function renderEdges(
   edgeLayer.addChild(lineGraphics);
   dotLayer.addChild(fadedDotGraphics);
   dotLayer.addChild(dotGraphics);
-}
+};
 
-function renderHorizontalEdge(
+const renderHorizontalEdge = (
   lineGraphics: Graphics,
   dotGraphics: Graphics,
   sx: number, sy: number,
   tx: number, ty: number,
   sourceHalfW: number, targetHalfW: number,
   color: number
-): void {
+): void => {
   const goingRight = tx > sx;
   const startX = goingRight ? sx + sourceHalfW : sx - sourceHalfW;
   const endX = goingRight ? tx - targetHalfW : tx + targetHalfW;
@@ -119,16 +119,16 @@ function renderHorizontalEdge(
 
   drawDot(dotGraphics, startX, sy, EDGE_DOT_RADIUS, color);
   drawDot(dotGraphics, endX, ty, EDGE_DOT_RADIUS, color);
-}
+};
 
-function renderVerticalEdge(
+const renderVerticalEdge = (
   lineGraphics: Graphics,
   dotGraphics: Graphics,
   sx: number, sy: number,
   tx: number, ty: number,
   sourceHalfH: number, targetHalfH: number,
   color: number
-): void {
+): void => {
   const goingDown = ty > sy;
   const startY = goingDown ? sy + sourceHalfH : sy - sourceHalfH;
   const endY = goingDown ? ty - targetHalfH : ty + targetHalfH;
@@ -139,4 +139,4 @@ function renderVerticalEdge(
 
   drawDot(dotGraphics, sx, startY, EDGE_DOT_RADIUS, color);
   drawDot(dotGraphics, tx, endY, EDGE_DOT_RADIUS, color);
-}
+};

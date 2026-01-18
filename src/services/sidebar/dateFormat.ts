@@ -1,7 +1,7 @@
 /**
  * Formats ISO timestamps for concise sidebar display.
  */
-export function formatTimestamp(timestamp: string): string {
+export const formatTimestamp = (timestamp: string): string => {
   const date = new Date(timestamp);
   if (Number.isNaN(date.getTime())) {
     return timestamp;
@@ -12,4 +12,4 @@ export function formatTimestamp(timestamp: string): string {
     hour: '2-digit',
     minute: '2-digit',
   });
-}
+};

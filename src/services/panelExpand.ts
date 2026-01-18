@@ -19,12 +19,12 @@ const defaults: Required<ExpandOptions> = {
  * Desktop: animates height first, then width.
  * Mobile: animates height only.
  */
-export function expandTo(
+export const expandTo = (
   element: HTMLElement,
   targetWidth: number,
   targetHeight: number,
   options: ExpandOptions = {}
-): gsap.core.Timeline {
+): gsap.core.Timeline => {
   const { duration, ease } = { ...defaults, ...options };
   const isMobile = window.innerWidth <= 900;
 
@@ -38,19 +38,19 @@ export function expandTo(
   }
 
   return tl;
-}
+};
 
 /**
  * Contract element from current size to target size.
  * Desktop: animates width first, then height.
  * Mobile: animates height only.
  */
-export function contractTo(
+export const contractTo = (
   element: HTMLElement,
   targetWidth: number,
   targetHeight: number,
   options: ExpandOptions = {}
-): gsap.core.Timeline {
+): gsap.core.Timeline => {
   const { duration, ease } = { ...defaults, ...options };
   const isMobile = window.innerWidth <= 900;
 
@@ -64,4 +64,4 @@ export function contractTo(
   }
 
   return tl;
-}
+};

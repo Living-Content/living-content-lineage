@@ -2,37 +2,25 @@
  * Pill-shaped node rendering with icon circle and knockout text effect.
  * Shows asset type icon on left, with type label and optional main label.
  */
-import { Container, Graphics, Sprite, Texture, Ticker } from 'pixi.js';
-import { ASSET_TYPE_ICON_PATHS, getCssVar, getColor, getPhaseColorHex } from '../../ui/theme.js';
+import { Container, Graphics, Sprite, Ticker } from 'pixi.js';
+import { ASSET_TYPE_ICON_PATHS, getColor, getPhaseColorHex } from '../../ui/theme.js';
 import type { AssetType, LineageNodeData } from '../../types.js';
 import { ASSET_TYPE_LABELS } from '../labels.js';
 import { attachNodeInteraction, createSelectionAnimator, type NodeCallbacks } from './nodeInteraction.js';
-import { createRetinaCanvas } from './rendererUtils.js';
+import { loadIcon } from './iconLoader.js';
+import {
+  BASE_PILL_HEIGHT_DETAILED,
+  BASE_PILL_HEIGHT_SIMPLE,
+  BASE_RIGHT_PADDING,
+  BASE_SIMPLE_TYPE_FONT_SIZE,
+  calculatePillWidth,
+  getNodeFontFamily,
+  getScaledDimensions,
+  measureCtx,
+} from './pillTextMeasurement.js';
+import { createPillWithIconTexture, createKnockoutPillTexture } from './pillTextureRenderer.js';
 
 export const DEFAULT_NODE_ALPHA = 1;
-
-function getNodeFontFamily(): string {
-  return getCssVar('--font-sans', '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif');
-}
-
-// Base dimensions (will be scaled)
-const BASE_TYPE_LABEL_FONT_SIZE = 13;
-const BASE_MAIN_LABEL_FONT_SIZE = 18;
-const BASE_SIMPLE_TYPE_FONT_SIZE = 16;
-const BASE_ICON_DIAMETER = 36;
-const BASE_PILL_HEIGHT_DETAILED = 56;
-const BASE_PILL_HEIGHT_SIMPLE = 48;
-const BASE_LEFT_PADDING = 10;
-const BASE_ICON_TEXT_GAP = 12;
-const BASE_RIGHT_PADDING = 20;
-
-const measureCanvas = document.createElement('canvas');
-const measureCtx = measureCanvas.getContext('2d')!;
-
-function measureText(text: string, fontSize: number, fontWeight = '600'): number {
-  measureCtx.font = `${fontWeight} ${fontSize}px ${getNodeFontFamily()}`;
-  return measureCtx.measureText(text).width;
-}
 
 export interface PillNode extends Container {
   nodeData: LineageNodeData;
@@ -52,203 +40,21 @@ export interface PillRenderOptions {
   mainLabel?: string;
 }
 
-// Cache for loaded SVG icons
-const iconCache = new Map<string, HTMLImageElement>();
-
-async function loadIcon(iconPath: string): Promise<HTMLImageElement> {
-  const cached = iconCache.get(iconPath);
-  if (cached) return cached;
-
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      iconCache.set(iconPath, img);
-      resolve(img);
-    };
-    img.onerror = () => {
-      // Return a placeholder on error
-      resolve(img);
-    };
-    img.src = iconPath;
-  });
-}
-
-interface ScaledDimensions {
-  iconDiameter: number;
-  leftPadding: number;
-  iconTextGap: number;
-  typeLabelFontSize: number;
-  mainLabelFontSize: number;
-  simpleTypeFontSize: number;
-}
-
-function getScaledDimensions(scale: number): ScaledDimensions {
-  return {
-    iconDiameter: BASE_ICON_DIAMETER * scale,
-    leftPadding: BASE_LEFT_PADDING * scale,
-    iconTextGap: BASE_ICON_TEXT_GAP * scale,
-    typeLabelFontSize: BASE_TYPE_LABEL_FONT_SIZE * scale,
-    mainLabelFontSize: BASE_MAIN_LABEL_FONT_SIZE * scale,
-    simpleTypeFontSize: BASE_SIMPLE_TYPE_FONT_SIZE * scale,
-  };
-}
-
-function createPillWithIconTexture(
-  options: PillRenderOptions,
-  color: string,
-  width: number,
-  height: number,
-  iconImage: HTMLImageElement | null,
-  dims: ScaledDimensions
-): Texture {
-  const { canvas, ctx } = createRetinaCanvas(width, height);
-
-  const radius = height / 2;
-
-  // Draw pill background
-  ctx.beginPath();
-  ctx.roundRect(0, 0, width, height, radius);
-  ctx.fillStyle = color;
-  ctx.fill();
-
-  // Draw icon circle
-  const iconCenterX = dims.leftPadding + dims.iconDiameter / 2;
-  const iconCenterY = height / 2;
-  const iconRadius = dims.iconDiameter / 2;
-
-  // Cut out the icon circle
-  ctx.globalCompositeOperation = 'destination-out';
-  ctx.beginPath();
-  ctx.arc(iconCenterX, iconCenterY, iconRadius, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Draw the icon inside the circle
-  if (iconImage && iconImage.complete && iconImage.naturalWidth > 0) {
-    ctx.globalCompositeOperation = 'source-over';
-    const iconSize = dims.iconDiameter * 0.55;
-    const iconX = iconCenterX - iconSize / 2;
-    const iconY = iconCenterY - iconSize / 2;
-
-    // Draw icon with the node color
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(iconCenterX, iconCenterY, iconRadius - 1, 0, Math.PI * 2);
-    ctx.clip();
-    ctx.fillStyle = color;
-    ctx.fill();
-    ctx.drawImage(iconImage, iconX, iconY, iconSize, iconSize);
-    ctx.restore();
-  }
-
-  // Text positioning
-  const textStartX = dims.leftPadding + dims.iconDiameter + dims.iconTextGap;
-
-  ctx.textBaseline = 'middle';
-  ctx.textAlign = 'left';
-
-  if (options.mode === 'detailed' && options.mainLabel) {
-    // Two-line layout: type label (small, black) + main label (normal, white)
-    const lineSpacing = height * 0.18;
-    const typeY = height / 2 - lineSpacing;
-    const mainY = height / 2 + lineSpacing;
-
-    // Type label - dark text
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = getCssVar('--color-text-primary');
-    ctx.font = `600 ${dims.typeLabelFontSize}px ${getNodeFontFamily()}`;
-    ctx.fillText(options.typeLabel, textStartX, typeY);
-
-    // Main label - white text
-    ctx.fillStyle = getCssVar('--color-pill-text');
-    ctx.font = `400 ${dims.typeLabelFontSize}px ${getNodeFontFamily()}`;
-    ctx.fillText(options.mainLabel, textStartX, mainY);
-  } else {
-    // Single-line layout: just type label (dark)
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = getCssVar('--color-text-primary');
-    ctx.font = `600 ${dims.simpleTypeFontSize}px ${getNodeFontFamily()}`;
-    ctx.fillText(options.typeLabel, textStartX, height / 2);
-  }
-
-  return Texture.from(canvas);
-}
-
-// Legacy knockout pill texture for stage nodes without icons
-function createKnockoutPillTexture(
-  label: string,
-  color: string,
-  width: number,
-  height: number,
-  fontSize: number,
-  badgeCount?: number
-): Texture {
-  const { canvas, ctx } = createRetinaCanvas(width, height);
-
-  const radius = height / 2;
-  ctx.beginPath();
-  ctx.roundRect(0, 0, width, height, radius);
-  ctx.fillStyle = color;
-  ctx.fill();
-
-  ctx.globalCompositeOperation = 'destination-out';
-  ctx.font = `600 ${fontSize}px ${getNodeFontFamily()}`;
-  ctx.textBaseline = 'middle';
-
-  if (badgeCount !== undefined) {
-    const badgeRadius = height * 0.32;
-    const badgeFontSize = fontSize * 0.75;
-    const rightPadding = 16;
-    const badgeCenterX = width - rightPadding - badgeRadius;
-
-    ctx.textAlign = 'center';
-    ctx.fillText(label, (width - badgeRadius * 2 - rightPadding) / 2, height / 2);
-
-    ctx.beginPath();
-    ctx.arc(badgeCenterX, height / 2, badgeRadius, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = color;
-    ctx.font = `600 ${badgeFontSize}px ${getNodeFontFamily()}`;
-    ctx.fillText(String(badgeCount), badgeCenterX, height / 2);
-  } else {
-    ctx.textAlign = 'center';
-    ctx.fillText(label, width / 2, height / 2);
-  }
-
-  return Texture.from(canvas);
-}
-
-function calculatePillWidth(options: PillRenderOptions, dims: ScaledDimensions, scale: number): number {
-  const textStartX = dims.leftPadding + dims.iconDiameter + dims.iconTextGap;
-  const rightPadding = BASE_RIGHT_PADDING * scale;
-
-  if (options.mode === 'detailed' && options.mainLabel) {
-    const typeWidth = measureText(options.typeLabel, dims.typeLabelFontSize);
-    const mainWidth = measureText(options.mainLabel, dims.mainLabelFontSize);
-    const maxTextWidth = Math.max(typeWidth, mainWidth);
-    return textStartX + maxTextWidth + rightPadding;
-  } else {
-    const typeWidth = measureText(options.typeLabel, dims.simpleTypeFontSize);
-    return textStartX + typeWidth + rightPadding;
-  }
-}
-
 interface CreatePillNodeOptions {
   scale?: number;
   renderOptions?: PillRenderOptions;
   selectionLayer?: Container;
 }
 
-function getAssetTypeLabel(assetType?: AssetType): string {
+const getAssetTypeLabel = (assetType?: AssetType): string => {
   if (!assetType) return 'DATA';
   return (ASSET_TYPE_LABELS[assetType] ?? assetType).toUpperCase();
-}
+};
 
-function getIconPath(assetType?: AssetType): string {
+const getIconPath = (assetType?: AssetType): string => {
   if (!assetType) return ASSET_TYPE_ICON_PATHS.DataObject;
   return ASSET_TYPE_ICON_PATHS[assetType] ?? ASSET_TYPE_ICON_PATHS.DataObject;
-}
+};
 
 /**
  * Creates a pill-shaped node with icon and knockout text.

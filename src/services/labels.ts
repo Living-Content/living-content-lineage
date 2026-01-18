@@ -21,11 +21,11 @@ export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   Credential: 'Credential',
 };
 
-export function formatNodeTypeLabel(nodeType: NodeType): string {
+export const formatNodeTypeLabel = (nodeType: NodeType): string => {
   return NODE_TYPE_LABELS[nodeType] ?? 'Node';
-}
+};
 
-export function formatAssetTypeLabel(assetType?: AssetType): string {
+export const formatAssetTypeLabel = (assetType?: AssetType): string => {
   if (!assetType) return '';
   return ASSET_TYPE_LABELS[assetType] ?? assetType;
-}
+};

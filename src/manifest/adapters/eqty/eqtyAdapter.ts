@@ -1,4 +1,4 @@
-import type { AssetType, LineageGraph } from '../../../types.js';
+import type { LineageGraph } from '../../../types.js';
 import type { ManifestAdapter } from '../manifestAdapter.js';
 import {
   getLineageAssetManifestRequests,
@@ -9,26 +9,7 @@ import {
   type LineageManifest,
 } from '../base/lineageTypes.js';
 import { isEqtyManifest } from './eqtyTypes.js';
-
-/**
- * Maps manifest asset_type strings to internal AssetType values.
- */
-function mapAssetType(assetType: string): AssetType {
-  switch (assetType) {
-    case 'Media':
-    case 'Document':
-    case 'DataObject':
-    case 'Dataset':
-    case 'Code':
-    case 'Model':
-    case 'Action':
-    case 'Attestation':
-    case 'Credential':
-      return assetType;
-    default:
-      throw new Error(`Unsupported asset_type: ${assetType}`);
-  }
-}
+import { mapAssetType } from '../assetTypeMapper.js';
 
 export const eqtyAdapter: ManifestAdapter<LineageManifest> = {
   type: 'eqty',

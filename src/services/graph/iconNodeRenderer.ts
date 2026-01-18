@@ -21,7 +21,7 @@ interface CreateIconNodeOptions {
   selectionLayer?: Container;
 }
 
-async function loadSvgContent(path: string): Promise<string> {
+const loadSvgContent = async (path: string): Promise<string> => {
   const cached = svgCache.get(path);
   if (cached) return cached;
 
@@ -32,13 +32,13 @@ async function loadSvgContent(path: string): Promise<string> {
   const content = await response.text();
   svgCache.set(path, content);
   return content;
-}
+};
 
-async function createIconTextureAsync(
+const createIconTextureAsync = async (
   svgContent: string,
   color: string,
   size: number
-): Promise<Texture> {
+): Promise<Texture> => {
   const cacheKey = `${svgContent}-${color}-${size}`;
   const cached = textureCache.get(cacheKey);
   if (cached) return cached;
@@ -69,19 +69,19 @@ async function createIconTextureAsync(
     };
     img.src = url;
   });
-}
+};
 
 /**
  * Creates a circular icon node.
  * Returns a PillNode-compatible container with the icon rendered inside.
  */
-export async function createIconNode(
+export const createIconNode = async (
   node: LineageNodeData,
   graphScale: number,
   _ticker: Ticker,
   callbacks: NodeCallbacks,
   options: CreateIconNodeOptions
-): Promise<PillNode> {
+): Promise<PillNode> => {
   const group = new Container() as PillNode;
   group.label = node.id;
 
@@ -136,22 +136,22 @@ export async function createIconNode(
   attachNodeInteraction(group, callbacks);
 
   return group;
-}
+};
 
 /**
  * Preloads SVG icons for faster node creation.
  * Call this during application initialization.
  */
-export async function preloadIcons(paths: string[]): Promise<void> {
+export const preloadIcons = async (paths: string[]): Promise<void> => {
   await Promise.all(paths.map(loadSvgContent));
-}
+};
 
 /**
  * Clears the texture and SVG caches.
  * Call when theme changes to regenerate colored textures.
  */
-export function clearIconCache(): void {
+export const clearIconCache = (): void => {
   textureCache.forEach((texture) => texture.destroy());
   textureCache.clear();
   svgCache.clear();
-}
+};
