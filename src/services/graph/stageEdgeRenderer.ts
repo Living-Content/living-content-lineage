@@ -11,13 +11,7 @@ import {
   STAGE_EDGE_WIDTH,
   STAGE_DOT_RADIUS,
 } from '../../config/constants.js';
-
-function drawDot(graphics: Graphics, x: number, y: number, color: number): void {
-  graphics.circle(x, y, STAGE_DOT_RADIUS);
-  graphics.fill({ color });
-  graphics.circle(x, y, STAGE_DOT_RADIUS);
-  graphics.stroke({ width: 1, color: getColor('--color-edge-stroke') });
-}
+import { drawDot } from './rendererUtils.js';
 
 /**
  * Renders edges connecting stage nodes in order.
@@ -51,8 +45,8 @@ export function renderStageEdges(
     graphics.lineTo(endX, endY);
     graphics.stroke({ width: STAGE_EDGE_WIDTH, color });
 
-    drawDot(graphics, startX, startY, color);
-    drawDot(graphics, endX, endY, color);
+    drawDot(graphics, startX, startY, STAGE_DOT_RADIUS, color);
+    drawDot(graphics, endX, endY, STAGE_DOT_RADIUS, color);
   }
 
   layer.addChild(graphics);

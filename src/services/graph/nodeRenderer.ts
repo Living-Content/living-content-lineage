@@ -3,10 +3,11 @@
  * Shows asset type icon on left, with type label and optional main label.
  */
 import { Container, Graphics, Sprite, Texture, Ticker } from 'pixi.js';
-import gsap from 'gsap';
-import { ASSET_TYPE_ICON_PATHS, PHASE_COLORS, getCssVar, getColor } from '../../ui/theme.js';
-import type { AssetType, LineageNodeData, WorkflowPhase } from '../../types.js';
+import { ASSET_TYPE_ICON_PATHS, getCssVar, getColor, getPhaseColorHex } from '../../ui/theme.js';
+import type { AssetType, LineageNodeData } from '../../types.js';
 import { ASSET_TYPE_LABELS } from '../labels.js';
+import { attachNodeInteraction, createSelectionAnimator, type NodeCallbacks } from './nodeInteraction.js';
+import { createRetinaCanvas } from './rendererUtils.js';
 
 export const DEFAULT_NODE_ALPHA = 1;
 
@@ -33,10 +34,6 @@ function measureText(text: string, fontSize: number, fontWeight = '600'): number
   return measureCtx.measureText(text).width;
 }
 
-function getNodeColorHex(phase: WorkflowPhase): string {
-  return PHASE_COLORS[phase];
-}
-
 export interface PillNode extends Container {
   nodeData: LineageNodeData;
   pillWidth: number;
@@ -44,12 +41,6 @@ export interface PillNode extends Container {
   baseScale: number;
   setSelected: (selected: boolean) => void;
   selectionRing?: Graphics;
-}
-
-interface NodeCallbacks {
-  onClick: () => void;
-  onHover: () => void;
-  onHoverEnd: () => void;
 }
 
 export type PillViewMode = 'simple' | 'detailed';
@@ -110,12 +101,7 @@ function createPillWithIconTexture(
   iconImage: HTMLImageElement | null,
   dims: ScaledDimensions
 ): Texture {
-  const retinaScale = 2;
-  const canvas = document.createElement('canvas');
-  canvas.width = width * retinaScale;
-  canvas.height = height * retinaScale;
-  const ctx = canvas.getContext('2d')!;
-  ctx.scale(retinaScale, retinaScale);
+  const { canvas, ctx } = createRetinaCanvas(width, height);
 
   const radius = height / 2;
 
@@ -196,12 +182,7 @@ function createKnockoutPillTexture(
   fontSize: number,
   badgeCount?: number
 ): Texture {
-  const retinaScale = 2;
-  const canvas = document.createElement('canvas');
-  canvas.width = width * retinaScale;
-  canvas.height = height * retinaScale;
-  const ctx = canvas.getContext('2d')!;
-  ctx.scale(retinaScale, retinaScale);
+  const { canvas, ctx } = createRetinaCanvas(width, height);
 
   const radius = height / 2;
   ctx.beginPath();
@@ -283,7 +264,7 @@ export function createPillNode(
   group.label = node.id;
 
   const nodeScale = options.scale ?? 1;
-  const color = getNodeColorHex(node.phase!);
+  const color = getPhaseColorHex(node.phase);
   const dims = getScaledDimensions(nodeScale);
 
   // Determine render mode based on node type and options
@@ -467,68 +448,9 @@ export function createPillNode(
     selectionRing.stroke({ width: 3, color: getColor('--color-selection-ring'), cap: 'round', join: 'round' });
   }
 
-  const animState = { progress: 0 };
+  group.setSelected = createSelectionAnimator(selectionRing, drawSelectionRing);
 
-  group.setSelected = (selected: boolean) => {
-    gsap.killTweensOf(animState);
-    gsap.killTweensOf(selectionRing);
-
-    if (selected) {
-      animState.progress = 0;
-      selectionRing.clear();
-      selectionRing.alpha = 1;
-
-      gsap.to(animState, {
-        progress: 1,
-        duration: 0.5,
-        ease: 'power2.inOut',
-        onUpdate: () => {
-          drawSelectionRing(animState.progress);
-        },
-      });
-    } else {
-      gsap.to(selectionRing, {
-        alpha: 0,
-        duration: 0.15,
-        ease: 'power2.out',
-      });
-    }
-  };
-
-  group.eventMode = 'static';
-  group.cursor = 'pointer';
-  group.cullable = true;
-
-  // Track pointer for click vs drag detection
-  let pointerStart: { x: number; y: number } | null = null;
-  const CLICK_THRESHOLD = 5;
-
-  group.on('pointerdown', (e) => {
-    pointerStart = { x: e.globalX, y: e.globalY };
-  });
-
-  group.on('pointerup', (e) => {
-    if (!pointerStart) return;
-    const dx = Math.abs(e.globalX - pointerStart.x);
-    const dy = Math.abs(e.globalY - pointerStart.y);
-    pointerStart = null;
-    // Only trigger click if pointer didn't move much (not a drag)
-    if (dx < CLICK_THRESHOLD && dy < CLICK_THRESHOLD) {
-      callbacks.onClick();
-    }
-  });
-
-  group.on('pointerupoutside', () => {
-    pointerStart = null;
-  });
-
-  group.on('pointerenter', () => {
-    callbacks.onHover();
-  });
-
-  group.on('pointerleave', () => {
-    callbacks.onHoverEnd();
-  });
+  attachNodeInteraction(group, callbacks);
 
   return group;
 }

@@ -96,6 +96,38 @@ export const PHASE_COLORS: Record<WorkflowPhase, string> = {
   get Persistence() { return getCssVar('--phase-persistence'); },
 } as Record<WorkflowPhase, string>;
 
+/**
+ * Get the hex color string for a workflow phase.
+ * Returns a fallback gray if phase is undefined.
+ */
+export function getPhaseColorHex(phase?: WorkflowPhase): string {
+  if (!phase) return '#666666';
+  return PHASE_COLORS[phase] ?? '#666666';
+}
+
+/**
+ * Parse a color string (rgb() or hex) into RGB components.
+ */
+export function parseColorToRgb(color: string): { r: number; g: number; b: number } {
+  const rgbMatch = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  if (rgbMatch) {
+    return {
+      r: parseInt(rgbMatch[1], 10),
+      g: parseInt(rgbMatch[2], 10),
+      b: parseInt(rgbMatch[3], 10),
+    };
+  }
+  if (color.startsWith('#')) {
+    const hex = color.slice(1);
+    return {
+      r: parseInt(hex.slice(0, 2), 16),
+      g: parseInt(hex.slice(2, 4), 16),
+      b: parseInt(hex.slice(4, 6), 16),
+    };
+  }
+  return { r: 102, g: 102, b: 102 };
+}
+
 export const DEFAULT_NODE_SIZE = 14;
 export const META_NODE_SIZE = 14;
 

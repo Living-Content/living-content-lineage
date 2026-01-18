@@ -12,13 +12,7 @@ import {
   EDGE_DOT_RADIUS,
   FADED_NODE_ALPHA,
 } from '../../config/constants.js';
-
-function drawDot(graphics: Graphics, x: number, y: number, color: number): void {
-  graphics.circle(x, y, EDGE_DOT_RADIUS);
-  graphics.fill({ color });
-  graphics.circle(x, y, EDGE_DOT_RADIUS);
-  graphics.stroke({ width: 1, color: getColor('--color-edge-stroke') });
-}
+import { drawDot } from './rendererUtils.js';
 
 /**
  * Render edges with solid colors matching source node.
@@ -123,8 +117,8 @@ function renderHorizontalEdge(
   lineGraphics.lineTo(endX, ty);
   lineGraphics.stroke({ width: EDGE_WIDTH, color });
 
-  drawDot(dotGraphics, startX, sy, color);
-  drawDot(dotGraphics, endX, ty, color);
+  drawDot(dotGraphics, startX, sy, EDGE_DOT_RADIUS, color);
+  drawDot(dotGraphics, endX, ty, EDGE_DOT_RADIUS, color);
 }
 
 function renderVerticalEdge(
@@ -143,6 +137,6 @@ function renderVerticalEdge(
   lineGraphics.lineTo(tx, endY);
   lineGraphics.stroke({ width: EDGE_WIDTH, color });
 
-  drawDot(dotGraphics, sx, startY, color);
-  drawDot(dotGraphics, tx, endY, color);
+  drawDot(dotGraphics, sx, startY, EDGE_DOT_RADIUS, color);
+  drawDot(dotGraphics, tx, endY, EDGE_DOT_RADIUS, color);
 }
