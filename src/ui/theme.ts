@@ -68,14 +68,33 @@ export const PHASE_ICON_PATHS: Record<WorkflowPhase, string> = {
   Persistence: '/icons/phases/persistence.svg',
 };
 
+function colorStringToValue(colorString: string): number {
+  const rgbMatch = colorString.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  if (rgbMatch) {
+    const r = parseInt(rgbMatch[1], 10);
+    const g = parseInt(rgbMatch[2], 10);
+    const b = parseInt(rgbMatch[3], 10);
+    return (r << 16) | (g << 8) | b;
+  }
+  return 0;
+}
+
+/**
+ * Get a color value from CSS variable by name.
+ * Returns numeric value for Pixi.js graphics.
+ */
+export function getColor(cssVarName: string): number {
+  return colorStringToValue(getCssVar(cssVarName));
+}
+
 export const PHASE_COLORS: Record<WorkflowPhase, string> = {
-  Acquisition: '#EF2D2D',
-  Preparation: '#FF595E',
-  Retrieval: '#FFCA3A',
-  Reasoning: '#8AC926',
-  Generation: '#1982C4',
-  Persistence: '#0054AF',
-};
+  get Acquisition() { return getCssVar('--phase-acquisition'); },
+  get Preparation() { return getCssVar('--phase-preparation'); },
+  get Retrieval() { return getCssVar('--phase-retrieval'); },
+  get Reasoning() { return getCssVar('--phase-reasoning'); },
+  get Generation() { return getCssVar('--phase-generation'); },
+  get Persistence() { return getCssVar('--phase-persistence'); },
+} as Record<WorkflowPhase, string>;
 
 export const DEFAULT_NODE_SIZE = 14;
 export const META_NODE_SIZE = 14;

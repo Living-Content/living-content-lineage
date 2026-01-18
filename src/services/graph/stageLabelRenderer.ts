@@ -6,7 +6,7 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import type { Stage, WorkflowPhase } from '../../types.js';
 import type { ViewportState } from './viewport.js';
-import { PHASE_COLORS } from '../../ui/theme.js';
+import { getColor, getCssVar } from '../../ui/theme.js';
 import {
   STAGE_LABEL_FONT_SIZE,
   STAGE_LABEL_TOP_PADDING,
@@ -15,25 +15,15 @@ import {
 
 const DOT_SIZE = 2;
 const DOT_GAP = 4;
-const DEFAULT_COLOR = 0x666666;
 
-function parseColor(colorString: string): number {
-  if (!colorString) return DEFAULT_COLOR;
-  if (colorString.startsWith('#')) {
-    return parseInt(colorString.slice(1), 16);
-  }
-  return DEFAULT_COLOR;
-}
-
-function getPhaseColor(phase?: WorkflowPhase): number {
-  if (!phase) return DEFAULT_COLOR;
-  const hexColor = PHASE_COLORS[phase];
-  return hexColor ? parseColor(hexColor) : DEFAULT_COLOR;
+function getStageColor(phase?: WorkflowPhase): number {
+  if (!phase) return getColor('--color-edge-default');
+  return getColor(`--phase-${phase.toLowerCase()}`);
 }
 
 function createLabelStyle(color: number): TextStyle {
   return new TextStyle({
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+    fontFamily: getCssVar('--font-sans'),
     fontSize: STAGE_LABEL_FONT_SIZE,
     fontWeight: '600',
     fill: color,
@@ -69,7 +59,7 @@ export function renderStageLabels(
   for (const stage of stages) {
     const worldX = (((stage.xStart + stage.xEnd) / 2) - 0.5) * graphScale;
     const screenX = viewportState.x + worldX * viewportState.scale;
-    const color = getPhaseColor(stage.phase);
+    const color = getStageColor(stage.phase);
 
     const label = new Text({ text: stage.label, style: createLabelStyle(color) });
     label.anchor.set(0.5, 0);

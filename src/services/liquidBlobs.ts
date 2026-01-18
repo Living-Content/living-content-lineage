@@ -171,11 +171,9 @@ export class BlobManager {
     const tl = gsap.timeline();
     const blobTl = this.animateBlobsInternal(this.baseBlobs, width, height, ease);
     tl.add(blobTl);
-    tl.to(this.container, {
-      backdropFilter: 'blur(20px)',
-      webkitBackdropFilter: 'blur(20px)',
-      duration: 0.3,
-      ease: 'power2.out',
+    tl.add(() => {
+      this.container.style.backdropFilter = 'blur(20px)';
+      this.container.style.setProperty('-webkit-backdrop-filter', 'blur(20px)');
     });
     tl.add(() => this.solidifyInternal());
 
@@ -196,11 +194,9 @@ export class BlobManager {
     const tl = gsap.timeline();
     const blobTl = this.animateBlobsInternal(this.expansionBlobs, width, height, ease);
     tl.add(blobTl);
-    tl.to(this.container, {
-      backdropFilter: 'blur(20px)',
-      webkitBackdropFilter: 'blur(20px)',
-      duration: 0.3,
-      ease: 'power2.out',
+    tl.add(() => {
+      this.container.style.backdropFilter = 'blur(20px)';
+      this.container.style.setProperty('-webkit-backdrop-filter', 'blur(20px)');
     });
     tl.add(() => this.solidifyInternal());
 
@@ -224,11 +220,9 @@ export class BlobManager {
       });
     }
 
-    tl.to(this.container, {
-      backdropFilter: 'blur(20px)',
-      webkitBackdropFilter: 'blur(20px)',
-      duration: 0.3,
-      ease: 'power2.out',
+    tl.add(() => {
+      this.container.style.backdropFilter = 'blur(20px)';
+      this.container.style.setProperty('-webkit-backdrop-filter', 'blur(20px)');
     });
     tl.add(() => this.solidifyInternal());
 

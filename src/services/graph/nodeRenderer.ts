@@ -3,13 +3,15 @@
  * Shows asset type icon on left, with type label and optional main label.
  */
 import { Container, Sprite, Texture, Ticker } from 'pixi.js';
-import { ASSET_TYPE_ICON_PATHS, PHASE_COLORS } from '../../ui/theme.js';
+import { ASSET_TYPE_ICON_PATHS, PHASE_COLORS, getCssVar } from '../../ui/theme.js';
 import type { AssetType, LineageNodeData, WorkflowPhase } from '../../types.js';
 import { ASSET_TYPE_LABELS } from '../labels.js';
 
 export const DEFAULT_NODE_ALPHA = 0.75;
 
-const NODE_FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif';
+function getNodeFontFamily(): string {
+  return getCssVar('--font-sans', '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif');
+}
 
 // Base dimensions (will be scaled)
 const BASE_TYPE_LABEL_FONT_SIZE = 13;
@@ -26,7 +28,7 @@ const measureCanvas = document.createElement('canvas');
 const measureCtx = measureCanvas.getContext('2d')!;
 
 function measureText(text: string, fontSize: number, fontWeight = '600'): number {
-  measureCtx.font = `${fontWeight} ${fontSize}px ${NODE_FONT_FAMILY}`;
+  measureCtx.font = `${fontWeight} ${fontSize}px ${getNodeFontFamily()}`;
   return measureCtx.measureText(text).width;
 }
 
@@ -152,28 +154,30 @@ function createPillWithIconTexture(
   // Text positioning
   const textStartX = dims.leftPadding + dims.iconDiameter + dims.iconTextGap;
 
-  // Knockout text
-  ctx.globalCompositeOperation = 'destination-out';
-  ctx.fillStyle = '#000000';
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'left';
 
   if (options.mode === 'detailed' && options.mainLabel) {
-    // Two-line layout: type label (small) + main label (normal)
+    // Two-line layout: type label (small, black) + main label (normal, white)
     const lineSpacing = height * 0.18;
     const typeY = height / 2 - lineSpacing;
     const mainY = height / 2 + lineSpacing;
 
-    // Type label (uppercase, smaller)
-    ctx.font = `600 ${dims.typeLabelFontSize}px ${NODE_FONT_FAMILY}`;
+    // Type label - dark text
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = getCssVar('--color-text-primary');
+    ctx.font = `600 ${dims.typeLabelFontSize}px ${getNodeFontFamily()}`;
     ctx.fillText(options.typeLabel, textStartX, typeY);
 
-    // Main label (normal size)
-    ctx.font = `600 ${dims.mainLabelFontSize}px ${NODE_FONT_FAMILY}`;
+    // Main label - white text
+    ctx.fillStyle = getCssVar('--color-pill-text');
+    ctx.font = `400 ${dims.typeLabelFontSize}px ${getNodeFontFamily()}`;
     ctx.fillText(options.mainLabel, textStartX, mainY);
   } else {
-    // Single-line layout: just type label (centered vertically)
-    ctx.font = `600 ${dims.simpleTypeFontSize}px ${NODE_FONT_FAMILY}`;
+    // Single-line layout: just type label (dark)
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = getCssVar('--color-text-primary');
+    ctx.font = `600 ${dims.simpleTypeFontSize}px ${getNodeFontFamily()}`;
     ctx.fillText(options.typeLabel, textStartX, height / 2);
   }
 
@@ -203,9 +207,8 @@ function createKnockoutPillTexture(
   ctx.fill();
 
   ctx.globalCompositeOperation = 'destination-out';
-  ctx.font = `600 ${fontSize}px ${NODE_FONT_FAMILY}`;
+  ctx.font = `600 ${fontSize}px ${getNodeFontFamily()}`;
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#000000';
 
   if (badgeCount !== undefined) {
     const badgeRadius = height * 0.32;
@@ -222,7 +225,7 @@ function createKnockoutPillTexture(
 
     ctx.globalCompositeOperation = 'source-over';
     ctx.fillStyle = color;
-    ctx.font = `600 ${badgeFontSize}px ${NODE_FONT_FAMILY}`;
+    ctx.font = `600 ${badgeFontSize}px ${getNodeFontFamily()}`;
     ctx.fillText(String(badgeCount), badgeCenterX, height / 2);
   } else {
     ctx.textAlign = 'center';
@@ -315,7 +318,7 @@ export function createPillNode(
   } else if (node.badgeCount !== undefined) {
     // Legacy badge count pills (for backwards compatibility)
     const fontSize = BASE_SIMPLE_TYPE_FONT_SIZE * nodeScale;
-    measureCtx.font = `600 ${fontSize}px ${NODE_FONT_FAMILY}`;
+    measureCtx.font = `600 ${fontSize}px ${getNodeFontFamily()}`;
     const textWidth = measureCtx.measureText(node.label).width;
     const pillHeight = BASE_PILL_HEIGHT_SIMPLE * nodeScale;
     const badgeRadius = pillHeight * 0.32;
@@ -340,7 +343,7 @@ export function createPillNode(
       mode: 'detailed',
       iconPath,
       typeLabel,
-      mainLabel: node.label,
+      mainLabel: node.title ?? node.label,
     };
 
     const pillHeight = (renderOptions.mode === 'detailed' ? BASE_PILL_HEIGHT_DETAILED : BASE_PILL_HEIGHT_SIMPLE) * nodeScale;

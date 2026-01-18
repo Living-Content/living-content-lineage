@@ -1,7 +1,10 @@
 {
   "$schema": "https://livingcontent.org/schemas/lineage/v1.json",
+  "manifest_type": "custom",
   "version": "1.0.0",
   "lineage_id": "e12a317d-5365-474e-ae24-d22de0514954",
+  "title": "What's in the database?",
+  "description": "A retrieval-augmented generation pipeline that processes user questions through multiple AI stages to produce informed answers.",
   "content_session_id": "2f7fbc02-40e7-4b5d-8ede-fff8541f976c",
   "user_id": "a128Ig5YR6RmZIp5JX1WeMmRArA2",
   "created": "2026-01-14T18:15:18Z",
@@ -51,6 +54,7 @@
     {
       "id": "comp-consume-query",
       "label": "Consume",
+      "title": "Query Validator",
       "stage": "consume",
       "description": "Receives and validates the user's question, preparing it for the AI pipeline.",
       "duration": "21ms",
@@ -60,6 +64,7 @@
     {
       "id": "comp-select-tool",
       "label": "Select",
+      "title": "Tool Selector",
       "stage": "select",
       "description": "Uses AI to analyze the question and pick the right tool to answer it.",
       "duration": "1.8s",
@@ -69,6 +74,7 @@
     {
       "id": "comp-retrieve-history",
       "label": "Retrieve",
+      "title": "History Retriever",
       "stage": "retrieve",
       "description": "Looks up previous messages in this conversation for context.",
       "duration": "357ms",
@@ -78,6 +84,7 @@
     {
       "id": "comp-reflect",
       "label": "Reflect",
+      "title": "Intent Analyzer",
       "stage": "reflect",
       "description": "Analyzes what the user really wants to know beyond the literal question.",
       "duration": "1.2s",
@@ -87,6 +94,7 @@
     {
       "id": "comp-plan",
       "label": "Plan",
+      "title": "Strategy Planner",
       "stage": "plan",
       "description": "Creates a strategy for finding the best information to answer the question.",
       "duration": "800ms",
@@ -96,6 +104,7 @@
     {
       "id": "comp-retrieve",
       "label": "Search",
+      "title": "Knowledge Retriever",
       "stage": "search",
       "description": "Searches the knowledge base to find relevant documents and information.",
       "duration": "2.1s",
@@ -105,6 +114,7 @@
     {
       "id": "comp-evaluate",
       "label": "Evaluate",
+      "title": "Relevance Evaluator",
       "stage": "evaluate",
       "description": "Uses AI to score and rank retrieved documents by relevance.",
       "duration": "1.5s",
@@ -114,6 +124,7 @@
     {
       "id": "comp-generate-response",
       "label": "Generate",
+      "title": "Response Generator",
       "stage": "generate",
       "description": "Uses Claude to synthesize the information into a helpful answer.",
       "duration": "12s",
@@ -123,6 +134,7 @@
     {
       "id": "comp-save-response",
       "label": "Save",
+      "title": "Response Archiver",
       "stage": "save",
       "description": "Saves the response and records its complete provenance chain.",
       "duration": "1ms",
@@ -142,12 +154,14 @@
     {
       "id": "data-consumed-query",
       "label": "Consumed",
+      "title": "Validated Query",
       "asset_type": "DataObject",
       "description": "The user's question after parsing and validation, ready for processing."
     },
     {
       "id": "model-select-tool",
       "label": "Select",
+      "title": "Gemini 2.5 Flash",
       "asset_type": "Model",
       "description": "Gemini 2.5 Flash - Google's lightweight model optimized for speed. Fast inference with low latency, ideal for quick classification tasks.",
       "manifest_url": "./assets/model-select-tool.json",
@@ -156,6 +170,7 @@
     {
       "id": "code-select-tool",
       "label": "Select",
+      "title": "Tool Router",
       "asset_type": "Code",
       "description": "Analyzes the query and chooses the best tool to answer it. Selected the knowledge query tool.",
       "manifest_url": "./assets/code-select-tool.json"
@@ -163,6 +178,7 @@
     {
       "id": "data-selected-tool",
       "label": "Selected",
+      "title": "Tool Selection",
       "asset_type": "DataObject",
       "description": "The decision to use the knowledge query tool for answering this question.",
       "manifest_url": "./assets/data-selected-tool.json"
@@ -170,6 +186,7 @@
     {
       "id": "code-retrieve-history",
       "label": "Retrieve",
+      "title": "History Lookup",
       "asset_type": "Code",
       "description": "Fetches previous messages from the conversation for context.",
       "manifest_url": "./assets/code-retrieve-history.json"
@@ -177,12 +194,14 @@
     {
       "id": "data-retrieved-history",
       "label": "Retrieved History",
+      "title": "Conversation History",
       "asset_type": "Dataset",
       "description": "No previous messages were found - this is the start of a new conversation."
     },
     {
       "id": "model-reflect",
       "label": "Reflect",
+      "title": "Gemini 2.5 Flash",
       "asset_type": "Model",
       "description": "Gemini 2.5 Flash - Google's lightweight model optimized for speed. Cost-effective for high-volume analysis tasks.",
       "tokens": { "input": 245, "output": 89 }
@@ -190,6 +209,7 @@
     {
       "id": "code-reflect",
       "label": "Reflect",
+      "title": "Intent Analyzer",
       "asset_type": "Code",
       "description": "Examines the query to identify the user's underlying intent and information needs.",
       "manifest_url": "./assets/code-reflect.json"
@@ -197,6 +217,7 @@
     {
       "id": "data-reflection",
       "label": "Reflected",
+      "title": "User Intent",
       "asset_type": "DataObject",
       "description": "Determined that the user wants to explore and understand the database contents.",
       "manifest_url": "./assets/data-reflection.json"
@@ -204,6 +225,7 @@
     {
       "id": "model-plan",
       "label": "Plan",
+      "title": "Gemini 2.5 Flash",
       "asset_type": "Model",
       "description": "Gemini 2.5 Flash - Google's lightweight model optimized for speed. Efficient for structured planning and reasoning tasks.",
       "tokens": { "input": 312, "output": 156 }
@@ -211,6 +233,7 @@
     {
       "id": "code-plan",
       "label": "Plan",
+      "title": "Strategy Builder",
       "asset_type": "Code",
       "description": "Develops a step-by-step plan for searching and retrieving knowledge.",
       "manifest_url": "./assets/code-plan.json"
@@ -218,6 +241,7 @@
     {
       "id": "data-plan",
       "label": "Planned",
+      "title": "Search Strategy",
       "asset_type": "DataObject",
       "description": "The search strategy: query the knowledge base for database content overview.",
       "manifest_url": "./assets/data-plan.json"
@@ -225,6 +249,7 @@
     {
       "id": "code-retrieve",
       "label": "Search",
+      "title": "Knowledge Search",
       "asset_type": "Code",
       "description": "Searches the knowledge base using the planned strategy.",
       "manifest_url": "./assets/code-retrieve.json"
@@ -232,6 +257,7 @@
     {
       "id": "data-retrieved-docs",
       "label": "Search Results",
+      "title": "Retrieved Documents",
       "asset_type": "Dataset",
       "description": "Documents and records found in the knowledge base matching the query.",
       "manifest_url": "./assets/data-retrieved-docs.json"
@@ -239,6 +265,7 @@
     {
       "id": "model-evaluate",
       "label": "Evaluate",
+      "title": "Claude Sonnet 4.5",
       "asset_type": "Model",
       "description": "Claude Sonnet 4.5 - Anthropic's standard-tier model. Balances capability and cost, strong at nuanced evaluation and judgment tasks.",
       "tokens": { "input": 1847, "output": 312 }
@@ -246,18 +273,21 @@
     {
       "id": "code-evaluate",
       "label": "Evaluate",
+      "title": "Relevance Scorer",
       "asset_type": "Code",
       "description": "Scores and ranks the retrieved documents based on relevance to the question."
     },
     {
       "id": "data-evaluation",
       "label": "Evaluated",
+      "title": "Relevance Rankings",
       "asset_type": "DataObject",
       "description": "The ranked list of documents deemed most useful for answering the question."
     },
     {
       "id": "model-generate-response",
       "label": "Generate",
+      "title": "Claude Sonnet 4.5",
       "asset_type": "Model",
       "description": "Claude Sonnet 4.5 - Anthropic's standard-tier model. Excellent at synthesis and natural language generation with nuanced understanding.",
       "manifest_url": "./assets/model-generate-response.json",
@@ -266,6 +296,7 @@
     {
       "id": "code-generate-response",
       "label": "Generate",
+      "title": "Response Composer",
       "asset_type": "Code",
       "description": "Synthesizes the evaluated information into a coherent, helpful response.",
       "manifest_url": "./assets/code-generate-response.json"
@@ -273,6 +304,7 @@
     {
       "id": "data-generated-response",
       "label": "Generated",
+      "title": "Generated Answer",
       "asset_type": "Document",
       "description": "The complete answer explaining what's in the database - a collection of digital art.",
       "manifest_url": "./assets/data-generated-response.json"
@@ -280,6 +312,7 @@
     {
       "id": "code-save-response",
       "label": "Save",
+      "title": "Response Saver",
       "asset_type": "Code",
       "description": "Records the response and its lineage for future reference and auditing.",
       "manifest_url": "./assets/code-save-response.json"
@@ -287,6 +320,7 @@
     {
       "id": "data-saved-response",
       "label": "Saved",
+      "title": "Saved Response",
       "asset_type": "DataObject",
       "description": "The response has been saved to the conversation history for continuity."
     }

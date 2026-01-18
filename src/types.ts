@@ -150,6 +150,7 @@ export interface LineageManifestSummary {
 export interface LineageNodeData {
   id: string;
   label: string;
+  title?: string;
   nodeType: NodeType;
   assetType?: AssetType;
   shape: NodeShape;
@@ -191,6 +192,7 @@ export interface Stage {
 
 export interface LineageGraph {
   title?: string;
+  lineageId?: string;
   nodes: LineageNodeData[];
   edges: LineageEdgeData[];
   stages: Stage[];

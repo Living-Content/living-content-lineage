@@ -4,54 +4,20 @@
  * Lines render behind nodes, dots render in front.
  */
 import { Container, Graphics } from 'pixi.js';
-import type { LineageGraph, WorkflowPhase } from '../../types.js';
+import type { LineageGraph } from '../../types.js';
 import type { PillNode } from './nodeRenderer.js';
-import { PHASE_COLORS } from '../../ui/theme.js';
+import { getColor } from '../../ui/theme.js';
 import {
   EDGE_WIDTH,
   EDGE_DOT_RADIUS,
   FADED_NODE_ALPHA,
 } from '../../config/constants.js';
 
-const cachedPhaseColors = new Map<WorkflowPhase, number>();
-
-function parseColor(colorString: string): number {
-  if (!colorString) return 0x666666;
-  const rgbMatch = colorString.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-  if (rgbMatch) {
-    const r = parseInt(rgbMatch[1], 10);
-    const g = parseInt(rgbMatch[2], 10);
-    const b = parseInt(rgbMatch[3], 10);
-    return (r << 16) | (g << 8) | b;
-  }
-  if (colorString.startsWith('#')) {
-    return parseInt(colorString.slice(1), 16);
-  }
-  return 0x666666;
-}
-
-function getPhaseColorCached(phase: WorkflowPhase): number {
-  let color = cachedPhaseColors.get(phase);
-  if (color === undefined) {
-    const hexColor = PHASE_COLORS[phase];
-    color = hexColor ? parseColor(hexColor) : 0x666666;
-    cachedPhaseColors.set(phase, color);
-  }
-  return color;
-}
-
-/**
- * Invalidate color cache when theme changes.
- */
-export function invalidateColorCache(): void {
-  cachedPhaseColors.clear();
-}
-
 function drawDot(graphics: Graphics, x: number, y: number, color: number): void {
   graphics.circle(x, y, EDGE_DOT_RADIUS);
   graphics.fill({ color });
   graphics.circle(x, y, EDGE_DOT_RADIUS);
-  graphics.stroke({ width: 1, color: 0x000000 });
+  graphics.stroke({ width: 1, color: getColor('--color-edge-stroke') });
 }
 
 /**
@@ -98,13 +64,16 @@ export function renderEdges(
     const tx = targetNode.position.x;
     const ty = targetNode.position.y;
 
+    // Use node's actual dimensions (in graph space)
     const sourceHalfW = sourceNode.pillWidth / 2;
     const sourceHalfH = sourceNode.pillHeight / 2;
     const targetHalfW = targetNode.pillWidth / 2;
     const targetHalfH = targetNode.pillHeight / 2;
 
     const sourcePhase = sourceNode.nodeData.phase;
-    const color = sourcePhase ? getPhaseColorCached(sourcePhase) : 0x666666;
+    const color = sourcePhase
+      ? getColor(`--phase-${sourcePhase.toLowerCase()}`)
+      : getColor('--color-edge-default');
 
     const dx = tx - sx;
     const dy = ty - sy;

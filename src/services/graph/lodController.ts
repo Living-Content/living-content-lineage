@@ -33,7 +33,9 @@ export interface LODLayers {
 }
 
 export interface LODCallbacks {
+  onCollapseStart?: () => void;
   onCollapseEnd?: () => void;
+  onExpandStart?: () => void;
   onExpandEnd?: () => void;
 }
 
@@ -68,6 +70,7 @@ export function createLODController(
     if (state.isAnimating) return;
     state.isAnimating = true;
     state.isCollapsed = true;
+    callbacks.onCollapseStart?.();
 
     layers.edgeLayer.visible = false;
     layers.dotLayer.visible = false;
@@ -113,6 +116,7 @@ export function createLODController(
     if (state.isAnimating) return;
     state.isAnimating = true;
     state.isCollapsed = false;
+    callbacks.onExpandStart?.();
 
     layers.stageEdgeLayer.visible = false;
 

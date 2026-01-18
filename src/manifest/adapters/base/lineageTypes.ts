@@ -12,6 +12,7 @@ export interface LineageStage {
 export interface LineageComputation {
   id: string;
   label: string;
+  title?: string;
   stage: string;
   description?: string;
   duration?: string;
@@ -22,6 +23,7 @@ export interface LineageComputation {
 export interface Asset {
   id: string;
   label: string;
+  title?: string;
   asset_type: string;
   description?: string;
   manifest_url?: string;
@@ -31,6 +33,7 @@ export interface Asset {
 export interface LineageAttestation {
   id: string;
   label: string;
+  title?: string;
   stage: string;
   verifies: string[];
   description?: string;
@@ -51,7 +54,10 @@ export interface LineageManifestRecord {
 }
 
 export interface LineageManifest {
-  manifest_type?: string;
+  manifest_type: string;
+  title: string;
+  description: string;
+  lineage_id: string;
   active_manifest: string;
   manifests: Record<string, LineageManifestRecord>;
   stages: LineageStage[];
@@ -66,11 +72,15 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 export function isLineageManifest(raw: unknown): raw is LineageManifest {
   if (!isRecord(raw)) return false;
+  if (typeof raw.manifest_type !== 'string') return false;
+  if (typeof raw.title !== 'string') return false;
+  if (typeof raw.description !== 'string') return false;
+  if (typeof raw.lineage_id !== 'string') return false;
+  if (typeof raw.active_manifest !== 'string') return false;
+  if (!isRecord(raw.manifests)) return false;
   if (!Array.isArray(raw.stages)) return false;
   if (!Array.isArray(raw.computations)) return false;
   if (!Array.isArray(raw.assets)) return false;
   if (!Array.isArray(raw.attestations)) return false;
-  if (!isRecord(raw.manifests)) return false;
-  if (typeof raw.active_manifest !== 'string') return false;
   return true;
 }

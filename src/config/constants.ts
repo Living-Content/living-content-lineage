@@ -24,6 +24,7 @@ export const FADED_NODE_ALPHA = 0.25;
 // Edges
 export const EDGE_WIDTH = 2;
 export const EDGE_DOT_RADIUS = 4;
+export const EDGE_GAP = 90; // Fixed gap between node edges in pixels
 
 // Stage edges (collapsed view)
 export const STAGE_EDGE_WIDTH = 3;

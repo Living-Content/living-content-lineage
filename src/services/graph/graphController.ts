@@ -15,7 +15,7 @@ import { renderStageLabels, type TopNodeInfo } from './stageLabelRenderer.js';
 import { createViewportState, createViewportHandlers } from './viewport.js';
 import { createLODController, type LODLayers } from './lodController.js';
 import { createTitleOverlay } from './titleOverlay.js';
-import { LOD_THRESHOLD, STAGE_NODE_SCALE, FADED_NODE_ALPHA } from '../../config/constants.js';
+import { LOD_THRESHOLD, STAGE_NODE_SCALE, FADED_NODE_ALPHA, EDGE_GAP } from '../../config/constants.js';
 
 interface HoverPayload {
   title: string;
@@ -95,7 +95,10 @@ export async function createGraphController({
   const stageLayer = new Container();
   app.stage.addChild(stageLayer);
 
-  const titleOverlay = createTitleOverlay(app.stage);
+  const titleOverlay = createTitleOverlay(app.stage, {
+    title: lineageData.title ?? 'Lineage',
+    lineageId: lineageData.lineageId ?? '',
+  });
 
   const viewportState = createViewportState(width, height);
   viewport.scale.set(viewportState.scale);
@@ -223,7 +226,7 @@ export async function createGraphController({
           const bounds = renderedNode.getBounds();
           const hoverIconConfig = getIconNodeConfig(node.nodeType);
           callbacks.onHover({
-            title: node.label,
+            title: node.title ?? node.label,
             nodeType: node.nodeType,
             screenX: bounds.x + bounds.width / 2,
             screenY: bounds.y,
@@ -258,6 +261,62 @@ export async function createGraphController({
   }
 
   await Promise.all(nodeCreationPromises);
+
+  // Reposition nodes based on actual bounds with fixed edge gap
+  // Group nodes that share the same x position (vertically stacked)
+  const nodesByX = new Map<number, PillNode[]>();
+  nodeMap.forEach((node) => {
+    const x = Math.round(node.position.x);
+    if (!nodesByX.has(x)) nodesByX.set(x, []);
+    nodesByX.get(x)!.push(node);
+  });
+
+  // Sort groups by x position
+  const sortedGroups = Array.from(nodesByX.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([_, nodes]) => nodes);
+
+  let rightEdge = -Infinity;
+  for (const group of sortedGroups) {
+    // Find widest node in this group (use pillWidth, not getBounds)
+    let maxHalfWidth = 0;
+    for (const node of group) {
+      maxHalfWidth = Math.max(maxHalfWidth, node.pillWidth / 2);
+    }
+
+    // Position group: left edge = previous right edge + gap
+    let newX: number;
+    if (rightEdge === -Infinity) {
+      newX = group[0].position.x;
+    } else {
+      newX = rightEdge + EDGE_GAP + maxHalfWidth;
+    }
+
+    // Move all nodes in group to new x
+    for (const node of group) {
+      node.position.x = newX;
+    }
+
+    rightEdge = newX + maxHalfWidth;
+  }
+
+  // Recalculate stage bounds based on repositioned nodes
+  const stagePadding = 0.04 * graphScale;
+  for (const stage of lineageData.stages) {
+    let minX = Infinity;
+    let maxX = -Infinity;
+    nodeMap.forEach((node) => {
+      if (node.nodeData.stage === stage.id) {
+        const halfW = node.pillWidth / 2;
+        minX = Math.min(minX, node.position.x - halfW);
+        maxX = Math.max(maxX, node.position.x + halfW);
+      }
+    });
+    if (minX !== Infinity) {
+      stage.xStart = (minX - stagePadding) / graphScale + 0.5;
+      stage.xEnd = (maxX + stagePadding) / graphScale + 0.5;
+    }
+  }
 
   for (const stage of lineageData.stages) {
     const stageNodes = lineageData.nodes.filter((n) => n.stage === stage.id);
@@ -315,12 +374,16 @@ export async function createGraphController({
   const lodLayers: LODLayers = { nodeLayer, edgeLayer, dotLayer, stageNodeLayer, stageEdgeLayer, stageLayer };
 
   const lodController = createLODController(nodeMap, stageNodeMap, lineageData.stages, lodLayers, {
+    onCollapseStart: () => {
+      titleOverlay.setMode('relative');
+    },
     onCollapseEnd: () => {
-      titleOverlay.setVisible(true);
       updateTitlePosition();
     },
+    onExpandStart: () => {
+      titleOverlay.setMode('fixed');
+    },
     onExpandEnd: () => {
-      titleOverlay.setVisible(false);
       updateStageLabels();
       cullAndRender();
     },

@@ -76,6 +76,7 @@ export function buildLineageGraph(
     nodes.push({
       id: asset.id,
       label: asset.label,
+      title: asset.title,
       nodeType: 'data',
       assetType: mapAssetType(asset.asset_type),
       shape: 'circle',
@@ -102,6 +103,7 @@ export function buildLineageGraph(
     nodes.push({
       id: comp.id,
       label: comp.label,
+      title: comp.title,
       nodeType: 'process',
       assetType: 'Action',
       shape: 'circle',
@@ -121,6 +123,7 @@ export function buildLineageGraph(
     nodes.push({
       id: attest.id,
       label: attest.label,
+      title: attest.title,
       nodeType: 'attestation',
       assetType: 'Attestation',
       shape: 'circle',
@@ -226,5 +229,11 @@ export function buildLineageGraph(
     isGate: edge.isGate ?? false,
   }));
 
-  return { nodes, edges, stages };
+  return {
+    title: manifest.title,
+    lineageId: manifest.lineage_id,
+    nodes,
+    edges,
+    stages
+  };
 }

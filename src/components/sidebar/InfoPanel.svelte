@@ -22,6 +22,22 @@
   let baseWidth = 0;
   let baseHeight = 0;
 
+  // Drag state
+  let isDragging = false;
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+  let panelX: number | null = null;
+  let panelY: number | null = null;
+
+  // Position before expanding (to restore on contract)
+  let preExpandX: number | null = null;
+  let preExpandY: number | null = null;
+
+  // Panel margin and minimum expanded dimensions
+  const PANEL_MARGIN = 25;
+  const MIN_EXPANDED_WIDTH = 500;
+  const MIN_EXPANDED_HEIGHT = 300;
+
   $: panelTitle = $selectedNode?.label ?? $selectedStage?.label ?? 'CONTEXT';
   $: detailAvailable = $selectedNode ? hasDetailContent($selectedNode) : false;
   $: panelHidden = !$selectedNode && !$selectedStage && !$loadError;
@@ -48,6 +64,11 @@
     baseWidth = wrapperElement.offsetWidth;
     baseHeight = wrapperElement.offsetHeight;
 
+    // Store position on first load
+    const rect = wrapperElement.getBoundingClientRect();
+    panelX = rect.left;
+    panelY = rect.top;
+
     const timeline = blobManager?.fill(baseWidth, baseHeight, 'elastic.out(1, 0.6)');
     timeline?.to(contentLayer, { opacity: 1, duration: 0.3, ease: 'power2.out' }, '-=0.5');
   }
@@ -64,15 +85,32 @@
     showDetailContent = true;
     await tick();
 
-    // Get target dimensions from expanded CSS
-    wrapperElement.classList.add('expanded');
-    const targetWidth = wrapperElement.offsetWidth;
-    const targetHeight = wrapperElement.offsetHeight;
-    wrapperElement.classList.remove('expanded');
+    // Save position before expanding
+    preExpandX = panelX;
+    preExpandY = panelY;
 
-    // Animate to expanded size, then fade in
-    await expandTo(wrapperElement, targetWidth, targetHeight);
-    wrapperElement.classList.add('expanded');
+    // Lock to pixel position for animation
+    wrapperElement.style.left = `${panelX}px`;
+    wrapperElement.style.top = `${panelY}px`;
+    wrapperElement.style.transform = 'none';
+
+    // Fixed target: full screen with margins
+    const targetX = PANEL_MARGIN;
+    const targetY = PANEL_MARGIN;
+    const targetWidth = window.innerWidth - PANEL_MARGIN * 2;
+    const targetHeight = window.innerHeight - PANEL_MARGIN * 2;
+
+    // Animate position AND size to target
+    await gsap.to(wrapperElement, {
+      left: targetX,
+      top: targetY,
+      width: targetWidth,
+      height: targetHeight,
+      duration: 0.2,
+      ease: 'back.out(1)'
+    });
+    panelX = targetX;
+    panelY = targetY;
     await gsap.to(scrollArea, { opacity: 1, duration: 0.2, ease: 'power2.out' });
     isAnimating = false;
   }
@@ -88,12 +126,20 @@
     showDetailContent = false;
     await tick();
 
-    // Animate back to base size
-    await contractTo(wrapperElement, baseWidth, baseHeight);
-    wrapperElement.classList.remove('expanded');
+    // Animate back to pre-expand position and size
+    await gsap.to(wrapperElement, {
+      left: preExpandX,
+      top: preExpandY,
+      width: baseWidth,
+      height: baseHeight,
+      duration: 0.2,
+      ease: 'back.out(1)'
+    });
     closeDetailPanel();
 
-    // Clear inline styles from animation
+    // Restore position state
+    panelX = preExpandX;
+    panelY = preExpandY;
     wrapperElement.style.width = '';
     wrapperElement.style.height = '';
 
@@ -109,29 +155,81 @@
     }
   }
 
+  function isMobile(): boolean {
+    return window.innerWidth <= 900;
+  }
+
+  function startDrag(e: MouseEvent): void {
+    if (isAnimating || $isDetailOpen || isMobile()) return;
+    isDragging = true;
+
+    const rect = wrapperElement.getBoundingClientRect();
+    dragOffsetX = e.clientX - rect.left;
+    dragOffsetY = e.clientY - rect.top;
+
+    // Initialize position from current visual position
+    panelX = rect.left;
+    panelY = rect.top;
+    wrapperElement.style.left = `${rect.left}px`;
+    wrapperElement.style.top = `${rect.top}px`;
+    wrapperElement.style.transform = 'none';
+
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('mouseup', stopDrag);
+  }
+
+  function onDrag(e: MouseEvent): void {
+    if (!isDragging || !wrapperElement) return;
+
+    // Constrain so expanded panel has minimum usable size
+    const minX = PANEL_MARGIN;
+    const maxX = window.innerWidth - MIN_EXPANDED_WIDTH - PANEL_MARGIN;
+    const minY = PANEL_MARGIN;
+    const maxY = window.innerHeight - MIN_EXPANDED_HEIGHT - PANEL_MARGIN;
+
+    const newX = Math.max(minX, Math.min(maxX, e.clientX - dragOffsetX));
+    const newY = Math.max(minY, Math.min(maxY, e.clientY - dragOffsetY));
+
+    // Directly set styles during drag for immediate feedback
+    wrapperElement.style.left = `${newX}px`;
+    wrapperElement.style.top = `${newY}px`;
+    wrapperElement.style.transform = 'none';
+
+    panelX = newX;
+    panelY = newY;
+  }
+
+  function stopDrag(): void {
+    isDragging = false;
+    document.removeEventListener('mousemove', onDrag);
+    document.removeEventListener('mouseup', stopDrag);
+  }
+
   onMount(() => {
     return () => {
       gsap.killTweensOf(contentLayer);
       gsap.killTweensOf(scrollArea);
       gsap.killTweensOf(wrapperElement);
       blobManager?.kill();
+      document.removeEventListener('mousemove', onDrag);
+      document.removeEventListener('mouseup', stopDrag);
     };
   });
 </script>
 
 <div
   bind:this={wrapperElement}
-  class={`liquid-wrapper${panelHidden ? ' hidden' : ''}`}
+  class={`liquid-wrapper${panelHidden ? ' hidden' : ''}${isDragging ? ' dragging' : ''}${panelX !== null ? ' dragged' : ''}${$isDetailOpen ? ' detail-open' : ''}`}
 >
   <div class="shape-layer">
     <div class="blob-container" bind:this={blobContainer}></div>
   </div>
 
   <aside class="panel-content-layer" bind:this={contentLayer}>
-    <div class="panel-header">
+    <div class="panel-header" on:mousedown={startDrag} role="presentation">
       <span class="panel-title">{panelTitle}</span>
       {#if showCloseButton}
-        <button class="panel-close-btn" title="Close" on:click={handleClose}>
+        <button class="panel-close-btn" title="Close" on:click|stopPropagation={handleClose} on:mousedown|stopPropagation>
           ×
         </button>
       {/if}

@@ -1,73 +1,89 @@
 /**
- * Workflow title overlay with UUID, date, and username.
+ * Workflow title overlay with title and lineage ID.
  * Only visible in collapsed (stage) view.
  */
 import { Container, Text, TextStyle } from 'pixi.js';
 import type { PillNode } from './nodeRenderer.js';
 import type { ViewportState } from './viewport.js';
+import { getColor, getCssVar } from '../../ui/theme.js';
 
 export interface TitleOverlay {
   container: Container;
   setVisible: (visible: boolean) => void;
+  setMode: (mode: 'fixed' | 'relative') => void;
   updatePosition: (leftmostNode: PillNode, viewportState: ViewportState) => void;
   destroy: () => void;
+}
+
+export interface TitleOverlayData {
+  title: string;
+  lineageId: string;
 }
 
 /**
  * Create title overlay with workflow metadata.
  */
-export function createTitleOverlay(stage: Container): TitleOverlay {
+export function createTitleOverlay(stage: Container, data: TitleOverlayData): TitleOverlay {
   const container = new Container();
   container.visible = false;
   stage.addChild(container);
 
-  const workflowId = crypto.randomUUID();
-  const workflowDate = new Date()
+  const dateStr = new Date()
     .toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
     })
     .toUpperCase();
-  const workflowUser = 'SYSTEM';
 
-  const titleStyle = new TextStyle({
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
-    fontSize: 16,
-    fontWeight: '700',
-    fill: 0x333333,
-    letterSpacing: -0.3,
-  });
-
-  const subtitleStyle = new TextStyle({
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+  const uuidStyle = new TextStyle({
+    fontFamily: getCssVar('--font-mono'),
     fontSize: 11,
-    fontWeight: '600',
-    fill: 0x888888,
+    fontWeight: '500',
+    fill: getColor('--color-pill-text'),
     letterSpacing: 0.5,
   });
 
-  const titleText = new Text({ text: workflowId, style: titleStyle });
+  const titleStyle = new TextStyle({
+    fontFamily: getCssVar('--font-sans'),
+    fontSize: 18,
+    fontWeight: '600',
+    fill: getColor('--color-pill-text'),
+    letterSpacing: -0.3,
+  });
+
+  const dateStyle = new TextStyle({
+    fontFamily: getCssVar('--font-sans'),
+    fontSize: 11,
+    fontWeight: '600',
+    fill: getColor('--color-title-secondary'),
+    letterSpacing: 0.5,
+  });
+
+  const uuidText = new Text({ text: data.lineageId, style: uuidStyle });
+  container.addChild(uuidText);
+
+  const titleText = new Text({ text: data.title, style: titleStyle });
   container.addChild(titleText);
 
-  const subtitleText = new Text({
-    text: `${workflowDate}  \u2022  ${workflowUser}`,
-    style: subtitleStyle,
-  });
-  container.addChild(subtitleText);
+  const dateText = new Text({ text: dateStr, style: dateStyle });
+  container.addChild(dateText);
 
-  container.alpha = 0.5;
+  uuidText.alpha = 0.5;
+  dateText.alpha = 0.5;
   let targetAlpha = 0.5;
   let fadeAnimationId: number | null = null;
 
   function animateAlpha(): void {
-    const diff = targetAlpha - container.alpha;
+    const diff = targetAlpha - uuidText.alpha;
     if (Math.abs(diff) < 0.01) {
-      container.alpha = targetAlpha;
+      uuidText.alpha = targetAlpha;
+      dateText.alpha = targetAlpha;
       fadeAnimationId = null;
       return;
     }
-    container.alpha += diff * 0.15;
+    uuidText.alpha += diff * 0.15;
+    dateText.alpha += diff * 0.15;
     fadeAnimationId = requestAnimationFrame(animateAlpha);
   }
 
@@ -82,18 +98,33 @@ export function createTitleOverlay(stage: Container): TitleOverlay {
     if (!fadeAnimationId) fadeAnimationId = requestAnimationFrame(animateAlpha);
   });
 
+  let currentMode: 'fixed' | 'relative' = 'fixed';
+
   function setVisible(visible: boolean): void {
     container.visible = visible;
   }
 
+  function setMode(mode: 'fixed' | 'relative'): void {
+    currentMode = mode;
+    if (mode === 'fixed') {
+      const leftEdge = 160;
+      uuidText.position.set(leftEdge, 20);
+      titleText.position.set(leftEdge, 34);
+      dateText.position.set(leftEdge, 57);
+    }
+  }
+
   function updatePosition(leftmostNode: PillNode, viewportState: ViewportState): void {
+    if (currentMode === 'fixed') return;
+
     const screenX = viewportState.x + leftmostNode.position.x * viewportState.scale;
     const screenY = viewportState.y + leftmostNode.position.y * viewportState.scale;
     const nodeTop = screenY - (leftmostNode.pillHeight / 2) * viewportState.scale;
     const leftEdge = screenX - (leftmostNode.pillWidth / 2) * viewportState.scale;
 
+    uuidText.position.set(leftEdge, nodeTop - 68);
     titleText.position.set(leftEdge, nodeTop - 48);
-    subtitleText.position.set(leftEdge, nodeTop - 26);
+    dateText.position.set(leftEdge, nodeTop - 25);
   }
 
   function destroy(): void {
@@ -103,9 +134,14 @@ export function createTitleOverlay(stage: Container): TitleOverlay {
     container.destroy({ children: true });
   }
 
+  // Initialize in fixed mode
+  setMode('fixed');
+  container.visible = true;
+
   return {
     container,
     setVisible,
+    setMode,
     updatePosition,
     destroy,
   };

@@ -7,7 +7,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 40px 20px 0;
   z-index: 20;
 }
 
@@ -19,8 +19,10 @@
 }
 
 .logo {
-  height: 28px;
-  width: auto;
+  height: 48px;
+  width: 126px;
+  color: white;
+  mix-blend-mode: difference;
 }
 
 .breadcrumb {
@@ -78,8 +80,9 @@
 }
 
 .lod-indicator {
-  width: 20px;
-  height: 20px;
-  opacity: 0.6;
+  width: 28px;
+  height: 28px;
+  filter: invert(1);
+  mix-blend-mode: difference;
   transition: opacity 0.2s ease;
 }

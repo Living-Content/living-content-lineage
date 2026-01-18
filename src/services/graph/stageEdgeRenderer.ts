@@ -4,39 +4,19 @@
  * Edges have dots at both ends.
  */
 import { Container, Graphics } from 'pixi.js';
-import type { Stage, WorkflowPhase } from '../../types.js';
+import type { Stage } from '../../types.js';
 import type { PillNode } from './nodeRenderer.js';
-import { PHASE_COLORS } from '../../ui/theme.js';
+import { getColor } from '../../ui/theme.js';
 import {
   STAGE_EDGE_WIDTH,
   STAGE_DOT_RADIUS,
 } from '../../config/constants.js';
 
-const cachedPhaseColors = new Map<WorkflowPhase, number>();
-
-function parseColor(colorString: string): number {
-  if (!colorString) return 0x666666;
-  if (colorString.startsWith('#')) {
-    return parseInt(colorString.slice(1), 16);
-  }
-  return 0x666666;
-}
-
-function getPhaseColorCached(phase: WorkflowPhase): number {
-  let color = cachedPhaseColors.get(phase);
-  if (color === undefined) {
-    const hexColor = PHASE_COLORS[phase];
-    color = hexColor ? parseColor(hexColor) : 0x666666;
-    cachedPhaseColors.set(phase, color);
-  }
-  return color;
-}
-
 function drawDot(graphics: Graphics, x: number, y: number, color: number): void {
   graphics.circle(x, y, STAGE_DOT_RADIUS);
   graphics.fill({ color });
   graphics.circle(x, y, STAGE_DOT_RADIUS);
-  graphics.stroke({ width: 1, color: 0x000000 });
+  graphics.stroke({ width: 1, color: getColor('--color-edge-stroke') });
 }
 
 /**
@@ -58,7 +38,9 @@ export function renderStageEdges(
     const targetNode = stageNodeMap.get(stageOrder[i + 1]);
     if (!sourceNode || !targetNode) continue;
 
-    const color = stage.phase ? getPhaseColorCached(stage.phase) : 0x666666;
+    const color = stage.phase
+      ? getColor(`--phase-${stage.phase.toLowerCase()}`)
+      : getColor('--color-edge-default');
 
     const startX = sourceNode.position.x + sourceNode.pillWidth / 2;
     const startY = sourceNode.position.y;
