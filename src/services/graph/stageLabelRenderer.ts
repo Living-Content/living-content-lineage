@@ -1,11 +1,12 @@
 /**
  * Renders stage labels at the top of the graph view.
+ * Labels are created once and positions updated on viewport changes.
  * Each label has a dotted vertical line extending down toward the nodes.
- * Labels and lines are color-coded by phase.
  */
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import type { Stage, WorkflowPhase } from '../../types.js';
 import type { ViewportState } from './viewport.js';
+import type { PillNode } from './nodeRenderer.js';
 import { getColor, getCssVar } from '../../ui/theme.js';
 import {
   STAGE_LABEL_FONT_SIZE,
@@ -36,57 +37,82 @@ export interface TopNodeInfo {
   halfHeight: number;
 }
 
+interface StageLabelEntry {
+  label: Text;
+  line: Graphics;
+  worldX: number;
+  color: number;
+}
+
+export interface StageLabels {
+  update: (viewportState: ViewportState) => void;
+  container: Container;
+}
+
 /**
- * Renders stage labels with dotted vertical lines extending toward graph nodes.
- * Lines fade out as they approach the topmost node.
+ * Creates stage labels once. Call update() on viewport changes.
+ * Uses stageNodeMap positions so labels align with collapsed stage nodes.
  */
-export function renderStageLabels(
-  layer: Container,
+export function createStageLabels(
   stages: Stage[],
-  viewportState: ViewportState,
-  graphScale: number,
+  stageNodeMap: Map<string, PillNode>,
   topNodeInfo: TopNodeInfo | null
-): void {
-  layer.removeChildren();
-
+): StageLabels {
+  const container = new Container();
+  const entries: StageLabelEntry[] = [];
   const topPadding = STAGE_LABEL_TOP_PADDING;
-  const lineStartY = STAGE_LABEL_LINE_START;
-
-  const globalTopY = topNodeInfo !== null
-    ? viewportState.y + topNodeInfo.worldY * viewportState.scale - topNodeInfo.halfHeight * viewportState.scale
-    : Infinity;
 
   for (const stage of stages) {
-    const worldX = (((stage.xStart + stage.xEnd) / 2) - 0.5) * graphScale;
-    const screenX = viewportState.x + worldX * viewportState.scale;
+    // Use stage node position so labels align with collapsed view
+    const stageNode = stageNodeMap.get(stage.id);
+    const worldX = stageNode ? stageNode.position.x : 0;
     const color = getStageColor(stage.phase);
 
     const label = new Text({ text: stage.label, style: createLabelStyle(color) });
     label.anchor.set(0.5, 0);
-    label.position.set(screenX, topPadding);
-    layer.addChild(label);
+    label.position.y = topPadding;
+    container.addChild(label);
 
-    if (globalTopY === Infinity) continue;
+    const line = new Graphics();
+    container.addChild(line);
 
-    const startY = topPadding + lineStartY;
-    const endY = globalTopY;
-    const fadeDistance = (endY - startY) * 0.6;
-    const fadeStartY = startY + fadeDistance;
-
-    const lineGraphics = new Graphics();
-    let currentY = startY;
-
-    while (currentY < endY) {
-      let alpha = 1;
-      if (currentY > fadeStartY) {
-        const fadeProgress = (currentY - fadeStartY) / (endY - fadeStartY);
-        alpha = 1 - Math.pow(fadeProgress, 2);
-      }
-      lineGraphics.circle(screenX, currentY, DOT_SIZE / 2);
-      lineGraphics.fill({ color, alpha });
-      currentY += DOT_SIZE + DOT_GAP;
-    }
-
-    layer.addChild(lineGraphics);
+    entries.push({ label, line, worldX, color });
   }
+
+  function update(viewportState: ViewportState): void {
+    const lineStartY = STAGE_LABEL_LINE_START;
+    const globalTopY = topNodeInfo !== null
+      ? viewportState.y + topNodeInfo.worldY * viewportState.scale - topNodeInfo.halfHeight * viewportState.scale
+      : Infinity;
+
+    for (const entry of entries) {
+      const screenX = viewportState.x + entry.worldX * viewportState.scale;
+      entry.label.position.x = screenX;
+
+      // Redraw dotted line
+      entry.line.clear();
+      if (globalTopY === Infinity) continue;
+
+      const startY = topPadding + lineStartY;
+      const endY = globalTopY;
+      if (endY <= startY) continue;
+
+      const fadeDistance = (endY - startY) * 0.6;
+      const fadeStartY = startY + fadeDistance;
+
+      let currentY = startY;
+      while (currentY < endY) {
+        let alpha = 1;
+        if (currentY > fadeStartY) {
+          const fadeProgress = (currentY - fadeStartY) / (endY - fadeStartY);
+          alpha = 1 - Math.pow(fadeProgress, 2);
+        }
+        entry.line.circle(screenX, currentY, DOT_SIZE / 2);
+        entry.line.fill({ color: entry.color, alpha });
+        currentY += DOT_SIZE + DOT_GAP;
+      }
+    }
+  }
+
+  return { update, container };
 }

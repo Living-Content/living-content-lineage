@@ -14,7 +14,7 @@ import { createIconNode } from './iconNodeRenderer.js';
 import { renderEdges } from './edgeRenderer.js';
 import { getIconNodeConfig, PHASE_ICON_PATHS } from '../../ui/theme.js';
 import { renderStageEdges } from './stageEdgeRenderer.js';
-import { renderStageLabels, type TopNodeInfo } from './stageLabelRenderer.js';
+import { createStageLabels, type TopNodeInfo } from './stageLabelRenderer.js';
 import { createViewportState, createViewportHandlers } from './viewport.js';
 import { createLODController, type LODLayers } from './lodController.js';
 import { createTitleOverlay } from './titleOverlay.js';
@@ -100,9 +100,6 @@ export async function createGraphController({
   viewport.addChild(stageNodeLayer);
   stageEdgeLayer.visible = false;
   stageNodeLayer.visible = false;
-
-  const stageLayer = new Container();
-  app.stage.addChild(stageLayer);
 
   const titleOverlay = createTitleOverlay(app.stage, {
     title: lineageData.title ?? 'Lineage',
@@ -394,34 +391,7 @@ export async function createGraphController({
 
   renderStageEdges(stageEdgeLayer, lineageData.stages, stageNodeMap);
 
-  const lodLayers: LODLayers = { nodeLayer, edgeLayer, dotLayer, stageNodeLayer, stageEdgeLayer, stageLayer };
-
-  const lodController = createLODController(nodeMap, stageNodeMap, lineageData.stages, lodLayers, {
-    onCollapseStart: () => {
-      clearSelection(); // Clears store, triggers subscription to update visuals
-      titleOverlay.setMode('relative');
-    },
-    onCollapseEnd: () => {
-      updateTitlePosition();
-    },
-    onExpandStart: () => {
-      clearSelection(); // Clears store, triggers subscription to update visuals
-      titleOverlay.setMode('fixed');
-    },
-    onExpandEnd: () => {
-      updateStageLabels();
-      cullAndRender();
-    },
-  });
-
-  function updateTitlePosition(): void {
-    const firstStage = lineageData.stages[0];
-    if (!firstStage) return;
-    const leftmostNode = stageNodeMap.get(firstStage.id);
-    if (!leftmostNode) return;
-    titleOverlay.updatePosition(leftmostNode, viewportState);
-  }
-
+  // Calculate top node info for stage label line rendering
   const topNodeInfo: TopNodeInfo | null = (() => {
     let minWorldY = Infinity;
     let halfHeight = 0;
@@ -434,11 +404,39 @@ export async function createGraphController({
     return minWorldY === Infinity ? null : { worldY: minWorldY, halfHeight };
   })();
 
-  function updateStageLabels(): void {
-    renderStageLabels(stageLayer, lineageData.stages, viewportState, graphScale, topNodeInfo);
+  // Create stage labels once - just update positions on viewport changes
+  // Uses stageNodeMap positions so labels align with collapsed stage nodes
+  const stageLabels = createStageLabels(lineageData.stages, stageNodeMap, topNodeInfo);
+  app.stage.addChild(stageLabels.container);
+  stageLabels.update(viewportState);
+
+  function updateTitlePosition(): void {
+    const firstStage = lineageData.stages[0];
+    if (!firstStage) return;
+    const leftmostNode = stageNodeMap.get(firstStage.id);
+    if (!leftmostNode) return;
+    titleOverlay.updatePosition(leftmostNode, viewportState);
   }
 
-  updateStageLabels();
+  const lodLayers: LODLayers = { nodeLayer, edgeLayer, dotLayer, stageNodeLayer, stageEdgeLayer, stageLayer: stageLabels.container };
+
+  const lodController = createLODController(lodLayers, {
+    onCollapseStart: () => {
+      clearSelection(); // Clears store, triggers subscription to update visuals
+      titleOverlay.setMode('relative');
+    },
+    onCollapseEnd: () => {
+      updateTitlePosition();
+    },
+    onExpandStart: () => {
+      clearSelection(); // Clears store, triggers subscription to update visuals
+      titleOverlay.setMode('fixed');
+    },
+    onExpandEnd: () => {
+      stageLabels.update(viewportState);
+      cullAndRender();
+    },
+  });
 
   // Subscribe to Svelte stores - this is the single source of truth for selection
   const unsubscribeNode = selectedNode.subscribe((node) => {
@@ -486,8 +484,9 @@ export async function createGraphController({
   const viewportHandlers = createViewportHandlers(app.canvas, viewport, container, viewportState, {
     onZoom: (scale) => {
       lodController.checkThreshold(scale);
+      // Always update stage labels so they track viewport even during animation
+      stageLabels.update(viewportState);
       if (!lodController.state.isCollapsed && !lodController.state.isAnimating) {
-        updateStageLabels();
         cullAndRender();
       } else if (lodController.state.isCollapsed) {
         updateTitlePosition();
@@ -495,8 +494,9 @@ export async function createGraphController({
       callbacks.onSimpleViewChange(scale < LOD_THRESHOLD);
     },
     onPan: () => {
+      // Always update stage labels so they track viewport even during animation
+      stageLabels.update(viewportState);
       if (!lodController.state.isCollapsed && !lodController.state.isAnimating) {
-        updateStageLabels();
         cullAndRender();
       } else if (lodController.state.isCollapsed) {
         updateTitlePosition();

@@ -4,7 +4,7 @@
  */
 
 // Zoom
-export const ZOOM_MIN = 0.3;
+export const ZOOM_MIN = 0.15;
 export const ZOOM_MAX = 1.3;
 export const ZOOM_DEFAULT = 0.8;
 export const ZOOM_FACTOR = 0.95;
