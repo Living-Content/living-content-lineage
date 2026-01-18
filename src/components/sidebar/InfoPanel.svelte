@@ -6,7 +6,12 @@
   import { isDetailOpen, loadError, setDetailOpen, closeDetailPanel } from '../../stores/uiState.js';
   import { hasDetailContent } from '../../services/sidebar/detailContent.js';
   import { createBlobManager, type BlobManager } from '../../services/liquidBlobs.js';
-  import { expandTo, contractTo } from '../../services/panelExpand.js';
+  import {
+    PANEL_MARGIN,
+    PANEL_MIN_EXPANDED_WIDTH,
+    PANEL_MIN_EXPANDED_HEIGHT,
+    MOBILE_BREAKPOINT,
+  } from '../../config/constants.js';
   import SummaryView from './SummaryView.svelte';
   import StageOverview from './StageOverview.svelte';
   import DetailView from './DetailView.svelte';
@@ -29,14 +34,6 @@
   let panelX: number | null = null;
   let panelY: number | null = null;
 
-  // Position before expanding (to restore on contract)
-  let preExpandX: number | null = null;
-  let preExpandY: number | null = null;
-
-  // Panel margin and minimum expanded dimensions
-  const PANEL_MARGIN = 25;
-  const MIN_EXPANDED_WIDTH = 500;
-  const MIN_EXPANDED_HEIGHT = 300;
 
   $: panelTitle = $selectedNode?.label ?? $selectedStage?.label ?? 'CONTEXT';
   $: detailAvailable = $selectedNode ? hasDetailContent($selectedNode) : false;
@@ -64,11 +61,6 @@
     baseWidth = wrapperElement.offsetWidth;
     baseHeight = wrapperElement.offsetHeight;
 
-    // Store position on first load
-    const rect = wrapperElement.getBoundingClientRect();
-    panelX = rect.left;
-    panelY = rect.top;
-
     const timeline = blobManager?.fill(baseWidth, baseHeight, 'elastic.out(1, 0.6)');
     timeline?.to(contentLayer, { opacity: 1, duration: 0.3, ease: 'power2.out' }, '-=0.5');
   }
@@ -76,41 +68,22 @@
   async function openDetails(): Promise<void> {
     if (isAnimating) return;
     isAnimating = true;
-    setDetailOpen(true);
 
-    // Fade out scroll content, keep header visible
+    // Fade out scroll content
     await gsap.to(scrollArea, { opacity: 0, duration: 0.12, ease: 'power2.in' });
 
-    // Now change content and wait for render
+    // Change content and set detail open (CSS handles sizing)
     showDetailContent = true;
+    setDetailOpen(true);
+
+    // Clear inline styles so CSS takes over
+    wrapperElement.style.left = '';
+    wrapperElement.style.top = '';
+    wrapperElement.style.transform = '';
+    panelX = null;
+    panelY = null;
+
     await tick();
-
-    // Save position before expanding
-    preExpandX = panelX;
-    preExpandY = panelY;
-
-    // Lock to pixel position for animation
-    wrapperElement.style.left = `${panelX}px`;
-    wrapperElement.style.top = `${panelY}px`;
-    wrapperElement.style.transform = 'none';
-
-    // Fixed target: full screen with margins
-    const targetX = PANEL_MARGIN;
-    const targetY = PANEL_MARGIN;
-    const targetWidth = window.innerWidth - PANEL_MARGIN * 2;
-    const targetHeight = window.innerHeight - PANEL_MARGIN * 2;
-
-    // Animate position AND size to target
-    await gsap.to(wrapperElement, {
-      left: targetX,
-      top: targetY,
-      width: targetWidth,
-      height: targetHeight,
-      duration: 0.2,
-      ease: 'back.out(1)'
-    });
-    panelX = targetX;
-    panelY = targetY;
     await gsap.to(scrollArea, { opacity: 1, duration: 0.2, ease: 'power2.out' });
     isAnimating = false;
   }
@@ -119,30 +92,21 @@
     if (isAnimating) return;
     isAnimating = true;
 
-    // Fade out scroll content, keep header visible
+    // Fade out scroll content
     await gsap.to(scrollArea, { opacity: 0, duration: 0.12, ease: 'power2.in' });
 
-    // Change content back to summary
+    // Change content back to summary and close detail (CSS handles sizing/centering)
     showDetailContent = false;
-    await tick();
-
-    // Animate back to pre-expand position and size
-    await gsap.to(wrapperElement, {
-      left: preExpandX,
-      top: preExpandY,
-      width: baseWidth,
-      height: baseHeight,
-      duration: 0.2,
-      ease: 'back.out(1)'
-    });
     closeDetailPanel();
 
-    // Restore position state
-    panelX = preExpandX;
-    panelY = preExpandY;
-    wrapperElement.style.width = '';
-    wrapperElement.style.height = '';
+    // Clear any inline styles - let CSS handle positioning
+    wrapperElement.style.left = '';
+    wrapperElement.style.top = '';
+    wrapperElement.style.transform = '';
+    panelX = null;
+    panelY = null;
 
+    await tick();
     await gsap.to(scrollArea, { opacity: 1, duration: 0.2, ease: 'power2.out' });
     isAnimating = false;
   }
@@ -156,7 +120,7 @@
   }
 
   function isMobile(): boolean {
-    return window.innerWidth <= 900;
+    return window.innerWidth <= MOBILE_BREAKPOINT;
   }
 
   function startDrag(e: MouseEvent): void {
@@ -183,9 +147,9 @@
 
     // Constrain so expanded panel has minimum usable size
     const minX = PANEL_MARGIN;
-    const maxX = window.innerWidth - MIN_EXPANDED_WIDTH - PANEL_MARGIN;
+    const maxX = window.innerWidth - PANEL_MIN_EXPANDED_WIDTH - PANEL_MARGIN;
     const minY = PANEL_MARGIN;
-    const maxY = window.innerHeight - MIN_EXPANDED_HEIGHT - PANEL_MARGIN;
+    const maxY = window.innerHeight - PANEL_MIN_EXPANDED_HEIGHT - PANEL_MARGIN;
 
     const newX = Math.max(minX, Math.min(maxX, e.clientX - dragOffsetX));
     const newY = Math.max(minY, Math.min(maxY, e.clientY - dragOffsetY));

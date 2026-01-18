@@ -34,3 +34,13 @@ export const STAGE_DOT_RADIUS = 6;
 export const STAGE_LABEL_FONT_SIZE = 20;
 export const STAGE_LABEL_TOP_PADDING = 80;
 export const STAGE_LABEL_LINE_START = 30;
+
+// Panel layout
+export const PANEL_MARGIN = 25;
+export const PANEL_MIN_EXPANDED_WIDTH = 500;
+export const PANEL_MIN_EXPANDED_HEIGHT = 300;
+export const PANEL_DETAIL_MAX_WIDTH = 800;
+export const HEADER_HEIGHT = 80;
+export const STAGE_LABEL_HEIGHT = 50;
+export const PANEL_TOP_OFFSET = HEADER_HEIGHT + STAGE_LABEL_HEIGHT;
+export const MOBILE_BREAKPOINT = 900;

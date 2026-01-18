@@ -10,17 +10,20 @@ import { getColor } from '../../ui/theme.js';
 import {
   STAGE_EDGE_WIDTH,
   STAGE_DOT_RADIUS,
+  FADED_NODE_ALPHA,
 } from '../../config/constants.js';
 import { drawDot } from './rendererUtils.js';
 
 /**
  * Renders edges connecting stage nodes in order.
  * Each edge uses the phase color of its source stage.
+ * When a stage is selected, only edges connected to it are fully visible.
  */
 export function renderStageEdges(
   layer: Container,
   stages: Stage[],
-  stageNodeMap: Map<string, PillNode>
+  stageNodeMap: Map<string, PillNode>,
+  selectedStageId: string | null = null
 ): void {
   layer.removeChildren();
   const graphics = new Graphics();
@@ -28,11 +31,19 @@ export function renderStageEdges(
 
   for (let i = 0; i < stageOrder.length - 1; i++) {
     const stage = stages[i];
+    const nextStageId = stageOrder[i + 1];
     const sourceNode = stageNodeMap.get(stageOrder[i]);
-    const targetNode = stageNodeMap.get(stageOrder[i + 1]);
+    const targetNode = stageNodeMap.get(nextStageId);
     if (!sourceNode || !targetNode) continue;
 
-    const color = stage.phase
+    // Determine if this edge is connected to the selected stage
+    const isConnected = selectedStageId === null ||
+      stage.id === selectedStageId ||
+      nextStageId === selectedStageId;
+
+    const alpha = isConnected ? 1 : FADED_NODE_ALPHA;
+
+    const baseColor = stage.phase
       ? getColor(`--phase-${stage.phase.toLowerCase()}`)
       : getColor('--color-edge-default');
 
@@ -43,10 +54,10 @@ export function renderStageEdges(
 
     graphics.moveTo(startX, startY);
     graphics.lineTo(endX, endY);
-    graphics.stroke({ width: STAGE_EDGE_WIDTH, color });
+    graphics.stroke({ width: STAGE_EDGE_WIDTH, color: baseColor, alpha });
 
-    drawDot(graphics, startX, startY, STAGE_DOT_RADIUS, color);
-    drawDot(graphics, endX, endY, STAGE_DOT_RADIUS, color);
+    drawDot(graphics, startX, startY, STAGE_DOT_RADIUS, baseColor, alpha);
+    drawDot(graphics, endX, endY, STAGE_DOT_RADIUS, baseColor, alpha);
   }
 
   layer.addChild(graphics);

@@ -1,7 +1,7 @@
 .liquid-wrapper {
   position: fixed;
   top: 50%;
-  left: 25px;
+  left: var(--panel-margin);
   transform: translateY(-50%);
   z-index: 10;
   width: 320px;
@@ -13,6 +13,12 @@
 
 .liquid-wrapper.detail-open {
   z-index: 100;
+  left: var(--panel-margin);
+  top: var(--header-height);
+  transform: none;
+  width: calc(50vw - var(--panel-margin) * 2);
+  max-width: var(--panel-max-width);
+  height: calc(100vh - var(--header-height) - var(--panel-margin));
 }
 
 .liquid-wrapper.detail-open .panel-header {
@@ -46,7 +52,7 @@
   position: relative;
   width: 100%;
   min-height: 100px;
-  max-height: calc(100vh - 100px);
+  max-height: calc(100vh - var(--header-height) - var(--panel-margin));
   display: flex;
   flex-direction: column;
 }
@@ -255,11 +261,19 @@
 
 @media (max-width: 900px) {
   .liquid-wrapper {
-    left: 15px;
-    bottom: 15px;
+    left: var(--panel-margin-mobile);
+    bottom: var(--panel-margin-mobile);
     top: auto;
     transform: none;
-    width: calc(100% - 30px);
+    width: calc(100% - var(--panel-margin-mobile) * 2);
+  }
+
+  .liquid-wrapper.detail-open {
+    top: auto;
+    left: var(--panel-margin-mobile);
+    width: calc(100% - var(--panel-margin-mobile) * 2);
+    max-width: none;
+    height: calc(100vh - var(--header-height) - var(--panel-margin-mobile));
   }
 
   .panel-content-layer {
@@ -267,7 +281,7 @@
   }
 
   .liquid-wrapper.detail-open .panel-content-layer {
-    max-height: calc(100vh - 80px);
+    max-height: calc(100vh - var(--header-height) - var(--panel-margin-mobile));
   }
 
   .panel-header {

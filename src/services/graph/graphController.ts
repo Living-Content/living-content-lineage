@@ -18,7 +18,7 @@ import { createStageLabels, type TopNodeInfo } from './stageLabelRenderer.js';
 import { createViewportState, createViewportHandlers } from './viewport.js';
 import { createLODController, type LODLayers } from './lodController.js';
 import { createTitleOverlay } from './titleOverlay.js';
-import { LOD_THRESHOLD, STAGE_NODE_SCALE, FADED_NODE_ALPHA, EDGE_GAP } from '../../config/constants.js';
+import { LOD_THRESHOLD, STAGE_NODE_SCALE, FADED_NODE_ALPHA, EDGE_GAP, PANEL_DETAIL_MAX_WIDTH, PANEL_MARGIN, MOBILE_BREAKPOINT } from '../../config/constants.js';
 import {
   selectedNode,
   selectedStage,
@@ -26,6 +26,8 @@ import {
   selectStage,
   clearSelection,
 } from '../../stores/lineageState.js';
+import { isDetailOpen } from '../../stores/uiState.js';
+import gsap from 'gsap';
 
 interface HoverPayload {
   title: string;
@@ -198,6 +200,7 @@ export async function createGraphController({
 
   function applySelectionHighlight(selectedId: string): void {
     const verticallyConnected = getVerticallyConnectedNodeIds(selectedId);
+    // Highlight nodes in expanded view
     nodeMap.forEach((node, nodeId) => {
       if (nodeId === selectedId) {
         setNodeAlpha(nodeId, 1);
@@ -210,7 +213,34 @@ export async function createGraphController({
         node.setSelected(false);
       }
     });
+    // Dim stage nodes and edges (for collapsed view consistency)
+    stageNodeMap.forEach((node) => {
+      node.alpha = FADED_NODE_ALPHA;
+      node.setSelected(false);
+    });
     renderEdges(edgeLayer, dotLayer, lineageData.edges, nodeMap, selectedId, verticallyConnected);
+    // Dim all stage edges when a node is selected
+    renderStageEdges(stageEdgeLayer, lineageData.stages, stageNodeMap, '');
+  }
+
+  function applyStageSelectionHighlight(stageId: string): void {
+    // Dim all stage nodes except selected
+    stageNodeMap.forEach((node, id) => {
+      if (id === stageId) {
+        node.alpha = 1;
+        node.setSelected(true);
+      } else {
+        node.alpha = FADED_NODE_ALPHA;
+        node.setSelected(false);
+      }
+    });
+    // Also dim expanded nodes for consistency
+    nodeMap.forEach((node, nodeId) => {
+      setNodeAlpha(nodeId, FADED_NODE_ALPHA);
+      node.setSelected(false);
+    });
+    // Re-render stage edges with selection highlighting
+    renderStageEdges(stageEdgeLayer, lineageData.stages, stageNodeMap, stageId);
   }
 
   function clearSelectionVisuals(): void {
@@ -219,9 +249,11 @@ export async function createGraphController({
       node.setSelected(false);
     });
     stageNodeMap.forEach((node) => {
+      node.alpha = DEFAULT_NODE_ALPHA;
       node.setSelected(false);
     });
     renderEdges(edgeLayer, dotLayer, lineageData.edges, nodeMap, null, null);
+    renderStageEdges(stageEdgeLayer, lineageData.stages, stageNodeMap, null);
   }
 
   const nodeCreationPromises: Promise<void>[] = [];
@@ -438,6 +470,48 @@ export async function createGraphController({
     },
   });
 
+  // Track detail panel state for centering logic
+  let detailPanelOpen = false;
+
+  // Center selected node on right side of viewport (when detail panel is open)
+  function centerSelectedNode(nodeId: string): void {
+    const node = nodeMap.get(nodeId);
+    if (!node) return;
+
+    const currentWidth = viewportState.width;
+    const currentHeight = viewportState.height;
+
+    // Skip on mobile - panel is full width at bottom
+    if (currentWidth <= MOBILE_BREAKPOINT) return;
+
+    // Calculate the panel width (half viewport, max 800px)
+    const panelWidth = Math.min(currentWidth * 0.5 - PANEL_MARGIN * 2, PANEL_DETAIL_MAX_WIDTH) + PANEL_MARGIN * 2;
+
+    // Target: center the node in the right half of the viewport (after the panel)
+    const rightHalfCenterX = panelWidth + (currentWidth - panelWidth) / 2;
+    const targetScreenX = rightHalfCenterX;
+    const targetScreenY = currentHeight / 2;
+
+    // Calculate where viewport needs to move so node appears at target screen position
+    const nodeWorldX = node.position.x;
+    const nodeWorldY = node.position.y;
+    const targetViewportX = targetScreenX - nodeWorldX * viewportState.scale;
+    const targetViewportY = targetScreenY - nodeWorldY * viewportState.scale;
+
+    // Animate the pan
+    gsap.to(viewportState, {
+      x: targetViewportX,
+      y: targetViewportY,
+      duration: 0.3,
+      ease: 'power2.out',
+      onUpdate: () => {
+        viewport.position.set(viewportState.x, viewportState.y);
+        stageLabels.update(viewportState);
+        cullAndRender();
+      },
+    });
+  }
+
   // Subscribe to Svelte stores - this is the single source of truth for selection
   const unsubscribeNode = selectedNode.subscribe((node) => {
     selectedNodeId = node?.id ?? null;
@@ -445,6 +519,11 @@ export async function createGraphController({
       // Clear any stage selection visuals first
       stageNodeMap.forEach((n) => n.setSelected(false));
       applySelectionHighlight(node.id);
+
+      // Center node if detail panel is open
+      if (detailPanelOpen) {
+        centerSelectedNode(node.id);
+      }
     } else if (!selectedStageId) {
       // Only clear if no stage is selected either
       clearSelectionVisuals();
@@ -454,19 +533,19 @@ export async function createGraphController({
   const unsubscribeStage = selectedStage.subscribe((stage) => {
     selectedStageId = stage?.stageId ?? null;
     if (stage) {
-      // Clear node selection visuals, apply stage selection
-      nodeMap.forEach((n, nodeId) => {
-        setNodeAlpha(nodeId, DEFAULT_NODE_ALPHA);
-        n.setSelected(false);
-      });
+      applyStageSelectionHighlight(stage.stageId);
       renderEdges(edgeLayer, dotLayer, lineageData.edges, nodeMap, null, null);
-      // Select the stage node
-      stageNodeMap.forEach((n) => n.setSelected(false));
-      const stageNode = stageNodeMap.get(stage.stageId);
-      if (stageNode) stageNode.setSelected(true);
     } else if (!selectedNodeId) {
-      // Only clear if no node is selected either
+      // Only clear if no stage is selected either
       clearSelectionVisuals();
+    }
+  });
+
+  // Subscribe to detail panel state to center selected node on right side
+  const unsubscribeDetail = isDetailOpen.subscribe((open) => {
+    detailPanelOpen = open;
+    if (open && selectedNodeId) {
+      centerSelectedNode(selectedNodeId);
     }
   });
 
@@ -507,15 +586,52 @@ export async function createGraphController({
     isZoomBlocked: () => lodController.state.isAnimating,
   });
 
-  const resizeObserver = new ResizeObserver(() => app.resize());
+  // Debounced resize handler
+  let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  function handleResize(): void {
+    // Update cached dimensions
+    const newWidth = container.clientWidth;
+    const newHeight = container.clientHeight;
+    viewportState.width = newWidth;
+    viewportState.height = newHeight;
+
+    // Resize the Pixi app
+    app.resize();
+
+    // Update stage labels
+    stageLabels.update(viewportState);
+
+    // Re-center selected node if detail panel is open
+    if (detailPanelOpen && selectedNodeId) {
+      centerSelectedNode(selectedNodeId);
+    }
+
+    // Re-render
+    if (!lodController.state.isCollapsed) {
+      cullAndRender();
+    } else {
+      updateTitlePosition();
+    }
+  }
+
+  const resizeObserver = new ResizeObserver(() => {
+    // Debounce resize handling
+    if (resizeTimeout) {
+      clearTimeout(resizeTimeout);
+    }
+    resizeTimeout = setTimeout(handleResize, 100);
+  });
   resizeObserver.observe(container);
 
   return {
     destroy: () => {
       unsubscribeNode();
       unsubscribeStage();
+      unsubscribeDetail();
       viewportHandlers.destroy();
       resizeObserver.disconnect();
+      if (resizeTimeout) clearTimeout(resizeTimeout);
       titleOverlay.destroy();
       nodeMap.forEach((node) => node.destroy());
       app.destroy(true, { children: true });

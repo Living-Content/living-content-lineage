@@ -12,12 +12,13 @@ export function drawDot(
   x: number,
   y: number,
   radius: number,
-  color: number
+  color: number,
+  alpha: number = 1
 ): void {
   graphics.circle(x, y, radius);
-  graphics.fill({ color });
+  graphics.fill({ color, alpha });
   graphics.circle(x, y, radius);
-  graphics.stroke({ width: 1, color: getColor('--color-edge-stroke') });
+  graphics.stroke({ width: 1, color: getColor('--color-edge-stroke'), alpha });
 }
 
 /**
