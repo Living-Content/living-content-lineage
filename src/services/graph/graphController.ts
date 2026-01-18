@@ -2,6 +2,9 @@
  * Graph controller using Pixi.js for WebGL rendering.
  * Orchestrates viewport, LOD, and rendering modules.
  * Nodes use Pixi's built-in cullable property for automatic off-screen culling.
+ *
+ * Selection is managed by Svelte stores (single source of truth).
+ * The controller subscribes to selection changes and updates visuals accordingly.
  */
 import { Application, Container, Culler } from 'pixi.js';
 import { loadManifest } from '../../manifest/registry.js';
@@ -16,6 +19,13 @@ import { createViewportState, createViewportHandlers } from './viewport.js';
 import { createLODController, type LODLayers } from './lodController.js';
 import { createTitleOverlay } from './titleOverlay.js';
 import { LOD_THRESHOLD, STAGE_NODE_SCALE, FADED_NODE_ALPHA, EDGE_GAP } from '../../config/constants.js';
+import {
+  selectedNode,
+  selectedStage,
+  selectNode,
+  selectStage,
+  clearSelection,
+} from '../../stores/lineageState.js';
 
 interface HoverPayload {
   title: string;
@@ -26,8 +36,6 @@ interface HoverPayload {
 }
 
 interface GraphControllerCallbacks {
-  onNodeSelect: (nodeData: LineageNodeData) => void;
-  onStageSelect: (stageLabel: string, nodes: LineageNodeData[], edges: LineageGraph['edges']) => void;
   onSimpleViewChange: (isSimple: boolean) => void;
   onHover: (payload: HoverPayload) => void;
   onHoverEnd: () => void;
@@ -37,7 +45,6 @@ interface GraphControllerCallbacks {
 
 export interface GraphController {
   destroy: () => void;
-  clearSelection: () => void;
 }
 
 interface GraphControllerOptions {
@@ -83,16 +90,16 @@ export async function createGraphController({
   const edgeLayer = new Container();
   const nodeLayer = new Container();
   const dotLayer = new Container();
-  const stageNodeLayer = new Container();
   const stageEdgeLayer = new Container();
+  const stageNodeLayer = new Container();
   viewport.addChild(selectionLayer);
   viewport.addChild(edgeLayer);
   viewport.addChild(nodeLayer);
   viewport.addChild(dotLayer);
-  viewport.addChild(stageNodeLayer);
   viewport.addChild(stageEdgeLayer);
-  stageNodeLayer.visible = false;
+  viewport.addChild(stageNodeLayer);
   stageEdgeLayer.visible = false;
+  stageNodeLayer.visible = false;
 
   const stageLayer = new Container();
   app.stage.addChild(stageLayer);
@@ -108,7 +115,10 @@ export async function createGraphController({
 
   const nodeMap = new Map<string, PillNode>();
   const stageNodeMap = new Map<string, PillNode>();
+
+  // Track current selection from store subscriptions (for hover logic)
   let selectedNodeId: string | null = null;
+  let selectedStageId: string | null = null;
 
   const nodePositions = new Map<string, { x: number; y: number }>();
   for (const node of lineageData.nodes) {
@@ -206,10 +216,12 @@ export async function createGraphController({
     renderEdges(edgeLayer, dotLayer, lineageData.edges, nodeMap, selectedId, verticallyConnected);
   }
 
-  function clearSelectionHighlight(): void {
-    selectedNodeId = null;
+  function clearSelectionVisuals(): void {
     nodeMap.forEach((node, nodeId) => {
       setNodeAlpha(nodeId, DEFAULT_NODE_ALPHA);
+      node.setSelected(false);
+    });
+    stageNodeMap.forEach((node) => {
       node.setSelected(false);
     });
     renderEdges(edgeLayer, dotLayer, lineageData.edges, nodeMap, null, null);
@@ -220,9 +232,7 @@ export async function createGraphController({
   for (const node of lineageData.nodes) {
     const nodeCallbacks = {
       onClick: () => {
-        selectedNodeId = node.id;
-        applySelectionHighlight(node.id);
-        callbacks.onNodeSelect(node);
+        selectNode(node);
       },
       onHover: () => {
         container.style.cursor = 'pointer';
@@ -360,7 +370,7 @@ export async function createGraphController({
         const stageEdges = lineageData.edges.filter(
           (e) => stageNodes.some((n) => n.id === e.source) || stageNodes.some((n) => n.id === e.target)
         );
-        callbacks.onStageSelect(stage.label, stageNodes, stageEdges);
+        selectStage({ stageId: stage.id, label: stage.label, nodes: stageNodes, edges: stageEdges });
       },
       onHover: () => {
         container.style.cursor = 'pointer';
@@ -377,7 +387,7 @@ export async function createGraphController({
         container.style.cursor = 'grab';
         callbacks.onHoverEnd();
       },
-    }, { scale: STAGE_NODE_SCALE, renderOptions: stageRenderOptions });
+    }, { scale: STAGE_NODE_SCALE, renderOptions: stageRenderOptions, selectionLayer });
     stageNodeLayer.addChild(pillNode);
     stageNodeMap.set(stage.id, pillNode);
   }
@@ -388,12 +398,14 @@ export async function createGraphController({
 
   const lodController = createLODController(nodeMap, stageNodeMap, lineageData.stages, lodLayers, {
     onCollapseStart: () => {
+      clearSelection(); // Clears store, triggers subscription to update visuals
       titleOverlay.setMode('relative');
     },
     onCollapseEnd: () => {
       updateTitlePosition();
     },
     onExpandStart: () => {
+      clearSelection(); // Clears store, triggers subscription to update visuals
       titleOverlay.setMode('fixed');
     },
     onExpandEnd: () => {
@@ -427,6 +439,38 @@ export async function createGraphController({
   }
 
   updateStageLabels();
+
+  // Subscribe to Svelte stores - this is the single source of truth for selection
+  const unsubscribeNode = selectedNode.subscribe((node) => {
+    selectedNodeId = node?.id ?? null;
+    if (node) {
+      // Clear any stage selection visuals first
+      stageNodeMap.forEach((n) => n.setSelected(false));
+      applySelectionHighlight(node.id);
+    } else if (!selectedStageId) {
+      // Only clear if no stage is selected either
+      clearSelectionVisuals();
+    }
+  });
+
+  const unsubscribeStage = selectedStage.subscribe((stage) => {
+    selectedStageId = stage?.stageId ?? null;
+    if (stage) {
+      // Clear node selection visuals, apply stage selection
+      nodeMap.forEach((n, nodeId) => {
+        setNodeAlpha(nodeId, DEFAULT_NODE_ALPHA);
+        n.setSelected(false);
+      });
+      renderEdges(edgeLayer, dotLayer, lineageData.edges, nodeMap, null, null);
+      // Select the stage node
+      stageNodeMap.forEach((n) => n.setSelected(false));
+      const stageNode = stageNodeMap.get(stage.stageId);
+      if (stageNode) stageNode.setSelected(true);
+    } else if (!selectedNodeId) {
+      // Only clear if no node is selected either
+      clearSelectionVisuals();
+    }
+  });
 
   function cullAndRender(): void {
     if (lodController.state.isCollapsed) return;
@@ -468,12 +512,13 @@ export async function createGraphController({
 
   return {
     destroy: () => {
+      unsubscribeNode();
+      unsubscribeStage();
       viewportHandlers.destroy();
       resizeObserver.disconnect();
       titleOverlay.destroy();
       nodeMap.forEach((node) => node.destroy());
       app.destroy(true, { children: true });
     },
-    clearSelection: clearSelectionHighlight,
   };
 }

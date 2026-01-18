@@ -1,10 +1,13 @@
 /**
  * Stores for lineage data and current selection.
+ * These are the single source of truth - components and the graph controller
+ * subscribe to these stores directly.
  */
 import { writable } from 'svelte/store';
 import type { LineageEdgeData, LineageGraph, LineageNodeData } from '../types.js';
 
 export interface StageSelection {
+  stageId: string;
   label: string;
   nodes: LineageNodeData[];
   edges: LineageEdgeData[];
