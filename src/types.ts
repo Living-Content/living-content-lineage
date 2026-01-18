@@ -108,19 +108,6 @@ export interface EnvironmentalImpact {
 }
 
 export interface AssetContent {
-  query?: string;
-  response?: string;
-  responseLength?: number;
-  toolId?: string;
-  model?: string;
-  candidates?: string[];
-  llmResponse?: string;
-  inputTokens?: number;
-  outputTokens?: number;
-  totalTokens?: number;
-  temperature?: number;
-  maxTokens?: number;
-  durationMs?: number;
   [key: string]: unknown;
 }
 

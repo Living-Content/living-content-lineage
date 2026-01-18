@@ -1,7 +1,11 @@
 <script lang="ts">
   // Full detail panel content for a selected node.
   import type { LineageNodeData } from '../../types.js';
-  import { isSecondaryContentKey } from '../../services/sidebar/contentKeys.js';
+  import {
+    shouldDisplayKey,
+    formatKeyLabel,
+    isSummaryValue
+  } from '../../services/sidebar/contentKeys.js';
   import DetailSection from './DetailSection.svelte';
   import DetailValue from './detail/DetailValue.svelte';
   import MetaRow from './MetaRow.svelte';
@@ -11,24 +15,22 @@
   $: assetManifest = node.assetManifest;
   $: contentEntries = assetManifest?.content
     ? Object.entries(assetManifest.content).filter(
-        ([key, value]) => isSecondaryContentKey(key) && value !== undefined && value !== null
+        ([key, value]) =>
+          shouldDisplayKey(key) && !isSummaryValue(value) && value !== undefined && value !== null
       )
     : [];
 </script>
 
 {#if assetManifest}
-  {#if assetManifest.content?.query}
-    <DetailSection title="Query">
-      <div class="content-block">
-        <DetailValue value={assetManifest.content.query} />
-      </div>
-    </DetailSection>
-  {/if}
-
-  {#if assetManifest.content?.response}
-    <DetailSection title="Response">
-      <div class="content-block">
-        <DetailValue value={assetManifest.content.response} />
+  {#if contentEntries.length}
+    <DetailSection title="Content">
+      <div class="detail-fields">
+        {#each contentEntries as [key, value] (key)}
+          <div class="detail-field">
+            <span class="detail-field-key">{formatKeyLabel(key)}</span>
+            <DetailValue {value} />
+          </div>
+        {/each}
       </div>
     </DetailSection>
   {/if}
@@ -36,19 +38,6 @@
   {#if assetManifest.sourceCode}
     <DetailSection title="Source Code">
       <pre class="code-block"><code>{assetManifest.sourceCode}</code></pre>
-    </DetailSection>
-  {/if}
-
-  {#if contentEntries.length}
-    <DetailSection title="Data">
-      <div class="detail-fields">
-        {#each contentEntries as [key, value] (key)}
-          <div class="detail-field">
-            <span class="detail-field-key">{key}</span>
-            <DetailValue value={value} />
-          </div>
-        {/each}
-      </div>
     </DetailSection>
   {/if}
 

@@ -1,35 +1,63 @@
 /**
- * Content key classification used for sidebar summary vs detail sections.
+ * Utilities for formatting content field values in the sidebar.
  */
-export type ContentKeyGroup = 'primary' | 'secondary';
 
-export const CONTENT_KEY_GROUPS: Record<string, ContentKeyGroup> = {
-  query: 'primary',
-  response: 'primary',
-  responseLength: 'primary',
-  model: 'primary',
-  inputTokens: 'primary',
-  outputTokens: 'primary',
-  temperature: 'primary',
-  maxTokens: 'primary',
-  durationMs: 'primary',
-  description: 'primary',
-  totalTokens: 'primary',
-  apiDurationMs: 'primary',
-  totalDurationMs: 'primary',
-  promptLength: 'primary',
-  systemLength: 'primary',
-  candidates: 'primary',
-  llmResponse: 'primary',
-  length: 'primary',
-};
+/**
+ * Keys to exclude from dynamic content display (internal/structural keys).
+ */
+const EXCLUDED_KEYS = new Set(['id', 'type', 'nodeType', 'shape', 'x', 'y']);
 
-export function isPrimaryContentKey(key: string): boolean {
-  return CONTENT_KEY_GROUPS[key] === 'primary';
+/**
+ * Check if a key should be displayed in the content list.
+ */
+export function shouldDisplayKey(key: string): boolean {
+  return !EXCLUDED_KEYS.has(key);
 }
 
-export function isSecondaryContentKey(key: string): boolean {
-  return (
-    CONTENT_KEY_GROUPS[key] === 'secondary' || !(key in CONTENT_KEY_GROUPS)
-  );
+/**
+ * Format a key for display (convert camelCase to readable label).
+ */
+export function formatKeyLabel(key: string): string {
+  return key
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, (str) => str.toLowerCase())
+    .trim();
+}
+
+/**
+ * Format a content value for display.
+ */
+export function formatContentValue(value: unknown): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  if (typeof value === 'number') {
+    return value.toLocaleString();
+  }
+  if (typeof value === 'boolean') {
+    return value ? 'yes' : 'no';
+  }
+  if (Array.isArray(value)) {
+    return `${value.length} items`;
+  }
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+  return String(value);
+}
+
+/**
+ * Check if a value is suitable for summary display (simple, short values).
+ */
+export function isSummaryValue(value: unknown): boolean {
+  if (value === null || value === undefined) {
+    return false;
+  }
+  if (typeof value === 'string') {
+    return value.length <= 100;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return true;
+  }
+  return false;
 }
