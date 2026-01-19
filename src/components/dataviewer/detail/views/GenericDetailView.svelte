@@ -8,7 +8,7 @@
     shouldDisplayKey,
     formatKeyLabel,
     isSummaryValue,
-  } from '../../../../services/dataviewer/contentKeys.js';
+  } from '../../../../services/dataviewer/parsing/contentKeys.js';
   import PropertyGroup from '../PropertyGroup.svelte';
   import DetailValue from '../DetailValue.svelte';
   import MetaRow from '../../MetaRow.svelte';

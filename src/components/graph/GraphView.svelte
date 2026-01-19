@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { GraphController } from '../services/graph/layout/graphController.js';
-  import { createGraphController } from '../services/graph/layout/graphController.js';
-  import { clearSelection, setLineageData } from '../stores/lineageState.js';
-  import { setLoadError, setLoading, setSimpleView } from '../stores/uiState.js';
+  import type { GraphController } from '../../services/graph/layout/graphController.js';
+  import { createGraphController } from '../../services/graph/layout/graphController.js';
+  import { clearSelection, setLineageData } from '../../stores/lineageState.js';
+  import { setLoadError, setLoading, setSimpleView } from '../../stores/uiState.js';
 
   let container: HTMLDivElement | null = null;
 
@@ -25,8 +25,8 @@
             setLoadError(null);
             setLineageData(data);
           },
-          onError: (message) => {
-            setLoadError(message);
+          onError: (error) => {
+            setLoadError(error.message + (error.details ? `: ${error.details}` : ''));
             clearSelection();
           },
         },

@@ -4,7 +4,7 @@
    * Displays action type, agent, and execution metadata.
    */
   import type { LineageNodeData } from '../../../../config/types.js';
-  import { extractAssertionData, formatDuration } from '../../../../services/dataviewer/assertionParsers.js';
+  import { extractAssertionData, formatDuration } from '../../../../services/dataviewer/parsing/assertionParsers.js';
   import PropertyGroup from '../PropertyGroup.svelte';
   import MetaRow from '../../MetaRow.svelte';
 

@@ -6,7 +6,7 @@
     parseJson,
     parseLooseJson,
     tryParseJsonFragment,
-  } from '../../../services/dataviewer/valueParsing.js';
+  } from '../../../services/dataviewer/parsing/valueParsing.js';
   import MarkdownValue from './MarkdownValue.svelte';
 
   export let value: unknown;

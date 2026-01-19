@@ -11,7 +11,7 @@
     shouldDisplayKey,
     formatKeyLabel,
     isSummaryValue,
-  } from '../../../../services/dataviewer/contentKeys.js';
+  } from '../../../../services/dataviewer/parsing/contentKeys.js';
 
   export let node: LineageNodeData;
 

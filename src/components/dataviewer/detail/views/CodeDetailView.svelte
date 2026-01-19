@@ -7,7 +7,7 @@
   import {
     extractAssertionData,
     formatDuration,
-  } from '../../../../services/dataviewer/assertionParsers.js';
+  } from '../../../../services/dataviewer/parsing/assertionParsers.js';
   import PropertyGroup from '../PropertyGroup.svelte';
   import MetaRow from '../../MetaRow.svelte';
 

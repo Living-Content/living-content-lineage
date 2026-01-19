@@ -3,6 +3,7 @@
  */
 import { Container, Graphics } from 'pixi.js';
 import gsap from 'gsap';
+import { ANIMATION_TIMINGS } from '../../../config/animationConstants.js';
 
 const CLICK_THRESHOLD = 5;
 
@@ -73,14 +74,14 @@ export const createSelectionAnimator = (
 
       gsap.to(animState, {
         progress: 1,
-        duration: 0.5,
+        duration: ANIMATION_TIMINGS.SELECTION_DRAW_DURATION,
         ease: 'power2.inOut',
         onUpdate: () => drawRing(animState.progress),
       });
     } else {
       gsap.to(selectionRing, {
         alpha: 0,
-        duration: 0.15,
+        duration: ANIMATION_TIMINGS.SELECTION_FADE_DURATION,
         ease: 'power2.out',
       });
     }

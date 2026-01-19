@@ -6,9 +6,8 @@
  */
 import { Container } from 'pixi.js';
 import gsap from 'gsap';
-
-const LOD_THRESHOLD = 0.7;
-const DURATION = 0.5;
+import { ANIMATION_TIMINGS } from '../../../config/animationConstants.js';
+import { LOD_THRESHOLD } from '../../../config/constants.js';
 
 export interface LODState {
   isCollapsed: boolean;
@@ -60,17 +59,19 @@ export function createLODController(
       layer.visible = true;
     });
 
+    const duration = ANIMATION_TIMINGS.LOD_DURATION;
+
     // Outgoing fades fast, incoming slightly delayed
     gsap.to(detailLayers, {
       alpha: 0,
-      duration: DURATION * 0.5,
+      duration: duration * ANIMATION_TIMINGS.LOD_FADE_OUT_FACTOR,
       ease: 'power2.in',
     });
 
     gsap.to(stageLayers, {
       alpha: 1,
-      duration: DURATION * 0.6,
-      delay: DURATION * 0.3,
+      duration: duration * ANIMATION_TIMINGS.LOD_FADE_IN_DURATION_FACTOR,
+      delay: duration * ANIMATION_TIMINGS.LOD_FADE_IN_DELAY_FACTOR,
       ease: 'power2.out',
       onComplete: () => {
         detailLayers.forEach((layer) => (layer.visible = false));
@@ -92,17 +93,19 @@ export function createLODController(
       layer.visible = true;
     });
 
+    const duration = ANIMATION_TIMINGS.LOD_DURATION;
+
     // Outgoing fades fast, incoming slightly delayed
     gsap.to(stageLayers, {
       alpha: 0,
-      duration: DURATION * 0.5,
+      duration: duration * ANIMATION_TIMINGS.LOD_FADE_OUT_FACTOR,
       ease: 'power2.in',
     });
 
     gsap.to(detailLayers, {
       alpha: 1,
-      duration: DURATION * 0.6,
-      delay: DURATION * 0.3,
+      duration: duration * ANIMATION_TIMINGS.LOD_FADE_IN_DURATION_FACTOR,
+      delay: duration * ANIMATION_TIMINGS.LOD_FADE_IN_DELAY_FACTOR,
       ease: 'power2.out',
       onComplete: () => {
         stageLayers.forEach((layer) => (layer.visible = false));

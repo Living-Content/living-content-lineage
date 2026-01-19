@@ -4,7 +4,7 @@
    * Displays retrieval metrics, search results, and chunk previews.
    */
   import type { LineageNodeData } from '../../../../config/types.js';
-  import { formatPercent, formatNumber } from '../../../../services/dataviewer/assertionParsers.js';
+  import { formatPercent, formatNumber } from '../../../../services/dataviewer/parsing/assertionParsers.js';
   import PropertyGroup from '../PropertyGroup.svelte';
   import MetaRow from '../../MetaRow.svelte';
 

@@ -6,7 +6,7 @@
     formatKeyLabel,
     formatContentValue,
     isSummaryValue
-  } from '../../services/dataviewer/contentKeys.js';
+  } from '../../services/dataviewer/parsing/contentKeys.js';
   import ImpactSection from './ImpactSection.svelte';
   import MetaRow from './MetaRow.svelte';
 

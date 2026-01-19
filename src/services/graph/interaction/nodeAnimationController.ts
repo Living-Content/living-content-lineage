@@ -2,7 +2,7 @@
  * Node alpha animation controller.
  * Handles smooth transitions for node opacity changes.
  */
-import type { PillNode } from '../graph/rendering/nodeRenderer.js';
+import type { PillNode } from '../rendering/nodeRenderer.js';
 
 export interface NodeAnimationController {
   setNodeAlpha: (nodeId: string, alpha: number) => void;

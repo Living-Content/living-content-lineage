@@ -6,6 +6,7 @@ import { Container, Graphics, Sprite, Ticker } from 'pixi.js';
 import { ASSET_TYPE_ICON_PATHS, getColor, getPhaseColorHex } from '../../../theme/theme.js';
 import type { AssetType, LineageNodeData } from '../../../config/types.js';
 import { ASSET_TYPE_LABELS } from '../../../config/labels.js';
+import { GEOMETRY } from '../../../config/animationConstants.js';
 import { attachNodeInteraction, createSelectionAnimator, type NodeCallbacks } from '../interaction/nodeInteraction.js';
 import { loadIcon } from '../interaction/iconLoader.js';
 import {
@@ -112,9 +113,9 @@ export function createPillNode(
     measureCtx.font = `600 ${fontSize}px ${getNodeFontFamily()}`;
     const textWidth = measureCtx.measureText(node.label).width;
     const pillHeight = BASE_PILL_HEIGHT_SIMPLE * nodeScale;
-    const badgeRadius = pillHeight * 0.32;
+    const badgeRadius = pillHeight * GEOMETRY.BADGE_RADIUS_FACTOR;
     const rightPadding = BASE_RIGHT_PADDING * nodeScale;
-    const pillWidth = textWidth + 56 * nodeScale + badgeRadius * 2 + rightPadding;
+    const pillWidth = textWidth + GEOMETRY.BADGE_WIDTH_PADDING * nodeScale + badgeRadius * 2 + rightPadding;
 
     const texture = createKnockoutPillTexture(node.label, color, pillWidth, pillHeight, fontSize, node.badgeCount);
     const sprite = new Sprite(texture);
@@ -191,7 +192,7 @@ export function createPillNode(
   }
   group.selectionRing = selectionRing;
 
-  const ringPadding = 6;
+  const ringPadding = GEOMETRY.SELECTION_RING_PADDING;
   const ringWidth = group.pillWidth + ringPadding * 2;
   const ringHeight = group.pillHeight + ringPadding * 2;
   const ringRadius = ringHeight / 2;
@@ -251,7 +252,7 @@ export function createPillNode(
       selectionRing.arc(-hw + r, 0, r, Math.PI / 2, Math.PI / 2 + arcAngle);
     }
 
-    selectionRing.stroke({ width: 3, color: getColor('--color-selection-ring'), cap: 'round', join: 'round' });
+    selectionRing.stroke({ width: GEOMETRY.SELECTION_RING_STROKE_WIDTH, color: getColor('--color-selection-ring'), cap: 'round', join: 'round' });
   }
 
   group.setSelected = createSelectionAnimator(selectionRing, drawSelectionRing);

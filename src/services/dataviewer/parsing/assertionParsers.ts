@@ -2,7 +2,7 @@
  * Type-safe assertion data extraction.
  * Parses assertion data from manifests into typed structures for display.
  */
-import type { ManifestAssertion } from '../../config/types.js';
+import type { ManifestAssertion } from '../../../config/types.js';
 
 /**
  * Model assertion data (lco.model).

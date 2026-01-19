@@ -1,4 +1,4 @@
-import type { LineageNodeData } from '../../config/types.js';
+import type { LineageNodeData } from '../../../config/types.js';
 
 /**
  * Determines whether a node has detail content for the detail panel.

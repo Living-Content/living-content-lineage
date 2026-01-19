@@ -4,7 +4,7 @@
    * Displays content preview, message count, and content metadata.
    */
   import type { LineageNodeData } from '../../../../config/types.js';
-  import { extractAssertionData } from '../../../../services/dataviewer/assertionParsers.js';
+  import { extractAssertionData } from '../../../../services/dataviewer/parsing/assertionParsers.js';
   import PropertyGroup from '../PropertyGroup.svelte';
   import MetaRow from '../../MetaRow.svelte';
   import MarkdownValue from '../MarkdownValue.svelte';

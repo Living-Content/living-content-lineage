@@ -2,8 +2,9 @@
  * Graph controller using Pixi.js for WebGL rendering.
  * Orchestrates viewport, LOD, and rendering modules.
  */
-import { Application, Container, Culler } from 'pixi.js';
+import { Culler } from 'pixi.js';
 import { loadManifest } from '../../manifest/registry.js';
+import { ManifestLoadError, type ManifestErrorInfo } from '../../manifest/errors.js';
 import type { LineageGraph } from '../../../config/types.js';
 import type { PillNode } from '../rendering/nodeRenderer.js';
 import { renderEdges } from '../rendering/edgeRenderer.js';
@@ -12,14 +13,15 @@ import { createStageLabels } from '../rendering/stageLabelRenderer.js';
 import { createViewportState, createViewportHandlers } from '../interaction/viewport.js';
 import { createLODController, type LODLayers } from './lodController.js';
 import { createTitleOverlay } from '../rendering/titleOverlay.js';
-import { LOD_THRESHOLD, PANEL_DETAIL_MAX_WIDTH, PANEL_MARGIN, MOBILE_BREAKPOINT } from '../../../config/constants.js';
-import { selectedNode, selectedStage, clearSelection } from '../../../stores/lineageState.js';
-import { isDetailOpen } from '../../../stores/uiState.js';
-import { buildVerticalAdjacencyMap, applySelectionHighlight, applyStageSelectionHighlight, clearSelectionVisuals, type SelectionHighlighterDeps } from '../interaction/selectionHighlighter.js';
-import { createNodeAnimationController } from '../../animation/nodeAnimationController.js';
+import { LOD_THRESHOLD } from '../../../config/constants.js';
+import { clearSelection } from '../../../stores/lineageState.js';
+import { buildVerticalAdjacencyMap } from '../interaction/selectionHighlighter.js';
+import { createNodeAnimationController } from '../interaction/nodeAnimationController.js';
 import { createNodes, repositionNodesWithGaps } from './nodeCreator.js';
 import { recalculateStageBounds, createStageNodes, calculateTopNodeInfo } from './stageCreator.js';
-import gsap from 'gsap';
+import { initializePixi } from './pixiSetup.js';
+import { createStoreSubscriptions } from './graphSubscriptions.js';
+import { createViewportManager, createResizeHandler } from './viewportManager.js';
 
 interface HoverPayload {
   title: string;
@@ -34,7 +36,7 @@ interface GraphControllerCallbacks {
   onHover: (payload: HoverPayload) => void;
   onHoverEnd: () => void;
   onLoaded: (data: LineageGraph) => void;
-  onError: (message: string) => void;
+  onError: (error: ManifestErrorInfo) => void;
 }
 
 export interface GraphController {
@@ -58,39 +60,22 @@ export async function createGraphController({
     lineageData = await loadManifest(manifestUrl);
   } catch (error) {
     console.error('Failed to load lineage manifest', error);
-    callbacks.onError('Unable to load manifest data.');
+    callbacks.onError({
+      message: 'Failed to load manifest',
+      details: error instanceof ManifestLoadError ? error.message : String(error),
+      failedAssets: error instanceof ManifestLoadError ? error.failedAssets : undefined,
+    });
     return null;
   }
   callbacks.onLoaded(lineageData);
 
-  // Initialize Pixi application
-  const app = new Application();
-  await app.init({
-    resizeTo: container,
-    backgroundAlpha: 0,
-    antialias: true,
-    resolution: window.devicePixelRatio || 1,
-    autoDensity: true,
-  });
-  container.appendChild(app.canvas);
+  // Initialize Pixi and layers
+  const pixi = await initializePixi(container);
+  const { app, viewport, layers } = pixi;
 
   const width = container.clientWidth;
   const height = container.clientHeight;
   const graphScale = Math.min(width, height) * 1.5;
-
-  // Create layer hierarchy
-  const viewport = new Container();
-  app.stage.addChild(viewport);
-
-  const selectionLayer = new Container();
-  const edgeLayer = new Container();
-  const nodeLayer = new Container();
-  const dotLayer = new Container();
-  const stageEdgeLayer = new Container();
-  const stageNodeLayer = new Container();
-  viewport.addChild(selectionLayer, edgeLayer, nodeLayer, dotLayer, stageEdgeLayer, stageNodeLayer);
-  stageEdgeLayer.visible = false;
-  stageNodeLayer.visible = false;
 
   // Initialize viewport state
   const viewportState = createViewportState(width, height);
@@ -107,26 +92,19 @@ export async function createGraphController({
   const nodeMap = new Map<string, PillNode>();
   const stageNodeMap = new Map<string, PillNode>();
 
-  // Selection state
-  let selectedNodeId: string | null = null;
-  let selectedStageId: string | null = null;
-  let detailPanelOpen = false;
-
   // Build adjacency map and animation controller
   const verticalAdjacency = buildVerticalAdjacencyMap(lineageData.nodes, lineageData.edges);
   const animationController = createNodeAnimationController(nodeMap);
 
-  const getHighlighterDeps = (): SelectionHighlighterDeps => ({
-    nodeMap, stageNodeMap, edgeLayer, dotLayer, stageEdgeLayer,
-    edges: lineageData.edges, stages: lineageData.stages,
-    verticalAdjacency, setNodeAlpha: animationController.setNodeAlpha,
-  });
-
   // Create nodes
   await createNodes(lineageData.nodes, nodeMap, {
-    container, nodeLayer, selectionLayer, graphScale, ticker: app.ticker,
+    container,
+    nodeLayer: layers.nodeLayer,
+    selectionLayer: layers.selectionLayer,
+    graphScale,
+    ticker: app.ticker,
     callbacks: { onHover: callbacks.onHover, onHoverEnd: callbacks.onHoverEnd },
-    getSelectedNodeId: () => selectedNodeId,
+    getSelectedNodeId: () => subscriptions.state.selectedNodeId,
     setNodeAlpha: animationController.setNodeAlpha,
   });
 
@@ -135,11 +113,15 @@ export async function createGraphController({
 
   // Create stage nodes
   createStageNodes(lineageData.stages, lineageData.nodes, lineageData.edges, stageNodeMap, {
-    container, stageNodeLayer, selectionLayer, graphScale, ticker: app.ticker,
+    container,
+    stageNodeLayer: layers.stageNodeLayer,
+    selectionLayer: layers.selectionLayer,
+    graphScale,
+    ticker: app.ticker,
     callbacks: { onHover: callbacks.onHover, onHoverEnd: callbacks.onHoverEnd },
   });
 
-  renderStageEdges(stageEdgeLayer, lineageData.stages, stageNodeMap);
+  renderStageEdges(layers.stageEdgeLayer, lineageData.stages, stageNodeMap);
 
   // Stage labels
   const topNodeInfo = calculateTopNodeInfo(nodeMap);
@@ -156,31 +138,22 @@ export async function createGraphController({
 
   const cullAndRender = (): void => {
     if (lodController.state.isCollapsed) return;
-    Culler.shared.cull(nodeLayer, app.screen);
-    const connected = selectedNodeId ? verticalAdjacency.getConnectedNodeIds(selectedNodeId) : null;
-    renderEdges(edgeLayer, dotLayer, lineageData.edges, nodeMap, selectedNodeId, connected);
-  };
-
-  const centerSelectedNode = (nodeId: string): void => {
-    const node = nodeMap.get(nodeId);
-    if (!node || viewportState.width <= MOBILE_BREAKPOINT) return;
-
-    const panelWidth = Math.min(viewportState.width * 0.5 - PANEL_MARGIN * 2, PANEL_DETAIL_MAX_WIDTH) + PANEL_MARGIN * 2;
-    const targetX = panelWidth + (viewportState.width - panelWidth) / 2 - node.position.x * viewportState.scale;
-    const targetY = viewportState.height / 2 - node.position.y * viewportState.scale;
-
-    gsap.to(viewportState, {
-      x: targetX, y: targetY, duration: 0.3, ease: 'power2.out',
-      onUpdate: () => {
-        viewport.position.set(viewportState.x, viewportState.y);
-        stageLabels.update(viewportState);
-        cullAndRender();
-      },
-    });
+    Culler.shared.cull(layers.nodeLayer, app.screen);
+    const nodeId = subscriptions.state.selectedNodeId;
+    const connected = nodeId ? verticalAdjacency.getConnectedNodeIds(nodeId) : null;
+    renderEdges(layers.edgeLayer, layers.dotLayer, lineageData.edges, nodeMap, nodeId, connected);
   };
 
   // LOD controller
-  const lodLayers: LODLayers = { nodeLayer, edgeLayer, dotLayer, stageNodeLayer, stageEdgeLayer, stageLayer: stageLabels.container };
+  const lodLayers: LODLayers = {
+    nodeLayer: layers.nodeLayer,
+    edgeLayer: layers.edgeLayer,
+    dotLayer: layers.dotLayer,
+    stageNodeLayer: layers.stageNodeLayer,
+    stageEdgeLayer: layers.stageEdgeLayer,
+    stageLayer: stageLabels.container,
+  };
+
   const lodController = createLODController(lodLayers, {
     onCollapseStart: () => { clearSelection(); titleOverlay.setMode('relative'); },
     onCollapseEnd: updateTitlePosition,
@@ -188,31 +161,27 @@ export async function createGraphController({
     onExpandEnd: () => { stageLabels.update(viewportState); cullAndRender(); },
   });
 
+  // Viewport manager
+  const viewportManager = createViewportManager({
+    nodeMap,
+    viewport,
+    viewportState,
+    stageLabelsUpdate: stageLabels.update,
+    cullAndRender,
+  });
+
   // Store subscriptions
-  const unsubscribeNode = selectedNode.subscribe((node) => {
-    selectedNodeId = node?.id ?? null;
-    if (node) {
-      stageNodeMap.forEach((n) => n.setSelected(false));
-      applySelectionHighlight(node.id, getHighlighterDeps());
-      if (detailPanelOpen) centerSelectedNode(node.id);
-    } else if (!selectedStageId) {
-      clearSelectionVisuals(getHighlighterDeps());
-    }
-  });
-
-  const unsubscribeStage = selectedStage.subscribe((stage) => {
-    selectedStageId = stage?.stageId ?? null;
-    if (stage) {
-      applyStageSelectionHighlight(stage.stageId, getHighlighterDeps());
-      renderEdges(edgeLayer, dotLayer, lineageData.edges, nodeMap, null, null);
-    } else if (!selectedNodeId) {
-      clearSelectionVisuals(getHighlighterDeps());
-    }
-  });
-
-  const unsubscribeDetail = isDetailOpen.subscribe((open) => {
-    detailPanelOpen = open;
-    if (open && selectedNodeId) centerSelectedNode(selectedNodeId);
+  const subscriptions = createStoreSubscriptions({
+    nodeMap,
+    stageNodeMap,
+    edgeLayer: layers.edgeLayer,
+    dotLayer: layers.dotLayer,
+    stageEdgeLayer: layers.stageEdgeLayer,
+    edges: lineageData.edges,
+    stages: lineageData.stages,
+    verticalAdjacency,
+    setNodeAlpha: animationController.setNodeAlpha,
+    centerSelectedNode: viewportManager.centerOnNode,
   });
 
   // Viewport handlers
@@ -235,31 +204,27 @@ export async function createGraphController({
   });
 
   // Resize handling
-  let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
-  const resizeObserver = new ResizeObserver(() => {
-    if (resizeTimeout) clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-      viewportState.width = container.clientWidth;
-      viewportState.height = container.clientHeight;
-      app.resize();
-      stageLabels.update(viewportState);
-      if (detailPanelOpen && selectedNodeId) centerSelectedNode(selectedNodeId);
-      if (!lodController.state.isCollapsed) cullAndRender();
-      else updateTitlePosition();
-    }, 100);
+  const resizeHandler = createResizeHandler({
+    container,
+    viewportState,
+    app,
+    stageLabelsUpdate: stageLabels.update,
+    cullAndRender,
+    updateTitlePosition,
+    centerSelectedNode: viewportManager.centerOnNode,
+    isCollapsed: () => lodController.state.isCollapsed,
+    getDetailPanelOpen: () => subscriptions.state.detailPanelOpen,
+    getSelectedNodeId: () => subscriptions.state.selectedNodeId,
   });
-  resizeObserver.observe(container);
 
   cullAndRender();
 
   return {
     destroy: () => {
-      unsubscribeNode();
-      unsubscribeStage();
-      unsubscribeDetail();
+      subscriptions.unsubscribe();
       viewportHandlers.destroy();
-      resizeObserver.disconnect();
-      if (resizeTimeout) clearTimeout(resizeTimeout);
+      resizeHandler.destroy();
+      viewportManager.destroy();
       animationController.cleanup();
       titleOverlay.destroy();
       nodeMap.forEach((node) => node.destroy());

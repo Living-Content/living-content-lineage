@@ -3,6 +3,7 @@ import type { ManifestAdapter } from './adapters/manifestAdapter.js';
 import { c2paAdapter } from './adapters/c2pa/c2paAdapter.js';
 import { eqtyAdapter } from './adapters/eqty/eqtyAdapter.js';
 import { customAdapter } from './adapters/custom/customAdapter.js';
+import { ManifestLoadError, type AssetLoadResult } from './errors.js';
 
 const ADAPTERS: ManifestAdapter<unknown>[] = [
   c2paAdapter,
@@ -63,24 +64,26 @@ export const loadManifest = async (url: string): Promise<LineageGraph> => {
   const assetRequests = adapter.getAssetManifestRequests(raw, baseUrl);
 
   const assetManifests = new Map<string, unknown>();
-  const fetchPromises = assetRequests.map(async (request) => {
-    try {
-      const res = await fetch(request.url);
-      if (res.ok) {
+  const results: AssetLoadResult[] = await Promise.all(
+    assetRequests.map(async (request): Promise<AssetLoadResult> => {
+      try {
+        const res = await fetch(request.url);
+        if (!res.ok) {
+          return { assetId: request.assetId, success: false, error: `HTTP ${res.status}` };
+        }
         const manifest = (await res.json()) as unknown;
         assetManifests.set(request.assetId, manifest);
-      } else {
-        console.warn(`Failed to fetch asset manifest for ${request.assetId}`);
+        return { assetId: request.assetId, success: true };
+      } catch (error) {
+        return { assetId: request.assetId, success: false, error: String(error) };
       }
-    } catch (error) {
-      console.warn(
-        `Failed to fetch asset manifest for ${request.assetId}`,
-        error
-      );
-    }
-  });
+    })
+  );
 
-  await Promise.all(fetchPromises);
+  const failed = results.filter(r => !r.success);
+  if (failed.length > 0) {
+    console.warn(`Failed to load ${failed.length} asset manifest(s):`, failed);
+  }
 
   return adapter.parse(raw, assetManifests);
 };

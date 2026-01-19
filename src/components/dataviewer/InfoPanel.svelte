@@ -1,17 +1,12 @@
 <script lang="ts">
   // Sidebar panel with liquid blob background.
   import { onMount, tick } from 'svelte';
-  import gsap from 'gsap';
   import { clearSelection, selectedNode, selectedStage } from '../../stores/lineageState.js';
   import { isDetailOpen, loadError, setDetailOpen, closeDetailPanel } from '../../stores/uiState.js';
-  import { hasDetailContent } from '../../services/dataviewer/detailContent.js';
-  import { createBlobManager, type BlobManager } from '../../services/animation/liquidBlobs.js';
-  import {
-    PANEL_MARGIN,
-    PANEL_MIN_EXPANDED_WIDTH,
-    PANEL_MIN_EXPANDED_HEIGHT,
-    MOBILE_BREAKPOINT,
-  } from '../../config/constants.js';
+  import { hasDetailContent } from '../../services/dataviewer/parsing/detailContent.js';
+  import { createDragHandler } from '../../services/dataviewer/interaction/dragHandler.js';
+  import { createAnimationOrchestrator } from '../../services/dataviewer/animation/animationOrchestrator.js';
+  import { MOBILE_BREAKPOINT } from '../../config/constants.js';
   import ContextBadges from './detail/ContextBadges.svelte';
   import MetricCard from './detail/MetricCard.svelte';
   import CardGrid from './detail/CardGrid.svelte';
@@ -24,21 +19,17 @@
   let contentLayer: HTMLElement;
   let scrollArea: HTMLElement;
   let blobContainer: HTMLElement;
-  let blobManager: BlobManager | null = null;
-  let isAnimating = false;
   let showDetailContent = false;
   let wasHidden = true;
-  let baseWidth = 0;
-  let baseHeight = 0;
   let signatureExpanded = false;
 
-  // Drag state
-  let isDragging = false;
-  let dragOffsetX = 0;
-  let dragOffsetY = 0;
-  let panelX: number | null = null;
-  let panelY: number | null = null;
+  // Create handlers
+  const dragHandler = createDragHandler(() => {});
 
+  const animationOrchestrator = createAnimationOrchestrator(() => {
+    if (!wrapperElement || !contentLayer || !scrollArea || !blobContainer) return null;
+    return { wrapper: wrapperElement, contentLayer, scrollArea, blobContainer };
+  });
 
   $: detailAvailable = $selectedNode ? hasDetailContent($selectedNode) : false;
 
@@ -60,74 +51,42 @@
                           ((nodeAssetType === 'Code' || nodeAssetType === 'Action') && durationDisplay);
 
   $: if (!panelHidden && wasHidden && wrapperElement) {
-    animateEntrance();
+    handleEntrance();
   }
 
   $: if (panelHidden) {
     wasHidden = true;
   }
 
-  async function animateEntrance(): Promise<void> {
+  async function handleEntrance(): Promise<void> {
     wasHidden = false;
     await tick();
+    animationOrchestrator.animateEntrance();
+  }
 
-    if (!blobManager && blobContainer) {
-      blobManager = createBlobManager(blobContainer);
-    }
-
-    gsap.set(contentLayer, { opacity: 0 });
-
-    baseWidth = wrapperElement.offsetWidth;
-    baseHeight = wrapperElement.offsetHeight;
-
-    const timeline = blobManager?.fill(baseWidth, baseHeight, 'elastic.out(1, 0.6)');
-    timeline?.to(contentLayer, { opacity: 1, duration: 0.3, ease: 'power2.out' }, '-=0.5');
+  function resetPosition(): void {
+    if (!wrapperElement) return;
+    wrapperElement.style.left = '';
+    wrapperElement.style.top = '';
+    wrapperElement.style.transform = '';
+    dragHandler.state.panelX = null;
+    dragHandler.state.panelY = null;
   }
 
   async function openDetails(): Promise<void> {
-    if (isAnimating) return;
-    isAnimating = true;
+    if (animationOrchestrator.isAnimating()) return;
 
-    // Fade out scroll content
-    await gsap.to(scrollArea, { opacity: 0, duration: 0.12, ease: 'power2.in' });
-
-    // Change content and set detail open (CSS handles sizing)
     showDetailContent = true;
     setDetailOpen(true);
-
-    // Clear inline styles so CSS takes over
-    wrapperElement.style.left = '';
-    wrapperElement.style.top = '';
-    wrapperElement.style.transform = '';
-    panelX = null;
-    panelY = null;
-
-    await tick();
-    await gsap.to(scrollArea, { opacity: 1, duration: 0.2, ease: 'power2.out' });
-    isAnimating = false;
+    await animationOrchestrator.openDetails(resetPosition);
   }
 
   async function closeDetails(): Promise<void> {
-    if (isAnimating) return;
-    isAnimating = true;
+    if (animationOrchestrator.isAnimating()) return;
 
-    // Fade out scroll content
-    await gsap.to(scrollArea, { opacity: 0, duration: 0.12, ease: 'power2.in' });
-
-    // Change content back to summary and close detail (CSS handles sizing/centering)
     showDetailContent = false;
     closeDetailPanel();
-
-    // Clear any inline styles - let CSS handle positioning
-    wrapperElement.style.left = '';
-    wrapperElement.style.top = '';
-    wrapperElement.style.transform = '';
-    panelX = null;
-    panelY = null;
-
-    await tick();
-    await gsap.to(scrollArea, { opacity: 1, duration: 0.2, ease: 'power2.out' });
-    isAnimating = false;
+    await animationOrchestrator.closeDetails(resetPosition);
   }
 
   function handleClose(): void {
@@ -138,78 +97,29 @@
     }
   }
 
-  function isMobile(): boolean {
-    return window.innerWidth <= MOBILE_BREAKPOINT;
-  }
-
-  function startDrag(e: MouseEvent): void {
-    if (isAnimating || $isDetailOpen || isMobile()) return;
-    isDragging = true;
-
-    const rect = wrapperElement.getBoundingClientRect();
-    dragOffsetX = e.clientX - rect.left;
-    dragOffsetY = e.clientY - rect.top;
-
-    // Initialize position from current visual position
-    panelX = rect.left;
-    panelY = rect.top;
-    wrapperElement.style.left = `${rect.left}px`;
-    wrapperElement.style.top = `${rect.top}px`;
-    wrapperElement.style.transform = 'none';
-
-    document.addEventListener('mousemove', onDrag);
-    document.addEventListener('mouseup', stopDrag);
-  }
-
-  function onDrag(e: MouseEvent): void {
-    if (!isDragging || !wrapperElement) return;
-
-    // Constrain so expanded panel has minimum usable size
-    const minX = PANEL_MARGIN;
-    const maxX = window.innerWidth - PANEL_MIN_EXPANDED_WIDTH - PANEL_MARGIN;
-    const minY = PANEL_MARGIN;
-    const maxY = window.innerHeight - PANEL_MIN_EXPANDED_HEIGHT - PANEL_MARGIN;
-
-    const newX = Math.max(minX, Math.min(maxX, e.clientX - dragOffsetX));
-    const newY = Math.max(minY, Math.min(maxY, e.clientY - dragOffsetY));
-
-    // Directly set styles during drag for immediate feedback
-    wrapperElement.style.left = `${newX}px`;
-    wrapperElement.style.top = `${newY}px`;
-    wrapperElement.style.transform = 'none';
-
-    panelX = newX;
-    panelY = newY;
-  }
-
-  function stopDrag(): void {
-    isDragging = false;
-    document.removeEventListener('mousemove', onDrag);
-    document.removeEventListener('mouseup', stopDrag);
+  function handleStartDrag(e: MouseEvent): void {
+    if (animationOrchestrator.isAnimating() || $isDetailOpen || dragHandler.isMobile()) return;
+    dragHandler.startDrag(e, wrapperElement);
   }
 
   onMount(() => {
     return () => {
-      gsap.killTweensOf(contentLayer);
-      gsap.killTweensOf(scrollArea);
-      gsap.killTweensOf(wrapperElement);
-      blobManager?.kill();
-      document.removeEventListener('mousemove', onDrag);
-      document.removeEventListener('mouseup', stopDrag);
+      animationOrchestrator.killAll();
+      dragHandler.destroy();
     };
   });
 </script>
 
 <div
   bind:this={wrapperElement}
-  class={`liquid-wrapper${panelHidden ? ' hidden' : ''}${isDragging ? ' dragging' : ''}${panelX !== null ? ' dragged' : ''}${$isDetailOpen ? ' detail-open' : ''}`}
+  class={`liquid-wrapper${panelHidden ? ' hidden' : ''}${dragHandler.state.isDragging ? ' dragging' : ''}${dragHandler.state.panelX !== null ? ' dragged' : ''}${$isDetailOpen ? ' detail-open' : ''}`}
 >
   <div class="shape-layer">
     <div class="blob-container" bind:this={blobContainer}></div>
   </div>
 
   <aside class="panel-content-layer" bind:this={contentLayer}>
-    <div class="panel-header" on:mousedown={startDrag} role="presentation">
+    <div class="panel-header" on:mousedown={handleStartDrag} role="presentation">
       <div class="panel-header-content">
         {#if $selectedNode}
           <ContextBadges phase={nodePhase} stage={nodeStage} assetType={nodeAssetType} />
@@ -265,7 +175,7 @@
             {#if detailAvailable}
               <button
                 class="view-details-link"
-                disabled={isAnimating}
+                disabled={animationOrchestrator.isAnimating()}
                 on:click={openDetails}
               >
                 Details

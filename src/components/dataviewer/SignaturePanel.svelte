@@ -4,7 +4,7 @@
    * Shows type/provider badges and timestamp, expands to show full details.
    */
   import type { ManifestSignatureInfo } from '../../config/types.js';
-  import { formatTimestamp } from '../../services/dataviewer/dateFormat.js';
+  import { formatTimestamp } from '../../services/dataviewer/parsing/dateFormat.js';
   import Expandable from './Expandable.svelte';
 
   export let signatureInfo: ManifestSignatureInfo | undefined;
