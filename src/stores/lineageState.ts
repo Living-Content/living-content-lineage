@@ -4,7 +4,7 @@
  * subscribe to these stores directly.
  */
 import { writable } from 'svelte/store';
-import type { LineageEdgeData, LineageGraph, LineageNodeData } from '../types.js';
+import type { LineageEdgeData, LineageGraph, LineageNodeData } from '../config/types.js';
 
 export interface StageSelection {
   stageId: string;

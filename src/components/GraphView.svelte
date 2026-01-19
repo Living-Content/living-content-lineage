@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { GraphController } from '../services/graph/graphController.js';
-  import { createGraphController } from '../services/graph/graphController.js';
+  import type { GraphController } from '../services/graph/layout/graphController.js';
+  import { createGraphController } from '../services/graph/layout/graphController.js';
   import { clearSelection, setLineageData } from '../stores/lineageState.js';
   import { setLoadError, setLoading, setSimpleView } from '../stores/uiState.js';
 
