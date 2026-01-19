@@ -49,6 +49,9 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
     currentPhaseFilter: null,
   };
 
+  const shouldUseBlur = (): boolean =>
+    state.detailPanelOpen || state.currentPhaseFilter !== null;
+
   const getHighlighterDeps = (useBlur: boolean = false): SelectionHighlighterDeps => ({
     nodeMap: ctx.nodeMap,
     workflowNodeMap: ctx.workflowNodeMap,
@@ -63,11 +66,9 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
 
   const unsubscribeSelection = selection.subscribe((sel) => {
     state.currentSelection = sel;
-    // Use blur when detail panel is open or phase filter is active
-    const useBlur = state.detailPanelOpen || state.currentPhaseFilter !== null;
 
     if (sel) {
-      applySelectionHighlight(sel, getHighlighterDeps(useBlur));
+      applySelectionHighlight(sel, getHighlighterDeps(shouldUseBlur()));
 
       // When a node is selected and detail panel is open, center on it
       if (sel.type === 'node' && state.detailPanelOpen) {
@@ -91,10 +92,9 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
     const wasOpen = state.detailPanelOpen;
     state.detailPanelOpen = open;
 
-    // Re-apply selection highlighting when detail panel opens/closes (to toggle blur mode)
+    // Re-apply selection highlighting when detail panel toggles (to toggle blur mode)
     if (state.currentSelection && wasOpen !== open) {
-      const useBlur = open || state.currentPhaseFilter !== null;
-      applySelectionHighlight(state.currentSelection, getHighlighterDeps(useBlur));
+      applySelectionHighlight(state.currentSelection, getHighlighterDeps(shouldUseBlur()));
     }
 
     if (open && state.currentSelection?.type === 'node') {
@@ -104,18 +104,14 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
 
   const unsubscribePhaseFilter = phaseFilter.subscribe((phase) => {
     state.currentPhaseFilter = phase;
-
-    // Update workflow labels visibility
     ctx.setWorkflowLabelsPhaseFilter(phase);
 
-    // Phase filter takes precedence over selection highlighting
     if (phase) {
       // Phase filter always uses blur
       applyPhaseFilter(phase, getHighlighterDeps(true));
     } else if (state.currentSelection) {
       // Restore selection highlighting when phase filter is cleared
-      const useBlur = state.detailPanelOpen;
-      applySelectionHighlight(state.currentSelection, getHighlighterDeps(useBlur));
+      applySelectionHighlight(state.currentSelection, getHighlighterDeps(shouldUseBlur()));
     } else {
       // No filter and no selection - clear all visual effects
       applyPhaseFilter(null, getHighlighterDeps());

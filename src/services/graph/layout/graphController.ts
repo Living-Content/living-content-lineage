@@ -12,7 +12,7 @@ import { createWorkflowLabels } from '../rendering/workflowLabelRenderer.js';
 import { createViewportState, createViewportHandlers } from '../interaction/viewport.js';
 import { createLODController, type LODLayers } from './lodController.js';
 import { createTitleOverlay } from '../rendering/titleOverlay.js';
-import { LOD_THRESHOLD, TEXT_SIMPLIFY_THRESHOLD } from '../../../config/constants.js';
+import { LOD_THRESHOLD, TEXT_SIMPLIFY_THRESHOLD, VIEWPORT_TOP_MARGIN, VIEWPORT_BOTTOM_MARGIN } from '../../../config/constants.js';
 import { clearSelection } from '../../../stores/lineageState.js';
 import { clearPhaseFilter } from '../../../stores/uiState.js';
 import { buildVerticalAdjacencyMap } from '../interaction/selectionHighlighter.js';
@@ -229,15 +229,11 @@ export async function createGraphController({
     isZoomBlocked: () => lodController.state.isAnimating,
     getBounds: () => {
       if (!topNodeInfo || !bottomNodeInfo) return null;
-      // Top margin: below workflow labels (label top padding + label height + extra padding)
-      const topMargin = 180;
-      // Bottom margin: keep bottom nodes visible with some padding from bottom edge
-      const bottomMargin = 100;
       return {
         topWorldY: topNodeInfo.worldY - topNodeInfo.halfHeight,
         bottomWorldY: bottomNodeInfo.worldY + bottomNodeInfo.halfHeight,
-        topMargin,
-        bottomMargin,
+        topMargin: VIEWPORT_TOP_MARGIN,
+        bottomMargin: VIEWPORT_BOTTOM_MARGIN,
       };
     },
   });

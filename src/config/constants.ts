@@ -22,3 +22,7 @@ export const WORKFLOW_NODE_SCALE = 4.0;
 // Panel layout (behavioral thresholds)
 export const PANEL_MIN_EXPANDED_WIDTH = 500;
 export const PANEL_MIN_EXPANDED_HEIGHT = 300;
+
+// Viewport bounds (pixels)
+export const VIEWPORT_TOP_MARGIN = 180;
+export const VIEWPORT_BOTTOM_MARGIN = 100;

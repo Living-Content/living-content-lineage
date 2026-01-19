@@ -1,10 +1,10 @@
 /**
  * Unified selection highlighting for graph nodes and edges.
  * Manages visual state based on selection changes.
- * Uses blur filters for non-highlighted nodes.
+ * Uses blur filters for non-highlighted nodes in detail view.
  */
 import { BlurFilter, type Container } from 'pixi.js';
-import type { LineageGraph, LineageEdgeData, Workflow, Phase } from '../../../config/types.js';
+import type { LineageEdgeData, LineageNodeData, Workflow, Phase } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import type { SelectionTarget } from '../../../stores/lineageState.js';
 import { renderEdges, renderWorkflowEdges } from '../rendering/edgeRenderer.js';
@@ -13,6 +13,14 @@ import { getCssVarFloat, getCssVarInt } from '../../../themes/index.js';
 
 // Cache blur filters to avoid creating new ones on every update
 const nodeBlurFilters = new Map<string, BlurFilter>();
+
+/**
+ * Gets cached fading style values from CSS variables.
+ */
+const getFadeStyles = (): { blurStrength: number; fadedAlpha: number } => ({
+  blurStrength: getCssVarInt('--faded-node-blur'),
+  fadedAlpha: getCssVarFloat('--faded-node-alpha'),
+});
 
 /**
  * Gets or creates a blur filter for a node.
@@ -27,7 +35,7 @@ const getBlurFilter = (nodeId: string): BlurFilter => {
 };
 
 /**
- * Applies blur to a node.
+ * Applies blur filter to a node. Removes filter when blur is 0.
  */
 const setNodeBlur = (node: GraphNode, blur: number): void => {
   const filter = getBlurFilter(node.nodeData.id);
@@ -37,13 +45,29 @@ const setNodeBlur = (node: GraphNode, blur: number): void => {
     if (!node.filters || !node.filters.includes(filter)) {
       node.filters = node.filters ? [...node.filters, filter] : [filter];
     }
-  } else {
-    if (node.filters) {
-      node.filters = node.filters.filter((f) => f !== filter);
-      if (node.filters.length === 0) {
-        node.filters = null;
-      }
+  } else if (node.filters) {
+    node.filters = node.filters.filter((f) => f !== filter);
+    if (node.filters.length === 0) {
+      node.filters = null;
     }
+  }
+};
+
+/**
+ * Applies fading effect (blur or alpha) to a single node.
+ */
+const applyNodeFade = (
+  node: GraphNode,
+  highlighted: boolean,
+  useBlur: boolean,
+  styles: { blurStrength: number; fadedAlpha: number }
+): void => {
+  if (useBlur) {
+    setNodeBlur(node, highlighted ? 0 : styles.blurStrength);
+    node.alpha = 1;
+  } else {
+    setNodeBlur(node, 0);
+    node.alpha = highlighted ? 1 : styles.fadedAlpha;
   }
 };
 
@@ -56,7 +80,7 @@ export interface VerticalAdjacencyMap {
  * Builds a map of vertically-connected nodes from edge data.
  */
 export const buildVerticalAdjacencyMap = (
-  nodes: LineageGraph['nodes'],
+  nodes: LineageNodeData[],
   edges: LineageEdgeData[]
 ): VerticalAdjacencyMap => {
   const nodePositions = new Map<string, { x: number; y: number }>();
@@ -132,23 +156,17 @@ function setNodeMapVisibility(
   isSelected: (id: string) => boolean,
   useBlur: boolean = false
 ): void {
-  const blurStrength = getCssVarInt('--faded-node-blur');
-  const fadedAlpha = getCssVarFloat('--faded-node-alpha');
+  const styles = getFadeStyles();
 
   nodeMap.forEach((node, nodeId) => {
     const highlighted = isHighlighted(nodeId);
-    const selected = isSelected(nodeId);
-
-    if (useBlur) {
-      // Use blur for fading
-      setNodeBlur(node, highlighted ? 0 : blurStrength);
-      setNodeAlpha(nodeId, 1);
+    applyNodeFade(node, highlighted, useBlur, styles);
+    if (!useBlur) {
+      setNodeAlpha(nodeId, highlighted ? 1 : styles.fadedAlpha);
     } else {
-      // Use alpha for fading
-      setNodeBlur(node, 0);
-      setNodeAlpha(nodeId, highlighted ? 1 : fadedAlpha);
+      setNodeAlpha(nodeId, 1);
     }
-    node.setSelected(selected);
+    node.setSelected(isSelected(nodeId));
   });
 }
 
@@ -182,6 +200,7 @@ const highlightNode = (
 ): void => {
   const { nodeMap, workflowNodeMap, edgeLayer, workflowEdgeLayer, edges, workflows, verticalAdjacency, setNodeAlpha, useBlur = false } = deps;
   const verticallyConnected = verticalAdjacency.getConnectedNodeIds(selectedId);
+  const styles = getFadeStyles();
 
   // Highlight nodes in expanded view
   setNodeMapVisibility(
@@ -192,16 +211,9 @@ const highlightNode = (
     useBlur
   );
 
-  // Dim workflow nodes and edges (for collapsed view consistency)
-  const blurStrength = getCssVarInt('--faded-node-blur');
-  const fadedAlpha = getCssVarFloat('--faded-node-alpha');
+  // Dim all workflow nodes (for collapsed view consistency)
   workflowNodeMap.forEach((node) => {
-    if (useBlur) {
-      setNodeBlur(node, blurStrength);
-    } else {
-      setNodeBlur(node, 0);
-      node.alpha = fadedAlpha;
-    }
+    applyNodeFade(node, false, useBlur, styles);
     node.setSelected(false);
   });
 
@@ -210,7 +222,6 @@ const highlightNode = (
     selectedId,
     highlightedIds: verticallyConnected,
   });
-  // Dim all workflow edges when a node is selected
   renderWorkflowEdges(workflowEdgeLayer, workflows, workflowNodeMap, '');
 };
 
@@ -222,19 +233,12 @@ const highlightWorkflow = (
   deps: SelectionHighlighterDeps
 ): void => {
   const { nodeMap, workflowNodeMap, workflowEdgeLayer, workflows, setNodeAlpha, useBlur = false } = deps;
-  const blurStrength = getCssVarInt('--faded-node-blur');
-  const fadedAlpha = getCssVarFloat('--faded-node-alpha');
+  const styles = getFadeStyles();
 
   // Highlight only selected workflow node
   workflowNodeMap.forEach((node, nodeId) => {
     const highlighted = nodeId === workflowId;
-    if (useBlur) {
-      setNodeBlur(node, highlighted ? 0 : blurStrength);
-      node.alpha = 1;
-    } else {
-      setNodeBlur(node, 0);
-      node.alpha = highlighted ? 1 : fadedAlpha;
-    }
+    applyNodeFade(node, highlighted, useBlur, styles);
     node.setSelected(highlighted);
   });
 
@@ -247,7 +251,6 @@ const highlightWorkflow = (
     useBlur
   );
 
-  // Re-render workflow edges with selection highlighting
   renderWorkflowEdges(workflowEdgeLayer, workflows, workflowNodeMap, workflowId);
 };
 
@@ -285,16 +288,12 @@ export const applyPhaseFilter = (
   deps: SelectionHighlighterDeps
 ): void => {
   const { nodeMap, workflowNodeMap, workflows } = deps;
-  const blurStrength = getCssVarInt('--faded-node-blur');
+  const { blurStrength } = getFadeStyles();
 
   if (!phase) {
     // Clear filter - remove blur from all nodes
-    nodeMap.forEach((node) => {
-      setNodeBlur(node, 0);
-    });
-    workflowNodeMap.forEach((node) => {
-      setNodeBlur(node, 0);
-    });
+    nodeMap.forEach((node) => setNodeBlur(node, 0));
+    workflowNodeMap.forEach((node) => setNodeBlur(node, 0));
     return;
   }
 

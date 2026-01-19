@@ -48,6 +48,7 @@ export const baseTokens = {
   'workflow-label-line-start': '30px',
   'workflow-label-dot-size': '2px',
   'workflow-label-dot-gap': '4px',
+  'phase-badge-top': '160px',
 
   // Node sizing
   'default-node-size': '14px',

@@ -23,7 +23,7 @@
 <style>
   .phase-filter-badge {
     position: fixed;
-    top: 160px;
+    top: var(--phase-badge-top, 160px);
     left: 50%;
     transform: translateX(-50%);
     display: flex;

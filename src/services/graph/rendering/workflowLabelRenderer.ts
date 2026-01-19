@@ -174,16 +174,10 @@ export function createWorkflowLabels(
   const setPhaseFilterVisibility = (activePhase: Phase | null): void => {
     const fadedAlpha = getCssVarFloat('--faded-node-alpha');
     for (const entry of entries) {
-      if (activePhase === null) {
-        // No filter - show all labels at full opacity
-        entry.labelContainer.alpha = 1;
-        entry.line.alpha = 1;
-      } else {
-        // Filter active - dim non-matching labels
-        const isActive = entry.phase === activePhase;
-        entry.labelContainer.alpha = isActive ? 1 : fadedAlpha;
-        entry.line.alpha = isActive ? 1 : fadedAlpha;
-      }
+      const isVisible = activePhase === null || entry.phase === activePhase;
+      const alpha = isVisible ? 1 : fadedAlpha;
+      entry.labelContainer.alpha = alpha;
+      entry.line.alpha = alpha;
     }
   };
 
