@@ -50,99 +50,6 @@
     { "id": "store", "label": "Store", "type": "store", "phase": "Persistence" }
   ],
 
-  "computations": [
-    {
-      "id": "comp-consume-query",
-      "label": "Consume",
-      "title": "Query Validator",
-      "workflowId": "ingest",
-      "description": "Receives and validates the user's question, preparing it for the AI pipeline.",
-      "duration": "21ms",
-      "inputs": ["data-user-query"],
-      "outputs": ["data-consumed-query"]
-    },
-    {
-      "id": "comp-select-tool",
-      "label": "Select",
-      "title": "Tool Selector",
-      "workflowId": "select",
-      "description": "Uses AI to analyze the question and pick the right tool to answer it.",
-      "duration": "1.8s",
-      "inputs": ["data-consumed-query", "model-select-tool", "code-select-tool"],
-      "outputs": ["data-selected-tool"]
-    },
-    {
-      "id": "comp-retrieve-history",
-      "label": "Retrieve",
-      "title": "History Retriever",
-      "workflowId": "retrieve",
-      "description": "Looks up previous messages in this conversation for context.",
-      "duration": "357ms",
-      "inputs": ["data-selected-tool", "code-retrieve-history"],
-      "outputs": ["data-retrieved-history"]
-    },
-    {
-      "id": "comp-reflect",
-      "label": "Reflect",
-      "title": "Intent Analyzer",
-      "workflowId": "reflect",
-      "description": "Analyzes what the user really wants to know beyond the literal question.",
-      "duration": "1.2s",
-      "inputs": ["data-retrieved-history", "model-reflect", "code-reflect"],
-      "outputs": ["data-reflection"]
-    },
-    {
-      "id": "comp-plan",
-      "label": "Plan",
-      "title": "Strategy Planner",
-      "workflowId": "plan",
-      "description": "Creates a strategy for finding the best information to answer the question.",
-      "duration": "800ms",
-      "inputs": ["data-reflection", "model-plan", "code-plan"],
-      "outputs": ["data-plan"]
-    },
-    {
-      "id": "comp-retrieve",
-      "label": "Search",
-      "title": "Knowledge Retriever",
-      "workflowId": "search",
-      "description": "Searches the knowledge base to find relevant documents and information.",
-      "duration": "2.1s",
-      "inputs": ["data-plan", "code-retrieve"],
-      "outputs": ["data-retrieved-docs"]
-    },
-    {
-      "id": "comp-evaluate",
-      "label": "Evaluate",
-      "title": "Relevance Evaluator",
-      "workflowId": "evaluate",
-      "description": "Uses AI to score and rank retrieved documents by relevance.",
-      "duration": "1.5s",
-      "inputs": ["data-retrieved-docs", "model-evaluate", "code-evaluate"],
-      "outputs": ["data-evaluation"]
-    },
-    {
-      "id": "comp-generate-response",
-      "label": "Generate",
-      "title": "Response Generator",
-      "workflowId": "generate",
-      "description": "Uses Claude to synthesize the information into a helpful answer.",
-      "duration": "12s",
-      "inputs": ["data-evaluation", "model-generate-response", "code-generate-response"],
-      "outputs": ["data-generated-response"]
-    },
-    {
-      "id": "comp-save-response",
-      "label": "Save",
-      "title": "Response Archiver",
-      "workflowId": "store",
-      "description": "Saves the response and records its complete provenance chain.",
-      "duration": "1ms",
-      "inputs": ["data-generated-response", "code-save-response"],
-      "outputs": ["data-saved-response"]
-    }
-  ],
-
   "assets": [
     {
       "id": "data-user-query",
@@ -152,11 +59,21 @@
       "manifest_url": "./assets/data-user-query.json"
     },
     {
+      "id": "action-consume-query",
+      "label": "Consume",
+      "title": "Query Validator",
+      "asset_type": "Action",
+      "workflowId": "ingest",
+      "description": "Receives and validates the user's question, preparing it for the AI pipeline.",
+      "manifest_url": "./actions/action-consume-query.json"
+    },
+    {
       "id": "data-consumed-query",
       "label": "Consumed",
       "title": "Validated Query",
       "asset_type": "Result",
-      "description": "The user's question after parsing and validation, ready for processing."
+      "description": "The user's question after parsing and validation, ready for processing.",
+      "manifest_url": "./assets/data-consumed-query.json"
     },
     {
       "id": "model-select-tool",
@@ -164,8 +81,7 @@
       "title": "Gemini 2.5 Flash",
       "asset_type": "Model",
       "description": "Gemini 2.5 Flash - Google's lightweight model optimized for speed. Fast inference with low latency, ideal for quick classification tasks.",
-      "manifest_url": "./assets/model-select-tool.json",
-      "tokens": { "input": 132, "output": 15 }
+      "manifest_url": "./assets/model-select-tool.json"
     },
     {
       "id": "code-select-tool",
@@ -174,6 +90,15 @@
       "asset_type": "Code",
       "description": "Analyzes the query and chooses the best tool to answer it. Selected the knowledge query tool.",
       "manifest_url": "./assets/code-select-tool.json"
+    },
+    {
+      "id": "action-select-tool",
+      "label": "Select",
+      "title": "Tool Selector",
+      "asset_type": "Action",
+      "workflowId": "select",
+      "description": "Uses AI to analyze the question and pick the right tool to answer it.",
+      "manifest_url": "./actions/action-select-tool.json"
     },
     {
       "id": "data-selected-tool",
@@ -192,11 +117,21 @@
       "manifest_url": "./assets/code-retrieve-history.json"
     },
     {
+      "id": "action-retrieve-history",
+      "label": "Retrieve",
+      "title": "History Retriever",
+      "asset_type": "Action",
+      "workflowId": "retrieve",
+      "description": "Looks up previous messages in this conversation for context.",
+      "manifest_url": "./actions/action-retrieve-history.json"
+    },
+    {
       "id": "data-retrieved-history",
       "label": "Retrieved History",
       "title": "Conversation History",
       "asset_type": "Dataset",
-      "description": "No previous messages were found - this is the start of a new conversation."
+      "description": "No previous messages were found - this is the start of a new conversation.",
+      "manifest_url": "./assets/data-retrieved-history.json"
     },
     {
       "id": "model-reflect",
@@ -204,7 +139,7 @@
       "title": "Gemini 2.5 Flash",
       "asset_type": "Model",
       "description": "Gemini 2.5 Flash - Google's lightweight model optimized for speed. Cost-effective for high-volume analysis tasks.",
-      "tokens": { "input": 245, "output": 89 }
+      "manifest_url": "./assets/model-reflect.json"
     },
     {
       "id": "code-reflect",
@@ -213,6 +148,15 @@
       "asset_type": "Code",
       "description": "Examines the query to identify the user's underlying intent and information needs.",
       "manifest_url": "./assets/code-reflect.json"
+    },
+    {
+      "id": "action-reflect",
+      "label": "Reflect",
+      "title": "Intent Analyzer",
+      "asset_type": "Action",
+      "workflowId": "reflect",
+      "description": "Analyzes what the user really wants to know beyond the literal question.",
+      "manifest_url": "./actions/action-reflect.json"
     },
     {
       "id": "data-reflection",
@@ -228,7 +172,7 @@
       "title": "Gemini 2.5 Flash",
       "asset_type": "Model",
       "description": "Gemini 2.5 Flash - Google's lightweight model optimized for speed. Efficient for structured planning and reasoning tasks.",
-      "tokens": { "input": 312, "output": 156 }
+      "manifest_url": "./assets/model-plan.json"
     },
     {
       "id": "code-plan",
@@ -237,6 +181,15 @@
       "asset_type": "Code",
       "description": "Develops a step-by-step plan for searching and retrieving knowledge.",
       "manifest_url": "./assets/code-plan.json"
+    },
+    {
+      "id": "action-plan",
+      "label": "Plan",
+      "title": "Strategy Planner",
+      "asset_type": "Action",
+      "workflowId": "plan",
+      "description": "Creates a strategy for finding the best information to answer the question.",
+      "manifest_url": "./actions/action-plan.json"
     },
     {
       "id": "data-plan",
@@ -255,6 +208,15 @@
       "manifest_url": "./assets/code-retrieve.json"
     },
     {
+      "id": "action-retrieve",
+      "label": "Search",
+      "title": "Knowledge Retriever",
+      "asset_type": "Action",
+      "workflowId": "search",
+      "description": "Searches the knowledge base to find relevant documents and information.",
+      "manifest_url": "./actions/action-retrieve.json"
+    },
+    {
       "id": "data-retrieved-docs",
       "label": "Search Results",
       "title": "Retrieved Documents",
@@ -268,21 +230,32 @@
       "title": "Claude Sonnet 4.5",
       "asset_type": "Model",
       "description": "Claude Sonnet 4.5 - Anthropic's standard-tier model. Balances capability and cost, strong at nuanced evaluation and judgment tasks.",
-      "tokens": { "input": 1847, "output": 312 }
+      "manifest_url": "./assets/model-evaluate.json"
     },
     {
       "id": "code-evaluate",
       "label": "Evaluate",
       "title": "Relevance Scorer",
       "asset_type": "Code",
-      "description": "Scores and ranks the retrieved documents based on relevance to the question."
+      "description": "Scores and ranks the retrieved documents based on relevance to the question.",
+      "manifest_url": "./assets/code-evaluate.json"
+    },
+    {
+      "id": "action-evaluate",
+      "label": "Evaluate",
+      "title": "Relevance Evaluator",
+      "asset_type": "Action",
+      "workflowId": "evaluate",
+      "description": "Uses AI to score and rank retrieved documents by relevance.",
+      "manifest_url": "./actions/action-evaluate.json"
     },
     {
       "id": "data-evaluation",
       "label": "Evaluated",
       "title": "Relevance Rankings",
       "asset_type": "Result",
-      "description": "The ranked list of documents deemed most useful for answering the question."
+      "description": "The ranked list of documents deemed most useful for answering the question.",
+      "manifest_url": "./assets/data-evaluation.json"
     },
     {
       "id": "model-generate-response",
@@ -290,8 +263,7 @@
       "title": "Claude Sonnet 4.5",
       "asset_type": "Model",
       "description": "Claude Sonnet 4.5 - Anthropic's standard-tier model. Excellent at synthesis and natural language generation with nuanced understanding.",
-      "manifest_url": "./assets/model-generate-response.json",
-      "tokens": { "input": 2156, "output": 847 }
+      "manifest_url": "./assets/model-generate-response.json"
     },
     {
       "id": "code-generate-response",
@@ -300,6 +272,15 @@
       "asset_type": "Code",
       "description": "Synthesizes the evaluated information into a coherent, helpful response.",
       "manifest_url": "./assets/code-generate-response.json"
+    },
+    {
+      "id": "action-generate-response",
+      "label": "Generate",
+      "title": "Response Generator",
+      "asset_type": "Action",
+      "workflowId": "generate",
+      "description": "Uses Claude to synthesize the information into a helpful answer.",
+      "manifest_url": "./actions/action-generate-response.json"
     },
     {
       "id": "data-generated-response",
@@ -318,11 +299,21 @@
       "manifest_url": "./assets/code-save-response.json"
     },
     {
+      "id": "action-save-response",
+      "label": "Save",
+      "title": "Response Archiver",
+      "asset_type": "Action",
+      "workflowId": "store",
+      "description": "Saves the response and records its complete provenance chain.",
+      "manifest_url": "./actions/action-save-response.json"
+    },
+    {
       "id": "data-saved-response",
       "label": "Saved",
       "title": "Saved Response",
       "asset_type": "Result",
-      "description": "The response has been saved to the conversation history for continuity."
+      "description": "The response has been saved to the conversation history for continuity.",
+      "manifest_url": "./assets/data-saved-response.json"
     }
   ],
 

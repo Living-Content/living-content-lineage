@@ -1,0 +1,38 @@
+{
+  "claim_generator": "LivingContent/1.0.0",
+  "claim_generator_info": [{ "name": "Living Content", "version": "1.0.0" }],
+  "title": "Query Validator",
+  "format": "application/vnd.livingcontent.action",
+  "instance_id": "urn:uuid:action-consume-query",
+
+  "assertions": [
+    {
+      "label": "c2pa.actions",
+      "data": {
+        "actions": [{
+          "action": "c2pa.transformed",
+          "when": "2026-01-14T18:15:19.021Z",
+          "softwareAgent": { "name": "Living Content Pipeline", "version": "1.0.0" }
+        }]
+      }
+    },
+    {
+      "label": "lco.action",
+      "data": {
+        "function": "consume_query",
+        "duration_ms": 21,
+        "start_time": "2026-01-14T18:15:19.000Z",
+        "end_time": "2026-01-14T18:15:19.021Z"
+      }
+    }
+  ],
+
+  "inputs": ["data-user-query"],
+  "outputs": ["data-consumed-query"],
+
+  "signature_info": {
+    "alg": "ES256",
+    "issuer": "did:key:zQ3shwc61yUNaJZBX2L9mZd3xhWjTEqD52dA3JxBnZnu78E3d",
+    "time": "2026-01-14T18:15:19Z"
+  }
+}

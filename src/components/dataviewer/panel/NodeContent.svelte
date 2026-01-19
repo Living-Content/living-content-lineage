@@ -1,7 +1,5 @@
 <script lang="ts">
   import type { LineageNodeData } from '../../../config/types.js';
-  import MetricCard from '../detail/MetricCard.svelte';
-  import CardGrid from '../detail/CardGrid.svelte';
   import SummaryView from '../SummaryView.svelte';
   import DetailView from '../DetailView.svelte';
 
@@ -12,12 +10,6 @@
 
   $: titleDisplay = node.title ?? node.label ?? '';
   $: descriptionDisplay = node.description ?? node.assetManifest?.content?.description ?? '';
-  $: tokens = node.tokens;
-  $: tokensDisplay = tokens ? (tokens.input + tokens.output).toLocaleString() : null;
-  $: durationDisplay = node.duration ?? null;
-  $: nodeAssetType = node.assetType;
-  $: hasSecondaryMetric = (nodeAssetType === 'Model' && tokensDisplay) ||
-                          ((nodeAssetType === 'Code' || nodeAssetType === 'Action') && durationDisplay);
 </script>
 
 <div class="node-header">
@@ -26,24 +18,6 @@
     <p class="node-description">{descriptionDisplay}</p>
   {/if}
 </div>
-
-{#if hasSecondaryMetric}
-  <CardGrid>
-    {#if nodeAssetType === 'Model' && tokensDisplay}
-      <MetricCard
-        value={tokensDisplay}
-        label="Tokens"
-        span={2}
-      />
-    {:else if (nodeAssetType === 'Code' || nodeAssetType === 'Action') && durationDisplay}
-      <MetricCard
-        value={durationDisplay}
-        label="Duration"
-        span={2}
-      />
-    {/if}
-  </CardGrid>
-{/if}
 
 {#if showDetailContent && detailAvailable}
   <DetailView {node} />

@@ -1,33 +1,47 @@
 <script lang="ts">
-  // Simple key-value row used in info panel metadata blocks.
+  /**
+   * Vertical key-value display.
+   * LABEL on top, value below.
+   */
   export let label: string;
   export let value: string;
+
+  // Convert camelCase to spaced words: "inputTokens" → "Input Tokens"
+  function formatLabel(key: string): string {
+    return key
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+      .replace(/^./, (c) => c.toUpperCase());
+  }
+
+  $: displayLabel = formatLabel(label);
 </script>
 
 <div class="property-row">
-  <span class="property-label">{label}</span>
-  <span class="property-value">{value}</span>
+  <div class="property-label">{displayLabel}</div>
+  <div class="property-value">{value}</div>
 </div>
 
 <style>
   .property-row {
-    display: grid;
-    grid-template-columns: 120px minmax(0, 1fr);
-    column-gap: 12px;
-    align-items: start;
-    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
 
   .property-label {
+    font-size: 12px;
+    font-weight: var(--font-weight-medium, 500);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     color: var(--color-text-light);
-    font-weight: 400;
   }
 
   .property-value {
-    color: var(--color-text-secondary);
+    font-size: 14px;
     font-weight: 500;
     font-family: var(--font-mono);
-    font-size: 11px;
+    color: var(--color-text-secondary);
     word-break: break-word;
   }
 </style>

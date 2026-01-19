@@ -83,5 +83,7 @@ export function normalizeAssetManifest(raw: unknown): AssetManifest | undefined 
             : undefined,
         }
       : undefined,
+    inputs: Array.isArray(raw.inputs) ? raw.inputs.map(String) : undefined,
+    outputs: Array.isArray(raw.outputs) ? raw.outputs.map(String) : undefined,
   };
 }

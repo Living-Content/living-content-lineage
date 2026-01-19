@@ -1,0 +1,44 @@
+{
+  "claim_generator": "LivingContent/1.0.0",
+  "claim_generator_info": [{ "name": "Living Content", "version": "1.0.0" }],
+  "title": "Response Generator",
+  "format": "application/vnd.livingcontent.action",
+  "instance_id": "urn:uuid:action-generate-response",
+
+  "assertions": [
+    {
+      "label": "c2pa.actions",
+      "data": {
+        "actions": [{
+          "action": "c2pa.transformed",
+          "when": "2026-01-14T18:15:38.831Z",
+          "softwareAgent": { "name": "Living Content Pipeline", "version": "1.0.0" }
+        }]
+      }
+    },
+    {
+      "label": "lco.action",
+      "data": {
+        "function": "generate_response",
+        "duration_ms": 12000,
+        "start_time": "2026-01-14T18:15:26.831Z",
+        "end_time": "2026-01-14T18:15:38.831Z"
+      }
+    }
+  ],
+
+  "inputs": ["data-evaluation", "model-generate-response", "code-generate-response"],
+  "outputs": ["data-generated-response"],
+
+  "content": {
+    "input_tokens": 3421,
+    "output_tokens": 847,
+    "total_tokens": 4268
+  },
+
+  "signature_info": {
+    "alg": "ES256",
+    "issuer": "did:key:zQ3shwc61yUNaJZBX2L9mZd3xhWjTEqD52dA3JxBnZnu78E3d",
+    "time": "2026-01-14T18:15:39Z"
+  }
+}

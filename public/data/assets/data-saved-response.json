@@ -1,0 +1,52 @@
+{
+  "claim_generator": "LivingContent/1.0.0",
+  "claim_generator_info": [{ "name": "Living Content", "version": "1.0.0" }],
+  "title": "Saved Response",
+  "format": "application/json",
+  "instance_id": "urn:uuid:data-saved-response",
+
+  "ingredients": [
+    {
+      "title": "Generated Answer",
+      "instance_id": "urn:uuid:data-generated-response",
+      "relationship": "inputTo"
+    }
+  ],
+
+  "assertions": [
+    {
+      "label": "c2pa.actions",
+      "data": {
+        "actions": [{
+          "action": "c2pa.created",
+          "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia",
+          "softwareAgent": { "name": "Living Content Pipeline", "version": "1.0.0" },
+          "when": "2026-01-14T18:15:35Z"
+        }]
+      }
+    },
+    {
+      "label": "lco.content",
+      "data": {
+        "type": "Result",
+        "computation": "response_persistence"
+      }
+    }
+  ],
+
+  "content": {
+    "saved": true,
+    "storage_location": "conversation_history",
+    "session_id": "2f7fbc02-40e7-4b5d-8ede-fff8541f976c",
+    "response_id": "resp-2026-01-14-18-15-35",
+    "char_count": 1247,
+    "word_count": 198,
+    "lineage_recorded": true
+  },
+
+  "signature_info": {
+    "alg": "ES256",
+    "issuer": "did:key:zQ3shwc61yUNaJZBX2L9mZd3xhWjTEqD52dA3JxBnZnu78E3d",
+    "time": "2026-01-14T18:15:35Z"
+  }
+}

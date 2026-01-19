@@ -50,7 +50,7 @@
   }
 
   .group-title {
-    font-size: var(--font-size-small, 12px);
+    font-size: var(--font-size-body, 14px);
     font-weight: var(--font-weight-semibold, 600);
     text-transform: uppercase;
     letter-spacing: var(--letter-spacing-wider, 0.05em);
@@ -60,6 +60,6 @@
   .group-content {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs, 4px);
+    gap: var(--space-sm, 8px);
   }
 </style>

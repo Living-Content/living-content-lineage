@@ -8,6 +8,7 @@ import type {
   Phase,
 } from '../../../../config/types.js';
 import { isRecord, validatePhase } from '../../../../config/utils.js';
+import { assetTypeToNodeType } from '../../../../config/types.js';
 import type { LineageManifest, LineageManifestRecord } from './lineageTypes.js';
 import { computeLayout } from './lineageLayout.js';
 import { getCssVar } from '../../../../themes/index.js';
@@ -45,7 +46,10 @@ const buildManifestSummary = (
   };
 };
 
-// Builds the renderable graph using adapter-provided asset type mapping.
+/**
+ * Builds the renderable graph using adapter-provided asset type mapping.
+ * Actions are first-class assets with inputs/outputs in their manifests.
+ */
 export const buildLineageGraph = (
   manifest: LineageManifest,
   assetManifests: Map<string, AssetManifest>,
@@ -55,7 +59,7 @@ export const buildLineageGraph = (
   const activeManifest = manifest.manifests[activeManifestId];
   const manifestSummary = buildManifestSummary(activeManifest);
 
-  const { positions, workflows } = computeLayout(manifest);
+  const { positions, workflows } = computeLayout(manifest, assetManifests);
   const nodes: LineageNodeData[] = [];
 
   // Build workflow-to-phase mapping
@@ -65,17 +69,27 @@ export const buildLineageGraph = (
     workflowPhaseMap.set(workflow.id, phase);
   });
 
+  // Build asset type map for edge classification
+  const assetTypes = new Map<string, AssetType>();
+  manifest.assets.forEach((asset) => {
+    assetTypes.set(asset.id, mapAssetType(asset.asset_type));
+  });
+
+  // Create nodes for all assets
   manifest.assets.forEach((asset) => {
     const pos = positions.get(asset.id) ?? { x: 0, y: 200, workflowId: 'unknown' };
     const assetManifest = assetManifests.get(asset.id);
+    const mappedAssetType = mapAssetType(asset.asset_type);
+    const nodeType = assetTypeToNodeType(mappedAssetType);
     const phase = workflowPhaseMap.get(pos.workflowId);
     if (!phase) throw new Error(`Missing phase for workflow ${pos.workflowId}`);
+
     nodes.push({
       id: asset.id,
       label: asset.label,
       title: asset.title,
-      nodeType: 'data',
-      assetType: mapAssetType(asset.asset_type),
+      nodeType,
+      assetType: mappedAssetType,
       shape: 'circle',
       x: pos.x,
       y: pos.y,
@@ -83,8 +97,8 @@ export const buildLineageGraph = (
       phase,
       description: asset.description,
       assetManifest,
-      tokens: asset.tokens,
       environmentalImpact: assetManifest?.environmentalImpact,
+      role: mappedAssetType === 'Action' ? 'process' : undefined,
       manifest: manifestSummary
         ? {
             ...manifestSummary,
@@ -94,27 +108,7 @@ export const buildLineageGraph = (
     });
   });
 
-  manifest.computations.forEach((comp) => {
-    const pos = positions.get(comp.id) ?? { x: 0, y: 200, workflowId: 'unknown' };
-    const phase = workflowPhaseMap.get(pos.workflowId);
-    if (!phase) throw new Error(`Missing phase for workflow ${pos.workflowId}`);
-    nodes.push({
-      id: comp.id,
-      label: comp.label,
-      title: comp.title,
-      nodeType: 'process',
-      assetType: 'Action',
-      shape: 'circle',
-      x: pos.x,
-      y: pos.y,
-      workflowId: pos.workflowId,
-      phase,
-      description: comp.description,
-      duration: comp.duration,
-      role: 'process',
-    });
-  });
-
+  // Create nodes for attestations
   manifest.attestations.forEach((attest) => {
     const pos = positions.get(attest.id) ?? { x: 0, y: 100, workflowId: 'unknown' };
     const phase = workflowPhaseMap.get(pos.workflowId);
@@ -135,64 +129,40 @@ export const buildLineageGraph = (
     });
   });
 
-  const edgeList: Array<{ source: string; target: string; isGate?: boolean }> =
-    [];
+  // Build edges from Action inputs/outputs
+  const edgeList: Array<{ source: string; target: string; isGate?: boolean }> = [];
+  const actionSet = new Set<string>();
 
-  // Build a set of computation IDs for filtering
-  const compSet = new Set(manifest.computations.map((c) => c.id));
-
-  // Build asset type map
-  const assetTypes = new Map<string, string>();
+  // Identify Action assets and build edge connections
   manifest.assets.forEach((asset) => {
-    assetTypes.set(asset.id, asset.asset_type);
+    if (mapAssetType(asset.asset_type) === 'Action') {
+      actionSet.add(asset.id);
+      const actionManifest = assetManifests.get(asset.id);
+      const inputs = actionManifest?.inputs ?? [];
+      const outputs = actionManifest?.outputs ?? [];
+
+      // Connect inputs to this Action
+      inputs.forEach((inputId) => {
+        edgeList.push({ source: inputId, target: asset.id });
+      });
+
+      // Connect this Action to outputs
+      outputs.forEach((outputId) => {
+        edgeList.push({ source: asset.id, target: outputId });
+      });
+    }
   });
 
-  // Track which assets are produced by computations
-  const assetProducer = new Map<string, string>();
-  manifest.computations.forEach((comp) => {
-    comp.outputs.forEach((id) => assetProducer.set(id, comp.id));
-  });
-
-  manifest.computations.forEach((comp) => {
-    // Separate inputs into categories
-    const dataInputs = comp.inputs.filter((id) => !compSet.has(id));
-    const sourceInputs = dataInputs.filter((id) => !assetProducer.has(id));
-
-    // Auxiliary inputs (models, code) - these stack vertically below the computation
-    const auxiliaryInputs = sourceInputs.filter((id) => {
-      const type = assetTypes.get(id);
-      return type === 'Code' || type === 'Model';
-    });
-
-    // Regular data inputs - connect directly to computation
-    const regularInputs = dataInputs.filter(
-      (id) => !auxiliaryInputs.includes(id)
-    );
-
-    // Regular inputs connect directly to computation
-    regularInputs.forEach((inputId) => {
-      edgeList.push({ source: inputId, target: comp.id });
-    });
-
-    // All auxiliary inputs connect directly to computation (fan-in)
-    auxiliaryInputs.forEach((inputId) => {
-      edgeList.push({ source: inputId, target: comp.id });
-    });
-
-    // Outputs connect from computation
-    comp.outputs.forEach((outputId) => {
-      edgeList.push({ source: comp.id, target: outputId });
-    });
-  });
-
+  // Add attestation edges
   manifest.attestations.forEach((attest) => {
     attest.verifies.forEach((verifiedId) => {
       edgeList.push({ source: verifiedId, target: attest.id, isGate: true });
     });
   });
 
+  // Determine node roles based on edge connections
   nodes.forEach((node) => {
-    if (node.nodeType !== 'data') return;
+    if (node.nodeType === 'attestation' || actionSet.has(node.id)) return;
     const hasIncoming = edgeList.some(
       (edge) => edge.target === node.id && !edge.isGate
     );

@@ -1,4 +1,4 @@
-import type { Workflow } from '../../../../config/types.js';
+import type { AssetManifest, Workflow } from '../../../../config/types.js';
 import { validatePhase } from '../../../../config/utils.js';
 import type { LineageManifest } from './lineageTypes.js';
 
@@ -7,38 +7,70 @@ export interface LayoutResult {
   workflows: Workflow[];
 }
 
-// Initial spacing (will be adjusted after render based on actual bounds)
 const HORIZONTAL_GAP = 0.2;
 const VERTICAL_GAP = 0.08;
 
-export const computeLayout = (manifest: LineageManifest): LayoutResult => {
+/**
+ * Computes layout positions for all assets.
+ * Actions drive the layout - they have inputs and outputs that determine flow.
+ */
+export const computeLayout = (
+  manifest: LineageManifest,
+  assetManifests: Map<string, AssetManifest>
+): LayoutResult => {
   const positions = new Map<string, { x: number; y: number; workflowId: string }>();
 
-  const compSet = new Set(manifest.computations.map((comp) => comp.id));
-
-  const assetProducer = new Map<string, string>();
-  manifest.computations.forEach((comp) => {
-    comp.outputs.forEach((id) => assetProducer.set(id, comp.id));
-  });
-
+  // Build maps for asset types and Action inputs/outputs
   const assetTypes = new Map<string, string>();
+  const actionInputs = new Map<string, string[]>();
+  const actionOutputs = new Map<string, string[]>();
+  const actionWorkflows = new Map<string, string>();
+
   manifest.assets.forEach((asset) => {
     assetTypes.set(asset.id, asset.asset_type);
+    if (asset.asset_type === 'Action') {
+      const actionManifest = assetManifests.get(asset.id);
+      actionInputs.set(asset.id, actionManifest?.inputs ?? []);
+      actionOutputs.set(asset.id, actionManifest?.outputs ?? []);
+      actionWorkflows.set(asset.id, asset.workflowId ?? 'unknown');
+    }
+  });
+
+  // Build a set of Action IDs
+  const actionSet = new Set(actionInputs.keys());
+
+  // Track which assets are produced by Actions
+  const assetProducer = new Map<string, string>();
+  actionOutputs.forEach((outputs, actionId) => {
+    outputs.forEach((outputId) => assetProducer.set(outputId, actionId));
   });
 
   let currentX = 0.1;
   const placedAssets = new Set<string>();
 
-  manifest.computations.forEach((comp) => {
-    const dataInputs = comp.inputs.filter((id) => !compSet.has(id));
+  // Process Actions in order (they maintain the workflow order from manifest)
+  const orderedActions = manifest.assets.filter((a) => a.asset_type === 'Action');
+
+  orderedActions.forEach((action) => {
+    const inputs = actionInputs.get(action.id) ?? [];
+    const outputs = actionOutputs.get(action.id) ?? [];
+    const workflowId = actionWorkflows.get(action.id) ?? 'unknown';
+
+    // Filter inputs that aren't Actions
+    const dataInputs = inputs.filter((id) => !actionSet.has(id));
+
+    // Source inputs: not produced by other Actions and not yet placed
     const sourceInputs = dataInputs.filter(
       (id) => !assetProducer.has(id) && !placedAssets.has(id)
     );
 
+    // Auxiliary inputs (Models, Code) stack below the Action
     const auxiliaryInputs = sourceInputs.filter((id) => {
       const type = assetTypes.get(id);
       return type === 'Code' || type === 'Model';
     });
+
+    // Data source inputs (Documents, etc.)
     const dataSourceInputs = sourceInputs.filter((id) => {
       const type = assetTypes.get(id);
       return type !== 'Code' && type !== 'Model';
@@ -53,33 +85,30 @@ export const computeLayout = (manifest: LineageManifest): LayoutResult => {
         positions.set(inputId, {
           x: currentX,
           y: startY + idx * VERTICAL_GAP,
-          workflowId: comp.workflowId,
+          workflowId,
         });
         placedAssets.add(inputId);
       });
       currentX += HORIZONTAL_GAP;
     }
 
-    // Place computation
-    positions.set(comp.id, {
+    // Place the Action
+    positions.set(action.id, {
       x: currentX,
       y: 0.5,
-      workflowId: comp.workflowId,
+      workflowId,
     });
 
-    // Place auxiliary inputs to the LEFT of computation (fan-in pattern)
+    // Place auxiliary inputs to the LEFT of the Action (fan-in pattern)
     if (auxiliaryInputs.length > 0) {
-      // Always position to the left of the computation
       const inputX = currentX - HORIZONTAL_GAP;
-
-      // Stack below center, leaving room for main data flow
       const startY = 0.5 + VERTICAL_GAP;
 
       auxiliaryInputs.forEach((inputId, idx) => {
         positions.set(inputId, {
           x: inputX,
           y: startY + idx * VERTICAL_GAP,
-          workflowId: comp.workflowId,
+          workflowId,
         });
         placedAssets.add(inputId);
       });
@@ -88,16 +117,16 @@ export const computeLayout = (manifest: LineageManifest): LayoutResult => {
     currentX += HORIZONTAL_GAP;
 
     // Place outputs
-    const outputs = comp.outputs.filter((id) => !placedAssets.has(id));
-    if (outputs.length > 0) {
-      const totalHeight = (outputs.length - 1) * VERTICAL_GAP;
+    const unplacedOutputs = outputs.filter((id) => !placedAssets.has(id));
+    if (unplacedOutputs.length > 0) {
+      const totalHeight = (unplacedOutputs.length - 1) * VERTICAL_GAP;
       const startY = 0.5 - totalHeight / 2;
 
-      outputs.forEach((outputId, idx) => {
+      unplacedOutputs.forEach((outputId, idx) => {
         positions.set(outputId, {
           x: currentX,
           y: startY + idx * VERTICAL_GAP,
-          workflowId: comp.workflowId,
+          workflowId,
         });
         placedAssets.add(outputId);
       });

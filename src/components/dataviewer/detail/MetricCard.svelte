@@ -22,6 +22,7 @@
 </script>
 
 <div class="metric-card {phaseClass} {spanClass} {sizeClass}">
+  <div class="metric-label">{label}</div>
   <div class="metric-value">
     <span class="value">{value}</span>
     {#if unit}
@@ -31,7 +32,6 @@
   {#if description}
     <div class="metric-description">{description}</div>
   {/if}
-  <div class="metric-label">{label}</div>
 </div>
 
 <style>
@@ -39,12 +39,12 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    padding: var(--space-lg, 16px);
+    padding: var(--space-xl, 20px);
     background: var(--metric-card-bg, rgba(0, 0, 0, 0.03));
     border: 1px solid var(--metric-card-border, rgba(0, 0, 0, 0.06));
     border-radius: var(--radius-md, 8px);
     min-width: 0;
-    min-height: 72px;
+    min-height: 80px;
   }
 
   /* Column spanning */
@@ -71,10 +71,10 @@
   }
 
   .value {
-    font-size: var(--font-size-heading, 18px);
+    font-size: var(--font-size-heading, 24px);
     font-weight: var(--font-weight-semibold, 600);
     letter-spacing: var(--letter-spacing-tight, -0.02em);
-    line-height: var(--line-height-snug, 1.3);
+    line-height: var(--line-height-snug, 1.2);
     word-break: break-word;
   }
 
@@ -92,9 +92,7 @@
   }
 
   .metric-label {
-    margin-top: auto;
-    padding-top: var(--space-xs, 4px);
-    font-size: var(--font-size-tiny, 10px);
+    font-size: var(--font-size-small, 12px);
     font-weight: var(--font-weight-medium, 500);
     text-transform: uppercase;
     letter-spacing: var(--letter-spacing-wider, 0.05em);

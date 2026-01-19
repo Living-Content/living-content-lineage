@@ -1,20 +1,20 @@
 <script lang="ts">
-  // Displays environmental impact and token metadata.
-  import type { LineageNodeData } from '../../config/types.js';
+  /**
+   * Displays environmental impact metrics.
+   * Uses impact data from asset manifest when available.
+   */
+  import type { AssetType, LineageNodeData } from '../../config/types.js';
+  import { extractAssertionData } from '../../services/dataviewer/parsing/assertionParsers.js';
 
   export let node: LineageNodeData;
+  export let assetType: AssetType | undefined = undefined;
 
   interface ImpactData {
     co2Grams?: number;
     energyKwh?: number;
   }
 
-  interface TokenData {
-    input: number;
-    output: number;
-  }
-
-  function formatImpactDetail(impact: ImpactData | undefined, tokens: TokenData | undefined): string {
+  function formatImpactDetail(impact: ImpactData | undefined, totalTokens: number | undefined): string {
     if (impact?.co2Grams !== undefined || impact?.energyKwh !== undefined) {
       const parts: string[] = [];
       if (impact.co2Grams !== undefined) {
@@ -25,21 +25,23 @@
       }
       return parts.join(' · ');
     }
-    if (tokens) {
-      const totalTokens = tokens.input + tokens.output;
+    if (totalTokens !== undefined) {
       return `${totalTokens.toLocaleString()} tokens · Impact data unavailable`;
     }
     return 'Impact data unavailable';
   }
 
+  $: effectiveAssetType = assetType ?? node.assetType;
   $: impact = node.environmentalImpact ?? node.assetManifest?.environmentalImpact;
-  $: tokens = node.tokens;
+  $: assertions = extractAssertionData(node.assetManifest?.assertions);
+  $: totalTokens = effectiveAssetType === 'Model' ? assertions.usage?.totalTokens : undefined;
   $: hasImpactData = impact?.co2Grams !== undefined || impact?.energyKwh !== undefined;
   $: impactClass = hasImpactData ? 'impact-available' : 'impact-unknown';
-  $: detailText = formatImpactDetail(impact, tokens);
+  $: detailText = formatImpactDetail(impact, totalTokens);
+  $: showSection = impact || (effectiveAssetType === 'Model' && totalTokens !== undefined);
 </script>
 
-{#if impact || tokens}
+{#if showSection}
   <div class="impact-section">
     <img
       src="/icons/leaf.svg"

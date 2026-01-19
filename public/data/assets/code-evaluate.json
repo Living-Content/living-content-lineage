@@ -1,0 +1,44 @@
+{
+  "claim_generator": "LivingContent/1.0.0",
+  "claim_generator_info": [{ "name": "Living Content", "version": "1.0.0" }],
+  "title": "Relevance Scorer",
+  "format": "application/json",
+  "instance_id": "urn:uuid:code-evaluate",
+
+  "assertions": [
+    {
+      "label": "lco.code",
+      "data": {
+        "function": "evaluate_relevance",
+        "module": "knowledge_query.evaluation",
+        "computation": "relevance_scoring",
+        "hash": "sha256:e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6"
+      }
+    },
+    {
+      "label": "lco.execution",
+      "data": {
+        "execution_start_time": "2026-01-14T18:15:27Z",
+        "execution_end_time": "2026-01-14T18:15:28Z",
+        "execution_duration_ms": 1245.6,
+        "previous_function": "retrieve_documents",
+        "next_function": "generate_response"
+      }
+    }
+  ],
+
+  "sourceCode": "@chain_link(computation=\"relevance_scoring\", output_asset_type=\"result\")\nasync def evaluate_relevance(query_ctx) -> dict:\n    \"\"\"Score and rank retrieved documents by relevance.\n    Returns: Dict with ranked documents and confidence scores.\n    \"\"\"\n    documents = query_ctx.retrieved_documents\n    query = query_ctx.validated_query\n    \n    # Score each document for relevance\n    scored_docs = []\n    for doc in documents:\n        score = await compute_relevance_score(doc, query)\n        scored_docs.append({\"doc\": doc, \"score\": score})\n    \n    # Sort by score descending\n    ranked = sorted(scored_docs, key=lambda x: x[\"score\"], reverse=True)\n    \n    return {\n        \"ranked_documents\": ranked,\n        \"top_score\": ranked[0][\"score\"] if ranked else 0,\n        \"document_count\": len(ranked)\n    }",
+
+  "content": {
+    "function": "evaluate_relevance",
+    "module": "knowledge_query.evaluation",
+    "language": "python",
+    "version": "3.11"
+  },
+
+  "signature_info": {
+    "alg": "ES256",
+    "issuer": "did:key:zQ3shwc61yUNaJZBX2L9mZd3xhWjTEqD52dA3JxBnZnu78E3d",
+    "time": "2026-01-14T18:15:28Z"
+  }
+}

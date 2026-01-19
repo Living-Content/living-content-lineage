@@ -1,3 +1,7 @@
+// Re-export display config types for convenience
+export type { DataCardType } from './cardTypes.js';
+export type { FieldDisplayConfig, AssetDisplayConfig } from './displayConfig.js';
+
 export type ManifestType = "c2pa" | "eqty" | "custom";
 
 /**
@@ -123,6 +127,8 @@ export interface AssetManifest {
   content?: AssetContent;
   ingredients?: ManifestIngredient[];
   environmentalImpact?: EnvironmentalImpact;
+  inputs?: string[];
+  outputs?: string[];
 }
 
 export interface LineageManifestSummary {
@@ -150,12 +156,10 @@ export interface LineageNodeData {
   y?: number;
   role?: NodeRole;
   environmentalImpact?: EnvironmentalImpact;
-  tokens?: { input: number; output: number };
   humanInputs?: string[];
   humanOutputs?: string[];
   verifiedBy?: string;
   verifiedAt?: string;
-  duration?: string;
   badgeCount?: number;
 }
 

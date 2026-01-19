@@ -1,0 +1,44 @@
+{
+  "claim_generator": "LivingContent/1.0.0",
+  "claim_generator_info": [{ "name": "Living Content", "version": "1.0.0" }],
+  "title": "Intent Analyzer",
+  "format": "application/vnd.livingcontent.action",
+  "instance_id": "urn:uuid:action-reflect",
+
+  "assertions": [
+    {
+      "label": "c2pa.actions",
+      "data": {
+        "actions": [{
+          "action": "c2pa.transformed",
+          "when": "2026-01-14T18:15:22.431Z",
+          "softwareAgent": { "name": "Living Content Pipeline", "version": "1.0.0" }
+        }]
+      }
+    },
+    {
+      "label": "lco.action",
+      "data": {
+        "function": "reflect",
+        "duration_ms": 1200,
+        "start_time": "2026-01-14T18:15:21.231Z",
+        "end_time": "2026-01-14T18:15:22.431Z"
+      }
+    }
+  ],
+
+  "inputs": ["data-retrieved-history", "model-reflect", "code-reflect"],
+  "outputs": ["data-reflection"],
+
+  "content": {
+    "input_tokens": 245,
+    "output_tokens": 89,
+    "total_tokens": 334
+  },
+
+  "signature_info": {
+    "alg": "ES256",
+    "issuer": "did:key:zQ3shwc61yUNaJZBX2L9mZd3xhWjTEqD52dA3JxBnZnu78E3d",
+    "time": "2026-01-14T18:15:23Z"
+  }
+}

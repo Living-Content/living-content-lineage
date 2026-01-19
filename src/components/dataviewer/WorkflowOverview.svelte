@@ -2,6 +2,17 @@
   // Summary view for a selected workflow.
   import type { LineageEdgeData, LineageNodeData } from '../../config/types.js';
   import { formatAssetTypeLabel } from '../../config/labels.js';
+  import { extractAssertionData, formatDuration } from '../../services/dataviewer/parsing/assertionParsers.js';
+
+  function getNodeDuration(node: LineageNodeData): string | undefined {
+    const assertions = extractAssertionData(node.assetManifest?.assertions);
+    const durationMs = assertions.action?.durationMs ?? assertions.execution?.executionDurationMs;
+    if (durationMs) {
+      const formatted = formatDuration(durationMs);
+      return formatted !== '-' ? formatted : undefined;
+    }
+    return undefined;
+  }
 
   export let nodes: LineageNodeData[];
   export let edges: LineageEdgeData[];
@@ -39,11 +50,12 @@
       <div class="workflow-group-header">{group.label}</div>
       <div class="workflow-node-list">
         {#each group.nodes as node (node.id)}
+          {@const duration = getNodeDuration(node)}
           <div class="workflow-node-item">
             <span class={`workflow-node-icon ${node.nodeType}`}></span>
             <span class="workflow-node-label">{node.label}</span>
-            {#if node.duration}
-              <span class="workflow-node-meta">{node.duration}</span>
+            {#if duration}
+              <span class="workflow-node-meta">{duration}</span>
             {:else if node.assetType}
               <span class="workflow-node-meta">
                 {formatAssetTypeLabel(node.assetType)}

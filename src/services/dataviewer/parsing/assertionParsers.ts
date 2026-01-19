@@ -44,6 +44,19 @@ export interface LcoExecutionData {
  */
 export interface LcoUsageData {
   durationMs?: number;
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+}
+
+/**
+ * Action assertion data (lco.action).
+ */
+export interface LcoActionData {
+  function?: string;
+  durationMs?: number;
+  startTime?: string;
+  endTime?: string;
 }
 
 /**
@@ -80,6 +93,7 @@ export interface ParsedAssertionData {
   code?: LcoCodeData;
   execution?: LcoExecutionData;
   usage?: LcoUsageData;
+  action?: LcoActionData;
   content?: LcoContentData;
   c2paActions?: C2paActionsData;
 }
@@ -152,9 +166,33 @@ export const parseLcoUsage = (data: unknown): LcoUsageData | undefined => {
     ? d.duration_ms
     : typeof d.duration_ms === 'string'
       ? parseFloat(d.duration_ms)
-      : undefined;
+      : typeof d.total_duration_ms === 'number'
+        ? d.total_duration_ms
+        : undefined;
   return {
     durationMs,
+    inputTokens: typeof d.input_tokens === 'number' ? d.input_tokens : undefined,
+    outputTokens: typeof d.output_tokens === 'number' ? d.output_tokens : undefined,
+    totalTokens: typeof d.total_tokens === 'number' ? d.total_tokens : undefined,
+  };
+};
+
+/**
+ * Parse lco.action assertion data.
+ */
+export const parseLcoAction = (data: unknown): LcoActionData | undefined => {
+  if (!data || typeof data !== 'object') return undefined;
+  const d = data as Record<string, unknown>;
+  const durationMs = typeof d.duration_ms === 'number'
+    ? d.duration_ms
+    : typeof d.duration_ms === 'string'
+      ? parseFloat(d.duration_ms)
+      : undefined;
+  return {
+    function: typeof d.function === 'string' ? d.function : undefined,
+    durationMs,
+    startTime: typeof d.start_time === 'string' ? d.start_time : undefined,
+    endTime: typeof d.end_time === 'string' ? d.end_time : undefined,
   };
 };
 
@@ -219,6 +257,9 @@ export const extractAssertionData = (assertions: ManifestAssertion[] | undefined
       case 'lco.usage':
         result.usage = parseLcoUsage(assertion.data);
         break;
+      case 'lco.action':
+        result.action = parseLcoAction(assertion.data);
+        break;
       case 'lco.content':
         result.content = parseLcoContent(assertion.data);
         break;
@@ -235,8 +276,7 @@ export const extractAssertionData = (assertions: ManifestAssertion[] | undefined
  */
 export const formatDuration = (ms: number | undefined): string => {
   if (ms === undefined) return '-';
-  if (ms < 1000) return `${ms.toFixed(0)}ms`;
-  return `${(ms / 1000).toFixed(1)}s`;
+  return `${ms.toFixed(0)}ms`;
 };
 
 /**

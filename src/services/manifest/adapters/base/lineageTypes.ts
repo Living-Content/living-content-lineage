@@ -9,17 +9,6 @@ export interface LineageWorkflow {
   phase?: string;
 }
 
-export interface LineageComputation {
-  id: string;
-  label: string;
-  title?: string;
-  workflowId: string;
-  description?: string;
-  duration?: string;
-  inputs: string[];
-  outputs: string[];
-}
-
 export interface Asset {
   id: string;
   label: string;
@@ -27,7 +16,29 @@ export interface Asset {
   asset_type: string;
   description?: string;
   manifest_url?: string;
-  tokens?: { input: number; output: number };
+  workflowId?: string;
+}
+
+/**
+ * Asset manifest loaded from manifest_url.
+ * For Action assets, includes inputs/outputs for edge building.
+ */
+export interface LineageAssetManifest {
+  claim_generator?: string;
+  claim_generator_info?: Array<{ name: string; version: string }>;
+  title?: string;
+  format?: string;
+  instance_id?: string;
+  assertions?: Array<{ label: string; data: unknown }>;
+  signature_info?: {
+    alg: string;
+    issuer: string;
+    time: string;
+  };
+  source_code?: string;
+  content?: Record<string, unknown>;
+  inputs?: string[];
+  outputs?: string[];
 }
 
 export interface LineageAttestation {
@@ -61,7 +72,6 @@ export interface LineageManifest {
   active_manifest: string;
   manifests: Record<string, LineageManifestRecord>;
   workflows: LineageWorkflow[];
-  computations: LineageComputation[];
   assets: Asset[];
   attestations: LineageAttestation[];
 }
@@ -77,7 +87,6 @@ export function isLineageManifest(raw: unknown): raw is LineageManifest {
   if (typeof raw.active_manifest !== 'string') return false;
   if (!isRecord(raw.manifests)) return false;
   if (!Array.isArray(raw.workflows)) return false;
-  if (!Array.isArray(raw.computations)) return false;
   if (!Array.isArray(raw.assets)) return false;
   if (!Array.isArray(raw.attestations)) return false;
   return true;

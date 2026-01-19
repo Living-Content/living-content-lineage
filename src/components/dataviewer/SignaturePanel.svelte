@@ -57,10 +57,6 @@
 {/if}
 
 <style>
-  .signature-panel {
-    /* No styles needed - parent footer handles border */
-  }
-
   .signature-header {
     display: flex;
     align-items: center;
