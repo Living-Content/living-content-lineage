@@ -8,6 +8,7 @@ import type { Workflow, Phase } from '../../../config/types.js';
 import type { ViewportState } from '../interaction/viewport.js';
 import type { GraphNode } from './nodeRenderer.js';
 import { getCssVarColorHex, getCssVar, getCssVarInt, getCssVarFloat, type CssVar } from '../../../themes/index.js';
+import { setPhaseFilter } from '../../../stores/uiState.js';
 
 
 /**
@@ -40,14 +41,17 @@ export interface TopNodeInfo {
  * A single workflow label entry with its visual elements.
  */
 export interface WorkflowLabelEntry {
+  labelContainer: Container;
   label: Text;
   line: Graphics;
   worldX: number;
   color: number;
+  phase: Phase;
 }
 
 export interface WorkflowLabels {
   update: (viewportState: ViewportState) => void;
+  setPhaseFilter: (activePhase: Phase | null) => void;
   container: Container;
 }
 
@@ -65,9 +69,16 @@ export const createWorkflowLabelEntry = (
   label.anchor.set(0.5, 0);
   label.position.y = getCssVarInt('--workflow-label-top-padding');
 
+  // Wrap label in clickable container
+  const labelContainer = new Container();
+  labelContainer.eventMode = 'static';
+  labelContainer.cursor = 'pointer';
+  labelContainer.addChild(label);
+  labelContainer.on('pointertap', () => setPhaseFilter(workflow.phase));
+
   const line = new Graphics();
 
-  return { label, line, worldX, color };
+  return { labelContainer, label, line, worldX, color, phase: workflow.phase };
 };
 
 /**
@@ -90,7 +101,7 @@ export const attachLabelEntriesToContainer = (
   entries: WorkflowLabelEntry[]
 ): void => {
   for (const entry of entries) {
-    container.addChild(entry.label);
+    container.addChild(entry.labelContainer);
     container.addChild(entry.line);
   }
 };
@@ -105,7 +116,7 @@ const updateLabelEntryPosition = (
   globalTopY: number
 ): void => {
   const screenX = viewportState.x + entry.worldX * viewportState.scale;
-  entry.label.position.x = screenX;
+  entry.labelContainer.position.x = screenX;
 
   // Redraw dotted line
   entry.line.clear();
@@ -160,5 +171,21 @@ export function createWorkflowLabels(
     }
   };
 
-  return { update, container };
+  const setPhaseFilterVisibility = (activePhase: Phase | null): void => {
+    const fadedAlpha = getCssVarFloat('--faded-node-alpha');
+    for (const entry of entries) {
+      if (activePhase === null) {
+        // No filter - show all labels at full opacity
+        entry.labelContainer.alpha = 1;
+        entry.line.alpha = 1;
+      } else {
+        // Filter active - dim non-matching labels
+        const isActive = entry.phase === activePhase;
+        entry.labelContainer.alpha = isActive ? 1 : fadedAlpha;
+        entry.line.alpha = isActive ? 1 : fadedAlpha;
+      }
+    }
+  };
+
+  return { update, setPhaseFilter: setPhaseFilterVisibility, container };
 }

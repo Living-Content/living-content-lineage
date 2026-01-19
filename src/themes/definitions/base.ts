@@ -39,6 +39,7 @@ export const baseTokens = {
   'workflow-edge-width': '8px',
   'workflow-dot-radius': '12px',
   'faded-node-alpha': '0.25',
+  'faded-node-blur': '3',
 
   // Workflow labels
   'workflow-label-font-size': '20px',

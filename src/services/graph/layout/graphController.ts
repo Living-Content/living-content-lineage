@@ -14,10 +14,11 @@ import { createLODController, type LODLayers } from './lodController.js';
 import { createTitleOverlay } from '../rendering/titleOverlay.js';
 import { LOD_THRESHOLD, TEXT_SIMPLIFY_THRESHOLD } from '../../../config/constants.js';
 import { clearSelection } from '../../../stores/lineageState.js';
+import { clearPhaseFilter } from '../../../stores/uiState.js';
 import { buildVerticalAdjacencyMap } from '../interaction/selectionHighlighter.js';
 import { createNodeAnimationController } from '../interaction/nodeAnimationController.js';
 import { createNodes, repositionNodesWithGaps } from './nodeCreator.js';
-import { recalculateWorkflowBounds, createWorkflowNodes, calculateTopNodeInfo } from './workflowCreator.js';
+import { recalculateWorkflowBounds, createWorkflowNodes, calculateTopNodeInfo, calculateBottomNodeInfo } from './workflowCreator.js';
 import { initializePixi } from './pixiSetup.js';
 import { createStoreSubscriptions } from './graphSubscriptions.js';
 import { createViewportManager, createResizeHandler } from './viewportManager.js';
@@ -124,6 +125,7 @@ export async function createGraphController({
 
   // Workflow labels
   const topNodeInfo = calculateTopNodeInfo(nodeMap);
+  const bottomNodeInfo = calculateBottomNodeInfo(nodeMap);
   const workflowLabels = createWorkflowLabels(lineageData.workflows, workflowNodeMap, topNodeInfo);
   app.stage.addChild(workflowLabels.container);
   workflowLabels.update(viewportState);
@@ -180,7 +182,7 @@ export async function createGraphController({
   const lodController = createLODController(lodLayers, {
     onCollapseStart: () => { clearSelection(); titleOverlay.setMode('relative'); },
     onCollapseEnd: updateTitlePosition,
-    onExpandStart: () => { clearSelection(); titleOverlay.setMode('fixed'); },
+    onExpandStart: () => { clearSelection(); clearPhaseFilter(); titleOverlay.setMode('fixed'); },
     onExpandEnd: () => { workflowLabels.update(viewportState); cullAndRender(); },
   });
 
@@ -204,6 +206,7 @@ export async function createGraphController({
     verticalAdjacency,
     setNodeAlpha: animationController.setNodeAlpha,
     centerSelectedNode: viewportManager.centerOnNode,
+    setWorkflowLabelsPhaseFilter: workflowLabels.setPhaseFilter,
   });
 
   // Viewport handlers
@@ -224,6 +227,19 @@ export async function createGraphController({
     onPanStart: () => {},
     onPanEnd: () => {},
     isZoomBlocked: () => lodController.state.isAnimating,
+    getBounds: () => {
+      if (!topNodeInfo || !bottomNodeInfo) return null;
+      // Top margin: below workflow labels (label top padding + label height + extra padding)
+      const topMargin = 180;
+      // Bottom margin: keep bottom nodes visible with some padding from bottom edge
+      const bottomMargin = 100;
+      return {
+        topWorldY: topNodeInfo.worldY - topNodeInfo.halfHeight,
+        bottomWorldY: bottomNodeInfo.worldY + bottomNodeInfo.halfHeight,
+        topMargin,
+        bottomMargin,
+      };
+    },
   });
 
   // Resize handling

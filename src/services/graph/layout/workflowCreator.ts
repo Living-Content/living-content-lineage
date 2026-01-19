@@ -117,3 +117,22 @@ export const calculateTopNodeInfo = (
 
   return minWorldY === Infinity ? null : { worldY: minWorldY, halfHeight };
 };
+
+/**
+ * Calculates info about the bottommost node for viewport bounds.
+ */
+export const calculateBottomNodeInfo = (
+  nodeMap: Map<string, GraphNode>
+): { worldY: number; halfHeight: number } | null => {
+  let maxWorldY = -Infinity;
+  let halfHeight = 0;
+
+  nodeMap.forEach((node) => {
+    if (node.position.y > maxWorldY) {
+      maxWorldY = node.position.y;
+      halfHeight = node.nodeHeight / 2;
+    }
+  });
+
+  return maxWorldY === -Infinity ? null : { worldY: maxWorldY, halfHeight };
+};

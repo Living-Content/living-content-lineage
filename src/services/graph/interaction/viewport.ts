@@ -12,12 +12,20 @@ export interface ViewportState {
   height: number;
 }
 
+export interface ViewportBounds {
+  topWorldY: number;    // World Y of topmost node
+  bottomWorldY: number; // World Y of bottommost node
+  topMargin: number;    // Screen Y where top bound should stop
+  bottomMargin: number; // Screen Y offset from bottom where content should still be visible
+}
+
 export interface ViewportCallbacks {
   onZoom: (scale: number) => void;
   onPan: () => void;
   onPanStart: () => void;
   onPanEnd: () => void;
   isZoomBlocked?: () => boolean;
+  getBounds?: () => ViewportBounds | null;
 }
 
 export const screenToWorld = (
@@ -62,6 +70,32 @@ export const createViewportHandlers = (
   let isDragging = false;
   let lastPointerPos = { x: 0, y: 0 };
 
+  /**
+   * Clamps the viewport position to keep content within bounds.
+   */
+  const clampPosition = (): void => {
+    const bounds = callbacks.getBounds?.();
+    if (!bounds) return;
+
+    // Convert world bounds to screen positions
+    // Upper bound: top node screen Y should not go below topMargin
+    // topScreenY = state.y + bounds.topWorldY * state.scale
+    // Ensure: topScreenY >= topMargin
+    // state.y >= topMargin - bounds.topWorldY * state.scale
+    const minY = bounds.topMargin - bounds.topWorldY * state.scale;
+
+    // Lower bound: bottom node screen Y should not go above (height - bottomMargin)
+    // bottomScreenY = state.y + bounds.bottomWorldY * state.scale
+    // Ensure: bottomScreenY <= height - bottomMargin
+    // state.y <= height - bottomMargin - bounds.bottomWorldY * state.scale
+    const maxY = state.height - bounds.bottomMargin - bounds.bottomWorldY * state.scale;
+
+    // Only clamp if bounds make sense (min < max means we have room to move)
+    if (minY < maxY) {
+      state.y = Math.max(minY, Math.min(maxY, state.y));
+    }
+  };
+
   const handleWheel = (e: WheelEvent): void => {
     e.preventDefault();
 
@@ -83,6 +117,8 @@ export const createViewportHandlers = (
     state.scale = newScale;
     state.x = mouseX - worldX * newScale;
     state.y = mouseY - worldY * newScale;
+
+    clampPosition();
 
     viewport.scale.set(state.scale);
     viewport.position.set(state.x, state.y);
@@ -107,6 +143,9 @@ export const createViewportHandlers = (
 
     state.x += dx;
     state.y += dy;
+
+    clampPosition();
+
     viewport.position.set(state.x, state.y);
 
     lastPointerPos = { x: e.clientX, y: e.clientY };

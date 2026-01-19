@@ -4,6 +4,7 @@
   import { createGraphController } from '../../services/graph/layout/graphController.js';
   import { clearSelection, setLineageData } from '../../stores/lineageState.js';
   import { setLoadError, setLoading, setSimpleView } from '../../stores/uiState.js';
+  import PhaseFilterBadge from '../PhaseFilterBadge.svelte';
 
   let container: HTMLDivElement | null = null;
 
@@ -45,6 +46,7 @@
 
 <main class="graph-container">
   <div id="graph-container" bind:this={container}></div>
+  <PhaseFilterBadge />
 </main>
 
 <style>

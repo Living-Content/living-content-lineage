@@ -5,6 +5,7 @@
 import { Container } from 'pixi.js';
 import gsap from 'gsap';
 import { getCssVarInt } from '../../../themes/index.js';
+import { ZOOM_MAX } from '../../../config/constants.js';
 import type { ViewportState } from '../interaction/viewport.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 
@@ -34,16 +35,21 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
     const panelMargin = getCssVarInt('--panel-margin');
     const panelMaxWidth = getCssVarInt('--panel-max-width');
     const panelWidth = Math.min(viewportState.width * 0.5 - panelMargin * 2, panelMaxWidth) + panelMargin * 2;
-    const targetX = panelWidth + (viewportState.width - panelWidth) / 2 - node.position.x * viewportState.scale;
-    const targetY = viewportState.height / 2 - node.position.y * viewportState.scale;
+
+    // Zoom to max and calculate position for that scale
+    const targetScale = ZOOM_MAX;
+    const targetX = panelWidth + (viewportState.width - panelWidth) / 2 - node.position.x * targetScale;
+    const targetY = viewportState.height / 2 - node.position.y * targetScale;
 
     gsap.to(viewportState, {
       x: targetX,
       y: targetY,
-      duration: 0.3,
+      scale: targetScale,
+      duration: 0.4,
       ease: 'power2.out',
       onUpdate: () => {
         viewport.position.set(viewportState.x, viewportState.y);
+        viewport.scale.set(viewportState.scale);
         workflowLabelsUpdate(viewportState);
         cullAndRender();
       },
