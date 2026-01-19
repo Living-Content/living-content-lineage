@@ -105,7 +105,7 @@ export const repositionNodesWithGaps = (nodeMap: Map<string, GraphNode>): void =
 
   const sortedGroups = Array.from(nodesByX.entries())
     .sort((a, b) => a[0] - b[0])
-    .map(([_, nodes]) => nodes);
+    .map((entry) => entry[1]);
 
   let rightEdge = -Infinity;
   for (const group of sortedGroups) {

@@ -25,7 +25,7 @@
 
   {#if ingredients.length > 0}
     <PropertyGroup title="Attested Assets ({ingredients.length})" collapsed>
-      {#each ingredients as ingredient}
+      {#each ingredients as ingredient (ingredient.instanceId)}
         <div class="ingredient-item">
           <PropertyRow label="Title" value={ingredient.title} />
           <PropertyRow label="Relationship" value={ingredient.relationship} />

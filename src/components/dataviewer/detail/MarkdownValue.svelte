@@ -33,6 +33,7 @@
   </button>
   <div class="markdown-rendered">
     {#if rendered}
+      <!-- eslint-disable-next-line svelte/no-at-html-tags -- Content is sanitized with DOMPurify -->
       {@html rendered}
     {:else}
       {value}

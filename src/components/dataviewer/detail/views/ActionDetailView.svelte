@@ -36,12 +36,15 @@
       {#if primaryAction.digitalSourceType}
         <PropertyRow label="Source Type" value={primaryAction.digitalSourceType.split('/').pop() ?? ''} />
       {/if}
+      {#if durationDisplay}
+        <PropertyRow label="Duration" value={durationDisplay} />
+      {/if}
     </PropertyGroup>
   {/if}
 
   {#if c2paActions?.actions && c2paActions.actions.length > 1}
     <PropertyGroup title="Additional Actions ({c2paActions.actions.length - 1})" collapsed>
-      {#each c2paActions.actions.slice(1) as action, i}
+      {#each c2paActions.actions.slice(1) as action (action.action)}
         <div class="additional-action">
           <PropertyRow label="Action" value={action.action ?? '-'} />
           {#if action.softwareAgent}

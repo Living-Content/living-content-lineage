@@ -2,7 +2,7 @@ import type { AssetManifest } from '../../../../config/types.js';
 import { isRecord } from '../../../../config/utils.js';
 
 function toCamelCase(value: string): string {
-  return value.replace(/_([a-z])/g, (_, letter: string) =>
+  return value.replace(/_([a-z])/g, (_match, letter: string) =>
     letter.toUpperCase()
   );
 }

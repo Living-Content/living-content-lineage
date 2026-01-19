@@ -44,7 +44,7 @@
 
   {#if c2paActions?.actions?.length}
     <PropertyGroup title="Actions" collapsed>
-      {#each c2paActions.actions as action}
+      {#each c2paActions.actions as action (action.action)}
         <PropertyRow label="Action" value={action.action ?? '-'} />
         {#if action.softwareAgent}
           <PropertyRow

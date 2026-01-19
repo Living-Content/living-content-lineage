@@ -17,8 +17,8 @@ export interface PanelElements {
 
 export interface AnimationOrchestrator {
   animateEntrance: () => Promise<void>;
-  openDetails: (resetPosition: () => void) => Promise<void>;
-  closeDetails: (resetPosition: () => void) => Promise<void>;
+  openDetails: (onStateChange: () => void, resetPosition: () => void) => Promise<void>;
+  closeDetails: (onStateChange: () => void, resetPosition: () => void) => Promise<void>;
   killAll: () => void;
   isAnimating: () => boolean;
   getBlobManager: () => BlobManager | null;
@@ -49,7 +49,7 @@ export function createAnimationOrchestrator(
     timeline?.to(contentLayer, { opacity: 1, duration: ANIMATION_TIMINGS.PANEL_ENTRANCE_DURATION, ease: 'power2.out' }, '-=0.5');
   }
 
-  async function openDetails(resetPosition: () => void): Promise<void> {
+  async function openDetails(onStateChange: () => void, resetPosition: () => void): Promise<void> {
     if (animating) return;
     animating = true;
 
@@ -59,8 +59,9 @@ export function createAnimationOrchestrator(
 
       const { scrollArea } = elements;
 
-      // Fade out, reset position, fade in
+      // Fade out, change state, reset position, fade in
       await gsap.to(scrollArea, { opacity: 0, duration: 0.12, ease: 'power2.in' });
+      onStateChange();
       resetPosition();
       await tick();
       await gsap.to(scrollArea, { opacity: 1, duration: ANIMATION_TIMINGS.PANEL_DETAIL_DURATION, ease: 'power2.out' });
@@ -69,7 +70,7 @@ export function createAnimationOrchestrator(
     }
   }
 
-  async function closeDetails(resetPosition: () => void): Promise<void> {
+  async function closeDetails(onStateChange: () => void, resetPosition: () => void): Promise<void> {
     if (animating) return;
     animating = true;
 
@@ -79,8 +80,9 @@ export function createAnimationOrchestrator(
 
       const { scrollArea } = elements;
 
-      // Fade out, reset position, fade in
+      // Fade out, change state, reset position, fade in
       await gsap.to(scrollArea, { opacity: 0, duration: 0.12, ease: 'power2.in' });
+      onStateChange();
       resetPosition();
       await tick();
       await gsap.to(scrollArea, { opacity: 1, duration: ANIMATION_TIMINGS.PANEL_DETAIL_DURATION, ease: 'power2.out' });

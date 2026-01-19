@@ -78,10 +78,11 @@ const createIconTextureAsync = async (
 export const createIconNode = async (
   node: LineageNodeData,
   graphScale: number,
-  _ticker: Ticker,
+  ticker: Ticker,
   callbacks: NodeCallbacks,
   options: CreateIconNodeOptions
 ): Promise<GraphNode> => {
+  void ticker;
   const group = new Container() as GraphNode;
   group.label = node.id;
 

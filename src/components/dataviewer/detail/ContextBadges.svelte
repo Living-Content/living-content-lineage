@@ -22,7 +22,7 @@
 </script>
 
 <div class="context-badges {phaseClass}">
-  {#each items as item, i}
+  {#each items as item, i (item.type)}
     {#if i > 0}
       <span class="separator">‹</span>
     {/if}

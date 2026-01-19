@@ -12,14 +12,10 @@ import { loadIcon } from '../interaction/iconLoader.js';
 import {
   BASE_NODE_HEIGHT_DETAILED,
   BASE_NODE_HEIGHT_SIMPLE,
-  BASE_RIGHT_PADDING,
-  BASE_SIMPLE_TYPE_FONT_SIZE,
   calculateNodeWidth,
-  getNodeFontFamily,
   getScaledDimensions,
-  measureCtx,
 } from './nodeTextMeasurement.js';
-import { createNodeTexture, createKnockoutNodeTexture } from './nodeTextureRenderer.js';
+import { createNodeTexture } from './nodeTextureRenderer.js';
 
 export const DEFAULT_NODE_ALPHA = 1;
 
@@ -63,10 +59,11 @@ const getIconPath = (assetType?: AssetType): string => {
 export function createGraphNode(
   node: LineageNodeData,
   graphScale: number,
-  _ticker: Ticker,
+  ticker: Ticker,
   callbacks: NodeCallbacks,
   options: CreateNodeOptions = {}
 ): GraphNode {
+  void ticker;
   const group = new Container() as GraphNode;
   group.label = node.id;
 
@@ -104,25 +101,6 @@ export function createGraphNode(
       sprite.height = nodeHeight;
       group.addChild(sprite);
     });
-
-    group.nodeWidth = nodeWidth;
-    group.nodeHeight = nodeHeight;
-  } else if (node.badgeCount !== undefined) {
-    // Legacy badge count nodes (for backwards compatibility)
-    const fontSize = BASE_SIMPLE_TYPE_FONT_SIZE * nodeScale;
-    measureCtx.font = `600 ${fontSize}px ${getNodeFontFamily()}`;
-    const textWidth = measureCtx.measureText(node.label).width;
-    const nodeHeight = BASE_NODE_HEIGHT_SIMPLE * nodeScale;
-    const badgeRadius = nodeHeight * GEOMETRY.BADGE_RADIUS_FACTOR;
-    const rightPadding = BASE_RIGHT_PADDING * nodeScale;
-    const nodeWidth = textWidth + GEOMETRY.BADGE_WIDTH_PADDING * nodeScale + badgeRadius * 2 + rightPadding;
-
-    const texture = createKnockoutNodeTexture(node.label, color, nodeWidth, nodeHeight, fontSize, node.badgeCount);
-    const sprite = new Sprite(texture);
-    sprite.anchor.set(0.5, 0.5);
-    sprite.width = nodeWidth;
-    sprite.height = nodeHeight;
-    group.addChild(sprite);
 
     group.nodeWidth = nodeWidth;
     group.nodeHeight = nodeHeight;

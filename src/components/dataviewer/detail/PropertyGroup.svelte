@@ -9,16 +9,7 @@
   export let collapsed: boolean = false;
   export let collapsible: boolean = true;
 
-  $: expanded = !collapsed;
-
-  function handleExpandedChange(value: boolean) {
-    collapsed = !value;
-  }
-
-  $: if (collapsible) {
-    // Sync collapsed prop with expanded state
-    handleExpandedChange(expanded);
-  }
+  let expanded = !collapsed;
 </script>
 
 <div class="property-group">

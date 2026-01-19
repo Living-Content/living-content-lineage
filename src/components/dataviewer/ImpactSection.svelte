@@ -4,13 +4,17 @@
 
   export let node: LineageNodeData;
 
-  $: impact = node.environmentalImpact ?? node.assetManifest?.environmentalImpact;
-  $: tokens = node.tokens;
-  $: hasImpactData =
-    impact?.co2Grams !== undefined || impact?.energyKwh !== undefined;
-  $: impactClass = hasImpactData ? 'impact-available' : 'impact-unknown';
+  interface ImpactData {
+    co2Grams?: number;
+    energyKwh?: number;
+  }
 
-  $: detailText = (() => {
+  interface TokenData {
+    input: number;
+    output: number;
+  }
+
+  function formatImpactDetail(impact: ImpactData | undefined, tokens: TokenData | undefined): string {
     if (impact?.co2Grams !== undefined || impact?.energyKwh !== undefined) {
       const parts: string[] = [];
       if (impact.co2Grams !== undefined) {
@@ -26,7 +30,13 @@
       return `${totalTokens.toLocaleString()} tokens · Impact data unavailable`;
     }
     return 'Impact data unavailable';
-  })();
+  }
+
+  $: impact = node.environmentalImpact ?? node.assetManifest?.environmentalImpact;
+  $: tokens = node.tokens;
+  $: hasImpactData = impact?.co2Grams !== undefined || impact?.energyKwh !== undefined;
+  $: impactClass = hasImpactData ? 'impact-available' : 'impact-unknown';
+  $: detailText = formatImpactDetail(impact, tokens);
 </script>
 
 {#if impact || tokens}

@@ -1,11 +1,11 @@
 /**
- * Selection highlighting for graph nodes and edges.
+ * Unified selection highlighting for graph nodes and edges.
  * Manages visual state based on selection changes.
  */
 import type { LineageGraph, LineageEdgeData, Workflow } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
-import { renderEdges } from '../rendering/edgeRenderer.js';
-import { renderWorkflowEdges } from '../rendering/workflowEdgeRenderer.js';
+import type { SelectionTarget } from '../../../stores/lineageState.js';
+import { renderEdges, renderWorkflowEdges } from '../rendering/edgeRenderer.js';
 import { FADED_NODE_ALPHA } from '../../../config/constants.js';
 import { DEFAULT_NODE_ALPHA } from '../rendering/nodeRenderer.js';
 import type { Container } from 'pixi.js';
@@ -102,10 +102,30 @@ function setNodeMapVisibility(
 }
 
 /**
+ * Unified selection highlighting.
+ * Dispatches to appropriate highlighter based on selection type.
+ */
+export const applySelectionHighlight = (
+  selection: SelectionTarget,
+  deps: SelectionHighlighterDeps
+): void => {
+  if (!selection) {
+    clearSelectionVisuals(deps);
+    return;
+  }
+
+  if (selection.type === 'workflow') {
+    highlightWorkflow(selection.workflowId, deps);
+  } else {
+    highlightNode(selection.nodeId, deps);
+  }
+};
+
+/**
  * Applies selection highlighting to a specific node.
  * Fades non-connected nodes and highlights the selection path.
  */
-export const applySelectionHighlight = (
+const highlightNode = (
   selectedId: string,
   deps: SelectionHighlighterDeps
 ): void => {
@@ -126,7 +146,11 @@ export const applySelectionHighlight = (
     node.setSelected(false);
   });
 
-  renderEdges(edgeLayer, dotLayer, edges, nodeMap, selectedId, verticallyConnected);
+  renderEdges(edgeLayer, dotLayer, edges, nodeMap, {
+    view: 'workflow',
+    selectedId,
+    highlightedIds: verticallyConnected,
+  });
   // Dim all workflow edges when a node is selected
   renderWorkflowEdges(workflowEdgeLayer, workflows, workflowNodeMap, '');
 };
@@ -134,7 +158,7 @@ export const applySelectionHighlight = (
 /**
  * Applies selection highlighting to a workflow node.
  */
-export const applyWorkflowSelectionHighlight = (
+const highlightWorkflow = (
   workflowId: string,
   deps: SelectionHighlighterDeps
 ): void => {
@@ -176,6 +200,10 @@ export const clearSelectionVisuals = (deps: SelectionHighlighterDeps): void => {
     node.setSelected(false);
   });
 
-  renderEdges(edgeLayer, dotLayer, edges, nodeMap, null, null);
+  renderEdges(edgeLayer, dotLayer, edges, nodeMap, {
+    view: 'workflow',
+    selectedId: null,
+    highlightedIds: null,
+  });
   renderWorkflowEdges(workflowEdgeLayer, workflows, workflowNodeMap, null);
 };

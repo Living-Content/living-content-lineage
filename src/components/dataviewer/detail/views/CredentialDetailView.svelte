@@ -22,10 +22,9 @@
   }
 
   $: issuer = signatureInfo?.issuer ?? content?.issuer ?? '-';
-  $: validityStatus = getValidityStatus();
   $: claims = content?.claims ? Object.entries(content.claims) : [];
 
-  function getValidityStatus(): string {
+  $: validityStatus = (() => {
     if (!content?.valid_from && !content?.valid_until) return 'Unknown';
     const now = new Date();
     if (content.valid_from) {
@@ -37,7 +36,7 @@
       if (until < now) return 'Expired';
     }
     return 'Valid';
-  }
+  })();
 </script>
 
 <div class="credential-detail-view">
@@ -66,7 +65,7 @@
 
   {#if claims.length > 0}
     <PropertyGroup title="Claims ({claims.length})" collapsed>
-      {#each claims as [key, value]}
+      {#each claims as [key, value] (key)}
         <PropertyRow label={key} value={String(value)} />
       {/each}
     </PropertyGroup>

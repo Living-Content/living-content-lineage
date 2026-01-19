@@ -65,7 +65,7 @@
 
   {#if searchResults.length > 0}
     <PropertyGroup title="Search Query" collapsible={false}>
-      {#each searchResults as result}
+      {#each searchResults as result, i (i)}
         {#if result.query_text}
           <p class="query-text">{result.query_text}</p>
         {/if}
@@ -78,7 +78,7 @@
 
   {#if gapsAddressed.length > 0}
     <PropertyGroup title="Gaps Addressed" collapsed>
-      {#each gapsAddressed as gap}
+      {#each gapsAddressed as gap, i (i)}
         <div class="gap-item">{gap}</div>
       {/each}
     </PropertyGroup>
@@ -87,7 +87,7 @@
   {#if chunks.length > 0}
     <PropertyGroup title="Retrieved Chunks ({chunks.length})" bind:collapsed={chunksCollapsed}>
       <div class="chunks-list">
-        {#each chunks as chunk, i}
+        {#each chunks as chunk, i (chunk.id ?? i)}
           <div class="chunk-item">
             <div class="chunk-header">
               <span class="chunk-index">#{i + 1}</span>

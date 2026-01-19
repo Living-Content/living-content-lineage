@@ -4,7 +4,7 @@ import type { ManifestAdapter } from './adapters/manifestAdapter.js';
 import { c2paAdapter } from './adapters/c2pa/c2paAdapter.js';
 import { eqtyAdapter } from './adapters/eqty/eqtyAdapter.js';
 import { customAdapter } from './adapters/custom/customAdapter.js';
-import { ManifestLoadError, type AssetLoadResult } from './errors.js';
+import type { AssetLoadResult } from './errors.js';
 
 const ADAPTERS: ManifestAdapter<unknown>[] = [
   c2paAdapter,

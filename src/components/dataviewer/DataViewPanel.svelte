@@ -1,18 +1,13 @@
 <script lang="ts">
-  // Data view panel with liquid blob background.
   import { onMount, tick } from 'svelte';
   import { clearSelection, selectedNode, selectedWorkflow } from '../../stores/lineageState.js';
   import { isDetailOpen, loadError, setDetailOpen, closeDetailPanel } from '../../stores/uiState.js';
   import { hasDetailContent } from '../../services/dataviewer/parsing/detailContent.js';
   import { createDragHandler } from '../../services/dataviewer/interaction/dragHandler.js';
   import { createAnimationOrchestrator } from '../../services/dataviewer/animation/animationOrchestrator.js';
-  import { MOBILE_BREAKPOINT } from '../../config/constants.js';
-  import ContextBadges from './detail/ContextBadges.svelte';
-  import MetricCard from './detail/MetricCard.svelte';
-  import CardGrid from './detail/CardGrid.svelte';
-  import SummaryView from './SummaryView.svelte';
+  import PanelHeader from './panel/PanelHeader.svelte';
+  import NodeContent from './panel/NodeContent.svelte';
   import WorkflowOverview from './WorkflowOverview.svelte';
-  import DetailView from './DetailView.svelte';
   import SignaturePanel from './SignaturePanel.svelte';
 
   let wrapperElement: HTMLElement;
@@ -23,8 +18,18 @@
   let wasHidden = true;
   let signatureExpanded = false;
 
-  // Create handlers
-  const dragHandler = createDragHandler(() => {});
+  let isDragging = false;
+  let panelX: number | null = null;
+  let panelY: number | null = null;
+
+  const dragHandler = createDragHandler({
+    onPositionChange: (x, y) => {
+      panelX = x;
+      panelY = y;
+    },
+    onDragStart: () => { isDragging = true; },
+    onDragEnd: () => { isDragging = false; },
+  });
 
   const animationOrchestrator = createAnimationOrchestrator(() => {
     if (!wrapperElement || !contentLayer || !scrollArea || !blobContainer) return null;
@@ -32,23 +37,8 @@
   });
 
   $: detailAvailable = $selectedNode ? hasDetailContent($selectedNode) : false;
-
-  // Badge data for header
-  $: nodePhase = $selectedNode?.phase;
-  $: nodeWorkflowId = $selectedNode?.workflowId;
-  $: nodeAssetType = $selectedNode?.assetType;
-  $: workflowLabel = $selectedWorkflow?.label;
   $: panelHidden = !$selectedNode && !$selectedWorkflow && !$loadError;
-  $: showCloseButton = $selectedNode || $selectedWorkflow;
-
-  // Shared header card data
-  $: titleDisplay = $selectedNode?.title ?? $selectedNode?.label ?? '';
-  $: descriptionDisplay = $selectedNode?.description ?? $selectedNode?.assetManifest?.content?.description ?? '';
-  $: tokens = $selectedNode?.tokens;
-  $: tokensDisplay = tokens ? (tokens.input + tokens.output).toLocaleString() : null;
-  $: durationDisplay = $selectedNode?.duration ?? null;
-  $: hasSecondaryMetric = (nodeAssetType === 'Model' && tokensDisplay) ||
-                          ((nodeAssetType === 'Code' || nodeAssetType === 'Action') && durationDisplay);
+  $: showCloseButton = !!$selectedNode || !!$selectedWorkflow;
 
   $: if (!panelHidden && wasHidden && wrapperElement) {
     handleEntrance();
@@ -69,24 +59,26 @@
     wrapperElement.style.left = '';
     wrapperElement.style.top = '';
     wrapperElement.style.transform = '';
-    dragHandler.state.panelX = null;
-    dragHandler.state.panelY = null;
+    panelX = null;
+    panelY = null;
   }
 
   async function openDetails(): Promise<void> {
     if (animationOrchestrator.isAnimating()) return;
 
-    showDetailContent = true;
-    setDetailOpen(true);
-    await animationOrchestrator.openDetails(resetPosition);
+    await animationOrchestrator.openDetails(() => {
+      showDetailContent = true;
+      setDetailOpen(true);
+    }, resetPosition);
   }
 
   async function closeDetails(): Promise<void> {
     if (animationOrchestrator.isAnimating()) return;
 
-    showDetailContent = false;
-    closeDetailPanel();
-    await animationOrchestrator.closeDetails(resetPosition);
+    await animationOrchestrator.closeDetails(() => {
+      showDetailContent = false;
+      closeDetailPanel();
+    }, resetPosition);
   }
 
   function handleClose(): void {
@@ -112,76 +104,41 @@
 
 <div
   bind:this={wrapperElement}
-  class={`liquid-wrapper${panelHidden ? ' hidden' : ''}${dragHandler.state.isDragging ? ' dragging' : ''}${dragHandler.state.panelX !== null ? ' dragged' : ''}${$isDetailOpen ? ' detail-open' : ''}`}
+  class="liquid-wrapper"
+  class:hidden={panelHidden}
+  class:dragging={isDragging}
+  class:dragged={panelX !== null || panelY !== null}
+  class:detail-open={$isDetailOpen}
 >
   <div class="shape-layer">
     <div class="blob-container" bind:this={blobContainer}></div>
   </div>
 
   <aside class="panel-content-layer" bind:this={contentLayer}>
-    <div class="panel-header" on:mousedown={handleStartDrag} role="presentation">
-      <div class="panel-header-content">
-        {#if $selectedNode}
-          <ContextBadges phase={nodePhase} workflowId={nodeWorkflowId} assetType={nodeAssetType} />
-        {:else if $selectedWorkflow}
-          <span class="panel-title">{workflowLabel}</span>
-        {:else}
-          <span class="panel-title">CONTEXT</span>
-        {/if}
-      </div>
-      {#if showCloseButton}
-        <button class="panel-close-btn" title="Close" on:click|stopPropagation={handleClose} on:mousedown|stopPropagation>
-          ×
-        </button>
-      {/if}
-    </div>
+    <PanelHeader
+      phase={$selectedNode?.phase}
+      workflowId={$selectedNode?.workflowId}
+      assetType={$selectedNode?.assetType}
+      workflowLabel={$selectedWorkflow?.label}
+      {showCloseButton}
+      isNodeSelected={!!$selectedNode}
+      isWorkflowSelected={!!$selectedWorkflow}
+      {isDragging}
+      onClose={handleClose}
+      onStartDrag={handleStartDrag}
+    />
 
     <div class="panel-scroll-area" bind:this={scrollArea}>
       <div class="panel-content">
         {#if $loadError}
           <p class="panel-placeholder">{$loadError}</p>
         {:else if $selectedNode}
-          <!-- Shared header for all node views -->
-          <div class="node-header">
-            <h2 class="node-title">{titleDisplay}</h2>
-            {#if descriptionDisplay}
-              <p class="node-description">{descriptionDisplay}</p>
-            {/if}
-          </div>
-
-          <!-- Metric cards grid -->
-          {#if hasSecondaryMetric}
-            <CardGrid>
-              {#if nodeAssetType === 'Model' && tokensDisplay}
-                <MetricCard
-                  value={tokensDisplay}
-                  label="Tokens"
-                  span={2}
-                />
-              {:else if (nodeAssetType === 'Code' || nodeAssetType === 'Action') && durationDisplay}
-                <MetricCard
-                  value={durationDisplay}
-                  label="Duration"
-                  span={2}
-                />
-              {/if}
-            </CardGrid>
-          {/if}
-
-          {#if showDetailContent && detailAvailable}
-            <DetailView node={$selectedNode} />
-          {:else}
-            <SummaryView node={$selectedNode} />
-            {#if detailAvailable}
-              <button
-                class="view-details-link"
-                disabled={animationOrchestrator.isAnimating()}
-                on:click={openDetails}
-              >
-                Details
-              </button>
-            {/if}
-          {/if}
+          <NodeContent
+            node={$selectedNode}
+            {showDetailContent}
+            {detailAvailable}
+            onOpenDetails={openDetails}
+          />
         {:else if $selectedWorkflow}
           <WorkflowOverview nodes={$selectedWorkflow.nodes} edges={$selectedWorkflow.edges} />
         {:else}
@@ -226,10 +183,6 @@
     height: calc(100vh - var(--header-height) - var(--panel-margin));
   }
 
-  .liquid-wrapper.detail-open .panel-header {
-    cursor: default;
-  }
-
   .liquid-wrapper.hidden {
     display: none;
   }
@@ -265,25 +218,8 @@
     overflow: hidden;
   }
 
-  .panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 16px 12px 16px;
-    flex-shrink: 0;
-    cursor: grab;
-    user-select: none;
-    gap: 12px;
-  }
-
-  .panel-header-content {
-    flex: 1;
-    display: flex;
-    align-items: center;
-  }
-
-  .liquid-wrapper.dragging .panel-header {
-    cursor: grabbing;
+  .liquid-wrapper.detail-open :global(.panel-header) {
+    cursor: default;
   }
 
   .liquid-wrapper.dragging {
@@ -313,47 +249,6 @@
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
   }
 
-  .panel-title {
-    font-size: 18px;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: var(--color-text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-  }
-
-  .panel-close-btn {
-    background: none;
-    border: none;
-    color: var(--color-text-light);
-    cursor: pointer;
-    font-size: 20px;
-    line-height: 1;
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    border-radius: var(--radius-full, 9999px);
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color 0.15s ease, opacity 0.15s ease;
-    opacity: 0.5;
-    outline: none;
-    -webkit-appearance: none;
-    appearance: none;
-  }
-
-  .panel-close-btn:hover,
-  .panel-close-btn:focus,
-  .panel-close-btn:active {
-    background: none;
-    color: var(--color-text-primary);
-    opacity: 1;
-    outline: none;
-    box-shadow: none;
-  }
-
   .panel-content {
     font-size: 13px;
     color: var(--color-text-secondary);
@@ -362,59 +257,9 @@
     gap: var(--space-md, 12px);
   }
 
-  .node-header {
-    margin-bottom: var(--space-xs, 4px);
-  }
-
-  .node-title {
-    font-size: var(--font-size-heading, 18px);
-    font-weight: var(--font-weight-semibold, 600);
-    letter-spacing: var(--letter-spacing-tight, -0.02em);
-    color: var(--color-text-primary);
-    margin: 0;
-    line-height: var(--line-height-snug, 1.3);
-  }
-
-  .node-description {
-    font-size: var(--font-size-small, 12px);
-    color: var(--color-text-secondary);
-    margin: var(--space-xs, 4px) 0 0 0;
-    line-height: 1.4;
-  }
-
   .panel-placeholder {
     color: var(--color-text-faint);
     font-style: italic;
-  }
-
-  .view-details-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-top: 20px;
-    padding: 0;
-    background: none;
-    border: none;
-    color: var(--color-text-muted);
-    font-size: 12px;
-    cursor: pointer;
-    transition: color 0.15s ease;
-  }
-
-  .view-details-link:hover {
-    color: var(--color-text-primary);
-  }
-
-  .view-details-link::after {
-    content: '\2194';
-    font-size: 14px;
-    transition: transform 0.15s ease;
-    display: inline-block;
-    transform: rotate(-45deg);
-  }
-
-  .view-details-link:hover::after {
-    transform: rotate(-45deg) scale(1.05);
   }
 
   @media (max-width: 900px) {
@@ -442,7 +287,7 @@
       max-height: calc(100vh - var(--header-height) - var(--panel-margin-mobile));
     }
 
-    .panel-header {
+    .liquid-wrapper :global(.panel-header) {
       cursor: default;
     }
   }

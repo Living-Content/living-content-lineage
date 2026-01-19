@@ -3,14 +3,13 @@
  * Consolidates reactive store subscriptions into a single module.
  */
 import { Container } from 'pixi.js';
-import { selectedNode, selectedWorkflow } from '../../../stores/lineageState.js';
+import { selection, type SelectionTarget } from '../../../stores/lineageState.js';
 import { isDetailOpen } from '../../../stores/uiState.js';
 import type { LineageEdgeData, Workflow } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import { renderEdges } from '../rendering/edgeRenderer.js';
 import {
   applySelectionHighlight,
-  applyWorkflowSelectionHighlight,
   clearSelectionVisuals,
   type SelectionHighlighterDeps,
   type VerticalAdjacencyMap,
@@ -30,8 +29,7 @@ export interface SubscriptionContext {
 }
 
 interface SelectionState {
-  selectedNodeId: string | null;
-  selectedWorkflowId: string | null;
+  currentSelection: SelectionTarget;
   detailPanelOpen: boolean;
 }
 
@@ -44,8 +42,7 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
   state: SelectionState;
 } {
   const state: SelectionState = {
-    selectedNodeId: null,
-    selectedWorkflowId: null,
+    currentSelection: null,
     detailPanelOpen: false,
   };
 
@@ -61,36 +58,39 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
     setNodeAlpha: ctx.setNodeAlpha,
   });
 
-  const unsubscribeNode = selectedNode.subscribe((node) => {
-    state.selectedNodeId = node?.id ?? null;
-    if (node) {
-      ctx.workflowNodeMap.forEach((n) => n.setSelected(false));
-      applySelectionHighlight(node.id, getHighlighterDeps());
-      if (state.detailPanelOpen) ctx.centerSelectedNode(node.id);
-    } else if (!state.selectedWorkflowId) {
-      clearSelectionVisuals(getHighlighterDeps());
-    }
-  });
+  const unsubscribeSelection = selection.subscribe((sel) => {
+    state.currentSelection = sel;
+    if (sel) {
+      applySelectionHighlight(sel, getHighlighterDeps());
 
-  const unsubscribeWorkflow = selectedWorkflow.subscribe((workflow) => {
-    state.selectedWorkflowId = workflow?.workflowId ?? null;
-    if (workflow) {
-      applyWorkflowSelectionHighlight(workflow.workflowId, getHighlighterDeps());
-      renderEdges(ctx.edgeLayer, ctx.dotLayer, ctx.edges, ctx.nodeMap, null, null);
-    } else if (!state.selectedNodeId) {
+      // When a node is selected and detail panel is open, center on it
+      if (sel.type === 'node' && state.detailPanelOpen) {
+        ctx.centerSelectedNode(sel.nodeId);
+      }
+
+      // When a workflow is selected, render edges with no node selection
+      if (sel.type === 'workflow') {
+        renderEdges(ctx.edgeLayer, ctx.dotLayer, ctx.edges, ctx.nodeMap, {
+          view: 'workflow',
+          selectedId: null,
+          highlightedIds: null,
+        });
+      }
+    } else {
       clearSelectionVisuals(getHighlighterDeps());
     }
   });
 
   const unsubscribeDetail = isDetailOpen.subscribe((open) => {
     state.detailPanelOpen = open;
-    if (open && state.selectedNodeId) ctx.centerSelectedNode(state.selectedNodeId);
+    if (open && state.currentSelection?.type === 'node') {
+      ctx.centerSelectedNode(state.currentSelection.nodeId);
+    }
   });
 
   return {
     unsubscribe: () => {
-      unsubscribeNode();
-      unsubscribeWorkflow();
+      unsubscribeSelection();
       unsubscribeDetail();
     },
     state,

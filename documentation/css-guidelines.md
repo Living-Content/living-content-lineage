@@ -90,12 +90,3 @@ src/components/
 └── ...
 ```
 
-## Migration Notes
-
-When moving styles from external CSS to Svelte components:
-
-1. Copy the relevant CSS rules to the component's `<style>` block
-2. Remove any selectors that targeted parent/ancestor elements (Svelte scopes to component)
-3. Replace hardcoded values with theme variables where applicable
-4. Test the component renders correctly
-5. Delete the external CSS file once all styles are migrated

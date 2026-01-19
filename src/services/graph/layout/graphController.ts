@@ -7,8 +7,7 @@ import { loadManifest } from '../../manifest/registry.js';
 import { ManifestLoadError, type ManifestErrorInfo } from '../../manifest/errors.js';
 import type { LineageGraph } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
-import { renderEdges } from '../rendering/edgeRenderer.js';
-import { renderWorkflowEdges } from '../rendering/workflowEdgeRenderer.js';
+import { renderEdges, renderWorkflowEdges } from '../rendering/edgeRenderer.js';
 import { createWorkflowLabels } from '../rendering/workflowLabelRenderer.js';
 import { createViewportState, createViewportHandlers } from '../interaction/viewport.js';
 import { createLODController, type LODLayers } from './lodController.js';
@@ -104,7 +103,7 @@ export async function createGraphController({
     graphScale,
     ticker: app.ticker,
     callbacks: { onHover: callbacks.onHover, onHoverEnd: callbacks.onHoverEnd },
-    getSelectedNodeId: () => subscriptions.state.selectedNodeId,
+    getSelectedNodeId: () => subscriptions.state.currentSelection?.type === 'node' ? subscriptions.state.currentSelection.nodeId : null,
     setNodeAlpha: animationController.setNodeAlpha,
   });
 
@@ -121,7 +120,7 @@ export async function createGraphController({
     callbacks: { onHover: callbacks.onHover, onHoverEnd: callbacks.onHoverEnd },
   });
 
-  renderWorkflowEdges(layers.workflowEdgeLayer, lineageData.workflows, workflowNodeMap);
+  renderWorkflowEdges(layers.workflowEdgeLayer, lineageData.workflows, workflowNodeMap, null);
 
   // Workflow labels
   const topNodeInfo = calculateTopNodeInfo(nodeMap);
@@ -139,9 +138,14 @@ export async function createGraphController({
   const cullAndRender = (): void => {
     if (lodController.state.isCollapsed) return;
     Culler.shared.cull(layers.nodeLayer, app.screen);
-    const nodeId = subscriptions.state.selectedNodeId;
+    const selection = subscriptions.state.currentSelection;
+    const nodeId = selection?.type === 'node' ? selection.nodeId : null;
     const connected = nodeId ? verticalAdjacency.getConnectedNodeIds(nodeId) : null;
-    renderEdges(layers.edgeLayer, layers.dotLayer, lineageData.edges, nodeMap, nodeId, connected);
+    renderEdges(layers.edgeLayer, layers.dotLayer, lineageData.edges, nodeMap, {
+      view: 'workflow',
+      selectedId: nodeId,
+      highlightedIds: connected,
+    });
   };
 
   // LOD controller
@@ -214,7 +218,7 @@ export async function createGraphController({
     centerSelectedNode: viewportManager.centerOnNode,
     isCollapsed: () => lodController.state.isCollapsed,
     getDetailPanelOpen: () => subscriptions.state.detailPanelOpen,
-    getSelectedNodeId: () => subscriptions.state.selectedNodeId,
+    getSelectedNodeId: () => subscriptions.state.currentSelection?.type === 'node' ? subscriptions.state.currentSelection.nodeId : null,
   });
 
   cullAndRender();

@@ -4,8 +4,7 @@
  */
 import {
   PANEL_MARGIN,
-  PANEL_MIN_EXPANDED_WIDTH,
-  PANEL_MIN_EXPANDED_HEIGHT,
+  HEADER_HEIGHT,
   MOBILE_BREAKPOINT,
 } from '../../../config/constants.js';
 
@@ -26,9 +25,15 @@ export interface DragHandler {
   destroy: () => void;
 }
 
-export function createDragHandler(
-  onPositionChange: (x: number, y: number) => void
-): DragHandler {
+export interface DragCallbacks {
+  onPositionChange: (x: number, y: number) => void;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
+}
+
+export function createDragHandler(callbacks: DragCallbacks): DragHandler {
+  const { onPositionChange, onDragStart, onDragEnd } = callbacks;
+
   const state: DragState = {
     isDragging: false,
     offsetX: 0,
@@ -47,6 +52,7 @@ export function createDragHandler(
     if (isMobile()) return;
     state.isDragging = true;
     currentElement = element;
+    onDragStart?.();
 
     const rect = element.getBoundingClientRect();
     state.offsetX = e.clientX - rect.left;
@@ -66,11 +72,14 @@ export function createDragHandler(
   function handleDrag(e: MouseEvent): void {
     if (!state.isDragging || !currentElement) return;
 
-    // Constrain so expanded panel has minimum usable size
+    // Constrain panel within viewport, below header
+    // Use actual panel width, not expanded width
+    const panelWidth = currentElement.offsetWidth;
+    const panelHeight = currentElement.offsetHeight;
     const minX = PANEL_MARGIN;
-    const maxX = window.innerWidth - PANEL_MIN_EXPANDED_WIDTH - PANEL_MARGIN;
-    const minY = PANEL_MARGIN;
-    const maxY = window.innerHeight - PANEL_MIN_EXPANDED_HEIGHT - PANEL_MARGIN;
+    const maxX = window.innerWidth - panelWidth - PANEL_MARGIN;
+    const minY = HEADER_HEIGHT;
+    const maxY = window.innerHeight - panelHeight - PANEL_MARGIN;
 
     const newX = Math.max(minX, Math.min(maxX, e.clientX - state.offsetX));
     const newY = Math.max(minY, Math.min(maxY, e.clientY - state.offsetY));
@@ -93,6 +102,7 @@ export function createDragHandler(
 
   function handleStopDrag(): void {
     state.isDragging = false;
+    onDragEnd?.();
     document.removeEventListener('mousemove', handleDrag);
     document.removeEventListener('mouseup', handleStopDrag);
   }

@@ -1,41 +1,55 @@
 /**
- * Edge rendering with solid colors matching source node phase.
+ * Unified edge rendering for both lineage and workflow views.
  * Edges have dots at both ends that sit on the edge of nodes.
  * Lines render behind nodes, dots render in front.
  */
 import { Container, Graphics } from 'pixi.js';
-import type { LineageGraph } from '../../../config/types.js';
+import type { LineageEdgeData, Workflow } from '../../../config/types.js';
 import type { GraphNode } from './nodeRenderer.js';
 import { getColor } from '../../../theme/theme.js';
 import {
   EDGE_WIDTH,
   EDGE_DOT_RADIUS,
+  WORKFLOW_EDGE_WIDTH,
+  WORKFLOW_DOT_RADIUS,
   FADED_NODE_ALPHA,
 } from '../../../config/constants.js';
 import { drawDot } from './rendererUtils.js';
 
+export type ViewMode = 'lineage' | 'workflow';
+
+export interface EdgeRenderOptions {
+  view: ViewMode;
+  selectedId: string | null;
+  highlightedIds: Set<string> | null;
+}
+
 /**
- * Render edges with solid colors matching source node.
- * Lines go in edgeLayer (behind nodes), dots go in dotLayer (in front).
+ * Unified edge rendering for both views.
+ * - 'workflow' view: renders edges between nodes within a workflow
+ * - 'lineage' view: renders edges between workflow nodes
  */
 export const renderEdges = (
   edgeLayer: Container,
-  dotLayer: Container,
-  edges: LineageGraph['edges'],
+  dotLayer: Container | null,
+  edges: LineageEdgeData[],
   nodeMap: Map<string, GraphNode>,
-  selectedNodeId: string | null = null,
-  highlightedNodeIds: Set<string> | null = null
+  options: EdgeRenderOptions
 ): void => {
   edgeLayer.removeChildren();
-  dotLayer.removeChildren();
+  dotLayer?.removeChildren();
+
+  const { view, selectedId, highlightedIds } = options;
+  const edgeWidth = view === 'lineage' ? WORKFLOW_EDGE_WIDTH : EDGE_WIDTH;
+  const dotRadius = view === 'lineage' ? WORKFLOW_DOT_RADIUS : EDGE_DOT_RADIUS;
 
   const lineGraphics = new Graphics();
   const fadedLineGraphics = new Graphics();
   const dotGraphics = new Graphics();
   const fadedDotGraphics = new Graphics();
 
-  const allHighlighted = highlightedNodeIds
-    ? new Set([selectedNodeId!, ...highlightedNodeIds])
+  const allHighlighted = highlightedIds && selectedId
+    ? new Set([selectedId, ...highlightedIds])
     : null;
 
   for (const edge of edges) {
@@ -45,7 +59,7 @@ export const renderEdges = (
 
     if (sourceNode.culled && targetNode.culled) continue;
 
-    const isHighlighted = selectedNodeId === null ||
+    const isHighlighted = selectedId === null ||
       (allHighlighted !== null &&
         allHighlighted.has(edge.source) &&
         allHighlighted.has(edge.target));
@@ -58,7 +72,6 @@ export const renderEdges = (
     const tx = targetNode.position.x;
     const ty = targetNode.position.y;
 
-    // Use node's actual dimensions (in graph space)
     const sourceHalfW = sourceNode.nodeWidth / 2;
     const sourceHalfH = sourceNode.nodeHeight / 2;
     const targetHalfW = targetNode.nodeWidth / 2;
@@ -79,7 +92,9 @@ export const renderEdges = (
         targetDotGraphics,
         sx, sy, tx, ty,
         sourceHalfW, targetHalfW,
-        color
+        color,
+        edgeWidth,
+        dotRadius
       );
     } else {
       renderVerticalEdge(
@@ -87,7 +102,9 @@ export const renderEdges = (
         targetDotGraphics,
         sx, sy, tx, ty,
         sourceHalfH, targetHalfH,
-        color
+        color,
+        edgeWidth,
+        dotRadius
       );
     }
   }
@@ -97,8 +114,58 @@ export const renderEdges = (
 
   edgeLayer.addChild(fadedLineGraphics);
   edgeLayer.addChild(lineGraphics);
-  dotLayer.addChild(fadedDotGraphics);
-  dotLayer.addChild(dotGraphics);
+
+  if (dotLayer) {
+    dotLayer.addChild(fadedDotGraphics);
+    dotLayer.addChild(dotGraphics);
+  }
+};
+
+/**
+ * Renders edges between workflow nodes in lineage view.
+ * Workflows are connected in order.
+ */
+export const renderWorkflowEdges = (
+  layer: Container,
+  workflows: Workflow[],
+  workflowNodeMap: Map<string, GraphNode>,
+  selectedWorkflowId: string | null
+): void => {
+  layer.removeChildren();
+  const graphics = new Graphics();
+  const workflowOrder = workflows.map((w) => w.id);
+
+  for (let i = 0; i < workflowOrder.length - 1; i++) {
+    const workflow = workflows[i];
+    const nextWorkflowId = workflowOrder[i + 1];
+    const sourceNode = workflowNodeMap.get(workflowOrder[i]);
+    const targetNode = workflowNodeMap.get(nextWorkflowId);
+    if (!sourceNode || !targetNode) continue;
+
+    const isConnected = selectedWorkflowId === null ||
+      workflow.id === selectedWorkflowId ||
+      nextWorkflowId === selectedWorkflowId;
+
+    const alpha = isConnected ? 1 : FADED_NODE_ALPHA;
+
+    const baseColor = workflow.phase
+      ? getColor(`--phase-${workflow.phase.toLowerCase()}`)
+      : getColor('--color-edge-default');
+
+    const startX = sourceNode.position.x + sourceNode.nodeWidth / 2;
+    const startY = sourceNode.position.y;
+    const endX = targetNode.position.x - targetNode.nodeWidth / 2;
+    const endY = targetNode.position.y;
+
+    graphics.moveTo(startX, startY);
+    graphics.lineTo(endX, endY);
+    graphics.stroke({ width: WORKFLOW_EDGE_WIDTH, color: baseColor, alpha });
+
+    drawDot(graphics, startX, startY, WORKFLOW_DOT_RADIUS, baseColor, alpha);
+    drawDot(graphics, endX, endY, WORKFLOW_DOT_RADIUS, baseColor, alpha);
+  }
+
+  layer.addChild(graphics);
 };
 
 const renderHorizontalEdge = (
@@ -107,7 +174,9 @@ const renderHorizontalEdge = (
   sx: number, sy: number,
   tx: number, ty: number,
   sourceHalfW: number, targetHalfW: number,
-  color: number
+  color: number,
+  edgeWidth: number,
+  dotRadius: number
 ): void => {
   const goingRight = tx > sx;
   const startX = goingRight ? sx + sourceHalfW : sx - sourceHalfW;
@@ -115,10 +184,10 @@ const renderHorizontalEdge = (
 
   lineGraphics.moveTo(startX, sy);
   lineGraphics.lineTo(endX, ty);
-  lineGraphics.stroke({ width: EDGE_WIDTH, color });
+  lineGraphics.stroke({ width: edgeWidth, color });
 
-  drawDot(dotGraphics, startX, sy, EDGE_DOT_RADIUS, color);
-  drawDot(dotGraphics, endX, ty, EDGE_DOT_RADIUS, color);
+  drawDot(dotGraphics, startX, sy, dotRadius, color);
+  drawDot(dotGraphics, endX, ty, dotRadius, color);
 };
 
 const renderVerticalEdge = (
@@ -127,7 +196,9 @@ const renderVerticalEdge = (
   sx: number, sy: number,
   tx: number, ty: number,
   sourceHalfH: number, targetHalfH: number,
-  color: number
+  color: number,
+  edgeWidth: number,
+  dotRadius: number
 ): void => {
   const goingDown = ty > sy;
   const startY = goingDown ? sy + sourceHalfH : sy - sourceHalfH;
@@ -135,8 +206,8 @@ const renderVerticalEdge = (
 
   lineGraphics.moveTo(sx, startY);
   lineGraphics.lineTo(tx, endY);
-  lineGraphics.stroke({ width: EDGE_WIDTH, color });
+  lineGraphics.stroke({ width: edgeWidth, color });
 
-  drawDot(dotGraphics, sx, startY, EDGE_DOT_RADIUS, color);
-  drawDot(dotGraphics, tx, endY, EDGE_DOT_RADIUS, color);
+  drawDot(dotGraphics, sx, startY, dotRadius, color);
+  drawDot(dotGraphics, tx, endY, dotRadius, color);
 };
