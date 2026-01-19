@@ -30,7 +30,7 @@
 </script>
 
 {#if impact || tokens}
-  <div class="sidebar-impact">
+  <div class="impact-section">
     <img
       src="/icons/leaf.svg"
       alt="Environmental impact"
@@ -46,7 +46,7 @@
 {/if}
 
 <style>
-  .sidebar-impact {
+  .impact-section {
     display: flex;
     align-items: center;
     gap: 12px;

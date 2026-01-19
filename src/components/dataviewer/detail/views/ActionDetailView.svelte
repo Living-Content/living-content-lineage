@@ -6,7 +6,7 @@
   import type { LineageNodeData } from '../../../../config/types.js';
   import { extractAssertionData, formatDuration } from '../../../../services/dataviewer/parsing/assertionParsers.js';
   import PropertyGroup from '../PropertyGroup.svelte';
-  import MetaRow from '../../MetaRow.svelte';
+  import PropertyRow from '../../PropertyRow.svelte';
 
   export let node: LineageNodeData;
 
@@ -25,16 +25,16 @@
 <div class="action-detail-view">
   {#if primaryAction}
     <PropertyGroup title="Action Info" collapsible={false}>
-      <MetaRow label="Action Type" value={actionType.replace('c2pa.', '')} />
-      <MetaRow label="Agent" value={agentName} />
+      <PropertyRow label="Action Type" value={actionType.replace('c2pa.', '')} />
+      <PropertyRow label="Agent" value={agentName} />
       {#if agentVersion}
-        <MetaRow label="Version" value={agentVersion} />
+        <PropertyRow label="Version" value={agentVersion} />
       {/if}
       {#if primaryAction.when}
-        <MetaRow label="When" value={primaryAction.when} />
+        <PropertyRow label="When" value={primaryAction.when} />
       {/if}
       {#if primaryAction.digitalSourceType}
-        <MetaRow label="Source Type" value={primaryAction.digitalSourceType.split('/').pop() ?? ''} />
+        <PropertyRow label="Source Type" value={primaryAction.digitalSourceType.split('/').pop() ?? ''} />
       {/if}
     </PropertyGroup>
   {/if}
@@ -43,9 +43,9 @@
     <PropertyGroup title="Additional Actions ({c2paActions.actions.length - 1})" collapsed>
       {#each c2paActions.actions.slice(1) as action, i}
         <div class="additional-action">
-          <MetaRow label="Action" value={action.action ?? '-'} />
+          <PropertyRow label="Action" value={action.action ?? '-'} />
           {#if action.softwareAgent}
-            <MetaRow
+            <PropertyRow
               label="Agent"
               value={`${action.softwareAgent.name ?? ''} ${action.softwareAgent.version ?? ''}`}
             />

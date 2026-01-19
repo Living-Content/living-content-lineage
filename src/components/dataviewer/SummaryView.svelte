@@ -8,7 +8,7 @@
     isSummaryValue
   } from '../../services/dataviewer/parsing/contentKeys.js';
   import ImpactSection from './ImpactSection.svelte';
-  import MetaRow from './MetaRow.svelte';
+  import PropertyRow from './PropertyRow.svelte';
 
   export let node: LineageNodeData;
 
@@ -29,18 +29,18 @@
 </script>
 
 <div class="summary-view">
-  <div class="sidebar-meta">
+  <div class="property-list">
   {#if node.duration}
-    <MetaRow label="duration" value={node.duration} />
+    <PropertyRow label="duration" value={node.duration} />
   {/if}
   {#each contentEntries as [key, value] (key)}
-    <MetaRow label={formatKeyLabel(key)} value={formatContentValue(value)} />
+    <PropertyRow label={formatKeyLabel(key)} value={formatContentValue(value)} />
   {/each}
   {#if codeData?.module}
-    <MetaRow label="module" value={codeData.module} />
+    <PropertyRow label="module" value={codeData.module} />
   {/if}
   {#if codeData?.function}
-    <MetaRow label="function" value={codeData.function} />
+    <PropertyRow label="function" value={codeData.function} />
   {/if}
   </div>
 
@@ -54,7 +54,7 @@
     gap: var(--space-md, 12px);
   }
 
-  .sidebar-meta {
+  .property-list {
     display: flex;
     flex-direction: column;
     gap: var(--space-xs, 4px);

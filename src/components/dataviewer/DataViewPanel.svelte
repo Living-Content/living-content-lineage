@@ -1,5 +1,5 @@
 <script lang="ts">
-  // Sidebar panel with liquid blob background.
+  // Data view panel with liquid blob background.
   import { onMount, tick } from 'svelte';
   import { clearSelection, selectedNode, selectedWorkflow } from '../../stores/lineageState.js';
   import { isDetailOpen, loadError, setDetailOpen, closeDetailPanel } from '../../stores/uiState.js';

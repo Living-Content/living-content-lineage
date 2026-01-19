@@ -3,13 +3,13 @@
   export let title: string;
 </script>
 
-<div class="sidebar-content-section">
+<div class="detail-section">
   <div class="content-header">{title}</div>
   <slot />
 </div>
 
 <style>
-  .sidebar-content-section {
+  .detail-section {
     margin-bottom: 16px;
   }
 

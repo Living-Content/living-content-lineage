@@ -6,7 +6,7 @@
   import type { LineageNodeData } from '../../../../config/types.js';
   import { extractAssertionData } from '../../../../services/dataviewer/parsing/assertionParsers.js';
   import PropertyGroup from '../PropertyGroup.svelte';
-  import MetaRow from '../../MetaRow.svelte';
+  import PropertyRow from '../../PropertyRow.svelte';
 
   export let node: LineageNodeData;
 
@@ -41,32 +41,32 @@
 
 <div class="media-detail-view">
   <PropertyGroup title="Media Info" collapsible={false}>
-    <MetaRow label="Format" value={format} />
-    <MetaRow label="Type" value={mediaType} />
-    <MetaRow label="Dimensions" value={dimensions} />
+    <PropertyRow label="Format" value={format} />
+    <PropertyRow label="Type" value={mediaType} />
+    <PropertyRow label="Dimensions" value={dimensions} />
     {#if content?.mime_type}
-      <MetaRow label="MIME Type" value={content.mime_type} />
+      <PropertyRow label="MIME Type" value={content.mime_type} />
     {/if}
     {#if content?.size}
-      <MetaRow label="File Size" value={fileSize} />
+      <PropertyRow label="File Size" value={fileSize} />
     {/if}
     {#if content?.duration}
-      <MetaRow label="Duration" value={`${content.duration}s`} />
+      <PropertyRow label="Duration" value={`${content.duration}s`} />
     {/if}
   </PropertyGroup>
 
   {#if c2paActions?.actions?.length}
     <PropertyGroup title="Actions" collapsed>
       {#each c2paActions.actions as action}
-        <MetaRow label="Action" value={action.action ?? '-'} />
+        <PropertyRow label="Action" value={action.action ?? '-'} />
         {#if action.softwareAgent}
-          <MetaRow
+          <PropertyRow
             label="Agent"
             value={`${action.softwareAgent.name ?? ''} ${action.softwareAgent.version ?? ''}`}
           />
         {/if}
         {#if action.when}
-          <MetaRow label="When" value={action.when} />
+          <PropertyRow label="When" value={action.when} />
         {/if}
       {/each}
     </PropertyGroup>

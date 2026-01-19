@@ -1,5 +1,5 @@
 /**
- * Formats ISO timestamps for concise sidebar display.
+ * Formats ISO timestamps for concise display.
  */
 export const formatTimestamp = (timestamp: string): string => {
   const date = new Date(timestamp);

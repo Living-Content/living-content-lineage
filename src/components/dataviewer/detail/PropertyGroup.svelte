@@ -1,7 +1,7 @@
 <script lang="ts">
   /**
    * Collapsible property section with title header.
-   * Contains child content (typically MetaRow elements).
+   * Contains child content (typically PropertyRow elements).
    */
   import Expandable from '../Expandable.svelte';
 

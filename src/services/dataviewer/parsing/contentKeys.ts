@@ -1,5 +1,5 @@
 /**
- * Utilities for formatting content field values in the sidebar.
+ * Utilities for formatting content field values in the info panel.
  */
 
 /**

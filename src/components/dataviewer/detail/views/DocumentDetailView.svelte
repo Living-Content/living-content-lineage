@@ -6,7 +6,7 @@
   import type { LineageNodeData } from '../../../../config/types.js';
   import { extractAssertionData } from '../../../../services/dataviewer/parsing/assertionParsers.js';
   import PropertyGroup from '../PropertyGroup.svelte';
-  import MetaRow from '../../MetaRow.svelte';
+  import PropertyRow from '../../PropertyRow.svelte';
   import MarkdownValue from '../MarkdownValue.svelte';
 
   export let node: LineageNodeData;
@@ -38,8 +38,8 @@
 
 <div class="document-detail-view">
   <PropertyGroup title="Document Stats" collapsible={false}>
-    <MetaRow label="Messages" value={String(messageCount)} />
-    <MetaRow label="Characters" value={charCount.toLocaleString()} />
+    <PropertyRow label="Messages" value={String(messageCount)} />
+    <PropertyRow label="Characters" value={charCount.toLocaleString()} />
   </PropertyGroup>
 
   {#if queryText}
@@ -59,22 +59,22 @@
   {#if lcoContent?.contentHash}
     <PropertyGroup title="Content Info" collapsed>
       {#if lcoContent.type}
-        <MetaRow label="Type" value={lcoContent.type} />
+        <PropertyRow label="Type" value={lcoContent.type} />
       {/if}
-      <MetaRow label="Hash" value={lcoContent.contentHash} />
+      <PropertyRow label="Hash" value={lcoContent.contentHash} />
     </PropertyGroup>
   {/if}
 
   {#if dateTime}
     <PropertyGroup title="Timestamp" collapsed>
       {#if dateTime.local}
-        <MetaRow label="Local" value={dateTime.local} />
+        <PropertyRow label="Local" value={dateTime.local} />
       {/if}
       {#if dateTime.timezone}
-        <MetaRow label="Timezone" value={dateTime.timezone} />
+        <PropertyRow label="Timezone" value={dateTime.timezone} />
       {/if}
       {#if dateTime.iso}
-        <MetaRow label="ISO" value={dateTime.iso} />
+        <PropertyRow label="ISO" value={dateTime.iso} />
       {/if}
     </PropertyGroup>
   {/if}

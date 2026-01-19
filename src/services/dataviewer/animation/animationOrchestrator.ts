@@ -1,6 +1,6 @@
 /**
  * Panel animation orchestrator.
- * Handles entrance, detail open/close animations for InfoPanel.
+ * Handles entrance, detail open/close animations for DataViewPanel.
  */
 import gsap from 'gsap';
 import { tick } from 'svelte';
@@ -53,46 +53,40 @@ export function createAnimationOrchestrator(
     if (animating) return;
     animating = true;
 
-    const elements = getElements();
-    if (!elements) {
+    try {
+      const elements = getElements();
+      if (!elements) return;
+
+      const { scrollArea } = elements;
+
+      // Fade out, reset position, fade in
+      await gsap.to(scrollArea, { opacity: 0, duration: 0.12, ease: 'power2.in' });
+      resetPosition();
+      await tick();
+      await gsap.to(scrollArea, { opacity: 1, duration: ANIMATION_TIMINGS.PANEL_DETAIL_DURATION, ease: 'power2.out' });
+    } finally {
       animating = false;
-      return;
     }
-
-    const { scrollArea } = elements;
-
-    // Fade out scroll content
-    await gsap.to(scrollArea, { opacity: 0, duration: 0.12, ease: 'power2.in' });
-
-    // Reset position (CSS handles sizing)
-    resetPosition();
-
-    await tick();
-    await gsap.to(scrollArea, { opacity: 1, duration: ANIMATION_TIMINGS.PANEL_DETAIL_DURATION, ease: 'power2.out' });
-    animating = false;
   }
 
   async function closeDetails(resetPosition: () => void): Promise<void> {
     if (animating) return;
     animating = true;
 
-    const elements = getElements();
-    if (!elements) {
+    try {
+      const elements = getElements();
+      if (!elements) return;
+
+      const { scrollArea } = elements;
+
+      // Fade out, reset position, fade in
+      await gsap.to(scrollArea, { opacity: 0, duration: 0.12, ease: 'power2.in' });
+      resetPosition();
+      await tick();
+      await gsap.to(scrollArea, { opacity: 1, duration: ANIMATION_TIMINGS.PANEL_DETAIL_DURATION, ease: 'power2.out' });
+    } finally {
       animating = false;
-      return;
     }
-
-    const { scrollArea } = elements;
-
-    // Fade out scroll content
-    await gsap.to(scrollArea, { opacity: 0, duration: 0.12, ease: 'power2.in' });
-
-    // Reset position (CSS handles sizing/centering)
-    resetPosition();
-
-    await tick();
-    await gsap.to(scrollArea, { opacity: 1, duration: ANIMATION_TIMINGS.PANEL_DETAIL_DURATION, ease: 'power2.out' });
-    animating = false;
   }
 
   function killAll(): void {

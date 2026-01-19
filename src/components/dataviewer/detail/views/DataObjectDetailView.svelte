@@ -5,7 +5,7 @@
    */
   import type { LineageNodeData } from '../../../../config/types.js';
   import PropertyGroup from '../PropertyGroup.svelte';
-  import MetaRow from '../../MetaRow.svelte';
+  import PropertyRow from '../../PropertyRow.svelte';
   import DetailValue from '../DetailValue.svelte';
   import {
     shouldDisplayKey,
@@ -31,8 +31,8 @@
 
 <div class="data-object-detail-view">
   <PropertyGroup title="Data Info" collapsible={false}>
-    <MetaRow label="Format" value={format.split('/').pop() ?? format} />
-    <MetaRow label="Fields" value={String(fieldCount)} />
+    <PropertyRow label="Format" value={format.split('/').pop() ?? format} />
+    <PropertyRow label="Fields" value={String(fieldCount)} />
   </PropertyGroup>
 
   {#if contentEntries.length > 0}

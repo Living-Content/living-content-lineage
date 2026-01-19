@@ -6,7 +6,7 @@
   import type { LineageNodeData } from '../../../../config/types.js';
   import { formatPercent, formatNumber } from '../../../../services/dataviewer/parsing/assertionParsers.js';
   import PropertyGroup from '../PropertyGroup.svelte';
-  import MetaRow from '../../MetaRow.svelte';
+  import PropertyRow from '../../PropertyRow.svelte';
 
   export let node: LineageNodeData;
 
@@ -58,9 +58,9 @@
 
 <div class="dataset-detail-view">
   <PropertyGroup title="Retrieval Stats" collapsible={false}>
-    <MetaRow label="Chunks Retrieved" value={String(chunksRetrieved)} />
-    <MetaRow label="Confidence" value={confidence} />
-    <MetaRow label="Avg Score" value={avgScore} />
+    <PropertyRow label="Chunks Retrieved" value={String(chunksRetrieved)} />
+    <PropertyRow label="Confidence" value={confidence} />
+    <PropertyRow label="Avg Score" value={avgScore} />
   </PropertyGroup>
 
   {#if searchResults.length > 0}
@@ -70,7 +70,7 @@
           <p class="query-text">{result.query_text}</p>
         {/if}
         {#if result.result_count !== undefined}
-          <MetaRow label="Results" value={String(result.result_count)} />
+          <PropertyRow label="Results" value={String(result.result_count)} />
         {/if}
       {/each}
     </PropertyGroup>

@@ -6,7 +6,7 @@
   import type { LineageNodeData } from '../../../../config/types.js';
   import { extractAssertionData } from '../../../../services/dataviewer/parsing/assertionParsers.js';
   import PropertyGroup from '../PropertyGroup.svelte';
-  import MetaRow from '../../MetaRow.svelte';
+  import PropertyRow from '../../PropertyRow.svelte';
 
   export let node: LineageNodeData;
 
@@ -26,18 +26,18 @@
 
 <div class="model-detail-view">
   <PropertyGroup title="Model Info" collapsible={false}>
-    <MetaRow label="Model ID" value={modelIdDisplay} />
-    <MetaRow label="Provider" value={providerDisplay} />
-    <MetaRow label="Computation" value={computationDisplay} />
+    <PropertyRow label="Model ID" value={modelIdDisplay} />
+    <PropertyRow label="Provider" value={providerDisplay} />
+    <PropertyRow label="Computation" value={computationDisplay} />
     {#if tokensDisplay}
-      <MetaRow label="Tokens" value={tokensDisplay} />
+      <PropertyRow label="Tokens" value={tokensDisplay} />
     {/if}
     {#if model?.parameters}
       {#if model.parameters.maxTokens}
-        <MetaRow label="Max Tokens" value={String(model.parameters.maxTokens)} />
+        <PropertyRow label="Max Tokens" value={String(model.parameters.maxTokens)} />
       {/if}
       {#if model.parameters.temperature !== undefined}
-        <MetaRow label="Temperature" value={String(model.parameters.temperature)} />
+        <PropertyRow label="Temperature" value={String(model.parameters.temperature)} />
       {/if}
     {/if}
   </PropertyGroup>
@@ -45,15 +45,15 @@
   {#if c2paActions?.actions?.length}
     <PropertyGroup title="Actions" collapsed>
       {#each c2paActions.actions as action}
-        <MetaRow label="Action" value={action.action ?? '-'} />
+        <PropertyRow label="Action" value={action.action ?? '-'} />
         {#if action.softwareAgent}
-          <MetaRow
+          <PropertyRow
             label="Agent"
             value={`${action.softwareAgent.name ?? ''} ${action.softwareAgent.version ?? ''}`}
           />
         {/if}
         {#if action.when}
-          <MetaRow label="When" value={action.when} />
+          <PropertyRow label="When" value={action.when} />
         {/if}
       {/each}
     </PropertyGroup>

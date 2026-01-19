@@ -28,7 +28,7 @@
   );
 </script>
 
-<div class="sidebar-type-badge">Workflow</div>
+<div class="type-badge">Workflow</div>
 <div class="workflow-summary">
   {nodes.length} node{nodes.length !== 1 ? 's' : ''}
 </div>
@@ -83,7 +83,7 @@
 {/if}
 
 <style>
-  .sidebar-type-badge {
+  .type-badge {
     display: inline-block;
     font-size: 10px;
     font-weight: 500;

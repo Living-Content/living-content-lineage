@@ -5,7 +5,7 @@
    */
   import type { LineageNodeData } from '../../../../config/types.js';
   import PropertyGroup from '../PropertyGroup.svelte';
-  import MetaRow from '../../MetaRow.svelte';
+  import PropertyRow from '../../PropertyRow.svelte';
 
   export let node: LineageNodeData;
 
@@ -19,18 +19,18 @@
 
 <div class="attestation-detail-view">
   <PropertyGroup title="Attestation Info" collapsible={false}>
-    <MetaRow label="Status" value={verificationStatus} />
-    <MetaRow label="Algorithm" value={algorithm} />
+    <PropertyRow label="Status" value={verificationStatus} />
+    <PropertyRow label="Algorithm" value={algorithm} />
   </PropertyGroup>
 
   {#if ingredients.length > 0}
     <PropertyGroup title="Attested Assets ({ingredients.length})" collapsed>
       {#each ingredients as ingredient}
         <div class="ingredient-item">
-          <MetaRow label="Title" value={ingredient.title} />
-          <MetaRow label="Relationship" value={ingredient.relationship} />
+          <PropertyRow label="Title" value={ingredient.title} />
+          <PropertyRow label="Relationship" value={ingredient.relationship} />
           {#if ingredient.format}
-            <MetaRow label="Format" value={ingredient.format} />
+            <PropertyRow label="Format" value={ingredient.format} />
           {/if}
         </div>
       {/each}

@@ -3,7 +3,7 @@
   import { isLoading } from './stores/uiState.js';
   import Header from './components/Header.svelte';
   import GraphView from './components/graph/GraphView.svelte';
-  import InfoPanel from './components/dataviewer/InfoPanel.svelte';
+  import DataViewPanel from './components/dataviewer/DataViewPanel.svelte';
   import LiquidFilter from './components/dataviewer/LiquidFilter.svelte';
 </script>
 
@@ -11,6 +11,6 @@
 
 <div class="app-shell" class:loading={$isLoading}>
   <Header />
-  <InfoPanel />
+  <DataViewPanel />
   <GraphView />
 </div>

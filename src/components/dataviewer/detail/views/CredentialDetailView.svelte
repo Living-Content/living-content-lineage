@@ -5,7 +5,7 @@
    */
   import type { LineageNodeData } from '../../../../config/types.js';
   import PropertyGroup from '../PropertyGroup.svelte';
-  import MetaRow from '../../MetaRow.svelte';
+  import PropertyRow from '../../PropertyRow.svelte';
 
   export let node: LineageNodeData;
 
@@ -42,24 +42,24 @@
 
 <div class="credential-detail-view">
   <PropertyGroup title="Credential Info" collapsible={false}>
-    <MetaRow label="Status" value={validityStatus} />
-    <MetaRow label="Issuer" value={issuer} />
+    <PropertyRow label="Status" value={validityStatus} />
+    <PropertyRow label="Issuer" value={issuer} />
     {#if signatureInfo}
-      <MetaRow label="Algorithm" value={signatureInfo.alg} />
-      <MetaRow label="Issued" value={signatureInfo.time} />
+      <PropertyRow label="Algorithm" value={signatureInfo.alg} />
+      <PropertyRow label="Issued" value={signatureInfo.time} />
     {/if}
     {#if content?.subject}
-      <MetaRow label="Subject" value={content.subject} />
+      <PropertyRow label="Subject" value={content.subject} />
     {/if}
   </PropertyGroup>
 
   {#if content?.valid_from || content?.valid_until}
     <PropertyGroup title="Validity Period" collapsed>
       {#if content.valid_from}
-        <MetaRow label="Valid From" value={content.valid_from} />
+        <PropertyRow label="Valid From" value={content.valid_from} />
       {/if}
       {#if content.valid_until}
-        <MetaRow label="Valid Until" value={content.valid_until} />
+        <PropertyRow label="Valid Until" value={content.valid_until} />
       {/if}
     </PropertyGroup>
   {/if}
@@ -67,7 +67,7 @@
   {#if claims.length > 0}
     <PropertyGroup title="Claims ({claims.length})" collapsed>
       {#each claims as [key, value]}
-        <MetaRow label={key} value={String(value)} />
+        <PropertyRow label={key} value={String(value)} />
       {/each}
     </PropertyGroup>
   {/if}

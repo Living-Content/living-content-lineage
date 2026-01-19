@@ -11,7 +11,7 @@
   } from '../../../../services/dataviewer/parsing/contentKeys.js';
   import PropertyGroup from '../PropertyGroup.svelte';
   import DetailValue from '../DetailValue.svelte';
-  import MetaRow from '../../MetaRow.svelte';
+  import PropertyRow from '../../PropertyRow.svelte';
 
   export let node: LineageNodeData;
 
@@ -75,13 +75,13 @@
   {#if assetManifest?.format || assetManifest?.instanceId || assetManifest?.claimGenerator}
     <PropertyGroup title="Manifest">
       {#if assetManifest.format}
-        <MetaRow label="Format" value={assetManifest.format} />
+        <PropertyRow label="Format" value={assetManifest.format} />
       {/if}
       {#if assetManifest.instanceId}
-        <MetaRow label="Instance ID" value={assetManifest.instanceId} />
+        <PropertyRow label="Instance ID" value={assetManifest.instanceId} />
       {/if}
       {#if assetManifest.claimGenerator}
-        <MetaRow label="Generator" value={assetManifest.claimGenerator} />
+        <PropertyRow label="Generator" value={assetManifest.claimGenerator} />
       {/if}
     </PropertyGroup>
   {/if}

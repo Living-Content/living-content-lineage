@@ -9,7 +9,7 @@
     formatDuration,
   } from '../../../../services/dataviewer/parsing/assertionParsers.js';
   import PropertyGroup from '../PropertyGroup.svelte';
-  import MetaRow from '../../MetaRow.svelte';
+  import PropertyRow from '../../PropertyRow.svelte';
 
   export let node: LineageNodeData;
 
@@ -29,24 +29,24 @@
 
 <div class="code-detail-view">
   <PropertyGroup title="Code Info" collapsible={false}>
-    <MetaRow label="Function" value={functionDisplay} />
-    <MetaRow label="Module" value={moduleDisplay} />
-    <MetaRow label="Computation" value={computationDisplay} />
+    <PropertyRow label="Function" value={functionDisplay} />
+    <PropertyRow label="Module" value={moduleDisplay} />
+    <PropertyRow label="Computation" value={computationDisplay} />
     {#if durationDisplay && durationDisplay !== '-'}
-      <MetaRow label="Duration" value={durationDisplay} />
+      <PropertyRow label="Duration" value={durationDisplay} />
     {/if}
     {#if code?.hash}
-      <MetaRow label="Hash" value={code.hash} />
+      <PropertyRow label="Hash" value={code.hash} />
     {/if}
   </PropertyGroup>
 
   {#if execution}
     <PropertyGroup title="Execution Flow" collapsed>
       {#if execution.previousFunction}
-        <MetaRow label="Previous" value={execution.previousFunction} />
+        <PropertyRow label="Previous" value={execution.previousFunction} />
       {/if}
       {#if execution.nextFunction}
-        <MetaRow label="Next" value={execution.nextFunction} />
+        <PropertyRow label="Next" value={execution.nextFunction} />
       {/if}
     </PropertyGroup>
   {/if}
