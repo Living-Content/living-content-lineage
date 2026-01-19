@@ -1,10 +1,10 @@
 export type ManifestType = "c2pa" | "eqty" | "custom";
 
 /**
- * High-level workflow phase grouping related stage types.
- * Phases represent logical workflow segments from input to output.
+ * High-level phase categorizing groups of workflows.
+ * Phases represent logical pipeline segments from input to output.
  */
-export type WorkflowPhase =
+export type Phase =
   | "Acquisition"
   | "Preparation"
   | "Retrieval"
@@ -13,10 +13,10 @@ export type WorkflowPhase =
   | "Persistence";
 
 /**
- * Specific workflow stage operation type.
- * Each stage type belongs to a single phase.
+ * Specific workflow operation type.
+ * Each phase type belongs to a single phase.
  */
-export type WorkflowStageType =
+export type PhaseType =
   // Acquisition - Getting input data into the pipeline
   | "ingest"
   // Preparation - Selecting, transforming, validating inputs
@@ -31,16 +31,6 @@ export type WorkflowStageType =
   // Persistence - Storing/publishing results
   | "store"     // internal persistence
   | "publish";  // external distribution
-
-/**
- * A workflow stage definition.
- */
-export interface WorkflowStage {
-  id: string;
-  type: WorkflowStageType;
-  phase: WorkflowPhase;
-  label: string;
-}
 
 /**
  * High-level category grouping related asset types.
@@ -152,7 +142,7 @@ export interface LineageNodeData {
   assetType?: AssetType;
   shape: NodeShape;
   workflowId?: string;
-  phase?: WorkflowPhase;
+  phase?: Phase;
   manifest?: LineageManifestSummary;
   assetManifest?: AssetManifest;
   description?: string;
@@ -181,7 +171,7 @@ export interface LineageEdgeData {
 export interface Workflow {
   id: string;
   label: string;
-  phase?: WorkflowPhase;
+  phase?: Phase;
   xStart: number;
   xEnd: number;
 }
@@ -217,10 +207,10 @@ export const assetTypeToNodeType = (assetType: AssetType): NodeType => {
 };
 
 /**
- * Maps a workflow stage type to its workflow phase.
+ * Maps a phase type to its parent phase.
  */
-export const workflowStageTypeToPhase = (stageType: WorkflowStageType): WorkflowPhase => {
-  switch (stageType) {
+export const phaseTypeToPhase = (phaseType: PhaseType): Phase => {
+  switch (phaseType) {
     case "ingest":
       return "Acquisition";
     case "select":

@@ -13,9 +13,9 @@ flow and transformations.
 **Features:**
 
 - **Node types** — Data, Process, Attestation, with visual distinction by color
-- **Stage grouping** — Nodes organized into pipeline stages (Consume, Retrieve, Generate, etc.)
+- **Hierarchical organization** — Lineage → Phases → Workflows → Nodes
 - **C2PA metadata** — Nodes carry manifest data including signatures and assertions
-- **Level-of-detail** — Zoom out to see collapsed stage view, zoom in for full detail
+- **Level-of-detail** — Zoom out to see collapsed workflow view, zoom in for full detail
 - **Environmental impact** — Displays CO2 and energy metrics when available
 - **Attestation edges** — Green "gate" connectors show cryptographic verification
 
@@ -104,13 +104,13 @@ src/
 
 The visualization consumes manifest JSON files with:
 
-- **stages** — Pipeline phases with position bounds
+- **workflows** — Collections of nodes within a phase, each with a PhaseType
 - **assets** — Data nodes (documents, models, code)
 - **computations** — Processing steps with inputs/outputs
 - **attestations** — Cryptographic verification records
 - **manifests** — C2PA metadata (signatures, assertions)
 
-See `public/data/manifest.json` for an example.
+See `public/data/manifest.json` for an example and `documentation/lineage-hierarchy.md` for the complete type hierarchy.
 
 ## License
 

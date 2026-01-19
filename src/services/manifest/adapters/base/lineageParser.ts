@@ -5,7 +5,7 @@ import type {
   LineageGraph,
   LineageManifestSummary,
   LineageNodeData,
-  WorkflowPhase,
+  Phase,
 } from '../../../../config/types.js';
 import { isRecord } from '../../../../config/utils.js';
 import type { LineageManifest, LineageManifestRecord } from './lineageTypes.js';
@@ -59,10 +59,10 @@ export const buildLineageGraph = (
   const nodes: LineageNodeData[] = [];
 
   // Build workflow-to-phase mapping
-  const workflowPhaseMap = new Map<string, WorkflowPhase>();
-  manifest.stages.forEach((stage) => {
-    if (stage.phase) {
-      workflowPhaseMap.set(stage.id, stage.phase as WorkflowPhase);
+  const workflowPhaseMap = new Map<string, Phase>();
+  manifest.workflows.forEach((workflow) => {
+    if (workflow.phase) {
+      workflowPhaseMap.set(workflow.id, workflow.phase as Phase);
     }
   });
 

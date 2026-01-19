@@ -4,13 +4,13 @@
    * Shows a value with label, optional description, unit, and phase-based color accent.
    * Supports column spanning and size variants for grid layouts.
    */
-  import type { WorkflowPhase } from '../../../config/types.js';
+  import type { Phase } from '../../../config/types.js';
 
   export let value: string | number;
   export let label: string;
   export let description: string = '';
   export let unit: string = '';
-  export let phase: WorkflowPhase | undefined = undefined;
+  export let phase: Phase | undefined = undefined;
   /** Number of grid columns to span (1-4) */
   export let span: 1 | 2 | 3 | 4 = 1;
   /** Size variant: compact for dense layouts, default for standard */

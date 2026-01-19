@@ -72,11 +72,6 @@
     color: var(--color-text-light);
   }
 
-  .signature-badges {
-    display: flex;
-    gap: var(--space-xs, 4px);
-  }
-
   .signature-badge {
     padding: 2px 6px;
     font-size: var(--font-size-tiny, 10px);

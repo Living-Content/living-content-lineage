@@ -4,7 +4,7 @@
  * Each label has a dotted vertical line extending down toward the nodes.
  */
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
-import type { Workflow, WorkflowPhase } from '../../../config/types.js';
+import type { Workflow, Phase } from '../../../config/types.js';
 import type { ViewportState } from '../interaction/viewport.js';
 import type { GraphNode } from './nodeRenderer.js';
 import { getColor, getCssVar } from '../../../theme/theme.js';
@@ -17,7 +17,7 @@ import {
 const DOT_SIZE = 2;
 const DOT_GAP = 4;
 
-const getWorkflowColor = (phase?: WorkflowPhase): number => {
+const getWorkflowColor = (phase?: Phase): number => {
   if (!phase) return getColor('--color-edge-default');
   return getColor(`--phase-${phase.toLowerCase()}`);
 };

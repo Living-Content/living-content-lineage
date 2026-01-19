@@ -1,4 +1,4 @@
-import type { AssetType, NodeType, WorkflowPhase } from '../config/types.js';
+import type { AssetType, NodeType, Phase } from '../config/types.js';
 
 export function getCssVar(name: string, fallback?: string): string {
   if (typeof window === 'undefined') {
@@ -59,7 +59,7 @@ export const ASSET_TYPE_ICON_PATHS: Record<AssetType, string> = {
   Credential: '/icons/assets/credential.svg',
 };
 
-export const PHASE_ICON_PATHS: Record<WorkflowPhase, string> = {
+export const PHASE_ICON_PATHS: Record<Phase, string> = {
   Acquisition: '/icons/phases/acquisition.svg',
   Preparation: '/icons/phases/preparation.svg',
   Retrieval: '/icons/phases/retrieval.svg',
@@ -87,20 +87,20 @@ export function getColor(cssVarName: string): number {
   return colorStringToValue(getCssVar(cssVarName));
 }
 
-export const PHASE_COLORS: Record<WorkflowPhase, string> = {
+export const PHASE_COLORS: Record<Phase, string> = {
   get Acquisition() { return getCssVar('--phase-acquisition'); },
   get Preparation() { return getCssVar('--phase-preparation'); },
   get Retrieval() { return getCssVar('--phase-retrieval'); },
   get Reasoning() { return getCssVar('--phase-reasoning'); },
   get Generation() { return getCssVar('--phase-generation'); },
   get Persistence() { return getCssVar('--phase-persistence'); },
-} as Record<WorkflowPhase, string>;
+} as Record<Phase, string>;
 
 /**
  * Get the hex color string for a workflow phase.
  * Returns a fallback gray if phase is undefined.
  */
-export function getPhaseColorHex(phase?: WorkflowPhase): string {
+export function getPhaseColorHex(phase?: Phase): string {
   if (!phase) return '#666666';
   return PHASE_COLORS[phase] ?? '#666666';
 }

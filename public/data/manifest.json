@@ -38,8 +38,8 @@
     }
   },
 
-  "stages": [
-    { "id": "consume", "label": "Consume", "type": "consume", "phase": "Acquisition" },
+  "workflows": [
+    { "id": "ingest", "label": "Ingest", "type": "ingest", "phase": "Acquisition" },
     { "id": "select", "label": "Select", "type": "select", "phase": "Preparation" },
     { "id": "retrieve", "label": "Retrieve", "type": "retrieve", "phase": "Retrieval" },
     { "id": "reflect", "label": "Reflect", "type": "reflect", "phase": "Reasoning" },
@@ -47,7 +47,7 @@
     { "id": "search", "label": "Search", "type": "search", "phase": "Retrieval" },
     { "id": "evaluate", "label": "Evaluate", "type": "evaluate", "phase": "Reasoning" },
     { "id": "generate", "label": "Generate", "type": "generate", "phase": "Generation" },
-    { "id": "save", "label": "Save", "type": "save", "phase": "Persistence" }
+    { "id": "store", "label": "Store", "type": "store", "phase": "Persistence" }
   ],
 
   "computations": [
@@ -55,7 +55,7 @@
       "id": "comp-consume-query",
       "label": "Consume",
       "title": "Query Validator",
-      "stage": "consume",
+      "workflowId": "ingest",
       "description": "Receives and validates the user's question, preparing it for the AI pipeline.",
       "duration": "21ms",
       "inputs": ["data-user-query"],
@@ -65,7 +65,7 @@
       "id": "comp-select-tool",
       "label": "Select",
       "title": "Tool Selector",
-      "stage": "select",
+      "workflowId": "select",
       "description": "Uses AI to analyze the question and pick the right tool to answer it.",
       "duration": "1.8s",
       "inputs": ["data-consumed-query", "model-select-tool", "code-select-tool"],
@@ -75,7 +75,7 @@
       "id": "comp-retrieve-history",
       "label": "Retrieve",
       "title": "History Retriever",
-      "stage": "retrieve",
+      "workflowId": "retrieve",
       "description": "Looks up previous messages in this conversation for context.",
       "duration": "357ms",
       "inputs": ["data-selected-tool", "code-retrieve-history"],
@@ -85,7 +85,7 @@
       "id": "comp-reflect",
       "label": "Reflect",
       "title": "Intent Analyzer",
-      "stage": "reflect",
+      "workflowId": "reflect",
       "description": "Analyzes what the user really wants to know beyond the literal question.",
       "duration": "1.2s",
       "inputs": ["data-retrieved-history", "model-reflect", "code-reflect"],
@@ -95,7 +95,7 @@
       "id": "comp-plan",
       "label": "Plan",
       "title": "Strategy Planner",
-      "stage": "plan",
+      "workflowId": "plan",
       "description": "Creates a strategy for finding the best information to answer the question.",
       "duration": "800ms",
       "inputs": ["data-reflection", "model-plan", "code-plan"],
@@ -105,7 +105,7 @@
       "id": "comp-retrieve",
       "label": "Search",
       "title": "Knowledge Retriever",
-      "stage": "search",
+      "workflowId": "search",
       "description": "Searches the knowledge base to find relevant documents and information.",
       "duration": "2.1s",
       "inputs": ["data-plan", "code-retrieve"],
@@ -115,7 +115,7 @@
       "id": "comp-evaluate",
       "label": "Evaluate",
       "title": "Relevance Evaluator",
-      "stage": "evaluate",
+      "workflowId": "evaluate",
       "description": "Uses AI to score and rank retrieved documents by relevance.",
       "duration": "1.5s",
       "inputs": ["data-retrieved-docs", "model-evaluate", "code-evaluate"],
@@ -125,7 +125,7 @@
       "id": "comp-generate-response",
       "label": "Generate",
       "title": "Response Generator",
-      "stage": "generate",
+      "workflowId": "generate",
       "description": "Uses Claude to synthesize the information into a helpful answer.",
       "duration": "12s",
       "inputs": ["data-evaluation", "model-generate-response", "code-generate-response"],
@@ -135,7 +135,7 @@
       "id": "comp-save-response",
       "label": "Save",
       "title": "Response Archiver",
-      "stage": "save",
+      "workflowId": "store",
       "description": "Saves the response and records its complete provenance chain.",
       "duration": "1ms",
       "inputs": ["data-generated-response", "code-save-response"],
@@ -330,7 +330,7 @@
     {
       "id": "attest-generate",
       "label": "Attestation",
-      "stage": "generate",
+      "workflowId": "generate",
       "verifies": ["data-generated-response"],
       "description": "Cryptographic proof that this response was generated in a secure, tamper-proof environment."
     }

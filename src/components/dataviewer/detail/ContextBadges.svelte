@@ -3,10 +3,10 @@
    * Displays hierarchical context badges: Phase > Workflow > Asset Type.
    * Each badge is color-coded based on the workflow phase.
    */
-  import type { WorkflowPhase, AssetType } from '../../../config/types.js';
+  import type { Phase, AssetType } from '../../../config/types.js';
   import { formatAssetTypeLabel } from '../../../config/labels.js';
 
-  export let phase: WorkflowPhase | undefined = undefined;
+  export let phase: Phase | undefined = undefined;
   export let workflowId: string | undefined = undefined;
   export let assetType: AssetType | undefined = undefined;
 

@@ -1,8 +1,8 @@
 /**
- * A workflow stage as defined in the manifest.
- * Stages represent processing steps in the workflow pipeline.
+ * Workflow definition in the lineage manifest.
+ * Workflows group related nodes within a phase.
  */
-export interface LineageStage {
+export interface LineageWorkflow {
   id: string;
   label: string;
   type?: string;
@@ -13,7 +13,7 @@ export interface LineageComputation {
   id: string;
   label: string;
   title?: string;
-  stage: string;
+  workflowId: string;
   description?: string;
   duration?: string;
   inputs: string[];
@@ -34,7 +34,7 @@ export interface LineageAttestation {
   id: string;
   label: string;
   title?: string;
-  stage: string;
+  workflowId: string;
   verifies: string[];
   description?: string;
 }
@@ -60,7 +60,7 @@ export interface LineageManifest {
   lineage_id: string;
   active_manifest: string;
   manifests: Record<string, LineageManifestRecord>;
-  stages: LineageStage[];
+  workflows: LineageWorkflow[];
   computations: LineageComputation[];
   assets: Asset[];
   attestations: LineageAttestation[];
@@ -76,7 +76,7 @@ export function isLineageManifest(raw: unknown): raw is LineageManifest {
   if (typeof raw.lineage_id !== 'string') return false;
   if (typeof raw.active_manifest !== 'string') return false;
   if (!isRecord(raw.manifests)) return false;
-  if (!Array.isArray(raw.stages)) return false;
+  if (!Array.isArray(raw.workflows)) return false;
   if (!Array.isArray(raw.computations)) return false;
   if (!Array.isArray(raw.assets)) return false;
   if (!Array.isArray(raw.attestations)) return false;

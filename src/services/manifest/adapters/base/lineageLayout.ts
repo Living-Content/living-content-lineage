@@ -1,4 +1,4 @@
-import type { Workflow, WorkflowPhase } from '../../../../config/types.js';
+import type { Workflow, Phase } from '../../../../config/types.js';
 import type { LineageManifest } from './lineageTypes.js';
 
 export interface LayoutResult {
@@ -52,7 +52,7 @@ export const computeLayout = (manifest: LineageManifest): LayoutResult => {
         positions.set(inputId, {
           x: currentX,
           y: startY + idx * VERTICAL_GAP,
-          workflowId: comp.stage,
+          workflowId: comp.workflowId,
         });
         placedAssets.add(inputId);
       });
@@ -63,7 +63,7 @@ export const computeLayout = (manifest: LineageManifest): LayoutResult => {
     positions.set(comp.id, {
       x: currentX,
       y: 0.5,
-      workflowId: comp.stage,
+      workflowId: comp.workflowId,
     });
 
     // Place auxiliary inputs below
@@ -72,7 +72,7 @@ export const computeLayout = (manifest: LineageManifest): LayoutResult => {
         positions.set(inputId, {
           x: currentX,
           y: 0.5 + VERTICAL_GAP + idx * VERTICAL_GAP,
-          workflowId: comp.stage,
+          workflowId: comp.workflowId,
         });
         placedAssets.add(inputId);
       });
@@ -90,7 +90,7 @@ export const computeLayout = (manifest: LineageManifest): LayoutResult => {
         positions.set(outputId, {
           x: currentX,
           y: startY + idx * VERTICAL_GAP,
-          workflowId: comp.stage,
+          workflowId: comp.workflowId,
         });
         placedAssets.add(outputId);
       });
@@ -106,7 +106,7 @@ export const computeLayout = (manifest: LineageManifest): LayoutResult => {
       positions.set(attest.id, {
         x: verifiedPos.x,
         y: verifiedPos.y - VERTICAL_GAP,
-        workflowId: attest.stage,
+        workflowId: attest.workflowId,
       });
     }
   });
@@ -126,13 +126,13 @@ export const computeLayout = (manifest: LineageManifest): LayoutResult => {
   });
 
   const padding = 0.04;
-  const workflows: Workflow[] = manifest.stages.map((stage) => {
-    const minX = workflowMinX.get(stage.id) ?? 0;
-    const maxX = workflowMaxX.get(stage.id) ?? 0;
+  const workflows: Workflow[] = manifest.workflows.map((workflow) => {
+    const minX = workflowMinX.get(workflow.id) ?? 0;
+    const maxX = workflowMaxX.get(workflow.id) ?? 0;
     return {
-      id: stage.id,
-      label: stage.label,
-      phase: stage.phase as WorkflowPhase | undefined,
+      id: workflow.id,
+      label: workflow.label,
+      phase: workflow.phase as Phase | undefined,
       xStart: minX - padding,
       xEnd: maxX + padding,
     };
