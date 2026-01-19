@@ -7,15 +7,15 @@ import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import type { Workflow, Phase } from '../../../config/types.js';
 import type { ViewportState } from '../interaction/viewport.js';
 import type { GraphNode } from './nodeRenderer.js';
-import { getColor, getCssVar } from '../../../theme/theme.js';
+import { getCssVarColorHex, getCssVar, getCssVarInt, getCssVarFloat, type CssVar } from '../../../themes/index.js';
 
 
 /**
  * Gets the color for a workflow based on its phase.
  */
 const getWorkflowColor = (phase?: Phase): number => {
-  if (!phase) return getColor('--color-edge-default');
-  return getColor(`--phase-${phase.toLowerCase()}`);
+  if (!phase) return getCssVarColorHex('--color-edge-default');
+  return getCssVarColorHex(`--phase-${phase.toLowerCase()}` as CssVar);
 };
 
 /**
@@ -24,10 +24,10 @@ const getWorkflowColor = (phase?: Phase): number => {
 const createLabelStyle = (color: number): TextStyle => {
   return new TextStyle({
     fontFamily: getCssVar('--font-sans'),
-    fontSize: parseInt(getCssVar('--workflow-label-font-size')),
+    fontSize: getCssVarInt('--workflow-label-font-size'),
     fontWeight: '600',
     fill: color,
-    letterSpacing: parseFloat(getCssVar('--workflow-label-letter-spacing')),
+    letterSpacing: getCssVarFloat('--workflow-label-letter-spacing'),
   });
 };
 
@@ -63,7 +63,7 @@ export const createWorkflowLabelEntry = (
 
   const label = new Text({ text: workflow.label, style: createLabelStyle(color) });
   label.anchor.set(0.5, 0);
-  label.position.y = parseInt(getCssVar('--workflow-label-top-padding'));
+  label.position.y = getCssVarInt('--workflow-label-top-padding');
 
   const line = new Graphics();
 
@@ -111,15 +111,15 @@ const updateLabelEntryPosition = (
   entry.line.clear();
   if (globalTopY === Infinity) return;
 
-  const startY = topPadding + parseInt(getCssVar('--workflow-label-line-start'));
+  const startY = topPadding + getCssVarInt('--workflow-label-line-start');
   const endY = globalTopY;
   if (endY <= startY) return;
 
   const fadeDistance = (endY - startY) * 0.6;
   const fadeStartY = startY + fadeDistance;
 
-  const dotSize = parseInt(getCssVar('--workflow-label-dot-size'));
-  const dotGap = parseInt(getCssVar('--workflow-label-dot-gap'));
+  const dotSize = getCssVarInt('--workflow-label-dot-size');
+  const dotGap = getCssVarInt('--workflow-label-dot-gap');
 
   let currentY = startY;
   while (currentY < endY) {
@@ -144,7 +144,7 @@ export function createWorkflowLabels(
   topNodeInfo: TopNodeInfo | null
 ): WorkflowLabels {
   const container = new Container();
-  const topPadding = parseInt(getCssVar('--workflow-label-top-padding'));
+  const topPadding = getCssVarInt('--workflow-label-top-padding');
 
   // Create and attach entries
   const entries = createLabelEntries(workflows, workflowNodeMap);

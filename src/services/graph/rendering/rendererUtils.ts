@@ -2,7 +2,7 @@
  * Shared utilities for graph rendering.
  */
 import { Graphics } from 'pixi.js';
-import { getColor } from '../../../theme/theme.js';
+import { getCssVarColorHex } from '../../../themes/index.js';
 
 /**
  * Draws a dot with fill and stroke at the specified position.
@@ -18,7 +18,7 @@ export const drawDot = (
   graphics.circle(x, y, radius);
   graphics.fill({ color, alpha });
   graphics.circle(x, y, radius);
-  graphics.stroke({ width: 1, color: getColor('--color-edge-stroke'), alpha });
+  graphics.stroke({ width: 1, color: getCssVarColorHex('--color-edge-stroke'), alpha });
 };
 
 /**

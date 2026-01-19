@@ -1,7 +1,7 @@
 /**
  * Text measurement utilities for node layout.
  */
-import { getCssVar } from '../../../theme/theme.js';
+import { getCssVar } from '../../../themes/index.js';
 import type { NodeRenderOptions } from './nodeRenderer.js';
 
 // Base dimensions (will be scaled)

@@ -2,7 +2,7 @@
  * Panel drag handler for repositioning the info panel.
  * Extracts drag logic from InfoPanel.svelte for better modularity.
  */
-import { getCssVar } from '../../../theme/theme.js';
+import { getCssVarInt } from '../../../themes/index.js';
 
 export interface DragState {
   isDragging: boolean;
@@ -41,7 +41,7 @@ export function createDragHandler(callbacks: DragCallbacks): DragHandler {
   let currentElement: HTMLElement | null = null;
 
   function isMobile(): boolean {
-    return window.innerWidth <= parseInt(getCssVar('--mobile-breakpoint'));
+    return window.innerWidth <= getCssVarInt('--mobile-breakpoint');
   }
 
   function startDrag(e: MouseEvent, element: HTMLElement): void {
@@ -72,8 +72,8 @@ export function createDragHandler(callbacks: DragCallbacks): DragHandler {
     // Use actual panel width, not expanded width
     const panelWidth = currentElement.offsetWidth;
     const panelHeight = currentElement.offsetHeight;
-    const panelMargin = parseInt(getCssVar('--panel-margin'));
-    const headerHeight = parseInt(getCssVar('--header-height'));
+    const panelMargin = getCssVarInt('--panel-margin');
+    const headerHeight = getCssVarInt('--header-height');
     const headerBottom = panelMargin + headerHeight;
     const minX = panelMargin;
     const maxX = window.innerWidth - panelWidth - panelMargin;

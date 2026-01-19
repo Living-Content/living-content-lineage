@@ -6,7 +6,7 @@ import type { Container, Ticker } from 'pixi.js';
 import type { LineageNodeData, Workflow, LineageEdgeData } from '../../../config/types.js';
 import { createGraphNode, type GraphNode, DEFAULT_NODE_ALPHA, type NodeRenderOptions } from '../rendering/nodeRenderer.js';
 import { createIconNode } from '../rendering/iconNodeRenderer.js';
-import { getIconNodeConfig, getPhaseIconPath } from '../../../theme/theme.js';
+import { getIconNodeConfig, getPhaseIconPath } from '../../../config/icons.js';
 import { WORKFLOW_NODE_SCALE } from '../../../config/constants.js';
 import { selectNode, selectWorkflow } from '../../../stores/lineageState.js';
 

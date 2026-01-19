@@ -1,6 +1,6 @@
 # Typography
 
-The typography system defines a consistent scale for text hierarchy.
+The typography system defines a consistent scale for text hierarchy. Typography tokens are defined in TypeScript and auto-generated to CSS.
 
 ## Font Families
 
@@ -36,21 +36,31 @@ From largest to smallest:
 ## Line Heights
 
 ```css
---line-height-tight: 1.1; /* Large metrics */
---line-height-snug: 1.3; /* Headings */
---line-height-normal: 1.5; /* Body text */
---line-height-relaxed: 1.6; /* Readable paragraphs */
---line-height-loose: 1.8; /* Spacious text */
+--line-height-tight: 1.1;    /* Large metrics */
+--line-height-snug: 1.3;     /* Headings */
+--line-height-normal: 1.5;   /* Body text */
+--line-height-relaxed: 1.6;  /* Readable paragraphs */
+--line-height-loose: 1.8;    /* Spacious text */
 ```
 
 ## Letter Spacing
 
 ```css
---letter-spacing-tight: -0.02em; /* Large text */
---letter-spacing-normal: 0; /* Body text */
---letter-spacing-wide: 0.02em; /* Slight emphasis */
---letter-spacing-wider: 0.05em; /* Uppercase labels */
---letter-spacing-caps: 0.1em; /* All caps */
+--letter-spacing-tight: -0.02em;  /* Large text */
+--letter-spacing-normal: 0;       /* Body text */
+--letter-spacing-wide: 0.02em;    /* Slight emphasis */
+--letter-spacing-wider: 0.05em;   /* Uppercase labels */
+--letter-spacing-caps: 0.1em;     /* All caps */
+```
+
+## Using Typography in TypeScript
+
+```typescript
+import { getCssVar, getCssVarInt, getCssVarFloat } from '../themes';
+
+const fontFamily = getCssVar('--font-sans');
+const fontSize = getCssVarInt('--font-size-body');
+const lineHeight = getCssVarFloat('--line-height-normal');
 ```
 
 ## Usage Examples
@@ -109,4 +119,4 @@ The MetricCard component uses these size presets:
 
 ## File
 
-Typography is defined in `src/styles/theme/typography.css`.
+Typography is defined in `src/themes/definitions/typography.ts`.

@@ -5,7 +5,7 @@
 import type { Ticker, Container } from 'pixi.js';
 import type { LineageNodeData } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
-import { getCssVar } from '../../../theme/theme.js';
+import { getCssVarInt } from '../../../themes/index.js';
 import {
   createNodeElement,
   addElementsToLayer,
@@ -95,7 +95,7 @@ export const repositionNodesWithGaps = (nodeMap: Map<string, GraphNode>): void =
       maxHalfWidth = Math.max(maxHalfWidth, node.nodeWidth / 2);
     }
 
-    const newX = rightEdge === -Infinity ? group[0].position.x : rightEdge + parseInt(getCssVar('--edge-gap')) + maxHalfWidth;
+    const newX = rightEdge === -Infinity ? group[0].position.x : rightEdge + getCssVarInt('--edge-gap') + maxHalfWidth;
 
     for (const node of group) {
       node.position.x = newX;

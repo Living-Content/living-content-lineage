@@ -4,7 +4,7 @@
  */
 import { Container } from 'pixi.js';
 import gsap from 'gsap';
-import { getCssVar } from '../../../theme/theme.js';
+import { getCssVarInt } from '../../../themes/index.js';
 import type { ViewportState } from '../interaction/viewport.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 
@@ -29,10 +29,10 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
 
   function centerOnNode(nodeId: string): void {
     const node = nodeMap.get(nodeId);
-    if (!node || viewportState.width <= parseInt(getCssVar('--mobile-breakpoint'))) return;
+    if (!node || viewportState.width <= getCssVarInt('--mobile-breakpoint')) return;
 
-    const panelMargin = parseInt(getCssVar('--panel-margin'));
-    const panelMaxWidth = parseInt(getCssVar('--panel-max-width'));
+    const panelMargin = getCssVarInt('--panel-margin');
+    const panelMaxWidth = getCssVarInt('--panel-max-width');
     const panelWidth = Math.min(viewportState.width * 0.5 - panelMargin * 2, panelMaxWidth) + panelMargin * 2;
     const targetX = panelWidth + (viewportState.width - panelWidth) / 2 - node.position.x * viewportState.scale;
     const targetY = viewportState.height / 2 - node.position.y * viewportState.scale;

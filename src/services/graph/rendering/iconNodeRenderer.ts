@@ -4,7 +4,7 @@
  * Uses texture caching for performance.
  */
 import { Container, Graphics, Sprite, Texture, Ticker } from 'pixi.js';
-import { getColor, getCssVar } from '../../../theme/theme.js';
+import { getCssVarColorHex, getCssVar, getCssVarInt, type CssVar } from '../../../themes/index.js';
 import type { LineageNodeData } from '../../../config/types.js';
 import { DEFAULT_NODE_ALPHA, type GraphNode } from './nodeRenderer.js';
 import { attachNodeInteraction, createSelectionAnimator, type NodeCallbacks } from '../interaction/nodeInteraction.js';
@@ -80,8 +80,8 @@ export const createIconNode = async (
   const group = new Container() as GraphNode;
   group.label = node.id;
 
-  const size = options.size ?? parseInt(getCssVar('--icon-node-size'));
-  const color = getCssVar(`--phase-${node.phase.toLowerCase()}`);
+  const size = options.size ?? getCssVarInt('--icon-node-size');
+  const color = getCssVar(`--phase-${node.phase.toLowerCase()}` as CssVar);
 
   const svgContent = await loadSvgContent(options.iconPath);
   const texture = await createIconTextureAsync(svgContent, color, size);
@@ -113,8 +113,8 @@ export const createIconNode = async (
   }
   group.selectionRing = selectionRing;
 
-  const ringPadding = parseInt(getCssVar('--icon-node-ring-padding'));
-  const ringWidth = parseInt(getCssVar('--icon-node-ring-width'));
+  const ringPadding = getCssVarInt('--icon-node-ring-padding');
+  const ringWidth = getCssVarInt('--icon-node-ring-width');
   const ringRadius = (size + ringPadding * 2) / 2;
 
   function drawSelectionRing(progress: number): void {
@@ -124,7 +124,7 @@ export const createIconNode = async (
     // Draw circle arc progressively
     const endAngle = -Math.PI / 2 + (2 * Math.PI * Math.min(progress, 1));
     selectionRing.arc(0, 0, ringRadius, -Math.PI / 2, endAngle);
-    selectionRing.stroke({ width: ringWidth, color: getColor('--color-selection-ring'), cap: 'round' });
+    selectionRing.stroke({ width: ringWidth, color: getCssVarColorHex('--color-selection-ring'), cap: 'round' });
   }
 
   group.setSelected = createSelectionAnimator(selectionRing, drawSelectionRing);

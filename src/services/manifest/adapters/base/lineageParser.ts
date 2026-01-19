@@ -10,7 +10,7 @@ import type {
 import { isRecord, validatePhase } from '../../../../config/utils.js';
 import type { LineageManifest, LineageManifestRecord } from './lineageTypes.js';
 import { computeLayout } from './lineageLayout.js';
-import { getCssVar } from '../../../../theme/theme.js';
+import { getCssVar } from '../../../../themes/index.js';
 
 const buildManifestSummary = (
   record?: LineageManifestRecord

@@ -3,7 +3,8 @@
  * Shows asset type icon on left, with type label and optional main label.
  */
 import { Container, Graphics, Sprite, Ticker } from 'pixi.js';
-import { getAssetIconPath, getColor, getCssVar } from '../../../theme/theme.js';
+import { getCssVarColorHex, getCssVar, type CssVar } from '../../../themes/index.js';
+import { getAssetIconPath } from '../../../config/icons.js';
 import type { AssetType, LineageNodeData } from '../../../config/types.js';
 import { ASSET_TYPE_LABELS } from '../../../config/labels.js';
 import { GEOMETRY } from '../../../config/animationConstants.js';
@@ -67,7 +68,7 @@ export function createGraphNode(
   group.label = node.id;
 
   const nodeScale = options.scale ?? 1;
-  const color = getCssVar(`--phase-${node.phase.toLowerCase()}`);
+  const color = getCssVar(`--phase-${node.phase.toLowerCase()}` as CssVar);
   const dims = getScaledDimensions(nodeScale);
 
   // Determine render mode based on node type and options
@@ -229,7 +230,7 @@ export function createGraphNode(
       selectionRing.arc(-hw + r, 0, r, Math.PI / 2, Math.PI / 2 + arcAngle);
     }
 
-    selectionRing.stroke({ width: GEOMETRY.SELECTION_RING_STROKE_WIDTH, color: getColor('--color-selection-ring'), cap: 'round', join: 'round' });
+    selectionRing.stroke({ width: GEOMETRY.SELECTION_RING_STROKE_WIDTH, color: getCssVarColorHex('--color-selection-ring'), cap: 'round', join: 'round' });
   }
 
   group.setSelected = createSelectionAnimator(selectionRing, drawSelectionRing);

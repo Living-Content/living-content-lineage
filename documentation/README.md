@@ -14,8 +14,8 @@ Technical documentation for the Living Content Lineage visualization system.
 
 - [Detail Views](./components/detail-views.md) - Asset-specific detail view components
 
-### Styling Documentation
+### Theming Documentation
 
-- [Colors](./styling/colors.md) - Phase-based color system
-- [Typography](./styling/typography.md) - Font scale and hierarchy
-- [Theming](./styling/theming.md) - Theme override mechanism
+- [Guidelines](./theming/guidelines.md) - Theme system architecture and rules
+- [Colors](./theming/colors.md) - Semantic color palette and phase colors
+- [Typography](./theming/typography.md) - Font scale and text hierarchy

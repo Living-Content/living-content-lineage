@@ -6,7 +6,7 @@
 import { Container, Graphics } from 'pixi.js';
 import type { LineageEdgeData, Workflow } from '../../../config/types.js';
 import type { GraphNode } from './nodeRenderer.js';
-import { getColor, getCssVar } from '../../../theme/theme.js';
+import { getCssVarColorHex, getCssVarInt, getCssVarFloat, type CssVar } from '../../../themes/index.js';
 import { drawDot } from './rendererUtils.js';
 
 export type ViewMode = 'lineage' | 'workflow';
@@ -33,8 +33,8 @@ export const renderEdges = (
   dotLayer?.removeChildren();
 
   const { view, selectedId, highlightedIds } = options;
-  const edgeWidth = parseInt(getCssVar(view === 'lineage' ? '--workflow-edge-width' : '--edge-width'));
-  const dotRadius = parseInt(getCssVar(view === 'lineage' ? '--workflow-dot-radius' : '--edge-dot-radius'));
+  const edgeWidth = getCssVarInt(view === 'lineage' ? '--workflow-edge-width' : '--edge-width');
+  const dotRadius = getCssVarInt(view === 'lineage' ? '--workflow-dot-radius' : '--edge-dot-radius');
 
   const lineGraphics = new Graphics();
   const fadedLineGraphics = new Graphics();
@@ -72,8 +72,8 @@ export const renderEdges = (
 
     const sourcePhase = sourceNode.nodeData.phase;
     const color = sourcePhase
-      ? getColor(`--phase-${sourcePhase.toLowerCase()}`)
-      : getColor('--color-edge-default');
+      ? getCssVarColorHex(`--phase-${sourcePhase.toLowerCase()}` as CssVar)
+      : getCssVarColorHex('--color-edge-default');
 
     const dx = tx - sx;
     const dy = ty - sy;
@@ -102,7 +102,7 @@ export const renderEdges = (
     }
   }
 
-  const fadedAlpha = parseFloat(getCssVar('--faded-node-alpha'));
+  const fadedAlpha = getCssVarFloat('--faded-node-alpha');
   fadedLineGraphics.alpha = fadedAlpha;
   fadedDotGraphics.alpha = fadedAlpha;
 
@@ -140,20 +140,20 @@ export const renderWorkflowEdges = (
       workflow.id === selectedWorkflowId ||
       nextWorkflowId === selectedWorkflowId;
 
-    const fadedAlpha = parseFloat(getCssVar('--faded-node-alpha'));
+    const fadedAlpha = getCssVarFloat('--faded-node-alpha');
     const alpha = isConnected ? 1 : fadedAlpha;
 
     const baseColor = workflow.phase
-      ? getColor(`--phase-${workflow.phase.toLowerCase()}`)
-      : getColor('--color-edge-default');
+      ? getCssVarColorHex(`--phase-${workflow.phase.toLowerCase()}` as CssVar)
+      : getCssVarColorHex('--color-edge-default');
 
     const startX = sourceNode.position.x + sourceNode.nodeWidth / 2;
     const startY = sourceNode.position.y;
     const endX = targetNode.position.x - targetNode.nodeWidth / 2;
     const endY = targetNode.position.y;
 
-    const workflowEdgeWidth = parseInt(getCssVar('--workflow-edge-width'));
-    const workflowDotRadius = parseInt(getCssVar('--workflow-dot-radius'));
+    const workflowEdgeWidth = getCssVarInt('--workflow-edge-width');
+    const workflowDotRadius = getCssVarInt('--workflow-dot-radius');
 
     graphics.moveTo(startX, startY);
     graphics.lineTo(endX, endY);
