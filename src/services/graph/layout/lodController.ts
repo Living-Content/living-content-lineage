@@ -17,7 +17,6 @@ export interface LODState {
 export interface LODLayers {
   nodeLayer: Container;
   edgeLayer: Container;
-  dotLayer: Container;
   workflowNodeLayer: Container;
   workflowEdgeLayer: Container;
   workflowLayer: Container;
@@ -77,7 +76,7 @@ export function createLODController(
     isAnimating: false,
   };
 
-  const detailLayers = [layers.nodeLayer, layers.edgeLayer, layers.dotLayer, layers.workflowLayer];
+  const detailLayers = [layers.nodeLayer, layers.edgeLayer, layers.workflowLayer];
   const workflowLayers = [layers.workflowNodeLayer, layers.workflowEdgeLayer];
 
   function collapse(): void {

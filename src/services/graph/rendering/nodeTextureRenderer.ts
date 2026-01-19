@@ -1,11 +1,15 @@
 /**
  * Canvas texture rendering for graph nodes.
+ * Supports pill shapes (rounded rectangles) and chevron shapes (arrow-like).
  */
 import { Texture } from 'pixi.js';
-import { getCssVar } from '../../../themes/index.js';
+import { getCssVar, getCssVarInt } from '../../../themes/index.js';
 import { createRetinaCanvas } from './rendererUtils.js';
-import { getNodeFontFamily, type ScaledDimensions } from './nodeTextMeasurement.js';
+import { getNodeFontFamily, BASE_ICON_DIAMETER, type ScaledDimensions } from './nodeTextMeasurement.js';
+import { getShape, type NodeShapeType } from './nodeShapes.js';
 import type { NodeRenderOptions } from './nodeRenderer.js';
+
+export type { NodeShapeType } from './nodeShapes.js';
 
 export const createNodeTexture = (
   options: NodeRenderOptions,
@@ -13,49 +17,61 @@ export const createNodeTexture = (
   width: number,
   height: number,
   iconImage: HTMLImageElement | null,
-  dims: ScaledDimensions
+  dims: ScaledDimensions,
+  shapeType: NodeShapeType = 'pill'
 ): Texture => {
   const { canvas, ctx } = createRetinaCanvas(width, height);
-
-  const radius = height / 2;
+  const shape = getShape(shapeType);
 
   // Draw node background
-  ctx.beginPath();
-  ctx.roundRect(0, 0, width, height, radius);
+  shape.drawPath(ctx, width, height);
   ctx.fillStyle = color;
   ctx.fill();
 
+  // Get content offset (e.g., to avoid chevron notch)
+  const contentOffset = shape.getContentOffset(height);
+
   // Draw icon circle
-  const iconCenterX = dims.leftPadding + dims.iconDiameter / 2;
+  const iconCenterX = contentOffset + dims.leftPadding + dims.iconDiameter / 2;
   const iconCenterY = height / 2;
   const iconRadius = dims.iconDiameter / 2;
 
-  // Cut out the icon circle
-  ctx.globalCompositeOperation = 'destination-out';
+  // Calculate ring width
+  const nodeScale = dims.iconDiameter / BASE_ICON_DIAMETER;
+  const ringWidth = getCssVarInt('--icon-node-ring-width') * nodeScale;
+
+  // Draw black ring border around icon
+  ctx.globalCompositeOperation = 'source-over';
   ctx.beginPath();
   ctx.arc(iconCenterX, iconCenterY, iconRadius, 0, Math.PI * 2);
+  ctx.fillStyle = '#000000';
   ctx.fill();
 
   // Draw the icon inside the circle
   if (iconImage && iconImage.complete && iconImage.naturalWidth > 0) {
-    ctx.globalCompositeOperation = 'source-over';
     const iconSize = dims.iconDiameter * 0.55;
     const iconX = iconCenterX - iconSize / 2;
     const iconY = iconCenterY - iconSize / 2;
 
-    // Draw icon with the node color
+    // Draw inner circle with node color (creates the ring effect)
     ctx.save();
     ctx.beginPath();
-    ctx.arc(iconCenterX, iconCenterY, iconRadius - 1, 0, Math.PI * 2);
+    ctx.arc(iconCenterX, iconCenterY, iconRadius - ringWidth, 0, Math.PI * 2);
     ctx.clip();
     ctx.fillStyle = color;
     ctx.fill();
     ctx.drawImage(iconImage, iconX, iconY, iconSize, iconSize);
     ctx.restore();
+  } else {
+    // No icon yet - just draw the inner colored circle
+    ctx.beginPath();
+    ctx.arc(iconCenterX, iconCenterY, iconRadius - ringWidth, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
   }
 
-  // Text positioning
-  const textStartX = dims.leftPadding + dims.iconDiameter + dims.iconTextGap;
+  // Text positioning (includes content offset for chevron)
+  const textStartX = contentOffset + dims.leftPadding + dims.iconDiameter + dims.iconTextGap;
 
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'left';

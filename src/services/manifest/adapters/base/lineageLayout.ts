@@ -67,12 +67,18 @@ export const computeLayout = (manifest: LineageManifest): LayoutResult => {
       workflowId: comp.workflowId,
     });
 
-    // Place auxiliary inputs below
+    // Place auxiliary inputs to the LEFT of computation (fan-in pattern)
     if (auxiliaryInputs.length > 0) {
+      // Always position to the left of the computation
+      const inputX = currentX - HORIZONTAL_GAP;
+
+      // Stack below center, leaving room for main data flow
+      const startY = 0.5 + VERTICAL_GAP;
+
       auxiliaryInputs.forEach((inputId, idx) => {
         positions.set(inputId, {
-          x: currentX,
-          y: 0.5 + VERTICAL_GAP + idx * VERTICAL_GAP,
+          x: inputX,
+          y: startY + idx * VERTICAL_GAP,
           workflowId: comp.workflowId,
         });
         placedAssets.add(inputId);

@@ -14,7 +14,7 @@ import { getCssVarColorHex, getCssVar, getCssVarInt, getCssVarFloat, type CssVar
  * Gets the color for a workflow based on its phase.
  */
 const getWorkflowColor = (phase?: Phase): number => {
-  if (!phase) return getCssVarColorHex('--color-edge-default');
+  if (!phase) return getCssVarColorHex('--color-edge');
   return getCssVarColorHex(`--phase-${phase.toLowerCase()}` as CssVar);
 };
 

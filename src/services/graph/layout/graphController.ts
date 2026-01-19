@@ -141,7 +141,7 @@ export async function createGraphController({
     const selection = subscriptions.state.currentSelection;
     const nodeId = selection?.type === 'node' ? selection.nodeId : null;
     const connected = nodeId ? verticalAdjacency.getConnectedNodeIds(nodeId) : null;
-    renderEdges(layers.edgeLayer, layers.dotLayer, lineageData.edges, nodeMap, {
+    renderEdges(layers.edgeLayer, lineageData.edges, nodeMap, {
       view: 'workflow',
       selectedId: nodeId,
       highlightedIds: connected,
@@ -152,7 +152,6 @@ export async function createGraphController({
   const lodLayers: LODLayers = {
     nodeLayer: layers.nodeLayer,
     edgeLayer: layers.edgeLayer,
-    dotLayer: layers.dotLayer,
     workflowNodeLayer: layers.workflowNodeLayer,
     workflowEdgeLayer: layers.workflowEdgeLayer,
     workflowLayer: workflowLabels.container,
@@ -179,7 +178,6 @@ export async function createGraphController({
     nodeMap,
     workflowNodeMap,
     edgeLayer: layers.edgeLayer,
-    dotLayer: layers.dotLayer,
     workflowEdgeLayer: layers.workflowEdgeLayer,
     edges: lineageData.edges,
     workflows: lineageData.workflows,

@@ -174,23 +174,10 @@ export const buildLineageGraph = (
       edgeList.push({ source: inputId, target: comp.id });
     });
 
-    // Chain auxiliary inputs: bottom → ... → top → computation
-    // Layout places index 0 closest to computation (top), higher indices below
-    if (auxiliaryInputs.length > 0) {
-      // First auxiliary (closest to comp) connects to computation
-      edgeList.push({
-        source: auxiliaryInputs[0],
-        target: comp.id,
-      });
-
-      // Chain remaining: each connects to the one above it
-      for (let i = 1; i < auxiliaryInputs.length; i++) {
-        edgeList.push({
-          source: auxiliaryInputs[i],
-          target: auxiliaryInputs[i - 1],
-        });
-      }
-    }
+    // All auxiliary inputs connect directly to computation (fan-in)
+    auxiliaryInputs.forEach((inputId) => {
+      edgeList.push({ source: inputId, target: comp.id });
+    });
 
     // Outputs connect from computation
     comp.outputs.forEach((outputId) => {
@@ -217,13 +204,12 @@ export const buildLineageGraph = (
     else node.role = 'intermediate';
   });
 
-  const gateColor = getCssVar('--color-edge-gate');
-  const edgeColor = getCssVar('--color-edge-muted');
+  const edgeColor = getCssVar('--color-edge');
   const edges: LineageEdgeData[] = edgeList.map((edge, idx) => ({
     id: `e-${idx}`,
     source: edge.source,
     target: edge.target,
-    color: edge.isGate ? gateColor : edgeColor,
+    color: edgeColor,
     isSimple: true,
     isGate: edge.isGate ?? false,
   }));

@@ -3,11 +3,10 @@
  * Shows asset type icon on left, with type label and optional main label.
  */
 import { Container, Graphics, Sprite, Ticker } from 'pixi.js';
-import { getCssVarColorHex, getCssVar, type CssVar } from '../../../themes/index.js';
+import { getCssVarColorHex, getCssVar, getCssVarInt, type CssVar } from '../../../themes/index.js';
 import { getAssetIconPath } from '../../../config/icons.js';
 import type { AssetType, LineageNodeData } from '../../../config/types.js';
 import { ASSET_TYPE_LABELS } from '../../../config/labels.js';
-import { GEOMETRY } from '../../../config/animationConstants.js';
 import { attachNodeInteraction, createSelectionAnimator, type NodeCallbacks } from '../interaction/nodeInteraction.js';
 import { loadIcon } from '../interaction/iconLoader.js';
 import {
@@ -16,7 +15,8 @@ import {
   calculateNodeWidth,
   getScaledDimensions,
 } from './nodeTextMeasurement.js';
-import { createNodeTexture } from './nodeTextureRenderer.js';
+import { createNodeTexture, type NodeShapeType } from './nodeTextureRenderer.js';
+import { getShape } from './nodeShapes.js';
 
 export const DEFAULT_NODE_ALPHA = 1;
 
@@ -25,6 +25,7 @@ export interface GraphNode extends Container {
   nodeWidth: number;
   nodeHeight: number;
   baseScale: number;
+  isChevronShape: boolean;
   setSelected: (selected: boolean) => void;
   selectionRing?: Graphics;
 }
@@ -51,6 +52,14 @@ const getAssetTypeLabel = (assetType?: AssetType): string => {
 
 const getIconPath = (assetType?: AssetType): string => {
   return getAssetIconPath(assetType ?? 'DataObject');
+};
+
+/**
+ * Determines if a node should render with a chevron shape.
+ * Action nodes use chevron shape to convey flow direction.
+ */
+const isChevronNode = (node: LineageNodeData): boolean => {
+  return node.nodeType === 'process' && node.assetType === 'Action';
 };
 
 /**
@@ -104,10 +113,13 @@ export function createGraphNode(
 
     group.nodeWidth = nodeWidth;
     group.nodeHeight = nodeHeight;
+    group.isChevronShape = false;
   } else {
     // Asset nodes: use icon-based node with asset type
     const typeLabel = getAssetTypeLabel(node.assetType);
     const iconPath = getIconPath(node.assetType);
+    const useChevron = isChevronNode(node);
+    const shapeType: NodeShapeType = useChevron ? 'chevron' : 'pill';
 
     const renderOptions: NodeRenderOptions = options.renderOptions ?? {
       mode: 'detailed',
@@ -117,7 +129,7 @@ export function createGraphNode(
     };
 
     const nodeHeight = (renderOptions.mode === 'detailed' ? BASE_NODE_HEIGHT_DETAILED : BASE_NODE_HEIGHT_SIMPLE) * nodeScale;
-    const nodeWidth = calculateNodeWidth(renderOptions, dims, nodeScale);
+    const nodeWidth = calculateNodeWidth(renderOptions, dims, nodeScale, shapeType);
 
     // Create placeholder first, then update with icon
     const placeholderTexture = createNodeTexture(
@@ -126,7 +138,8 @@ export function createGraphNode(
       nodeWidth,
       nodeHeight,
       null,
-      dims
+      dims,
+      shapeType
     );
     const sprite = new Sprite(placeholderTexture);
     sprite.anchor.set(0.5, 0.5);
@@ -142,13 +155,15 @@ export function createGraphNode(
         nodeWidth,
         nodeHeight,
         iconImage,
-        dims
+        dims,
+        shapeType
       );
       sprite.texture = texture;
     });
 
     group.nodeWidth = nodeWidth;
     group.nodeHeight = nodeHeight;
+    group.isChevronShape = useChevron;
   }
 
   const x = ((node.x ?? 0.5) - 0.5) * graphScale;
@@ -170,12 +185,15 @@ export function createGraphNode(
   }
   group.selectionRing = selectionRing;
 
-  const ringPadding = GEOMETRY.SELECTION_RING_PADDING;
+  const ringPadding = getCssVarInt('--selection-ring-gap') * nodeScale;
+  const ringStrokeWidth = getCssVarInt('--selection-ring-width') * nodeScale;
   const ringWidth = group.nodeWidth + ringPadding * 2;
   const ringHeight = group.nodeHeight + ringPadding * 2;
   const ringRadius = ringHeight / 2;
+  const currentShapeType: NodeShapeType = group.isChevronShape ? 'chevron' : 'pill';
+  const shape = getShape(currentShapeType);
 
-  function drawSelectionRing(progress: number): void {
+  function drawPillSelectionRing(progress: number): void {
     selectionRing.clear();
     if (progress <= 0) return;
 
@@ -193,7 +211,6 @@ export function createGraphNode(
     const halfCurve = curveLength / 2;
 
     // Left curve upper half: 9 o'clock (π) → 12 o'clock (3π/2)
-    // No moveTo - let arc define the start point directly
     if (remaining > 0) {
       const arcLen = Math.min(remaining, halfCurve);
       const arcAngle = (arcLen / halfCurve) * (Math.PI / 2);
@@ -230,8 +247,79 @@ export function createGraphNode(
       selectionRing.arc(-hw + r, 0, r, Math.PI / 2, Math.PI / 2 + arcAngle);
     }
 
-    selectionRing.stroke({ width: GEOMETRY.SELECTION_RING_STROKE_WIDTH, color: getCssVarColorHex('--color-selection-ring'), cap: 'round', join: 'round' });
+    selectionRing.stroke({ width: ringStrokeWidth, color: getCssVarColorHex('--color-selection-ring'), cap: 'round', join: 'round' });
   }
+
+  function drawVertexSelectionRing(progress: number): void {
+    selectionRing.clear();
+    if (progress <= 0) return;
+
+    // Get vertices from shape and center them
+    const vertices = shape.getVertices(ringWidth, ringHeight);
+    if (!vertices) return;
+
+    const hw = ringWidth / 2;
+    const hh = ringHeight / 2;
+
+    // Center the vertices, adjust for uniform gap
+    const points = vertices.map((v, i) => {
+      const pt = { x: v.x - hw, y: v.y - hh };
+      if (i === 0 || i === 4) pt.x -= ringPadding * 1.25;  // Top-left, bottom-left
+      if (i === 5) pt.x -= ringPadding;  // Left notch center
+      if (i === 1 || i === 3) pt.x += ringPadding * 0.25;  // Top-right, bottom-right corners
+      if (i === 2) pt.x += ringPadding * 0.25;  // Right arrow tip
+      return pt;
+    });
+
+    // If fully complete, draw closed polygon
+    if (progress >= 1) {
+      selectionRing.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        selectionRing.lineTo(points[i].x, points[i].y);
+      }
+      selectionRing.closePath();
+      selectionRing.stroke({ width: ringStrokeWidth, color: getCssVarColorHex('--color-selection-ring'), cap: 'round', join: 'miter', miterLimit: 10 });
+      return;
+    }
+
+    // Calculate segment lengths for animation
+    const segments: number[] = [];
+    for (let i = 0; i < points.length; i++) {
+      const next = (i + 1) % points.length;
+      const dx = points[next].x - points[i].x;
+      const dy = points[next].y - points[i].y;
+      segments.push(Math.sqrt(dx * dx + dy * dy));
+    }
+    const totalLength = segments.reduce((a, b) => a + b, 0);
+    const drawLength = totalLength * Math.min(progress, 1);
+
+    let remaining = drawLength;
+    let currentSegment = 0;
+
+    selectionRing.moveTo(points[0].x, points[0].y);
+
+    while (remaining > 0 && currentSegment < segments.length) {
+      const segLen = segments[currentSegment];
+      const next = (currentSegment + 1) % points.length;
+
+      if (remaining >= segLen) {
+        selectionRing.lineTo(points[next].x, points[next].y);
+        remaining -= segLen;
+        currentSegment++;
+      } else {
+        const ratio = remaining / segLen;
+        const x = points[currentSegment].x + ratio * (points[next].x - points[currentSegment].x);
+        const y = points[currentSegment].y + ratio * (points[next].y - points[currentSegment].y);
+        selectionRing.lineTo(x, y);
+        remaining = 0;
+      }
+    }
+
+    selectionRing.stroke({ width: ringStrokeWidth, color: getCssVarColorHex('--color-selection-ring'), cap: 'round', join: 'round' });
+  }
+
+  // Use vertex-based drawing for shapes with vertices, otherwise pill path tracing
+  const drawSelectionRing = shape.getVertices(ringWidth, ringHeight) ? drawVertexSelectionRing : drawPillSelectionRing;
 
   group.setSelected = createSelectionAnimator(selectionRing, drawSelectionRing);
 

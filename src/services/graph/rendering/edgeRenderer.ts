@@ -1,13 +1,13 @@
 /**
  * Unified edge rendering for both lineage and workflow views.
  * Edges have dots at both ends that sit on the edge of nodes.
- * Lines render behind nodes, dots render in front.
+ * Edges render on top of nodes.
  */
 import { Container, Graphics } from 'pixi.js';
 import type { LineageEdgeData, Workflow } from '../../../config/types.js';
 import type { GraphNode } from './nodeRenderer.js';
-import { getCssVarColorHex, getCssVarInt, getCssVarFloat, type CssVar } from '../../../themes/index.js';
-import { drawDot } from './rendererUtils.js';
+import { getCssVarColorHex, getCssVarInt, getCssVarFloat } from '../../../themes/index.js';
+import { drawChevron } from './rendererUtils.js';
 
 export type ViewMode = 'lineage' | 'workflow';
 
@@ -24,17 +24,16 @@ export interface EdgeRenderOptions {
  */
 export const renderEdges = (
   edgeLayer: Container,
-  dotLayer: Container | null,
   edges: LineageEdgeData[],
   nodeMap: Map<string, GraphNode>,
   options: EdgeRenderOptions
 ): void => {
   edgeLayer.removeChildren();
-  dotLayer?.removeChildren();
 
   const { view, selectedId, highlightedIds } = options;
   const edgeWidth = getCssVarInt(view === 'lineage' ? '--workflow-edge-width' : '--edge-width');
   const dotRadius = getCssVarInt(view === 'lineage' ? '--workflow-dot-radius' : '--edge-dot-radius');
+  const color = getCssVarColorHex('--color-edge');
 
   const lineGraphics = new Graphics();
   const fadedLineGraphics = new Graphics();
@@ -70,11 +69,6 @@ export const renderEdges = (
     const targetHalfW = targetNode.nodeWidth / 2;
     const targetHalfH = targetNode.nodeHeight / 2;
 
-    const sourcePhase = sourceNode.nodeData.phase;
-    const color = sourcePhase
-      ? getCssVarColorHex(`--phase-${sourcePhase.toLowerCase()}` as CssVar)
-      : getCssVarColorHex('--color-edge-default');
-
     const dx = tx - sx;
     const dy = ty - sy;
     const isMainlyHorizontal = Math.abs(dx) > Math.abs(dy);
@@ -87,7 +81,8 @@ export const renderEdges = (
         sourceHalfW, targetHalfW,
         color,
         edgeWidth,
-        dotRadius
+        dotRadius,
+        targetNode.isChevronShape
       );
     } else {
       renderVerticalEdge(
@@ -108,11 +103,8 @@ export const renderEdges = (
 
   edgeLayer.addChild(fadedLineGraphics);
   edgeLayer.addChild(lineGraphics);
-
-  if (dotLayer) {
-    dotLayer.addChild(fadedDotGraphics);
-    dotLayer.addChild(dotGraphics);
-  }
+  edgeLayer.addChild(fadedDotGraphics);
+  edgeLayer.addChild(dotGraphics);
 };
 
 /**
@@ -128,43 +120,44 @@ export const renderWorkflowEdges = (
   layer.removeChildren();
   const graphics = new Graphics();
   const workflowOrder = workflows.map((w) => w.id);
+  const color = getCssVarColorHex('--color-edge');
+  const workflowEdgeWidth = getCssVarInt('--workflow-edge-width');
+  const fadedAlpha = getCssVarFloat('--faded-node-alpha');
 
   for (let i = 0; i < workflowOrder.length - 1; i++) {
-    const workflow = workflows[i];
     const nextWorkflowId = workflowOrder[i + 1];
     const sourceNode = workflowNodeMap.get(workflowOrder[i]);
     const targetNode = workflowNodeMap.get(nextWorkflowId);
     if (!sourceNode || !targetNode) continue;
 
     const isConnected = selectedWorkflowId === null ||
-      workflow.id === selectedWorkflowId ||
+      workflowOrder[i] === selectedWorkflowId ||
       nextWorkflowId === selectedWorkflowId;
 
-    const fadedAlpha = getCssVarFloat('--faded-node-alpha');
-    const alpha = isConnected ? 1 : fadedAlpha;
-
-    const baseColor = workflow.phase
-      ? getCssVarColorHex(`--phase-${workflow.phase.toLowerCase()}` as CssVar)
-      : getCssVarColorHex('--color-edge-default');
+    const alpha = isConnected ? 0.5 : fadedAlpha;
 
     const startX = sourceNode.position.x + sourceNode.nodeWidth / 2;
     const startY = sourceNode.position.y;
     const endX = targetNode.position.x - targetNode.nodeWidth / 2;
     const endY = targetNode.position.y;
 
-    const workflowEdgeWidth = getCssVarInt('--workflow-edge-width');
-    const workflowDotRadius = getCssVarInt('--workflow-dot-radius');
+    // Calculate control points for cubic bezier curve
+    const dx = endX - startX;
+    const controlOffset = Math.abs(dx) * 0.4;
 
     graphics.moveTo(startX, startY);
-    graphics.lineTo(endX, endY);
-    graphics.stroke({ width: workflowEdgeWidth, color: baseColor, alpha });
-
-    drawDot(graphics, startX, startY, workflowDotRadius, baseColor, alpha);
-    drawDot(graphics, endX, endY, workflowDotRadius, baseColor, alpha);
+    graphics.bezierCurveTo(
+      startX + controlOffset, startY,
+      endX - controlOffset, endY,
+      endX, endY
+    );
+    graphics.stroke({ width: workflowEdgeWidth, color, alpha });
   }
 
   layer.addChild(graphics);
 };
+
+const EDGE_ALPHA = 0.5;
 
 const renderHorizontalEdge = (
   lineGraphics: Graphics,
@@ -174,18 +167,35 @@ const renderHorizontalEdge = (
   sourceHalfW: number, targetHalfW: number,
   color: number,
   edgeWidth: number,
-  dotRadius: number
+  dotRadius: number,
+  targetIsChevron: boolean = false
 ): void => {
   const goingRight = tx > sx;
   const startX = goingRight ? sx + sourceHalfW : sx - sourceHalfW;
-  const endX = goingRight ? tx - targetHalfW : tx + targetHalfW;
+  const nodeEdgeX = goingRight ? tx - targetHalfW : tx + targetHalfW;
+
+  // Chevron arm size (must match drawChevron)
+  const chevronArm = dotRadius * 1.5;
+
+  // For chevron targets, line extends to the chevron tip
+  const endX = (targetIsChevron && goingRight) ? nodeEdgeX + chevronArm : nodeEdgeX;
+
+  // Calculate control points for cubic bezier curve
+  const dx = endX - startX;
+  const controlOffset = Math.abs(dx) * 0.4;
 
   lineGraphics.moveTo(startX, sy);
-  lineGraphics.lineTo(endX, ty);
-  lineGraphics.stroke({ width: edgeWidth, color });
+  lineGraphics.bezierCurveTo(
+    startX + (goingRight ? controlOffset : -controlOffset), sy,
+    endX - (goingRight ? controlOffset : -controlOffset), ty,
+    endX, ty
+  );
+  lineGraphics.stroke({ width: edgeWidth, color, alpha: EDGE_ALPHA });
 
-  drawDot(dotGraphics, startX, sy, dotRadius, color);
-  drawDot(dotGraphics, endX, ty, dotRadius, color);
+  // Draw chevron at the node edge (tip points inward to where line ends)
+  if (targetIsChevron && goingRight) {
+    drawChevron(dotGraphics, nodeEdgeX, ty, dotRadius, color, EDGE_ALPHA);
+  }
 };
 
 const renderVerticalEdge = (
@@ -202,10 +212,15 @@ const renderVerticalEdge = (
   const startY = goingDown ? sy + sourceHalfH : sy - sourceHalfH;
   const endY = goingDown ? ty - targetHalfH : ty + targetHalfH;
 
-  lineGraphics.moveTo(sx, startY);
-  lineGraphics.lineTo(tx, endY);
-  lineGraphics.stroke({ width: edgeWidth, color });
+  // Calculate control points for cubic bezier curve
+  const dy = endY - startY;
+  const controlOffset = Math.abs(dy) * 0.4;
 
-  drawDot(dotGraphics, sx, startY, dotRadius, color);
-  drawDot(dotGraphics, tx, endY, dotRadius, color);
+  lineGraphics.moveTo(sx, startY);
+  lineGraphics.bezierCurveTo(
+    sx, startY + (goingDown ? controlOffset : -controlOffset),
+    tx, endY - (goingDown ? controlOffset : -controlOffset),
+    tx, endY
+  );
+  lineGraphics.stroke({ width: edgeWidth, color, alpha: EDGE_ALPHA });
 };

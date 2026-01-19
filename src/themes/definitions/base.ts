@@ -37,8 +37,8 @@ export const baseTokens = {
   'edge-width': '2px',
   'edge-dot-radius': '4px',
   'edge-gap': '90px',
-  'workflow-edge-width': '3px',
-  'workflow-dot-radius': '6px',
+  'workflow-edge-width': '8px',
+  'workflow-dot-radius': '12px',
   'faded-node-alpha': '0.25',
 
   // Workflow labels
@@ -55,6 +55,8 @@ export const baseTokens = {
   'icon-node-size': '40px',
   'icon-node-ring-padding': '6px',
   'icon-node-ring-width': '3px',
+  'selection-ring-gap': '6px',
+  'selection-ring-width': '3px',
   'title-left-gap': '9px',
 
   // Border radius scale
@@ -85,6 +87,7 @@ export const baseTokens = {
   'z-overlay': '300',
   'z-modal': '400',
   'z-tooltip': '500',
+
 } as const;
 
 export type BaseTokenName = keyof typeof baseTokens;

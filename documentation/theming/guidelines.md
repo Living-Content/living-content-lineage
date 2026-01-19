@@ -98,13 +98,13 @@ export const baseTokens = {
 } as const;
 ```
 
-2. Regenerate CSS:
+1. Regenerate CSS:
 
 ```bash
 npm run theme:generate
 ```
 
-3. Use in code with type safety:
+1. Use in code with type safety:
 
 ```typescript
 const value = getCssVarInt('--my-new-token');
@@ -137,7 +137,9 @@ cycleTheme();  // light -> dark -> system -> light
 
 ## Build Process
 
-The `theme:generate` script runs automatically before `dev` and `build`. Generated CSS works with Vite HMR, but changes to TypeScript definitions require re-running `npm run theme:generate`.
+The `theme:generate` script runs automatically before `dev` and `build`.
+
+During development, a Vite plugin watches `src/themes/definitions/` and `src/themes/variants/` for changes and auto-regenerates CSS. Vite HMR then hot-reloads the updated styles.
 
 ## Files
 

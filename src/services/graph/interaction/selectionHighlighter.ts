@@ -76,7 +76,6 @@ export interface SelectionHighlighterDeps {
   nodeMap: Map<string, GraphNode>;
   workflowNodeMap: Map<string, GraphNode>;
   edgeLayer: Container;
-  dotLayer: Container;
   workflowEdgeLayer: Container;
   edges: LineageEdgeData[];
   workflows: Workflow[];
@@ -129,7 +128,7 @@ const highlightNode = (
   selectedId: string,
   deps: SelectionHighlighterDeps
 ): void => {
-  const { nodeMap, workflowNodeMap, edgeLayer, dotLayer, workflowEdgeLayer, edges, workflows, verticalAdjacency, setNodeAlpha } = deps;
+  const { nodeMap, workflowNodeMap, edgeLayer, workflowEdgeLayer, edges, workflows, verticalAdjacency, setNodeAlpha } = deps;
   const verticallyConnected = verticalAdjacency.getConnectedNodeIds(selectedId);
 
   // Highlight nodes in expanded view
@@ -146,7 +145,7 @@ const highlightNode = (
     node.setSelected(false);
   });
 
-  renderEdges(edgeLayer, dotLayer, edges, nodeMap, {
+  renderEdges(edgeLayer, edges, nodeMap, {
     view: 'workflow',
     selectedId,
     highlightedIds: verticallyConnected,
@@ -188,7 +187,7 @@ const highlightWorkflow = (
  * Clears all selection visuals, restoring default alpha.
  */
 export const clearSelectionVisuals = (deps: SelectionHighlighterDeps): void => {
-  const { nodeMap, workflowNodeMap, edgeLayer, dotLayer, workflowEdgeLayer, edges, workflows, setNodeAlpha } = deps;
+  const { nodeMap, workflowNodeMap, edgeLayer, workflowEdgeLayer, edges, workflows, setNodeAlpha } = deps;
 
   nodeMap.forEach((node, nodeId) => {
     setNodeAlpha(nodeId, DEFAULT_NODE_ALPHA);
@@ -200,7 +199,7 @@ export const clearSelectionVisuals = (deps: SelectionHighlighterDeps): void => {
     node.setSelected(false);
   });
 
-  renderEdges(edgeLayer, dotLayer, edges, nodeMap, {
+  renderEdges(edgeLayer, edges, nodeMap, {
     view: 'workflow',
     selectedId: null,
     highlightedIds: null,

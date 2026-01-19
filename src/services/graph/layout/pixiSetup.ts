@@ -6,11 +6,10 @@ import { Application, Container } from 'pixi.js';
 
 export interface LayerGroup {
   selectionLayer: Container;
-  edgeLayer: Container;
   nodeLayer: Container;
-  dotLayer: Container;
-  workflowEdgeLayer: Container;
+  edgeLayer: Container;
   workflowNodeLayer: Container;
+  workflowEdgeLayer: Container;
 }
 
 export interface PixiContext {
@@ -43,28 +42,26 @@ export async function initializePixi(container: HTMLElement): Promise<PixiContex
 
 /**
  * Create the layer hierarchy for rendering order.
- * Order: selection → edges → nodes → dots → workflow edges → workflow nodes
+ * Order: selection → nodes → edges → workflow nodes → workflow edges
  */
 export function createLayerHierarchy(viewport: Container): LayerGroup {
   const selectionLayer = new Container();
-  const edgeLayer = new Container();
   const nodeLayer = new Container();
-  const dotLayer = new Container();
-  const workflowEdgeLayer = new Container();
+  const edgeLayer = new Container();
   const workflowNodeLayer = new Container();
+  const workflowEdgeLayer = new Container();
 
-  viewport.addChild(selectionLayer, edgeLayer, nodeLayer, dotLayer, workflowEdgeLayer, workflowNodeLayer);
+  viewport.addChild(selectionLayer, nodeLayer, edgeLayer, workflowNodeLayer, workflowEdgeLayer);
 
   // Workflow layers start hidden (shown during LOD collapse)
-  workflowEdgeLayer.visible = false;
   workflowNodeLayer.visible = false;
+  workflowEdgeLayer.visible = false;
 
   return {
     selectionLayer,
-    edgeLayer,
     nodeLayer,
-    dotLayer,
-    workflowEdgeLayer,
+    edgeLayer,
     workflowNodeLayer,
+    workflowEdgeLayer,
   };
 }

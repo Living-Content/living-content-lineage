@@ -19,7 +19,6 @@ export interface SubscriptionContext {
   nodeMap: Map<string, GraphNode>;
   workflowNodeMap: Map<string, GraphNode>;
   edgeLayer: Container;
-  dotLayer: Container;
   workflowEdgeLayer: Container;
   edges: LineageEdgeData[];
   workflows: Workflow[];
@@ -50,7 +49,6 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
     nodeMap: ctx.nodeMap,
     workflowNodeMap: ctx.workflowNodeMap,
     edgeLayer: ctx.edgeLayer,
-    dotLayer: ctx.dotLayer,
     workflowEdgeLayer: ctx.workflowEdgeLayer,
     edges: ctx.edges,
     workflows: ctx.workflows,
@@ -70,7 +68,7 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
 
       // When a workflow is selected, render edges with no node selection
       if (sel.type === 'workflow') {
-        renderEdges(ctx.edgeLayer, ctx.dotLayer, ctx.edges, ctx.nodeMap, {
+        renderEdges(ctx.edgeLayer, ctx.edges, ctx.nodeMap, {
           view: 'workflow',
           selectedId: null,
           highlightedIds: null,

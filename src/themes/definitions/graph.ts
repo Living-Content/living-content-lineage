@@ -7,12 +7,8 @@ export const graphTokens = {
   'color-graph-bg-2': 'rgb(0, 0, 0)',
   'color-graph-bg-3': 'rgb(0, 0, 0)',
 
-  // Edge colors
-  'color-edge': 'rgb(26, 26, 26)',
-  'color-edge-muted': 'rgb(102, 102, 102)',
-  'color-edge-default': 'rgb(102, 102, 102)',
-  'color-edge-stroke': 'rgb(0, 0, 0)',
-  'color-edge-gate': 'rgb(107, 203, 119)',
+  // Edge color
+  'color-edge': 'rgb(255, 255, 255)',
 
   // Port colors
   'color-port': 'rgb(75, 85, 99)',

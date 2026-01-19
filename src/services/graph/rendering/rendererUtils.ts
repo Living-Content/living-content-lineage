@@ -2,10 +2,9 @@
  * Shared utilities for graph rendering.
  */
 import { Graphics } from 'pixi.js';
-import { getCssVarColorHex } from '../../../themes/index.js';
 
 /**
- * Draws a dot with fill and stroke at the specified position.
+ * Draws a dot at the specified position.
  */
 export const drawDot = (
   graphics: Graphics,
@@ -15,10 +14,34 @@ export const drawDot = (
   color: number,
   alpha: number = 1
 ): void => {
-  graphics.circle(x, y, radius);
+  // Scale up the radius for better visibility
+  const scaledRadius = radius * 1.5;
+  graphics.circle(x, y, scaledRadius);
   graphics.fill({ color, alpha });
-  graphics.circle(x, y, radius);
-  graphics.stroke({ width: 1, color: getCssVarColorHex('--color-edge-stroke'), alpha });
+};
+
+/**
+ * Draws an open chevron (>) pointing right at the specified position.
+ * Used for left-side connectors on Action nodes.
+ * Chevron is 45 degrees.
+ */
+export const drawChevron = (
+  graphics: Graphics,
+  x: number,
+  y: number,
+  size: number,
+  color: number,
+  alpha: number = 1
+): void => {
+  // 45 degree chevron: depth equals height
+  const scaledSize = size * 1.5;
+  const arm = scaledSize; // 45 degrees means equal horizontal and vertical
+
+  // Draw open chevron shape (>)
+  graphics.moveTo(x, y - arm);
+  graphics.lineTo(x + arm, y);
+  graphics.lineTo(x, y + arm);
+  graphics.stroke({ width: 2, color, alpha, cap: 'round', join: 'round' });
 };
 
 /**
