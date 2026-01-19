@@ -25,6 +25,7 @@ export interface ViewportCallbacks {
   onPanStart: () => void;
   onPanEnd: () => void;
   isZoomBlocked?: () => boolean;
+  isInteractionBlocked?: () => boolean;
   getBounds?: () => ViewportBounds | null;
 }
 
@@ -99,8 +100,8 @@ export const createViewportHandlers = (
   const handleWheel = (e: WheelEvent): void => {
     e.preventDefault();
 
-    // Block zoom during LOD animation
-    if (callbacks.isZoomBlocked?.()) return;
+    // Block zoom during LOD animation or when interaction is blocked (detail view)
+    if (callbacks.isZoomBlocked?.() || callbacks.isInteractionBlocked?.()) return;
 
     const zoomFactor = e.deltaY > 0 ? 0.95 : 1.05;
     const newScale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, state.scale * zoomFactor));
@@ -127,6 +128,9 @@ export const createViewportHandlers = (
   };
 
   const handlePointerDown = (e: PointerEvent): void => {
+    // Block pan when interaction is blocked (detail view)
+    if (callbacks.isInteractionBlocked?.()) return;
+
     if (e.button === 1 || (e.target === canvas && e.button === 0)) {
       isDragging = true;
       lastPointerPos = { x: e.clientX, y: e.clientY };

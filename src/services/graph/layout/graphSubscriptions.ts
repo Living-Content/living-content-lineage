@@ -27,6 +27,8 @@ export interface SubscriptionContext {
   setNodeAlpha: (nodeId: string, alpha: number) => void;
   centerSelectedNode: (nodeId: string) => void;
   setWorkflowLabelsPhaseFilter: (phase: Phase | null) => void;
+  setWorkflowLabelsVisible: (visible: boolean) => void;
+  zoomToBounds: (nodeId?: string) => void;
 }
 
 interface SelectionState {
@@ -92,6 +94,9 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
     const wasOpen = state.detailPanelOpen;
     state.detailPanelOpen = open;
 
+    // Hide workflow labels when entering detail view, show when exiting
+    ctx.setWorkflowLabelsVisible(!open);
+
     // Re-apply selection highlighting when detail panel toggles (to toggle blur mode)
     if (state.currentSelection && wasOpen !== open) {
       applySelectionHighlight(state.currentSelection, getHighlighterDeps(shouldUseBlur()));
@@ -99,6 +104,10 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
 
     if (open && state.currentSelection?.type === 'node') {
       ctx.centerSelectedNode(state.currentSelection.nodeId);
+    } else if (!open && wasOpen) {
+      // Zoom out to bounds when exiting detail view, centered on selected node
+      const nodeId = state.currentSelection?.type === 'node' ? state.currentSelection.nodeId : undefined;
+      ctx.zoomToBounds(nodeId);
     }
   });
 

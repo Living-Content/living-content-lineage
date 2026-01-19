@@ -193,6 +193,8 @@ export async function createGraphController({
     viewportState,
     workflowLabelsUpdate: workflowLabels.update,
     cullAndRender,
+    topNodeInfo,
+    bottomNodeInfo,
   });
 
   // Store subscriptions
@@ -207,6 +209,8 @@ export async function createGraphController({
     setNodeAlpha: animationController.setNodeAlpha,
     centerSelectedNode: viewportManager.centerOnNode,
     setWorkflowLabelsPhaseFilter: workflowLabels.setPhaseFilter,
+    setWorkflowLabelsVisible: workflowLabels.setVisible,
+    zoomToBounds: viewportManager.zoomToBounds,
   });
 
   // Viewport handlers
@@ -227,6 +231,7 @@ export async function createGraphController({
     onPanStart: () => {},
     onPanEnd: () => {},
     isZoomBlocked: () => lodController.state.isAnimating,
+    isInteractionBlocked: () => subscriptions.state.detailPanelOpen,
     getBounds: () => {
       if (!topNodeInfo || !bottomNodeInfo) return null;
       return {

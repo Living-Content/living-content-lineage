@@ -5,9 +5,10 @@
 import { Container } from 'pixi.js';
 import gsap from 'gsap';
 import { getCssVarInt } from '../../../themes/index.js';
-import { ZOOM_MAX } from '../../../config/constants.js';
+import { ZOOM_MAX, ZOOM_DEFAULT, VIEWPORT_TOP_MARGIN, VIEWPORT_BOTTOM_MARGIN } from '../../../config/constants.js';
 import type { ViewportState } from '../interaction/viewport.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
+import type { TopNodeInfo } from '../rendering/workflowLabelRenderer.js';
 
 export interface ViewportManagerDeps {
   nodeMap: Map<string, GraphNode>;
@@ -15,10 +16,13 @@ export interface ViewportManagerDeps {
   viewportState: ViewportState;
   workflowLabelsUpdate: (state: ViewportState) => void;
   cullAndRender: () => void;
+  topNodeInfo: TopNodeInfo | null;
+  bottomNodeInfo: TopNodeInfo | null;
 }
 
 export interface ViewportManager {
   centerOnNode: (nodeId: string) => void;
+  zoomToBounds: (nodeId?: string) => void;
   destroy: () => void;
 }
 
@@ -26,7 +30,7 @@ export interface ViewportManager {
  * Creates a viewport manager with node centering capabilities.
  */
 export function createViewportManager(deps: ViewportManagerDeps): ViewportManager {
-  const { nodeMap, viewport, viewportState, workflowLabelsUpdate, cullAndRender } = deps;
+  const { nodeMap, viewport, viewportState, workflowLabelsUpdate, cullAndRender, topNodeInfo, bottomNodeInfo } = deps;
 
   function centerOnNode(nodeId: string): void {
     const node = nodeMap.get(nodeId);
@@ -56,12 +60,68 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
     });
   }
 
+  /**
+   * Zooms out to fit content within viewport bounds, centered on a node.
+   * Used when exiting detail view.
+   */
+  function zoomToBounds(nodeId?: string): void {
+    if (!topNodeInfo || !bottomNodeInfo) return;
+
+    // Calculate the scale needed to fit content within bounds
+    const contentWorldHeight = (bottomNodeInfo.worldY + bottomNodeInfo.halfHeight) -
+                               (topNodeInfo.worldY - topNodeInfo.halfHeight);
+    const availableScreenHeight = viewportState.height - VIEWPORT_TOP_MARGIN - VIEWPORT_BOTTOM_MARGIN;
+
+    // Use default zoom or fit to bounds, whichever is smaller
+    const fitScale = availableScreenHeight / contentWorldHeight;
+    const targetScale = Math.min(ZOOM_DEFAULT, fitScale);
+
+    // Center on the selected node if provided, otherwise center content
+    const node = nodeId ? nodeMap.get(nodeId) : null;
+    let targetX: number;
+    let targetY: number;
+
+    if (node) {
+      // Center on the selected node
+      targetX = viewportState.width / 2 - node.position.x * targetScale;
+      targetY = viewportState.height / 2 - node.position.y * targetScale;
+
+      // Clamp Y to stay within bounds
+      const minY = VIEWPORT_TOP_MARGIN - (topNodeInfo.worldY - topNodeInfo.halfHeight) * targetScale;
+      const maxY = viewportState.height - VIEWPORT_BOTTOM_MARGIN - (bottomNodeInfo.worldY + bottomNodeInfo.halfHeight) * targetScale;
+      if (minY < maxY) {
+        targetY = Math.max(minY, Math.min(maxY, targetY));
+      }
+    } else {
+      // Center content vertically
+      const contentCenterWorldY = (topNodeInfo.worldY - topNodeInfo.halfHeight + bottomNodeInfo.worldY + bottomNodeInfo.halfHeight) / 2;
+      const screenCenterY = VIEWPORT_TOP_MARGIN + availableScreenHeight / 2;
+      targetX = viewportState.width / 2;
+      targetY = screenCenterY - contentCenterWorldY * targetScale;
+    }
+
+    gsap.to(viewportState, {
+      x: targetX,
+      y: targetY,
+      scale: targetScale,
+      duration: 0.4,
+      ease: 'power2.out',
+      onUpdate: () => {
+        viewport.position.set(viewportState.x, viewportState.y);
+        viewport.scale.set(viewportState.scale);
+        workflowLabelsUpdate(viewportState);
+        cullAndRender();
+      },
+    });
+  }
+
   function destroy(): void {
     gsap.killTweensOf(viewportState);
   }
 
   return {
     centerOnNode,
+    zoomToBounds,
     destroy,
   };
 }

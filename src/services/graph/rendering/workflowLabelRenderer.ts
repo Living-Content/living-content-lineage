@@ -52,6 +52,7 @@ export interface WorkflowLabelEntry {
 export interface WorkflowLabels {
   update: (viewportState: ViewportState) => void;
   setPhaseFilter: (activePhase: Phase | null) => void;
+  setVisible: (visible: boolean) => void;
   container: Container;
 }
 
@@ -181,5 +182,9 @@ export function createWorkflowLabels(
     }
   };
 
-  return { update, setPhaseFilter: setPhaseFilterVisibility, container };
+  const setVisible = (visible: boolean): void => {
+    container.visible = visible;
+  };
+
+  return { update, setPhaseFilter: setPhaseFilterVisibility, setVisible, container };
 }
