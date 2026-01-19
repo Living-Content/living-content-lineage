@@ -34,8 +34,8 @@ export const NODE_STYLES: Record<
   media: {
     color: getCssVar('--node-media-color'),
   },
-  stage: {
-    color: getCssVar('--node-stage-color'),
+  workflow: {
+    color: getCssVar('--node-workflow-color'),
   },
 };
 
@@ -133,7 +133,7 @@ export const META_NODE_SIZE = 14;
 
 /**
  * Configuration for icon-based node rendering.
- * Nodes with entries here render as icons instead of text pills.
+ * Nodes with entries here render as icons instead of text labels.
  */
 export const ICON_NODE_CONFIG: Partial<Record<NodeType, { size: number; iconPath: string }>> = {
   attestation: { size: 56, iconPath: ASSET_TYPE_ICON_PATHS.Attestation },
@@ -147,7 +147,7 @@ export function isIconNode(nodeType: NodeType): boolean {
 }
 
 /**
- * Returns the icon configuration for a node type, or null if it uses pill rendering.
+ * Returns the icon configuration for a node type, or null if it uses standard rendering.
  */
 export function getIconNodeConfig(nodeType: NodeType): { size: number; iconPath: string } | null {
   return ICON_NODE_CONFIG[nodeType] ?? null;

@@ -6,10 +6,10 @@ import { Culler } from 'pixi.js';
 import { loadManifest } from '../../manifest/registry.js';
 import { ManifestLoadError, type ManifestErrorInfo } from '../../manifest/errors.js';
 import type { LineageGraph } from '../../../config/types.js';
-import type { PillNode } from '../rendering/nodeRenderer.js';
+import type { GraphNode } from '../rendering/nodeRenderer.js';
 import { renderEdges } from '../rendering/edgeRenderer.js';
-import { renderStageEdges } from '../rendering/stageEdgeRenderer.js';
-import { createStageLabels } from '../rendering/stageLabelRenderer.js';
+import { renderWorkflowEdges } from '../rendering/workflowEdgeRenderer.js';
+import { createWorkflowLabels } from '../rendering/workflowLabelRenderer.js';
 import { createViewportState, createViewportHandlers } from '../interaction/viewport.js';
 import { createLODController, type LODLayers } from './lodController.js';
 import { createTitleOverlay } from '../rendering/titleOverlay.js';
@@ -18,7 +18,7 @@ import { clearSelection } from '../../../stores/lineageState.js';
 import { buildVerticalAdjacencyMap } from '../interaction/selectionHighlighter.js';
 import { createNodeAnimationController } from '../interaction/nodeAnimationController.js';
 import { createNodes, repositionNodesWithGaps } from './nodeCreator.js';
-import { recalculateStageBounds, createStageNodes, calculateTopNodeInfo } from './stageCreator.js';
+import { recalculateWorkflowBounds, createWorkflowNodes, calculateTopNodeInfo } from './workflowCreator.js';
 import { initializePixi } from './pixiSetup.js';
 import { createStoreSubscriptions } from './graphSubscriptions.js';
 import { createViewportManager, createResizeHandler } from './viewportManager.js';
@@ -89,8 +89,8 @@ export async function createGraphController({
   });
 
   // Node maps
-  const nodeMap = new Map<string, PillNode>();
-  const stageNodeMap = new Map<string, PillNode>();
+  const nodeMap = new Map<string, GraphNode>();
+  const workflowNodeMap = new Map<string, GraphNode>();
 
   // Build adjacency map and animation controller
   const verticalAdjacency = buildVerticalAdjacencyMap(lineageData.nodes, lineageData.edges);
@@ -109,30 +109,30 @@ export async function createGraphController({
   });
 
   repositionNodesWithGaps(nodeMap);
-  recalculateStageBounds(lineageData.stages, nodeMap, graphScale);
+  recalculateWorkflowBounds(lineageData.workflows, nodeMap, graphScale);
 
-  // Create stage nodes
-  createStageNodes(lineageData.stages, lineageData.nodes, lineageData.edges, stageNodeMap, {
+  // Create workflow nodes
+  createWorkflowNodes(lineageData.workflows, lineageData.nodes, lineageData.edges, workflowNodeMap, {
     container,
-    stageNodeLayer: layers.stageNodeLayer,
+    workflowNodeLayer: layers.workflowNodeLayer,
     selectionLayer: layers.selectionLayer,
     graphScale,
     ticker: app.ticker,
     callbacks: { onHover: callbacks.onHover, onHoverEnd: callbacks.onHoverEnd },
   });
 
-  renderStageEdges(layers.stageEdgeLayer, lineageData.stages, stageNodeMap);
+  renderWorkflowEdges(layers.workflowEdgeLayer, lineageData.workflows, workflowNodeMap);
 
-  // Stage labels
+  // Workflow labels
   const topNodeInfo = calculateTopNodeInfo(nodeMap);
-  const stageLabels = createStageLabels(lineageData.stages, stageNodeMap, topNodeInfo);
-  app.stage.addChild(stageLabels.container);
-  stageLabels.update(viewportState);
+  const workflowLabels = createWorkflowLabels(lineageData.workflows, workflowNodeMap, topNodeInfo);
+  app.stage.addChild(workflowLabels.container);
+  workflowLabels.update(viewportState);
 
   // Helper functions
   const updateTitlePosition = (): void => {
-    const firstStage = lineageData.stages[0];
-    const leftmostNode = firstStage ? stageNodeMap.get(firstStage.id) : null;
+    const firstWorkflow = lineageData.workflows[0];
+    const leftmostNode = firstWorkflow ? workflowNodeMap.get(firstWorkflow.id) : null;
     if (leftmostNode) titleOverlay.updatePosition(leftmostNode, viewportState);
   };
 
@@ -149,16 +149,16 @@ export async function createGraphController({
     nodeLayer: layers.nodeLayer,
     edgeLayer: layers.edgeLayer,
     dotLayer: layers.dotLayer,
-    stageNodeLayer: layers.stageNodeLayer,
-    stageEdgeLayer: layers.stageEdgeLayer,
-    stageLayer: stageLabels.container,
+    workflowNodeLayer: layers.workflowNodeLayer,
+    workflowEdgeLayer: layers.workflowEdgeLayer,
+    workflowLayer: workflowLabels.container,
   };
 
   const lodController = createLODController(lodLayers, {
     onCollapseStart: () => { clearSelection(); titleOverlay.setMode('relative'); },
     onCollapseEnd: updateTitlePosition,
     onExpandStart: () => { clearSelection(); titleOverlay.setMode('fixed'); },
-    onExpandEnd: () => { stageLabels.update(viewportState); cullAndRender(); },
+    onExpandEnd: () => { workflowLabels.update(viewportState); cullAndRender(); },
   });
 
   // Viewport manager
@@ -166,19 +166,19 @@ export async function createGraphController({
     nodeMap,
     viewport,
     viewportState,
-    stageLabelsUpdate: stageLabels.update,
+    workflowLabelsUpdate: workflowLabels.update,
     cullAndRender,
   });
 
   // Store subscriptions
   const subscriptions = createStoreSubscriptions({
     nodeMap,
-    stageNodeMap,
+    workflowNodeMap,
     edgeLayer: layers.edgeLayer,
     dotLayer: layers.dotLayer,
-    stageEdgeLayer: layers.stageEdgeLayer,
+    workflowEdgeLayer: layers.workflowEdgeLayer,
     edges: lineageData.edges,
-    stages: lineageData.stages,
+    workflows: lineageData.workflows,
     verticalAdjacency,
     setNodeAlpha: animationController.setNodeAlpha,
     centerSelectedNode: viewportManager.centerOnNode,
@@ -188,13 +188,13 @@ export async function createGraphController({
   const viewportHandlers = createViewportHandlers(app.canvas, viewport, container, viewportState, {
     onZoom: (scale) => {
       lodController.checkThreshold(scale);
-      stageLabels.update(viewportState);
+      workflowLabels.update(viewportState);
       if (!lodController.state.isCollapsed && !lodController.state.isAnimating) cullAndRender();
       else if (lodController.state.isCollapsed) updateTitlePosition();
       callbacks.onSimpleViewChange(scale < LOD_THRESHOLD);
     },
     onPan: () => {
-      stageLabels.update(viewportState);
+      workflowLabels.update(viewportState);
       if (!lodController.state.isCollapsed && !lodController.state.isAnimating) cullAndRender();
       else if (lodController.state.isCollapsed) updateTitlePosition();
     },
@@ -208,7 +208,7 @@ export async function createGraphController({
     container,
     viewportState,
     app,
-    stageLabelsUpdate: stageLabels.update,
+    workflowLabelsUpdate: workflowLabels.update,
     cullAndRender,
     updateTitlePosition,
     centerSelectedNode: viewportManager.centerOnNode,

@@ -1,4 +1,5 @@
 import type { ManifestType, LineageGraph } from '../../config/types.js';
+import { isRecord } from '../../config/utils.js';
 import type { ManifestAdapter } from './adapters/manifestAdapter.js';
 import { c2paAdapter } from './adapters/c2pa/c2paAdapter.js';
 import { eqtyAdapter } from './adapters/eqty/eqtyAdapter.js';
@@ -10,10 +11,6 @@ const ADAPTERS: ManifestAdapter<unknown>[] = [
   eqtyAdapter,
   customAdapter,
 ];
-
-const isRecord = (value: unknown): value is Record<string, unknown> => {
-  return typeof value === 'object' && value !== null;
-};
 
 export const getManifestType = (raw: unknown): ManifestType | null => {
   if (!isRecord(raw)) return null;

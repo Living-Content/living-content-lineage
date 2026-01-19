@@ -7,13 +7,10 @@ import type {
   LineageNodeData,
   WorkflowPhase,
 } from '../../../../config/types.js';
+import { isRecord } from '../../../../config/utils.js';
 import type { LineageManifest, LineageManifestRecord } from './lineageTypes.js';
 import { computeLayout } from './lineageLayout.js';
 import { getCssVar } from '../../../../theme/theme.js';
-
-const isRecord = (value: unknown): value is Record<string, unknown> => {
-  return typeof value === 'object' && value !== null;
-};
 
 const buildManifestSummary = (
   record?: LineageManifestRecord
@@ -58,21 +55,21 @@ export const buildLineageGraph = (
   const activeManifest = manifest.manifests[activeManifestId];
   const manifestSummary = buildManifestSummary(activeManifest);
 
-  const { positions, stages } = computeLayout(manifest);
+  const { positions, workflows } = computeLayout(manifest);
   const nodes: LineageNodeData[] = [];
 
-  // Build stage-to-phase mapping
-  const stagePhaseMap = new Map<string, WorkflowPhase>();
+  // Build workflow-to-phase mapping
+  const workflowPhaseMap = new Map<string, WorkflowPhase>();
   manifest.stages.forEach((stage) => {
     if (stage.phase) {
-      stagePhaseMap.set(stage.id, stage.phase as WorkflowPhase);
+      workflowPhaseMap.set(stage.id, stage.phase as WorkflowPhase);
     }
   });
 
   manifest.assets.forEach((asset) => {
-    const pos = positions.get(asset.id) ?? { x: 0, y: 200, stage: 'unknown' };
+    const pos = positions.get(asset.id) ?? { x: 0, y: 200, workflowId: 'unknown' };
     const assetManifest = assetManifests.get(asset.id);
-    const phase = stagePhaseMap.get(pos.stage);
+    const phase = workflowPhaseMap.get(pos.workflowId);
     nodes.push({
       id: asset.id,
       label: asset.label,
@@ -82,7 +79,7 @@ export const buildLineageGraph = (
       shape: 'circle',
       x: pos.x,
       y: pos.y,
-      stage: pos.stage,
+      workflowId: pos.workflowId,
       phase,
       description: asset.description,
       assetManifest,
@@ -98,8 +95,8 @@ export const buildLineageGraph = (
   });
 
   manifest.computations.forEach((comp) => {
-    const pos = positions.get(comp.id) ?? { x: 0, y: 200, stage: 'unknown' };
-    const phase = stagePhaseMap.get(pos.stage);
+    const pos = positions.get(comp.id) ?? { x: 0, y: 200, workflowId: 'unknown' };
+    const phase = workflowPhaseMap.get(pos.workflowId);
     nodes.push({
       id: comp.id,
       label: comp.label,
@@ -109,7 +106,7 @@ export const buildLineageGraph = (
       shape: 'circle',
       x: pos.x,
       y: pos.y,
-      stage: pos.stage,
+      workflowId: pos.workflowId,
       phase,
       description: comp.description,
       duration: comp.duration,
@@ -118,8 +115,8 @@ export const buildLineageGraph = (
   });
 
   manifest.attestations.forEach((attest) => {
-    const pos = positions.get(attest.id) ?? { x: 0, y: 100, stage: 'unknown' };
-    const phase = stagePhaseMap.get(pos.stage);
+    const pos = positions.get(attest.id) ?? { x: 0, y: 100, workflowId: 'unknown' };
+    const phase = workflowPhaseMap.get(pos.workflowId);
     nodes.push({
       id: attest.id,
       label: attest.label,
@@ -129,7 +126,7 @@ export const buildLineageGraph = (
       shape: 'circle',
       x: pos.x,
       y: pos.y,
-      stage: pos.stage,
+      workflowId: pos.workflowId,
       phase,
       description: attest.description,
       role: 'sink',
@@ -234,6 +231,6 @@ export const buildLineageGraph = (
     lineageId: manifest.lineage_id,
     nodes,
     edges,
-    stages
+    workflows
   };
 }

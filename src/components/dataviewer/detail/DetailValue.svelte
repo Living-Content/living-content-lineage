@@ -7,13 +7,10 @@
     parseLooseJson,
     tryParseJsonFragment,
   } from '../../../services/dataviewer/parsing/valueParsing.js';
+  import { isRecord } from '../../../config/utils.js';
   import MarkdownValue from './MarkdownValue.svelte';
 
   export let value: unknown;
-
-  function isRecord(input: unknown): input is Record<string, unknown> {
-    return typeof input === 'object' && input !== null && !Array.isArray(input);
-  }
 
   $: parsedJson =
     typeof value === 'string' ? parseJson(value) : null;

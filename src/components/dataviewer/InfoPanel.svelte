@@ -1,7 +1,7 @@
 <script lang="ts">
   // Sidebar panel with liquid blob background.
   import { onMount, tick } from 'svelte';
-  import { clearSelection, selectedNode, selectedStage } from '../../stores/lineageState.js';
+  import { clearSelection, selectedNode, selectedWorkflow } from '../../stores/lineageState.js';
   import { isDetailOpen, loadError, setDetailOpen, closeDetailPanel } from '../../stores/uiState.js';
   import { hasDetailContent } from '../../services/dataviewer/parsing/detailContent.js';
   import { createDragHandler } from '../../services/dataviewer/interaction/dragHandler.js';
@@ -11,7 +11,7 @@
   import MetricCard from './detail/MetricCard.svelte';
   import CardGrid from './detail/CardGrid.svelte';
   import SummaryView from './SummaryView.svelte';
-  import StageOverview from './StageOverview.svelte';
+  import WorkflowOverview from './WorkflowOverview.svelte';
   import DetailView from './DetailView.svelte';
   import SignaturePanel from './SignaturePanel.svelte';
 
@@ -35,11 +35,11 @@
 
   // Badge data for header
   $: nodePhase = $selectedNode?.phase;
-  $: nodeStage = $selectedNode?.stage;
+  $: nodeWorkflowId = $selectedNode?.workflowId;
   $: nodeAssetType = $selectedNode?.assetType;
-  $: stageLabel = $selectedStage?.label;
-  $: panelHidden = !$selectedNode && !$selectedStage && !$loadError;
-  $: showCloseButton = $selectedNode || $selectedStage;
+  $: workflowLabel = $selectedWorkflow?.label;
+  $: panelHidden = !$selectedNode && !$selectedWorkflow && !$loadError;
+  $: showCloseButton = $selectedNode || $selectedWorkflow;
 
   // Shared header card data
   $: titleDisplay = $selectedNode?.title ?? $selectedNode?.label ?? '';
@@ -122,9 +122,9 @@
     <div class="panel-header" on:mousedown={handleStartDrag} role="presentation">
       <div class="panel-header-content">
         {#if $selectedNode}
-          <ContextBadges phase={nodePhase} stage={nodeStage} assetType={nodeAssetType} />
-        {:else if $selectedStage}
-          <span class="panel-title">{stageLabel}</span>
+          <ContextBadges phase={nodePhase} workflowId={nodeWorkflowId} assetType={nodeAssetType} />
+        {:else if $selectedWorkflow}
+          <span class="panel-title">{workflowLabel}</span>
         {:else}
           <span class="panel-title">CONTEXT</span>
         {/if}
@@ -182,8 +182,8 @@
               </button>
             {/if}
           {/if}
-        {:else if $selectedStage}
-          <StageOverview nodes={$selectedStage.nodes} edges={$selectedStage.edges} />
+        {:else if $selectedWorkflow}
+          <WorkflowOverview nodes={$selectedWorkflow.nodes} edges={$selectedWorkflow.edges} />
         {:else}
           <p class="panel-placeholder">Select a node to view details</p>
         {/if}

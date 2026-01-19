@@ -1,6 +1,6 @@
 /**
  * Level-of-detail controller with container crossfade.
- * Manages collapse to stage nodes and expand to detail view.
+ * Manages collapse to workflow nodes and expand to detail view.
  *
  * Animation locks zoom input via state.isAnimating - viewport should check this.
  */
@@ -18,9 +18,9 @@ export interface LODLayers {
   nodeLayer: Container;
   edgeLayer: Container;
   dotLayer: Container;
-  stageNodeLayer: Container;
-  stageEdgeLayer: Container;
-  stageLayer: Container;
+  workflowNodeLayer: Container;
+  workflowEdgeLayer: Container;
+  workflowLayer: Container;
 }
 
 export interface LODCallbacks {
@@ -35,6 +35,39 @@ export interface LODController {
   readonly state: LODState;
 }
 
+/**
+ * Shared crossfade animation for LOD transitions.
+ */
+function animateCrossfade(
+  outgoing: Container[],
+  incoming: Container[],
+  onComplete: () => void
+): void {
+  const duration = ANIMATION_TIMINGS.LOD_DURATION;
+
+  incoming.forEach((layer) => {
+    layer.alpha = 0;
+    layer.visible = true;
+  });
+
+  gsap.to(outgoing, {
+    alpha: 0,
+    duration: duration * ANIMATION_TIMINGS.LOD_FADE_OUT_FACTOR,
+    ease: 'power2.in',
+  });
+
+  gsap.to(incoming, {
+    alpha: 1,
+    duration: duration * ANIMATION_TIMINGS.LOD_FADE_IN_DURATION_FACTOR,
+    delay: duration * ANIMATION_TIMINGS.LOD_FADE_IN_DELAY_FACTOR,
+    ease: 'power2.out',
+    onComplete: () => {
+      outgoing.forEach((layer) => (layer.visible = false));
+      onComplete();
+    },
+  });
+}
+
 export function createLODController(
   layers: LODLayers,
   callbacks: LODCallbacks
@@ -44,8 +77,8 @@ export function createLODController(
     isAnimating: false,
   };
 
-  const detailLayers = [layers.nodeLayer, layers.edgeLayer, layers.dotLayer, layers.stageLayer];
-  const stageLayers = [layers.stageNodeLayer, layers.stageEdgeLayer];
+  const detailLayers = [layers.nodeLayer, layers.edgeLayer, layers.dotLayer, layers.workflowLayer];
+  const workflowLayers = [layers.workflowNodeLayer, layers.workflowEdgeLayer];
 
   function collapse(): void {
     if (state.isAnimating) return;
@@ -53,31 +86,9 @@ export function createLODController(
     state.isCollapsed = true;
     callbacks.onCollapseStart?.();
 
-    // Show stage layers, start transparent
-    stageLayers.forEach((layer) => {
-      layer.alpha = 0;
-      layer.visible = true;
-    });
-
-    const duration = ANIMATION_TIMINGS.LOD_DURATION;
-
-    // Outgoing fades fast, incoming slightly delayed
-    gsap.to(detailLayers, {
-      alpha: 0,
-      duration: duration * ANIMATION_TIMINGS.LOD_FADE_OUT_FACTOR,
-      ease: 'power2.in',
-    });
-
-    gsap.to(stageLayers, {
-      alpha: 1,
-      duration: duration * ANIMATION_TIMINGS.LOD_FADE_IN_DURATION_FACTOR,
-      delay: duration * ANIMATION_TIMINGS.LOD_FADE_IN_DELAY_FACTOR,
-      ease: 'power2.out',
-      onComplete: () => {
-        detailLayers.forEach((layer) => (layer.visible = false));
-        state.isAnimating = false;
-        callbacks.onCollapseEnd?.();
-      },
+    animateCrossfade(detailLayers, workflowLayers, () => {
+      state.isAnimating = false;
+      callbacks.onCollapseEnd?.();
     });
   }
 
@@ -87,31 +98,9 @@ export function createLODController(
     state.isCollapsed = false;
     callbacks.onExpandStart?.();
 
-    // Show detail layers, start transparent
-    detailLayers.forEach((layer) => {
-      layer.alpha = 0;
-      layer.visible = true;
-    });
-
-    const duration = ANIMATION_TIMINGS.LOD_DURATION;
-
-    // Outgoing fades fast, incoming slightly delayed
-    gsap.to(stageLayers, {
-      alpha: 0,
-      duration: duration * ANIMATION_TIMINGS.LOD_FADE_OUT_FACTOR,
-      ease: 'power2.in',
-    });
-
-    gsap.to(detailLayers, {
-      alpha: 1,
-      duration: duration * ANIMATION_TIMINGS.LOD_FADE_IN_DURATION_FACTOR,
-      delay: duration * ANIMATION_TIMINGS.LOD_FADE_IN_DELAY_FACTOR,
-      ease: 'power2.out',
-      onComplete: () => {
-        stageLayers.forEach((layer) => (layer.visible = false));
-        state.isAnimating = false;
-        callbacks.onExpandEnd?.();
-      },
+    animateCrossfade(workflowLayers, detailLayers, () => {
+      state.isAnimating = false;
+      callbacks.onExpandEnd?.();
     });
   }
 

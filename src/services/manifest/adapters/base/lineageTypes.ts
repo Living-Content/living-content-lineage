@@ -66,9 +66,7 @@ export interface LineageManifest {
   attestations: LineageAttestation[];
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
+import { isRecord } from '../../../../config/utils.js';
 
 export function isLineageManifest(raw: unknown): raw is LineageManifest {
   if (!isRecord(raw)) return false;

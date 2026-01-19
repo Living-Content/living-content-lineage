@@ -1,16 +1,16 @@
 /**
- * Text measurement utilities for pill node layout.
+ * Text measurement utilities for node layout.
  */
 import { getCssVar } from '../../../theme/theme.js';
-import type { PillRenderOptions } from './nodeRenderer.js';
+import type { NodeRenderOptions } from './nodeRenderer.js';
 
 // Base dimensions (will be scaled)
 export const BASE_TYPE_LABEL_FONT_SIZE = 13;
 export const BASE_MAIN_LABEL_FONT_SIZE = 18;
 export const BASE_SIMPLE_TYPE_FONT_SIZE = 16;
 export const BASE_ICON_DIAMETER = 36;
-export const BASE_PILL_HEIGHT_DETAILED = 56;
-export const BASE_PILL_HEIGHT_SIMPLE = 48;
+export const BASE_NODE_HEIGHT_DETAILED = 56;
+export const BASE_NODE_HEIGHT_SIMPLE = 48;
 export const BASE_LEFT_PADDING = 10;
 export const BASE_ICON_TEXT_GAP = 12;
 export const BASE_RIGHT_PADDING = 20;
@@ -47,7 +47,7 @@ export const getScaledDimensions = (scale: number): ScaledDimensions => {
   };
 };
 
-export const calculatePillWidth = (options: PillRenderOptions, dims: ScaledDimensions, scale: number): number => {
+export const calculateNodeWidth = (options: NodeRenderOptions, dims: ScaledDimensions, scale: number): number => {
   const textStartX = dims.leftPadding + dims.iconDiameter + dims.iconTextGap;
   const rightPadding = BASE_RIGHT_PADDING * scale;
 

@@ -2,10 +2,10 @@
  * Selection highlighting for graph nodes and edges.
  * Manages visual state based on selection changes.
  */
-import type { LineageGraph, LineageEdgeData, Stage } from '../../../config/types.js';
-import type { PillNode } from '../rendering/nodeRenderer.js';
+import type { LineageGraph, LineageEdgeData, Workflow } from '../../../config/types.js';
+import type { GraphNode } from '../rendering/nodeRenderer.js';
 import { renderEdges } from '../rendering/edgeRenderer.js';
-import { renderStageEdges } from '../rendering/stageEdgeRenderer.js';
+import { renderWorkflowEdges } from '../rendering/workflowEdgeRenderer.js';
 import { FADED_NODE_ALPHA } from '../../../config/constants.js';
 import { DEFAULT_NODE_ALPHA } from '../rendering/nodeRenderer.js';
 import type { Container } from 'pixi.js';
@@ -73,15 +73,32 @@ export const buildVerticalAdjacencyMap = (
 };
 
 export interface SelectionHighlighterDeps {
-  nodeMap: Map<string, PillNode>;
-  stageNodeMap: Map<string, PillNode>;
+  nodeMap: Map<string, GraphNode>;
+  workflowNodeMap: Map<string, GraphNode>;
   edgeLayer: Container;
   dotLayer: Container;
-  stageEdgeLayer: Container;
+  workflowEdgeLayer: Container;
   edges: LineageEdgeData[];
-  stages: Stage[];
+  workflows: Workflow[];
   verticalAdjacency: VerticalAdjacencyMap;
   setNodeAlpha: (nodeId: string, alpha: number) => void;
+}
+
+/**
+ * Helper to set visibility state for a map of nodes.
+ */
+function setNodeMapVisibility(
+  nodeMap: Map<string, GraphNode>,
+  setNodeAlpha: (id: string, alpha: number) => void,
+  isHighlighted: (id: string) => boolean,
+  isSelected: (id: string) => boolean
+): void {
+  nodeMap.forEach((node, nodeId) => {
+    const highlighted = isHighlighted(nodeId);
+    const selected = isSelected(nodeId);
+    setNodeAlpha(nodeId, highlighted ? 1 : FADED_NODE_ALPHA);
+    node.setSelected(selected);
+  });
 }
 
 /**
@@ -92,82 +109,73 @@ export const applySelectionHighlight = (
   selectedId: string,
   deps: SelectionHighlighterDeps
 ): void => {
-  const { nodeMap, stageNodeMap, edgeLayer, dotLayer, stageEdgeLayer, edges, stages, verticalAdjacency, setNodeAlpha } = deps;
+  const { nodeMap, workflowNodeMap, edgeLayer, dotLayer, workflowEdgeLayer, edges, workflows, verticalAdjacency, setNodeAlpha } = deps;
   const verticallyConnected = verticalAdjacency.getConnectedNodeIds(selectedId);
 
   // Highlight nodes in expanded view
-  nodeMap.forEach((node, nodeId) => {
-    if (nodeId === selectedId) {
-      setNodeAlpha(nodeId, 1);
-      node.setSelected(true);
-    } else if (verticallyConnected.has(nodeId)) {
-      setNodeAlpha(nodeId, 1);
-      node.setSelected(false);
-    } else {
-      setNodeAlpha(nodeId, FADED_NODE_ALPHA);
-      node.setSelected(false);
-    }
-  });
+  setNodeMapVisibility(
+    nodeMap,
+    setNodeAlpha,
+    (id) => id === selectedId || verticallyConnected.has(id),
+    (id) => id === selectedId
+  );
 
-  // Dim stage nodes and edges (for collapsed view consistency)
-  stageNodeMap.forEach((node) => {
+  // Dim workflow nodes and edges (for collapsed view consistency)
+  workflowNodeMap.forEach((node) => {
     node.alpha = FADED_NODE_ALPHA;
     node.setSelected(false);
   });
 
   renderEdges(edgeLayer, dotLayer, edges, nodeMap, selectedId, verticallyConnected);
-  // Dim all stage edges when a node is selected
-  renderStageEdges(stageEdgeLayer, stages, stageNodeMap, '');
+  // Dim all workflow edges when a node is selected
+  renderWorkflowEdges(workflowEdgeLayer, workflows, workflowNodeMap, '');
 };
 
 /**
- * Applies selection highlighting to a stage node.
+ * Applies selection highlighting to a workflow node.
  */
-export const applyStageSelectionHighlight = (
-  stageId: string,
+export const applyWorkflowSelectionHighlight = (
+  workflowId: string,
   deps: SelectionHighlighterDeps
 ): void => {
-  const { nodeMap, stageNodeMap, stageEdgeLayer, stages, setNodeAlpha } = deps;
+  const { nodeMap, workflowNodeMap, workflowEdgeLayer, workflows, setNodeAlpha } = deps;
 
-  // Dim all stage nodes except selected
-  stageNodeMap.forEach((node, id) => {
-    if (id === stageId) {
-      node.alpha = 1;
-      node.setSelected(true);
-    } else {
-      node.alpha = FADED_NODE_ALPHA;
-      node.setSelected(false);
-    }
-  });
+  // Highlight only selected workflow node
+  setNodeMapVisibility(
+    workflowNodeMap,
+    (id, alpha) => { workflowNodeMap.get(id)!.alpha = alpha; },
+    (id) => id === workflowId,
+    (id) => id === workflowId
+  );
 
-  // Also dim expanded nodes for consistency
-  nodeMap.forEach((_, nodeId) => {
-    setNodeAlpha(nodeId, FADED_NODE_ALPHA);
-  });
-  nodeMap.forEach((node) => {
-    node.setSelected(false);
-  });
+  // Dim all expanded nodes for consistency
+  setNodeMapVisibility(
+    nodeMap,
+    setNodeAlpha,
+    () => false,
+    () => false
+  );
 
-  // Re-render stage edges with selection highlighting
-  renderStageEdges(stageEdgeLayer, stages, stageNodeMap, stageId);
+  // Re-render workflow edges with selection highlighting
+  renderWorkflowEdges(workflowEdgeLayer, workflows, workflowNodeMap, workflowId);
 };
 
 /**
  * Clears all selection visuals, restoring default alpha.
  */
 export const clearSelectionVisuals = (deps: SelectionHighlighterDeps): void => {
-  const { nodeMap, stageNodeMap, edgeLayer, dotLayer, stageEdgeLayer, edges, stages, setNodeAlpha } = deps;
+  const { nodeMap, workflowNodeMap, edgeLayer, dotLayer, workflowEdgeLayer, edges, workflows, setNodeAlpha } = deps;
 
   nodeMap.forEach((node, nodeId) => {
     setNodeAlpha(nodeId, DEFAULT_NODE_ALPHA);
     node.setSelected(false);
   });
 
-  stageNodeMap.forEach((node) => {
+  workflowNodeMap.forEach((node) => {
     node.alpha = DEFAULT_NODE_ALPHA;
     node.setSelected(false);
   });
 
   renderEdges(edgeLayer, dotLayer, edges, nodeMap, null, null);
-  renderStageEdges(stageEdgeLayer, stages, stageNodeMap, null);
+  renderWorkflowEdges(workflowEdgeLayer, workflows, workflowNodeMap, null);
 };

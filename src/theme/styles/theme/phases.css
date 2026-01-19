@@ -1,7 +1,7 @@
 /**
  * Workflow phase colors.
  * Each workflow phase has a distinct accent color used for
- * stage backgrounds, asset accents, and detail view highlights.
+ * workflow backgrounds, asset accents, and detail view highlights.
  */
 :root {
   /* Phase accent colors - vibrant for visual distinction */

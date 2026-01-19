@@ -1,5 +1,5 @@
 <script lang="ts">
-  // Summary view for a selected stage.
+  // Summary view for a selected workflow.
   import type { LineageEdgeData, LineageNodeData } from '../../config/types.js';
   import { formatAssetTypeLabel } from '../../config/labels.js';
 
@@ -28,24 +28,24 @@
   );
 </script>
 
-<div class="sidebar-type-badge">Stage</div>
-<div class="stage-summary">
+<div class="sidebar-type-badge">Workflow</div>
+<div class="workflow-summary">
   {nodes.length} node{nodes.length !== 1 ? 's' : ''}
 </div>
 
 {#each groups as group (group.label)}
   {#if group.nodes.length > 0}
-    <div class="stage-group">
-      <div class="stage-group-header">{group.label}</div>
-      <div class="stage-node-list">
+    <div class="workflow-group">
+      <div class="workflow-group-header">{group.label}</div>
+      <div class="workflow-node-list">
         {#each group.nodes as node (node.id)}
-          <div class="stage-node-item">
-            <span class={`stage-node-icon ${node.nodeType}`}></span>
-            <span class="stage-node-label">{node.label}</span>
+          <div class="workflow-node-item">
+            <span class={`workflow-node-icon ${node.nodeType}`}></span>
+            <span class="workflow-node-label">{node.label}</span>
             {#if node.duration}
-              <span class="stage-node-meta">{node.duration}</span>
+              <span class="workflow-node-meta">{node.duration}</span>
             {:else if node.assetType}
-              <span class="stage-node-meta">
+              <span class="workflow-node-meta">
                 {formatAssetTypeLabel(node.assetType)}
               </span>
             {/if}
@@ -57,9 +57,9 @@
 {/each}
 
 {#if internalEdges.length || incomingEdges.length || outgoingEdges.length}
-  <div class="stage-group">
-    <div class="stage-group-header">Flow</div>
-    <div class="stage-flow">
+  <div class="workflow-group">
+    <div class="workflow-group-header">Flow</div>
+    <div class="workflow-flow">
       {#if incomingEdges.length}
         <div class="flow-item">
           <span class="flow-arrow">→</span>
@@ -96,7 +96,7 @@
     margin-bottom: 16px;
   }
 
-  .stage-summary {
+  .workflow-summary {
     font-size: 13px;
     color: var(--color-text-muted);
     margin-bottom: 20px;
@@ -104,11 +104,11 @@
     border-bottom: 1px solid var(--color-border-soft);
   }
 
-  .stage-group {
+  .workflow-group {
     margin-bottom: 20px;
   }
 
-  .stage-group-header {
+  .workflow-group-header {
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.5px;
@@ -117,13 +117,13 @@
     margin-bottom: 10px;
   }
 
-  .stage-node-list {
+  .workflow-node-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
   }
 
-  .stage-node-item {
+  .workflow-node-item {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -132,39 +132,39 @@
     border-radius: 6px;
   }
 
-  .stage-node-icon {
+  .workflow-node-icon {
     width: 8px;
     height: 8px;
     border-radius: 50%;
     flex-shrink: 0;
   }
 
-  .stage-node-icon.process {
-    background: var(--color-stage-compute);
+  .workflow-node-icon.process {
+    background: var(--color-workflow-compute);
   }
 
-  .stage-node-icon.data {
-    background: var(--color-stage-data);
+  .workflow-node-icon.data {
+    background: var(--color-workflow-data);
   }
 
-  .stage-node-icon.attestation {
-    background: var(--color-stage-attestation);
+  .workflow-node-icon.attestation {
+    background: var(--color-workflow-attestation);
   }
 
-  .stage-node-label {
+  .workflow-node-label {
     flex: 1;
     font-size: 13px;
     color: var(--color-text-primary);
     font-weight: 500;
   }
 
-  .stage-node-meta {
+  .workflow-node-meta {
     font-size: 11px;
     color: var(--color-text-light);
     font-family: var(--font-mono);
   }
 
-  .stage-flow {
+  .workflow-flow {
     display: flex;
     flex-direction: column;
     gap: 6px;

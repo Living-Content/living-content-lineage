@@ -2,7 +2,7 @@
  * Node alpha animation controller.
  * Handles smooth transitions for node opacity changes.
  */
-import type { PillNode } from '../rendering/nodeRenderer.js';
+import type { GraphNode } from '../rendering/nodeRenderer.js';
 
 export interface NodeAnimationController {
   setNodeAlpha: (nodeId: string, alpha: number) => void;
@@ -13,7 +13,7 @@ export interface NodeAnimationController {
  * Creates a controller for animating node alpha values with smooth lerping.
  */
 export const createNodeAnimationController = (
-  nodeMap: Map<string, PillNode>
+  nodeMap: Map<string, GraphNode>
 ): NodeAnimationController => {
   const animatingNodes = new Map<string, number>();
   let animationFrameId: number | null = null;
@@ -22,17 +22,17 @@ export const createNodeAnimationController = (
     const toRemove: string[] = [];
 
     animatingNodes.forEach((target, id) => {
-      const pillNode = nodeMap.get(id);
-      if (!pillNode) {
+      const node = nodeMap.get(id);
+      if (!node) {
         toRemove.push(id);
         return;
       }
 
-      const diff = target - pillNode.alpha;
+      const diff = target - node.alpha;
       if (Math.abs(diff) > 0.01) {
-        pillNode.alpha += diff * 0.2;
+        node.alpha += diff * 0.2;
       } else {
-        pillNode.alpha = target;
+        node.alpha = target;
         toRemove.push(id);
       }
     });

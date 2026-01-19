@@ -1,13 +1,13 @@
 <script lang="ts">
   /**
-   * Displays hierarchical context badges: Phase > Stage > Asset Type.
+   * Displays hierarchical context badges: Phase > Workflow > Asset Type.
    * Each badge is color-coded based on the workflow phase.
    */
   import type { WorkflowPhase, AssetType } from '../../../config/types.js';
   import { formatAssetTypeLabel } from '../../../config/labels.js';
 
   export let phase: WorkflowPhase | undefined = undefined;
-  export let stage: string | undefined = undefined;
+  export let workflowId: string | undefined = undefined;
   export let assetType: AssetType | undefined = undefined;
 
   $: phaseClass = phase ? `phase-${phase.toLowerCase()}` : '';
@@ -16,7 +16,7 @@
   // Build hierarchy array for rendering with separators (most specific first)
   $: items = [
     typeLabel ? { label: typeLabel, type: 'type' } : null,
-    stage ? { label: stage, type: 'stage' } : null,
+    workflowId ? { label: workflowId, type: 'workflow' } : null,
     phase ? { label: phase, type: 'phase' } : null,
   ].filter(Boolean) as Array<{ label: string; type: string }>;
 </script>
@@ -58,12 +58,12 @@
     color: var(--color-text-secondary);
   }
 
-  /* Hierarchy opacity: Phase (0.5) > Stage (0.7) > Type (1.0) - most specific is most prominent */
+  /* Hierarchy opacity: Phase (0.5) > Workflow (0.7) > Type (1.0) - most specific is most prominent */
   .badge-phase {
     opacity: 0.5;
   }
 
-  .badge-stage {
+  .badge-workflow {
     opacity: 0.7;
   }
 

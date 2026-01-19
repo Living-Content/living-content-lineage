@@ -6,7 +6,7 @@ export const NODE_TYPE_LABELS: Record<NodeType, string> = {
   attestation: 'Verification',
   store: 'Storage',
   media: 'Media',
-  stage: 'Stage',
+  workflow: 'Workflow',
 };
 
 export const ASSET_TYPE_LABELS: Record<AssetType, string> = {

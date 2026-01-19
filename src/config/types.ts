@@ -70,7 +70,7 @@ export type NodeType =
   | "attestation"
   | "store"
   | "media"
-  | "stage";
+  | "workflow";
 
 export type NodeRole = "source" | "sink" | "intermediate" | "process";
 
@@ -151,7 +151,7 @@ export interface LineageNodeData {
   nodeType: NodeType;
   assetType?: AssetType;
   shape: NodeShape;
-  stage?: string;
+  workflowId?: string;
   phase?: WorkflowPhase;
   manifest?: LineageManifestSummary;
   assetManifest?: AssetManifest;
@@ -178,7 +178,7 @@ export interface LineageEdgeData {
   isGate?: boolean;
 }
 
-export interface Stage {
+export interface Workflow {
   id: string;
   label: string;
   phase?: WorkflowPhase;
@@ -191,7 +191,7 @@ export interface LineageGraph {
   lineageId?: string;
   nodes: LineageNodeData[];
   edges: LineageEdgeData[];
-  stages: Stage[];
+  workflows: Workflow[];
 }
 
 /**

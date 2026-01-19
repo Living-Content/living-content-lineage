@@ -5,7 +5,7 @@
  */
 import { Container, Graphics } from 'pixi.js';
 import type { LineageGraph } from '../../../config/types.js';
-import type { PillNode } from './nodeRenderer.js';
+import type { GraphNode } from './nodeRenderer.js';
 import { getColor } from '../../../theme/theme.js';
 import {
   EDGE_WIDTH,
@@ -22,7 +22,7 @@ export const renderEdges = (
   edgeLayer: Container,
   dotLayer: Container,
   edges: LineageGraph['edges'],
-  nodeMap: Map<string, PillNode>,
+  nodeMap: Map<string, GraphNode>,
   selectedNodeId: string | null = null,
   highlightedNodeIds: Set<string> | null = null
 ): void => {
@@ -59,10 +59,10 @@ export const renderEdges = (
     const ty = targetNode.position.y;
 
     // Use node's actual dimensions (in graph space)
-    const sourceHalfW = sourceNode.pillWidth / 2;
-    const sourceHalfH = sourceNode.pillHeight / 2;
-    const targetHalfW = targetNode.pillWidth / 2;
-    const targetHalfH = targetNode.pillHeight / 2;
+    const sourceHalfW = sourceNode.nodeWidth / 2;
+    const sourceHalfH = sourceNode.nodeHeight / 2;
+    const targetHalfW = targetNode.nodeWidth / 2;
+    const targetHalfH = targetNode.nodeHeight / 2;
 
     const sourcePhase = sourceNode.nodeData.phase;
     const color = sourcePhase

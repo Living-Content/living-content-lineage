@@ -6,13 +6,13 @@ import { Container } from 'pixi.js';
 import gsap from 'gsap';
 import { PANEL_DETAIL_MAX_WIDTH, PANEL_MARGIN, MOBILE_BREAKPOINT } from '../../../config/constants.js';
 import type { ViewportState } from '../interaction/viewport.js';
-import type { PillNode } from '../rendering/nodeRenderer.js';
+import type { GraphNode } from '../rendering/nodeRenderer.js';
 
 export interface ViewportManagerDeps {
-  nodeMap: Map<string, PillNode>;
+  nodeMap: Map<string, GraphNode>;
   viewport: Container;
   viewportState: ViewportState;
-  stageLabelsUpdate: (state: ViewportState) => void;
+  workflowLabelsUpdate: (state: ViewportState) => void;
   cullAndRender: () => void;
 }
 
@@ -25,7 +25,7 @@ export interface ViewportManager {
  * Creates a viewport manager with node centering capabilities.
  */
 export function createViewportManager(deps: ViewportManagerDeps): ViewportManager {
-  const { nodeMap, viewport, viewportState, stageLabelsUpdate, cullAndRender } = deps;
+  const { nodeMap, viewport, viewportState, workflowLabelsUpdate, cullAndRender } = deps;
 
   function centerOnNode(nodeId: string): void {
     const node = nodeMap.get(nodeId);
@@ -42,7 +42,7 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
       ease: 'power2.out',
       onUpdate: () => {
         viewport.position.set(viewportState.x, viewportState.y);
-        stageLabelsUpdate(viewportState);
+        workflowLabelsUpdate(viewportState);
         cullAndRender();
       },
     });
@@ -62,7 +62,7 @@ export interface ResizeHandlerDeps {
   container: HTMLElement;
   viewportState: ViewportState;
   app: { resize: () => void };
-  stageLabelsUpdate: (state: ViewportState) => void;
+  workflowLabelsUpdate: (state: ViewportState) => void;
   cullAndRender: () => void;
   updateTitlePosition: () => void;
   centerSelectedNode: (nodeId: string) => void;
@@ -86,7 +86,7 @@ export function createResizeHandler(deps: ResizeHandlerDeps): {
       deps.viewportState.width = deps.container.clientWidth;
       deps.viewportState.height = deps.container.clientHeight;
       deps.app.resize();
-      deps.stageLabelsUpdate(deps.viewportState);
+      deps.workflowLabelsUpdate(deps.viewportState);
 
       const selectedNodeId = deps.getSelectedNodeId();
       if (deps.getDetailPanelOpen() && selectedNodeId) {

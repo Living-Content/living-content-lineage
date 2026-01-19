@@ -6,7 +6,7 @@
 import { Container, Graphics, Sprite, Texture, Ticker } from 'pixi.js';
 import { getColor, getPhaseColorHex, parseColorToRgb } from '../../../theme/theme.js';
 import type { LineageNodeData } from '../../../config/types.js';
-import { DEFAULT_NODE_ALPHA, type PillNode } from './nodeRenderer.js';
+import { DEFAULT_NODE_ALPHA, type GraphNode } from './nodeRenderer.js';
 import { attachNodeInteraction, createSelectionAnimator, type NodeCallbacks } from '../interaction/nodeInteraction.js';
 import { createRetinaCanvas } from './rendererUtils.js';
 
@@ -73,7 +73,7 @@ const createIconTextureAsync = async (
 
 /**
  * Creates a circular icon node.
- * Returns a PillNode-compatible container with the icon rendered inside.
+ * Returns a GraphNode-compatible container with the icon rendered inside.
  */
 export const createIconNode = async (
   node: LineageNodeData,
@@ -81,8 +81,8 @@ export const createIconNode = async (
   _ticker: Ticker,
   callbacks: NodeCallbacks,
   options: CreateIconNodeOptions
-): Promise<PillNode> => {
-  const group = new Container() as PillNode;
+): Promise<GraphNode> => {
+  const group = new Container() as GraphNode;
   group.label = node.id;
 
   const size = options.size ?? DEFAULT_ICON_SIZE;
@@ -102,8 +102,8 @@ export const createIconNode = async (
   group.position.set(x, y);
 
   group.nodeData = node;
-  group.pillWidth = size;
-  group.pillHeight = size;
+  group.nodeWidth = size;
+  group.nodeHeight = size;
   group.baseScale = 1;
   group.alpha = DEFAULT_NODE_ALPHA;
 

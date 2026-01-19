@@ -1,10 +1,10 @@
 /**
  * Node creation and layout for the graph.
- * Handles creating pill nodes and icon nodes, then repositioning with edge gaps.
+ * Handles creating graph nodes and icon nodes, then repositioning with edge gaps.
  */
 import type { Ticker, Container } from 'pixi.js';
 import type { LineageNodeData } from '../../../config/types.js';
-import { createPillNode, type PillNode, DEFAULT_NODE_ALPHA } from '../rendering/nodeRenderer.js';
+import { createGraphNode, type GraphNode, DEFAULT_NODE_ALPHA } from '../rendering/nodeRenderer.js';
 import { createIconNode } from '../rendering/iconNodeRenderer.js';
 import { getIconNodeConfig } from '../../../theme/theme.js';
 import { EDGE_GAP } from '../../../config/constants.js';
@@ -39,7 +39,7 @@ interface NodeCreatorDeps {
  */
 export const createNodes = async (
   nodes: LineageNodeData[],
-  nodeMap: Map<string, PillNode>,
+  nodeMap: Map<string, GraphNode>,
   deps: NodeCreatorDeps
 ): Promise<void> => {
   const { container, nodeLayer, selectionLayer, graphScale, ticker, callbacks, getSelectedNodeId, setNodeAlpha } = deps;
@@ -83,9 +83,9 @@ export const createNodes = async (
       });
       nodeCreationPromises.push(promise);
     } else {
-      const pillNode = createPillNode(node, graphScale, ticker, nodeCallbacks, { selectionLayer });
-      nodeLayer.addChild(pillNode);
-      nodeMap.set(node.id, pillNode);
+      const graphNode = createGraphNode(node, graphScale, ticker, nodeCallbacks, { selectionLayer });
+      nodeLayer.addChild(graphNode);
+      nodeMap.set(node.id, graphNode);
     }
   }
 
@@ -95,8 +95,8 @@ export const createNodes = async (
 /**
  * Repositions nodes horizontally to maintain fixed edge gaps between columns.
  */
-export const repositionNodesWithGaps = (nodeMap: Map<string, PillNode>): void => {
-  const nodesByX = new Map<number, PillNode[]>();
+export const repositionNodesWithGaps = (nodeMap: Map<string, GraphNode>): void => {
+  const nodesByX = new Map<number, GraphNode[]>();
   nodeMap.forEach((node) => {
     const x = Math.round(node.position.x);
     if (!nodesByX.has(x)) nodesByX.set(x, []);
@@ -111,7 +111,7 @@ export const repositionNodesWithGaps = (nodeMap: Map<string, PillNode>): void =>
   for (const group of sortedGroups) {
     let maxHalfWidth = 0;
     for (const node of group) {
-      maxHalfWidth = Math.max(maxHalfWidth, node.pillWidth / 2);
+      maxHalfWidth = Math.max(maxHalfWidth, node.nodeWidth / 2);
     }
 
     const newX = rightEdge === -Infinity ? group[0].position.x : rightEdge + EDGE_GAP + maxHalfWidth;

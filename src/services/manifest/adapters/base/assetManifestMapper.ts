@@ -1,8 +1,5 @@
 import type { AssetManifest } from '../../../../config/types.js';
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
+import { isRecord } from '../../../../config/utils.js';
 
 function toCamelCase(value: string): string {
   return value.replace(/_([a-z])/g, (_, letter: string) =>

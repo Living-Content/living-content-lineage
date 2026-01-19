@@ -1,23 +1,23 @@
 /**
- * Renders stage labels at the top of the graph view.
+ * Renders workflow labels at the top of the graph view.
  * Labels are created once and positions updated on viewport changes.
  * Each label has a dotted vertical line extending down toward the nodes.
  */
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
-import type { Stage, WorkflowPhase } from '../../../config/types.js';
+import type { Workflow, WorkflowPhase } from '../../../config/types.js';
 import type { ViewportState } from '../interaction/viewport.js';
-import type { PillNode } from './nodeRenderer.js';
+import type { GraphNode } from './nodeRenderer.js';
 import { getColor, getCssVar } from '../../../theme/theme.js';
 import {
-  STAGE_LABEL_FONT_SIZE,
-  STAGE_LABEL_TOP_PADDING,
-  STAGE_LABEL_LINE_START,
+  WORKFLOW_LABEL_FONT_SIZE,
+  WORKFLOW_LABEL_TOP_PADDING,
+  WORKFLOW_LABEL_LINE_START,
 } from '../../../config/constants.js';
 
 const DOT_SIZE = 2;
 const DOT_GAP = 4;
 
-const getStageColor = (phase?: WorkflowPhase): number => {
+const getWorkflowColor = (phase?: WorkflowPhase): number => {
   if (!phase) return getColor('--color-edge-default');
   return getColor(`--phase-${phase.toLowerCase()}`);
 };
@@ -25,7 +25,7 @@ const getStageColor = (phase?: WorkflowPhase): number => {
 const createLabelStyle = (color: number): TextStyle => {
   return new TextStyle({
     fontFamily: getCssVar('--font-sans'),
-    fontSize: STAGE_LABEL_FONT_SIZE,
+    fontSize: WORKFLOW_LABEL_FONT_SIZE,
     fontWeight: '600',
     fill: color,
     letterSpacing: -0.5,
@@ -37,38 +37,38 @@ export interface TopNodeInfo {
   halfHeight: number;
 }
 
-interface StageLabelEntry {
+interface WorkflowLabelEntry {
   label: Text;
   line: Graphics;
   worldX: number;
   color: number;
 }
 
-export interface StageLabels {
+export interface WorkflowLabels {
   update: (viewportState: ViewportState) => void;
   container: Container;
 }
 
 /**
- * Creates stage labels once. Call update() on viewport changes.
- * Uses stageNodeMap positions so labels align with collapsed stage nodes.
+ * Creates workflow labels once. Call update() on viewport changes.
+ * Uses workflowNodeMap positions so labels align with collapsed workflow nodes.
  */
-export function createStageLabels(
-  stages: Stage[],
-  stageNodeMap: Map<string, PillNode>,
+export function createWorkflowLabels(
+  workflows: Workflow[],
+  workflowNodeMap: Map<string, GraphNode>,
   topNodeInfo: TopNodeInfo | null
-): StageLabels {
+): WorkflowLabels {
   const container = new Container();
-  const entries: StageLabelEntry[] = [];
-  const topPadding = STAGE_LABEL_TOP_PADDING;
+  const entries: WorkflowLabelEntry[] = [];
+  const topPadding = WORKFLOW_LABEL_TOP_PADDING;
 
-  for (const stage of stages) {
-    // Use stage node position so labels align with collapsed view
-    const stageNode = stageNodeMap.get(stage.id);
-    const worldX = stageNode ? stageNode.position.x : 0;
-    const color = getStageColor(stage.phase);
+  for (const workflow of workflows) {
+    // Use workflow node position so labels align with collapsed view
+    const workflowNode = workflowNodeMap.get(workflow.id);
+    const worldX = workflowNode ? workflowNode.position.x : 0;
+    const color = getWorkflowColor(workflow.phase);
 
-    const label = new Text({ text: stage.label, style: createLabelStyle(color) });
+    const label = new Text({ text: workflow.label, style: createLabelStyle(color) });
     label.anchor.set(0.5, 0);
     label.position.y = topPadding;
     container.addChild(label);
@@ -80,7 +80,7 @@ export function createStageLabels(
   }
 
   function update(viewportState: ViewportState): void {
-    const lineStartY = STAGE_LABEL_LINE_START;
+    const lineStartY = WORKFLOW_LABEL_LINE_START;
     const globalTopY = topNodeInfo !== null
       ? viewportState.y + topNodeInfo.worldY * viewportState.scale - topNodeInfo.halfHeight * viewportState.scale
       : Infinity;

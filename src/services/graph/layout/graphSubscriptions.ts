@@ -3,27 +3,27 @@
  * Consolidates reactive store subscriptions into a single module.
  */
 import { Container } from 'pixi.js';
-import { selectedNode, selectedStage } from '../../../stores/lineageState.js';
+import { selectedNode, selectedWorkflow } from '../../../stores/lineageState.js';
 import { isDetailOpen } from '../../../stores/uiState.js';
-import type { LineageEdgeData, Stage } from '../../../config/types.js';
-import type { PillNode } from '../rendering/nodeRenderer.js';
+import type { LineageEdgeData, Workflow } from '../../../config/types.js';
+import type { GraphNode } from '../rendering/nodeRenderer.js';
 import { renderEdges } from '../rendering/edgeRenderer.js';
 import {
   applySelectionHighlight,
-  applyStageSelectionHighlight,
+  applyWorkflowSelectionHighlight,
   clearSelectionVisuals,
   type SelectionHighlighterDeps,
   type VerticalAdjacencyMap,
 } from '../interaction/selectionHighlighter.js';
 
 export interface SubscriptionContext {
-  nodeMap: Map<string, PillNode>;
-  stageNodeMap: Map<string, PillNode>;
+  nodeMap: Map<string, GraphNode>;
+  workflowNodeMap: Map<string, GraphNode>;
   edgeLayer: Container;
   dotLayer: Container;
-  stageEdgeLayer: Container;
+  workflowEdgeLayer: Container;
   edges: LineageEdgeData[];
-  stages: Stage[];
+  workflows: Workflow[];
   verticalAdjacency: VerticalAdjacencyMap;
   setNodeAlpha: (nodeId: string, alpha: number) => void;
   centerSelectedNode: (nodeId: string) => void;
@@ -31,7 +31,7 @@ export interface SubscriptionContext {
 
 interface SelectionState {
   selectedNodeId: string | null;
-  selectedStageId: string | null;
+  selectedWorkflowId: string | null;
   detailPanelOpen: boolean;
 }
 
@@ -45,18 +45,18 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
 } {
   const state: SelectionState = {
     selectedNodeId: null,
-    selectedStageId: null,
+    selectedWorkflowId: null,
     detailPanelOpen: false,
   };
 
   const getHighlighterDeps = (): SelectionHighlighterDeps => ({
     nodeMap: ctx.nodeMap,
-    stageNodeMap: ctx.stageNodeMap,
+    workflowNodeMap: ctx.workflowNodeMap,
     edgeLayer: ctx.edgeLayer,
     dotLayer: ctx.dotLayer,
-    stageEdgeLayer: ctx.stageEdgeLayer,
+    workflowEdgeLayer: ctx.workflowEdgeLayer,
     edges: ctx.edges,
-    stages: ctx.stages,
+    workflows: ctx.workflows,
     verticalAdjacency: ctx.verticalAdjacency,
     setNodeAlpha: ctx.setNodeAlpha,
   });
@@ -64,18 +64,18 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
   const unsubscribeNode = selectedNode.subscribe((node) => {
     state.selectedNodeId = node?.id ?? null;
     if (node) {
-      ctx.stageNodeMap.forEach((n) => n.setSelected(false));
+      ctx.workflowNodeMap.forEach((n) => n.setSelected(false));
       applySelectionHighlight(node.id, getHighlighterDeps());
       if (state.detailPanelOpen) ctx.centerSelectedNode(node.id);
-    } else if (!state.selectedStageId) {
+    } else if (!state.selectedWorkflowId) {
       clearSelectionVisuals(getHighlighterDeps());
     }
   });
 
-  const unsubscribeStage = selectedStage.subscribe((stage) => {
-    state.selectedStageId = stage?.stageId ?? null;
-    if (stage) {
-      applyStageSelectionHighlight(stage.stageId, getHighlighterDeps());
+  const unsubscribeWorkflow = selectedWorkflow.subscribe((workflow) => {
+    state.selectedWorkflowId = workflow?.workflowId ?? null;
+    if (workflow) {
+      applyWorkflowSelectionHighlight(workflow.workflowId, getHighlighterDeps());
       renderEdges(ctx.edgeLayer, ctx.dotLayer, ctx.edges, ctx.nodeMap, null, null);
     } else if (!state.selectedNodeId) {
       clearSelectionVisuals(getHighlighterDeps());
@@ -90,7 +90,7 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
   return {
     unsubscribe: () => {
       unsubscribeNode();
-      unsubscribeStage();
+      unsubscribeWorkflow();
       unsubscribeDetail();
     },
     state,

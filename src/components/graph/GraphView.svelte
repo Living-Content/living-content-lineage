@@ -120,7 +120,7 @@
     cursor: grabbing;
   }
 
-  :global(.stage-labels) {
+  :global(.workflow-labels) {
     position: absolute;
     top: 0;
     left: 0;
@@ -129,7 +129,7 @@
     pointer-events: none;
   }
 
-  :global(.stage-label) {
+  :global(.workflow-label) {
     position: absolute;
     top: 80px;
     font-size: 20px;
@@ -142,7 +142,7 @@
     border: none;
   }
 
-  :global(.stage-divider) {
+  :global(.workflow-divider) {
     position: absolute;
     top: 110px;
     bottom: 20px;

@@ -15,10 +15,10 @@
   --filter-icon-amber: invert(62%) sepia(83%) saturate(1500%) hue-rotate(16deg)
     brightness(97%) contrast(95%);
 
-  /* Stage colors */
-  --color-stage-compute: rgb(99, 102, 241);
-  --color-stage-data: rgb(26, 26, 26);
-  --color-stage-attestation: rgb(34, 197, 94);
+  /* Workflow colors */
+  --color-workflow-compute: rgb(99, 102, 241);
+  --color-workflow-data: rgb(26, 26, 26);
+  --color-workflow-attestation: rgb(34, 197, 94);
 
   /* Impact indicator colors */
   --color-impact-minimal: rgb(74, 222, 128);
@@ -38,8 +38,8 @@
   --filter-impact-moderate: invert(60%) sepia(70%) saturate(700%)
     hue-rotate(10deg) brightness(95%);
 
-  /* Pill/badge colors */
-  --color-pill-text: rgb(255, 255, 255);
+  /* Node/badge colors */
+  --color-node-text: rgb(255, 255, 255);
   --color-pill-bg: var(--color-text-muted);
 
   /* Detail panel metric card */

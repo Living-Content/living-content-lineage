@@ -1,5 +1,5 @@
 /**
- * Pill-shaped node rendering with icon circle and knockout text effect.
+ * Rounded rectangle node rendering with icon circle and knockout text effect.
  * Shows asset type icon on left, with type label and optional main label.
  */
 import { Container, Graphics, Sprite, Ticker } from 'pixi.js';
@@ -10,40 +10,40 @@ import { GEOMETRY } from '../../../config/animationConstants.js';
 import { attachNodeInteraction, createSelectionAnimator, type NodeCallbacks } from '../interaction/nodeInteraction.js';
 import { loadIcon } from '../interaction/iconLoader.js';
 import {
-  BASE_PILL_HEIGHT_DETAILED,
-  BASE_PILL_HEIGHT_SIMPLE,
+  BASE_NODE_HEIGHT_DETAILED,
+  BASE_NODE_HEIGHT_SIMPLE,
   BASE_RIGHT_PADDING,
   BASE_SIMPLE_TYPE_FONT_SIZE,
-  calculatePillWidth,
+  calculateNodeWidth,
   getNodeFontFamily,
   getScaledDimensions,
   measureCtx,
-} from './pillTextMeasurement.js';
-import { createPillWithIconTexture, createKnockoutPillTexture } from './pillTextureRenderer.js';
+} from './nodeTextMeasurement.js';
+import { createNodeTexture, createKnockoutNodeTexture } from './nodeTextureRenderer.js';
 
 export const DEFAULT_NODE_ALPHA = 1;
 
-export interface PillNode extends Container {
+export interface GraphNode extends Container {
   nodeData: LineageNodeData;
-  pillWidth: number;
-  pillHeight: number;
+  nodeWidth: number;
+  nodeHeight: number;
   baseScale: number;
   setSelected: (selected: boolean) => void;
   selectionRing?: Graphics;
 }
 
-export type PillViewMode = 'simple' | 'detailed';
+export type NodeViewMode = 'simple' | 'detailed';
 
-export interface PillRenderOptions {
-  mode: PillViewMode;
+export interface NodeRenderOptions {
+  mode: NodeViewMode;
   iconPath: string;
   typeLabel: string;
   mainLabel?: string;
 }
 
-interface CreatePillNodeOptions {
+interface CreateNodeOptions {
   scale?: number;
-  renderOptions?: PillRenderOptions;
+  renderOptions?: NodeRenderOptions;
   selectionLayer?: Container;
 }
 
@@ -58,16 +58,16 @@ const getIconPath = (assetType?: AssetType): string => {
 };
 
 /**
- * Creates a pill-shaped node with icon and knockout text.
+ * Creates a graph node with icon and knockout text.
  */
-export function createPillNode(
+export function createGraphNode(
   node: LineageNodeData,
   graphScale: number,
   _ticker: Ticker,
   callbacks: NodeCallbacks,
-  options: CreatePillNodeOptions = {}
-): PillNode {
-  const group = new Container() as PillNode;
+  options: CreateNodeOptions = {}
+): GraphNode {
+  const group = new Container() as GraphNode;
   group.label = node.id;
 
   const nodeScale = options.scale ?? 1;
@@ -75,102 +75,102 @@ export function createPillNode(
   const dims = getScaledDimensions(nodeScale);
 
   // Determine render mode based on node type and options
-  const isStageNode = node.nodeType === 'stage';
+  const isWorkflowNode = node.nodeType === 'workflow';
 
-  if (isStageNode) {
-    // Stage nodes: use icon-based pill with stage type
-    const renderOptions: PillRenderOptions = options.renderOptions ?? {
+  if (isWorkflowNode) {
+    // Workflow nodes: use icon-based node with workflow type
+    const renderOptions: NodeRenderOptions = options.renderOptions ?? {
       mode: 'simple',
       iconPath: ASSET_TYPE_ICON_PATHS.Action,
       typeLabel: node.label,
     };
 
-    const pillHeight = BASE_PILL_HEIGHT_SIMPLE * nodeScale;
-    const pillWidth = calculatePillWidth(renderOptions, dims, nodeScale);
+    const nodeHeight = BASE_NODE_HEIGHT_SIMPLE * nodeScale;
+    const nodeWidth = calculateNodeWidth(renderOptions, dims, nodeScale);
 
     // Load icon and create texture
     loadIcon(renderOptions.iconPath).then((iconImage) => {
-      const texture = createPillWithIconTexture(
+      const texture = createNodeTexture(
         renderOptions,
         color,
-        pillWidth,
-        pillHeight,
+        nodeWidth,
+        nodeHeight,
         iconImage,
         dims
       );
       const sprite = new Sprite(texture);
       sprite.anchor.set(0.5, 0.5);
-      sprite.width = pillWidth;
-      sprite.height = pillHeight;
+      sprite.width = nodeWidth;
+      sprite.height = nodeHeight;
       group.addChild(sprite);
     });
 
-    group.pillWidth = pillWidth;
-    group.pillHeight = pillHeight;
+    group.nodeWidth = nodeWidth;
+    group.nodeHeight = nodeHeight;
   } else if (node.badgeCount !== undefined) {
-    // Legacy badge count pills (for backwards compatibility)
+    // Legacy badge count nodes (for backwards compatibility)
     const fontSize = BASE_SIMPLE_TYPE_FONT_SIZE * nodeScale;
     measureCtx.font = `600 ${fontSize}px ${getNodeFontFamily()}`;
     const textWidth = measureCtx.measureText(node.label).width;
-    const pillHeight = BASE_PILL_HEIGHT_SIMPLE * nodeScale;
-    const badgeRadius = pillHeight * GEOMETRY.BADGE_RADIUS_FACTOR;
+    const nodeHeight = BASE_NODE_HEIGHT_SIMPLE * nodeScale;
+    const badgeRadius = nodeHeight * GEOMETRY.BADGE_RADIUS_FACTOR;
     const rightPadding = BASE_RIGHT_PADDING * nodeScale;
-    const pillWidth = textWidth + GEOMETRY.BADGE_WIDTH_PADDING * nodeScale + badgeRadius * 2 + rightPadding;
+    const nodeWidth = textWidth + GEOMETRY.BADGE_WIDTH_PADDING * nodeScale + badgeRadius * 2 + rightPadding;
 
-    const texture = createKnockoutPillTexture(node.label, color, pillWidth, pillHeight, fontSize, node.badgeCount);
+    const texture = createKnockoutNodeTexture(node.label, color, nodeWidth, nodeHeight, fontSize, node.badgeCount);
     const sprite = new Sprite(texture);
     sprite.anchor.set(0.5, 0.5);
-    sprite.width = pillWidth;
-    sprite.height = pillHeight;
+    sprite.width = nodeWidth;
+    sprite.height = nodeHeight;
     group.addChild(sprite);
 
-    group.pillWidth = pillWidth;
-    group.pillHeight = pillHeight;
+    group.nodeWidth = nodeWidth;
+    group.nodeHeight = nodeHeight;
   } else {
-    // Asset nodes: use icon-based pill with asset type
+    // Asset nodes: use icon-based node with asset type
     const typeLabel = getAssetTypeLabel(node.assetType);
     const iconPath = getIconPath(node.assetType);
 
-    const renderOptions: PillRenderOptions = options.renderOptions ?? {
+    const renderOptions: NodeRenderOptions = options.renderOptions ?? {
       mode: 'detailed',
       iconPath,
       typeLabel,
       mainLabel: node.title ?? node.label,
     };
 
-    const pillHeight = (renderOptions.mode === 'detailed' ? BASE_PILL_HEIGHT_DETAILED : BASE_PILL_HEIGHT_SIMPLE) * nodeScale;
-    const pillWidth = calculatePillWidth(renderOptions, dims, nodeScale);
+    const nodeHeight = (renderOptions.mode === 'detailed' ? BASE_NODE_HEIGHT_DETAILED : BASE_NODE_HEIGHT_SIMPLE) * nodeScale;
+    const nodeWidth = calculateNodeWidth(renderOptions, dims, nodeScale);
 
     // Create placeholder first, then update with icon
-    const placeholderTexture = createPillWithIconTexture(
+    const placeholderTexture = createNodeTexture(
       renderOptions,
       color,
-      pillWidth,
-      pillHeight,
+      nodeWidth,
+      nodeHeight,
       null,
       dims
     );
     const sprite = new Sprite(placeholderTexture);
     sprite.anchor.set(0.5, 0.5);
-    sprite.width = pillWidth;
-    sprite.height = pillHeight;
+    sprite.width = nodeWidth;
+    sprite.height = nodeHeight;
     group.addChild(sprite);
 
     // Load icon and update texture
     loadIcon(renderOptions.iconPath).then((iconImage) => {
-      const texture = createPillWithIconTexture(
+      const texture = createNodeTexture(
         renderOptions,
         color,
-        pillWidth,
-        pillHeight,
+        nodeWidth,
+        nodeHeight,
         iconImage,
         dims
       );
       sprite.texture = texture;
     });
 
-    group.pillWidth = pillWidth;
-    group.pillHeight = pillHeight;
+    group.nodeWidth = nodeWidth;
+    group.nodeHeight = nodeHeight;
   }
 
   const x = ((node.x ?? 0.5) - 0.5) * graphScale;
@@ -193,8 +193,8 @@ export function createPillNode(
   group.selectionRing = selectionRing;
 
   const ringPadding = GEOMETRY.SELECTION_RING_PADDING;
-  const ringWidth = group.pillWidth + ringPadding * 2;
-  const ringHeight = group.pillHeight + ringPadding * 2;
+  const ringWidth = group.nodeWidth + ringPadding * 2;
+  const ringHeight = group.nodeHeight + ringPadding * 2;
   const ringRadius = ringHeight / 2;
 
   function drawSelectionRing(progress: number): void {

@@ -1,9 +1,9 @@
 /**
  * Workflow title overlay with title and lineage ID.
- * Only visible in collapsed (stage) view.
+ * Only visible in collapsed (workflow) view.
  */
 import { Container, Text, TextStyle } from 'pixi.js';
-import type { PillNode } from './nodeRenderer.js';
+import type { GraphNode } from './nodeRenderer.js';
 import type { ViewportState } from '../interaction/viewport.js';
 import { getColor, getCssVar } from '../../../theme/theme.js';
 
@@ -11,7 +11,7 @@ export interface TitleOverlay {
   container: Container;
   setVisible: (visible: boolean) => void;
   setMode: (mode: 'fixed' | 'relative') => void;
-  updatePosition: (leftmostNode: PillNode, viewportState: ViewportState) => void;
+  updatePosition: (leftmostNode: GraphNode, viewportState: ViewportState) => void;
   destroy: () => void;
 }
 
@@ -40,7 +40,7 @@ export function createTitleOverlay(stage: Container, data: TitleOverlayData): Ti
     fontFamily: getCssVar('--font-mono'),
     fontSize: 11,
     fontWeight: '500',
-    fill: getColor('--color-pill-text'),
+    fill: getColor('--color-node-text'),
     letterSpacing: 0.5,
   });
 
@@ -48,7 +48,7 @@ export function createTitleOverlay(stage: Container, data: TitleOverlayData): Ti
     fontFamily: getCssVar('--font-sans'),
     fontSize: 18,
     fontWeight: '600',
-    fill: getColor('--color-pill-text'),
+    fill: getColor('--color-node-text'),
     letterSpacing: -0.3,
   });
 
@@ -114,13 +114,13 @@ export function createTitleOverlay(stage: Container, data: TitleOverlayData): Ti
     }
   }
 
-  function updatePosition(leftmostNode: PillNode, viewportState: ViewportState): void {
+  function updatePosition(leftmostNode: GraphNode, viewportState: ViewportState): void {
     if (currentMode === 'fixed') return;
 
     const screenX = viewportState.x + leftmostNode.position.x * viewportState.scale;
     const screenY = viewportState.y + leftmostNode.position.y * viewportState.scale;
-    const nodeTop = screenY - (leftmostNode.pillHeight / 2) * viewportState.scale;
-    const leftEdge = screenX - (leftmostNode.pillWidth / 2) * viewportState.scale;
+    const nodeTop = screenY - (leftmostNode.nodeHeight / 2) * viewportState.scale;
+    const leftEdge = screenX - (leftmostNode.nodeWidth / 2) * viewportState.scale;
 
     uuidText.position.set(leftEdge, nodeTop - 68);
     titleText.position.set(leftEdge, nodeTop - 48);

@@ -9,8 +9,8 @@
 
   /* Layout dimensions */
   --header-height: 80px;
-  --stage-label-height: 50px;
-  --panel-top-offset: calc(var(--header-height) + var(--stage-label-height));
+  --workflow-label-height: 50px;
+  --panel-top-offset: calc(var(--header-height) + var(--workflow-label-height));
   --panel-margin: 25px;
   --panel-margin-mobile: 25px;
   --panel-max-width: 800px;

@@ -1,14 +1,14 @@
 /**
- * Canvas texture rendering for pill nodes.
+ * Canvas texture rendering for graph nodes.
  */
 import { Texture } from 'pixi.js';
 import { getCssVar, getColor } from '../../../theme/theme.js';
 import { createRetinaCanvas } from './rendererUtils.js';
-import { getNodeFontFamily, type ScaledDimensions } from './pillTextMeasurement.js';
-import type { PillRenderOptions } from './nodeRenderer.js';
+import { getNodeFontFamily, type ScaledDimensions } from './nodeTextMeasurement.js';
+import type { NodeRenderOptions } from './nodeRenderer.js';
 
-export const createPillWithIconTexture = (
-  options: PillRenderOptions,
+export const createNodeTexture = (
+  options: NodeRenderOptions,
   color: string,
   width: number,
   height: number,
@@ -19,7 +19,7 @@ export const createPillWithIconTexture = (
 
   const radius = height / 2;
 
-  // Draw pill background
+  // Draw node background
   ctx.beginPath();
   ctx.roundRect(0, 0, width, height, radius);
   ctx.fillStyle = color;
@@ -73,7 +73,7 @@ export const createPillWithIconTexture = (
     ctx.fillText(options.typeLabel, textStartX, typeY);
 
     // Main label - white text
-    ctx.fillStyle = getCssVar('--color-pill-text');
+    ctx.fillStyle = getCssVar('--color-node-text');
     ctx.font = `400 ${dims.typeLabelFontSize}px ${getNodeFontFamily()}`;
     ctx.fillText(options.mainLabel, textStartX, mainY);
   } else {
@@ -87,7 +87,7 @@ export const createPillWithIconTexture = (
   return Texture.from(canvas);
 };
 
-export const createKnockoutPillTexture = (
+export const createKnockoutNodeTexture = (
   label: string,
   color: string,
   width: number,

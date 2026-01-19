@@ -25,9 +25,9 @@ export const ANIMATION_TIMINGS = {
 };
 
 export const GEOMETRY = {
-  /** Badge radius as factor of pill height */
+  /** Badge radius as factor of node height */
   BADGE_RADIUS_FACTOR: 0.32,
-  /** Additional width padding for badge pills */
+  /** Additional width padding for badge nodes */
   BADGE_WIDTH_PADDING: 56,
   /** Padding around selection ring */
   SELECTION_RING_PADDING: 6,
