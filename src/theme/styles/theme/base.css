@@ -11,9 +11,7 @@
   --panel-margin: 25px;
   --panel-margin-mobile: 25px;
   --header-height: 48px;
-  --header-bottom: calc(var(--panel-margin) + var(--header-height));
   --workflow-label-height: 30px;
-  --panel-top-offset: calc(var(--header-bottom) + var(--workflow-label-height));
   --panel-max-width: 800px;
   --logo-width: 126px;
 
