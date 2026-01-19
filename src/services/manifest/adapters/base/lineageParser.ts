@@ -7,7 +7,7 @@ import type {
   LineageNodeData,
   Phase,
 } from '../../../../config/types.js';
-import { isRecord } from '../../../../config/utils.js';
+import { isRecord, validatePhase } from '../../../../config/utils.js';
 import type { LineageManifest, LineageManifestRecord } from './lineageTypes.js';
 import { computeLayout } from './lineageLayout.js';
 import { getCssVar } from '../../../../theme/theme.js';
@@ -61,15 +61,15 @@ export const buildLineageGraph = (
   // Build workflow-to-phase mapping
   const workflowPhaseMap = new Map<string, Phase>();
   manifest.workflows.forEach((workflow) => {
-    if (workflow.phase) {
-      workflowPhaseMap.set(workflow.id, workflow.phase as Phase);
-    }
+    const phase = validatePhase(workflow.phase, `workflow ${workflow.id}`);
+    workflowPhaseMap.set(workflow.id, phase);
   });
 
   manifest.assets.forEach((asset) => {
     const pos = positions.get(asset.id) ?? { x: 0, y: 200, workflowId: 'unknown' };
     const assetManifest = assetManifests.get(asset.id);
     const phase = workflowPhaseMap.get(pos.workflowId);
+    if (!phase) throw new Error(`Missing phase for workflow ${pos.workflowId}`);
     nodes.push({
       id: asset.id,
       label: asset.label,
@@ -97,6 +97,7 @@ export const buildLineageGraph = (
   manifest.computations.forEach((comp) => {
     const pos = positions.get(comp.id) ?? { x: 0, y: 200, workflowId: 'unknown' };
     const phase = workflowPhaseMap.get(pos.workflowId);
+    if (!phase) throw new Error(`Missing phase for workflow ${pos.workflowId}`);
     nodes.push({
       id: comp.id,
       label: comp.label,
@@ -117,6 +118,7 @@ export const buildLineageGraph = (
   manifest.attestations.forEach((attest) => {
     const pos = positions.get(attest.id) ?? { x: 0, y: 100, workflowId: 'unknown' };
     const phase = workflowPhaseMap.get(pos.workflowId);
+    if (!phase) throw new Error(`Missing phase for workflow ${pos.workflowId}`);
     nodes.push({
       id: attest.id,
       label: attest.label,
@@ -215,8 +217,8 @@ export const buildLineageGraph = (
     else node.role = 'intermediate';
   });
 
-  const gateColor = getCssVar('--color-edge-gate', '#22c55e');
-  const edgeColor = getCssVar('--color-edge-muted', '#666666');
+  const gateColor = getCssVar('--color-edge-gate');
+  const edgeColor = getCssVar('--color-edge-muted');
   const edges: LineageEdgeData[] = edgeList.map((edge, idx) => ({
     id: `e-${idx}`,
     source: edge.source,

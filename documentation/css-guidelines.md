@@ -3,14 +3,17 @@
 ## Architecture
 
 ### Theme (`src/styles/theme/`)
+
 All design tokens: colors, spacing, typography, radius, shadows.
 These are CSS custom properties (variables).
 
 ### Base (`src/styles/base.css`)
-Global resets only: html, body, *, ::before, ::after.
+
+Global resets only: html, body, \*, ::before, ::after.
 No component classes.
 
 ### Component Styles (Svelte `<style>` blocks)
+
 ALL component-specific classes go in the component file.
 Svelte scopes these automatically.
 
@@ -70,7 +73,7 @@ Svelte scopes these automatically.
 
 ## File Structure
 
-```
+```plaintext
 src/styles/
 ├── theme/          ← Theme variables only
 │   ├── index.css
@@ -83,10 +86,9 @@ src/styles/
 
 src/components/
 ├── Header.svelte           ← Contains its own <style>
-├── sidebar/
-│   ├── InfoPanel.svelte    ← Contains its own <style>
-│   ├── DetailView.svelte   ← Contains its own <style>
+├── dataviewer/
+│   ├── DataViewPanel.svelte ← Contains its own <style>
+│   ├── DetailView.svelte    ← Contains its own <style>
 │   └── ...
 └── ...
 ```
-

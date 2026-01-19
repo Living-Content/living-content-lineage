@@ -6,37 +6,45 @@ Assertions are typed data blocks attached to asset manifests. They follow the C2
 
 ```typescript
 interface ManifestAssertion {
-  label: string;   // Assertion type identifier
-  data: unknown;   // Type-specific data
+  label: string; // Assertion type identifier
+  data: unknown; // Type-specific data
 }
 ```
 
 ## Standard Assertions
 
 ### c2pa.actions
+
 Records actions performed on the asset.
 
 ```json
 {
   "label": "c2pa.actions",
   "data": {
-    "actions": [{
-      "action": "c2pa.created",
-      "softwareAgent": { "name": "Living Content Pipeline", "version": "1.0.0" },
-      "when": "2026-01-14T18:15:30Z",
-      "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia"
-    }]
+    "actions": [
+      {
+        "action": "c2pa.created",
+        "softwareAgent": {
+          "name": "Living Content Pipeline",
+          "version": "1.0.0"
+        },
+        "when": "2026-01-14T18:15:30Z",
+        "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia"
+      }
+    ]
   }
 }
 ```
 
 Action types:
+
 - `c2pa.created` - Asset was created
 - `c2pa.placed` - Asset was placed/used
 
 ## LCO Assertions
 
 ### lco.model
+
 Model invocation metadata.
 
 ```json
@@ -55,6 +63,7 @@ Model invocation metadata.
 ```
 
 ### lco.code
+
 Code execution metadata.
 
 ```json
@@ -70,6 +79,7 @@ Code execution metadata.
 ```
 
 ### lco.execution
+
 Execution flow metadata.
 
 ```json
@@ -86,6 +96,7 @@ Execution flow metadata.
 ```
 
 ### lco.usage
+
 Resource usage metrics.
 
 ```json
@@ -98,6 +109,7 @@ Resource usage metrics.
 ```
 
 ### lco.content
+
 Content metadata for documents.
 
 ```json
@@ -116,13 +128,13 @@ Content metadata for documents.
 Use the `assertionParsers.ts` service to extract typed data:
 
 ```typescript
-import { extractAssertionData } from '../../services/sidebar/assertionParsers.js';
+import { extractAssertionData } from "../../services/dataviewer/parsing/assertionParsers.js";
 
 const assertions = extractAssertionData(manifest.assertions);
 
 // Access typed data
-assertions.model?.provider      // "anthropic"
-assertions.model?.modelId       // "claude-sonnet-4-5"
-assertions.usage?.durationMs    // 12029.63
-assertions.code?.function       // "_stream_llm_response"
+assertions.model?.provider; // "anthropic"
+assertions.model?.modelId; // "claude-sonnet-4-5"
+assertions.usage?.durationMs; // 12029.63
+assertions.code?.function; // "_stream_llm_response"
 ```

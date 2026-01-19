@@ -19,7 +19,7 @@ const measureCanvas = document.createElement('canvas');
 const measureCtx = measureCanvas.getContext('2d')!;
 
 export const getNodeFontFamily = (): string => {
-  return getCssVar('--font-sans', '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif');
+  return getCssVar('--font-sans');
 };
 
 export const measureText = (text: string, fontSize: number, fontWeight = '600'): number => {

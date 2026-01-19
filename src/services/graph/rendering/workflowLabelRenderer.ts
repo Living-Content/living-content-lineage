@@ -8,27 +8,26 @@ import type { Workflow, Phase } from '../../../config/types.js';
 import type { ViewportState } from '../interaction/viewport.js';
 import type { GraphNode } from './nodeRenderer.js';
 import { getColor, getCssVar } from '../../../theme/theme.js';
-import {
-  WORKFLOW_LABEL_FONT_SIZE,
-  WORKFLOW_LABEL_TOP_PADDING,
-  WORKFLOW_LABEL_LINE_START,
-} from '../../../config/constants.js';
 
-const DOT_SIZE = 2;
-const DOT_GAP = 4;
 
+/**
+ * Gets the color for a workflow based on its phase.
+ */
 const getWorkflowColor = (phase?: Phase): number => {
   if (!phase) return getColor('--color-edge-default');
   return getColor(`--phase-${phase.toLowerCase()}`);
 };
 
+/**
+ * Creates a text style for workflow labels.
+ */
 const createLabelStyle = (color: number): TextStyle => {
   return new TextStyle({
     fontFamily: getCssVar('--font-sans'),
-    fontSize: WORKFLOW_LABEL_FONT_SIZE,
+    fontSize: parseInt(getCssVar('--workflow-label-font-size')),
     fontWeight: '600',
     fill: color,
-    letterSpacing: -0.5,
+    letterSpacing: parseFloat(getCssVar('--workflow-label-letter-spacing')),
   });
 };
 
@@ -37,7 +36,10 @@ export interface TopNodeInfo {
   halfHeight: number;
 }
 
-interface WorkflowLabelEntry {
+/**
+ * A single workflow label entry with its visual elements.
+ */
+export interface WorkflowLabelEntry {
   label: Text;
   line: Graphics;
   worldX: number;
@@ -50,6 +52,89 @@ export interface WorkflowLabels {
 }
 
 /**
+ * Pure creation of a single workflow label entry (no container attachment).
+ */
+export const createWorkflowLabelEntry = (
+  workflow: Workflow,
+  workflowNode: GraphNode | undefined
+): WorkflowLabelEntry => {
+  const worldX = workflowNode ? workflowNode.position.x : 0;
+  const color = getWorkflowColor(workflow.phase);
+
+  const label = new Text({ text: workflow.label, style: createLabelStyle(color) });
+  label.anchor.set(0.5, 0);
+  label.position.y = parseInt(getCssVar('--workflow-label-top-padding'));
+
+  const line = new Graphics();
+
+  return { label, line, worldX, color };
+};
+
+/**
+ * Batch creation of label entries from workflows (no container attachment).
+ */
+export const createLabelEntries = (
+  workflows: Workflow[],
+  workflowNodeMap: Map<string, GraphNode>
+): WorkflowLabelEntry[] => {
+  return workflows.map((workflow) =>
+    createWorkflowLabelEntry(workflow, workflowNodeMap.get(workflow.id))
+  );
+};
+
+/**
+ * Attaches label entries to a container (explicit side effect).
+ */
+export const attachLabelEntriesToContainer = (
+  container: Container,
+  entries: WorkflowLabelEntry[]
+): void => {
+  for (const entry of entries) {
+    container.addChild(entry.label);
+    container.addChild(entry.line);
+  }
+};
+
+/**
+ * Updates a single label entry position based on viewport state.
+ */
+const updateLabelEntryPosition = (
+  entry: WorkflowLabelEntry,
+  viewportState: ViewportState,
+  topPadding: number,
+  globalTopY: number
+): void => {
+  const screenX = viewportState.x + entry.worldX * viewportState.scale;
+  entry.label.position.x = screenX;
+
+  // Redraw dotted line
+  entry.line.clear();
+  if (globalTopY === Infinity) return;
+
+  const startY = topPadding + parseInt(getCssVar('--workflow-label-line-start'));
+  const endY = globalTopY;
+  if (endY <= startY) return;
+
+  const fadeDistance = (endY - startY) * 0.6;
+  const fadeStartY = startY + fadeDistance;
+
+  const dotSize = parseInt(getCssVar('--workflow-label-dot-size'));
+  const dotGap = parseInt(getCssVar('--workflow-label-dot-gap'));
+
+  let currentY = startY;
+  while (currentY < endY) {
+    let alpha = 1;
+    if (currentY > fadeStartY) {
+      const fadeProgress = (currentY - fadeStartY) / (endY - fadeStartY);
+      alpha = 1 - Math.pow(fadeProgress, 2);
+    }
+    entry.line.circle(screenX, currentY, dotSize / 2);
+    entry.line.fill({ color: entry.color, alpha });
+    currentY += dotSize + dotGap;
+  }
+};
+
+/**
  * Creates workflow labels once. Call update() on viewport changes.
  * Uses workflowNodeMap positions so labels align with collapsed workflow nodes.
  */
@@ -59,60 +144,21 @@ export function createWorkflowLabels(
   topNodeInfo: TopNodeInfo | null
 ): WorkflowLabels {
   const container = new Container();
-  const entries: WorkflowLabelEntry[] = [];
-  const topPadding = WORKFLOW_LABEL_TOP_PADDING;
+  const topPadding = parseInt(getCssVar('--workflow-label-top-padding'));
 
-  for (const workflow of workflows) {
-    // Use workflow node position so labels align with collapsed view
-    const workflowNode = workflowNodeMap.get(workflow.id);
-    const worldX = workflowNode ? workflowNode.position.x : 0;
-    const color = getWorkflowColor(workflow.phase);
+  // Create and attach entries
+  const entries = createLabelEntries(workflows, workflowNodeMap);
+  attachLabelEntriesToContainer(container, entries);
 
-    const label = new Text({ text: workflow.label, style: createLabelStyle(color) });
-    label.anchor.set(0.5, 0);
-    label.position.y = topPadding;
-    container.addChild(label);
-
-    const line = new Graphics();
-    container.addChild(line);
-
-    entries.push({ label, line, worldX, color });
-  }
-
-  function update(viewportState: ViewportState): void {
-    const lineStartY = WORKFLOW_LABEL_LINE_START;
+  const update = (viewportState: ViewportState): void => {
     const globalTopY = topNodeInfo !== null
       ? viewportState.y + topNodeInfo.worldY * viewportState.scale - topNodeInfo.halfHeight * viewportState.scale
       : Infinity;
 
     for (const entry of entries) {
-      const screenX = viewportState.x + entry.worldX * viewportState.scale;
-      entry.label.position.x = screenX;
-
-      // Redraw dotted line
-      entry.line.clear();
-      if (globalTopY === Infinity) continue;
-
-      const startY = topPadding + lineStartY;
-      const endY = globalTopY;
-      if (endY <= startY) continue;
-
-      const fadeDistance = (endY - startY) * 0.6;
-      const fadeStartY = startY + fadeDistance;
-
-      let currentY = startY;
-      while (currentY < endY) {
-        let alpha = 1;
-        if (currentY > fadeStartY) {
-          const fadeProgress = (currentY - fadeStartY) / (endY - fadeStartY);
-          alpha = 1 - Math.pow(fadeProgress, 2);
-        }
-        entry.line.circle(screenX, currentY, DOT_SIZE / 2);
-        entry.line.fill({ color: entry.color, alpha });
-        currentY += DOT_SIZE + DOT_GAP;
-      }
+      updateLabelEntryPosition(entry, viewportState, topPadding, globalTopY);
     }
-  }
+  };
 
   return { update, container };
 }

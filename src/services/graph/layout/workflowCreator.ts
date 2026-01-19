@@ -3,18 +3,15 @@
  */
 import type { Ticker, Container } from 'pixi.js';
 import type { LineageNodeData, Workflow, LineageEdgeData } from '../../../config/types.js';
-import { createGraphNode, type GraphNode, type NodeRenderOptions } from '../rendering/nodeRenderer.js';
-import { PHASE_ICON_PATHS } from '../../../theme/theme.js';
-import { WORKFLOW_NODE_SCALE } from '../../../config/constants.js';
-import { selectWorkflow } from '../../../stores/lineageState.js';
-
-interface HoverPayload {
-  title: string;
-  nodeType: string;
-  screenX: number;
-  screenY: number;
-  size: number;
-}
+import type { GraphNode } from '../rendering/nodeRenderer.js';
+import {
+  createWorkflowElement,
+  addElementsToLayer,
+  populateElementMap,
+  type HoverPayload,
+  type CreateElementConfig,
+  type HoverCallbackConfig,
+} from './graphLayout.js';
 
 interface WorkflowCreatorCallbacks {
   onHover: (payload: HoverPayload) => void;
@@ -29,6 +26,29 @@ interface WorkflowCreatorDeps {
   ticker: Ticker;
   callbacks: WorkflowCreatorCallbacks;
 }
+
+/**
+ * Builds the unified element config from workflow creator deps.
+ */
+const buildElementConfig = (
+  deps: WorkflowCreatorDeps,
+  workflowNodeMap: Map<string, GraphNode>
+): CreateElementConfig => {
+  const hoverConfig: HoverCallbackConfig = {
+    container: deps.container,
+    getSelectedNodeId: () => null, // Workflow nodes don't have alpha changes on hover
+    onHover: deps.callbacks.onHover,
+    onHoverEnd: deps.callbacks.onHoverEnd,
+  };
+
+  return {
+    graphScale: deps.graphScale,
+    ticker: deps.ticker,
+    selectionLayer: deps.selectionLayer,
+    hoverConfig,
+    nodeMap: workflowNodeMap,
+  };
+};
 
 /**
  * Recalculates workflow bounds based on the positioned nodes within each workflow.
@@ -69,55 +89,14 @@ export const createWorkflowNodes = (
   workflowNodeMap: Map<string, GraphNode>,
   deps: WorkflowCreatorDeps
 ): void => {
-  const { container, workflowNodeLayer, selectionLayer, graphScale, ticker, callbacks } = deps;
+  const config = buildElementConfig(deps, workflowNodeMap);
 
-  for (const workflow of workflows) {
-    const workflowNodes = nodes.filter((n) => n.workflowId === workflow.id);
-    const workflowNodeData: LineageNodeData = {
-      id: `workflow-${workflow.id}`,
-      label: workflow.label,
-      nodeType: 'workflow',
-      shape: 'circle',
-      workflowId: workflow.id,
-      phase: workflow.phase,
-      x: (workflow.xStart + workflow.xEnd) / 2,
-      y: 0.5,
-    };
+  const elements = workflows.map((workflow) =>
+    createWorkflowElement(workflow, nodes, edges, config)
+  );
 
-    const phaseIconPath = workflow.phase ? PHASE_ICON_PATHS[workflow.phase] : PHASE_ICON_PATHS.Reasoning;
-    const workflowRenderOptions: NodeRenderOptions = {
-      mode: 'simple',
-      iconPath: phaseIconPath,
-      typeLabel: workflow.label,
-    };
-
-    const workflowNode = createGraphNode(workflowNodeData, graphScale, ticker, {
-      onClick: () => {
-        const workflowEdges = edges.filter(
-          (e) => workflowNodes.some((n) => n.id === e.source) || workflowNodes.some((n) => n.id === e.target)
-        );
-        selectWorkflow({ workflowId: workflow.id, label: workflow.label, nodes: workflowNodes, edges: workflowEdges });
-      },
-      onHover: () => {
-        container.style.cursor = 'pointer';
-        const bounds = workflowNode.getBounds();
-        callbacks.onHover({
-          title: workflow.label,
-          nodeType: 'workflow',
-          screenX: bounds.x + bounds.width / 2,
-          screenY: bounds.y,
-          size: 40,
-        });
-      },
-      onHoverEnd: () => {
-        container.style.cursor = 'grab';
-        callbacks.onHoverEnd();
-      },
-    }, { scale: WORKFLOW_NODE_SCALE, renderOptions: workflowRenderOptions, selectionLayer });
-
-    workflowNodeLayer.addChild(workflowNode);
-    workflowNodeMap.set(workflow.id, workflowNode);
-  }
+  addElementsToLayer(elements, deps.workflowNodeLayer);
+  populateElementMap(elements, workflowNodeMap);
 };
 
 /**

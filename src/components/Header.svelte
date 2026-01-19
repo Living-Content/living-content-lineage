@@ -27,14 +27,14 @@
 <style>
   .header {
     position: fixed;
-    top: 0;
+    top: var(--panel-margin);
     left: 0;
     right: 0;
-    height: 48px;
+    height: var(--header-height);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--panel-margin) var(--panel-margin) 0;
+    padding: 0 var(--panel-margin);
     z-index: 20;
   }
 
@@ -46,7 +46,7 @@
   }
 
   .logo {
-    height: 48px;
+    height: var(--header-height);
     width: 126px;
     color: white;
     mix-blend-mode: difference;

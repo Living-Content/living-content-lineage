@@ -8,12 +8,55 @@
   --font-mono: 'SF Mono', Monaco, 'Cascadia Code', monospace;
 
   /* Layout dimensions */
-  --header-height: 80px;
-  --workflow-label-height: 50px;
-  --panel-top-offset: calc(var(--header-height) + var(--workflow-label-height));
   --panel-margin: 25px;
   --panel-margin-mobile: 25px;
+  --header-height: 48px;
+  --header-bottom: calc(var(--panel-margin) + var(--header-height));
+  --workflow-label-height: 30px;
+  --panel-top-offset: calc(var(--header-bottom) + var(--workflow-label-height));
   --panel-max-width: 800px;
+  --logo-width: 126px;
+
+  /* Title overlay spacing */
+  --title-uuid-to-title: 14px;
+  --title-title-to-date: 23px;
+  --title-node-gap: 25px;
+
+  /* Title overlay typography */
+  --title-uuid-font-size: 11px;
+  --title-uuid-letter-spacing: 0.5px;
+  --title-main-font-size: 18px;
+  --title-main-letter-spacing: -0.3px;
+  --title-date-font-size: 11px;
+  --title-date-letter-spacing: 0.5px;
+  --title-secondary-alpha: 0.5;
+
+  /* Breakpoints */
+  --mobile-breakpoint: 900px;
+
+  /* Graph edges */
+  --edge-width: 2px;
+  --edge-dot-radius: 4px;
+  --edge-gap: 90px;
+  --workflow-edge-width: 3px;
+  --workflow-dot-radius: 6px;
+  --faded-node-alpha: 0.25;
+
+  /* Workflow labels */
+  --workflow-label-font-size: 20px;
+  --workflow-label-letter-spacing: -0.5px;
+  --workflow-label-top-padding: 80px;
+  --workflow-label-line-start: 30px;
+  --workflow-label-dot-size: 2px;
+  --workflow-label-dot-gap: 4px;
+
+  /* Node sizing */
+  --default-node-size: 14px;
+  --attestation-icon-size: 56px;
+  --icon-node-size: 40px;
+  --icon-node-ring-padding: 6px;
+  --icon-node-ring-width: 3px;
+  --title-left-gap: 9px;
 
   /* Border radius scale */
   --radius-sm: 4px;

@@ -4,13 +4,11 @@
  * Uses texture caching for performance.
  */
 import { Container, Graphics, Sprite, Texture, Ticker } from 'pixi.js';
-import { getColor, getPhaseColorHex, parseColorToRgb } from '../../../theme/theme.js';
+import { getColor, getCssVar } from '../../../theme/theme.js';
 import type { LineageNodeData } from '../../../config/types.js';
 import { DEFAULT_NODE_ALPHA, type GraphNode } from './nodeRenderer.js';
 import { attachNodeInteraction, createSelectionAnimator, type NodeCallbacks } from '../interaction/nodeInteraction.js';
 import { createRetinaCanvas } from './rendererUtils.js';
-
-const DEFAULT_ICON_SIZE = 40;
 
 const textureCache = new Map<string, Texture>();
 const svgCache = new Map<string, string>();
@@ -45,11 +43,7 @@ const createIconTextureAsync = async (
 
   const { canvas, ctx } = createRetinaCanvas(size, size);
 
-  const rgb = parseColorToRgb(color);
-  const coloredSvg = svgContent.replace(
-    /fill="currentColor"/g,
-    `fill="rgb(${rgb.r}, ${rgb.g}, ${rgb.b})"`
-  );
+  const coloredSvg = svgContent.replace(/fill="currentColor"/g, `fill="${color}"`);
 
   const blob = new Blob([coloredSvg], { type: 'image/svg+xml' });
   const url = URL.createObjectURL(blob);
@@ -86,8 +80,8 @@ export const createIconNode = async (
   const group = new Container() as GraphNode;
   group.label = node.id;
 
-  const size = options.size ?? DEFAULT_ICON_SIZE;
-  const color = getPhaseColorHex(node.phase);
+  const size = options.size ?? parseInt(getCssVar('--icon-node-size'));
+  const color = getCssVar(`--phase-${node.phase.toLowerCase()}`);
 
   const svgContent = await loadSvgContent(options.iconPath);
   const texture = await createIconTextureAsync(svgContent, color, size);
@@ -119,7 +113,8 @@ export const createIconNode = async (
   }
   group.selectionRing = selectionRing;
 
-  const ringPadding = 6;
+  const ringPadding = parseInt(getCssVar('--icon-node-ring-padding'));
+  const ringWidth = parseInt(getCssVar('--icon-node-ring-width'));
   const ringRadius = (size + ringPadding * 2) / 2;
 
   function drawSelectionRing(progress: number): void {
@@ -129,7 +124,7 @@ export const createIconNode = async (
     // Draw circle arc progressively
     const endAngle = -Math.PI / 2 + (2 * Math.PI * Math.min(progress, 1));
     selectionRing.arc(0, 0, ringRadius, -Math.PI / 2, endAngle);
-    selectionRing.stroke({ width: 3, color: getColor('--color-selection-ring'), cap: 'round' });
+    selectionRing.stroke({ width: ringWidth, color: getColor('--color-selection-ring'), cap: 'round' });
   }
 
   group.setSelected = createSelectionAnimator(selectionRing, drawSelectionRing);

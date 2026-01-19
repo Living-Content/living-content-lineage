@@ -1,4 +1,5 @@
-import type { Workflow, Phase } from '../../../../config/types.js';
+import type { Workflow } from '../../../../config/types.js';
+import { validatePhase } from '../../../../config/utils.js';
 import type { LineageManifest } from './lineageTypes.js';
 
 export interface LayoutResult {
@@ -127,12 +128,13 @@ export const computeLayout = (manifest: LineageManifest): LayoutResult => {
 
   const padding = 0.04;
   const workflows: Workflow[] = manifest.workflows.map((workflow) => {
+    const phase = validatePhase(workflow.phase, `workflow ${workflow.id}`);
     const minX = workflowMinX.get(workflow.id) ?? 0;
     const maxX = workflowMaxX.get(workflow.id) ?? 0;
     return {
       id: workflow.id,
       label: workflow.label,
-      phase: workflow.phase as Phase | undefined,
+      phase,
       xStart: minX - padding,
       xEnd: maxX + padding,
     };

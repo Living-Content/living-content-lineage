@@ -11,11 +11,11 @@ function normalizeAssetContent(
   raw: unknown
 ): AssetManifest['content'] | undefined {
   if (!isRecord(raw)) return undefined;
-  const normalized: Record<string, unknown> = {};
+  const normalized: AssetManifest['content'] = {};
   Object.entries(raw).forEach(([key, value]) => {
     normalized[toCamelCase(key)] = value;
   });
-  return normalized as AssetManifest['content'];
+  return normalized;
 }
 
 function normalizeIngredients(raw: unknown): AssetManifest['ingredients'] {

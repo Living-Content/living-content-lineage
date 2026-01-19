@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * Generic fallback detail view for unknown or unspecified asset types.
+   * Default detail view for DataObject and unspecified asset types.
    * Displays all available content, assertions, and metadata.
    */
   import type { LineageNodeData } from '../../../../config/types.js';
@@ -12,19 +12,30 @@
   import PropertyGroup from '../PropertyGroup.svelte';
   import DetailValue from '../DetailValue.svelte';
   import PropertyRow from '../../PropertyRow.svelte';
+  import CodeBlock from '../CodeBlock.svelte';
 
   export let node: LineageNodeData;
 
   $: assetManifest = node.assetManifest;
+  $: format = assetManifest?.format ?? 'unknown';
+  $: isDataObject = node.assetType === 'DataObject';
   $: contentEntries = assetManifest?.content
     ? Object.entries(assetManifest.content).filter(
         ([key, value]) =>
           shouldDisplayKey(key) && !isSummaryValue(value) && value !== undefined && value !== null
       )
     : [];
+  $: fieldCount = contentEntries.length;
 </script>
 
-<div class="generic-detail-view">
+<div class="default-detail-view">
+  {#if isDataObject}
+    <PropertyGroup title="Data Info" collapsible={false}>
+      <PropertyRow label="Format" value={format.split('/').pop() ?? format} />
+      <PropertyRow label="Fields" value={String(fieldCount)} />
+    </PropertyGroup>
+  {/if}
+
   {#if contentEntries.length > 0}
     <PropertyGroup title="Content" collapsible={false}>
       <div class="detail-fields">
@@ -39,9 +50,7 @@
   {/if}
 
   {#if assetManifest?.sourceCode}
-    <PropertyGroup title="Source Code">
-      <pre class="code-block"><code>{assetManifest.sourceCode}</code></pre>
-    </PropertyGroup>
+    <CodeBlock code={assetManifest.sourceCode} />
   {/if}
 
   {#if assetManifest?.assertions?.length}
@@ -88,7 +97,7 @@
 </div>
 
 <style>
-  .generic-detail-view {
+  .default-detail-view {
     display: flex;
     flex-direction: column;
     gap: var(--space-lg, 16px);
@@ -132,23 +141,6 @@
   .assertion-data {
     font-size: var(--font-size-small, 12px);
     color: var(--color-text-muted);
-  }
-
-  .code-block {
-    margin: 0;
-    padding: var(--space-md, 12px);
-    background: var(--code-block-bg, rgba(0, 0, 0, 0.04));
-    border: 1px solid var(--code-block-border, rgba(0, 0, 0, 0.04));
-    border-radius: var(--radius-md, 8px);
-    overflow-x: auto;
-    font-family: var(--font-mono);
-    font-size: var(--font-size-small, 12px);
-    line-height: var(--line-height-relaxed, 1.6);
-    color: var(--code-text-color, var(--color-text-secondary));
-  }
-
-  .code-block code {
-    font-family: inherit;
   }
 
   .ingredients-list {

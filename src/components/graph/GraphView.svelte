@@ -131,7 +131,7 @@
 
   :global(.workflow-label) {
     position: absolute;
-    top: 80px;
+    top: var(--header-bottom);
     font-size: 20px;
     font-weight: 500;
     color: var(--color-text-primary);
@@ -144,7 +144,7 @@
 
   :global(.workflow-divider) {
     position: absolute;
-    top: 110px;
+    top: var(--panel-top-offset);
     bottom: 20px;
     border-left: 1px dashed var(--color-divider);
   }

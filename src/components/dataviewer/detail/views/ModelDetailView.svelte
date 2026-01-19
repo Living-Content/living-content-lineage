@@ -7,6 +7,7 @@
   import { extractAssertionData } from '../../../../services/dataviewer/parsing/assertionParsers.js';
   import PropertyGroup from '../PropertyGroup.svelte';
   import PropertyRow from '../../PropertyRow.svelte';
+  import ActionsList from '../ActionsList.svelte';
 
   export let node: LineageNodeData;
 
@@ -42,23 +43,9 @@
     {/if}
   </PropertyGroup>
 
-  {#if c2paActions?.actions?.length}
-    <PropertyGroup title="Actions" collapsed>
-      {#each c2paActions.actions as action (action.action)}
-        <PropertyRow label="Action" value={action.action ?? '-'} />
-        {#if action.softwareAgent}
-          <PropertyRow
-            label="Agent"
-            value={`${action.softwareAgent.name ?? ''} ${action.softwareAgent.version ?? ''}`}
-          />
-        {/if}
-        {#if action.when}
-          <PropertyRow label="When" value={action.when} />
-        {/if}
-      {/each}
-    </PropertyGroup>
+  {#if c2paActions?.actions}
+    <ActionsList actions={c2paActions.actions} />
   {/if}
-
 </div>
 
 <style>

@@ -5,62 +5,68 @@ The lineage system organizes workflow stages into 6 logical phases.
 ## Phases
 
 ### Acquisition
+
 Getting input data into the pipeline.
 
-| Stage Type | Description |
-|------------|-------------|
-| `ingest` | Initial data ingestion |
+| Stage Type | Description            |
+| ---------- | ---------------------- |
+| `ingest`   | Initial data ingestion |
 
 Color: `--phase-acquisition` (Red)
 
 ### Preparation
+
 Selecting, transforming, and validating inputs.
 
-| Stage Type | Description |
-|------------|-------------|
-| `select` | Choose specific data |
-| `transform` | Modify data format |
-| `validate` | Verify data integrity |
+| Stage Type  | Description           |
+| ----------- | --------------------- |
+| `select`    | Choose specific data  |
+| `transform` | Modify data format    |
+| `validate`  | Verify data integrity |
 
 Color: `--phase-preparation` (Coral)
 
 ### Retrieval
+
 Fetching additional context and data.
 
-| Stage Type | Description |
-|------------|-------------|
+| Stage Type | Description             |
+| ---------- | ----------------------- |
 | `retrieve` | Get known internal data |
-| `search` | Find external data |
+| `search`   | Find external data      |
 
 Color: `--phase-retrieval` (Yellow)
 
 ### Reasoning
+
 AI/ML processing and analysis.
 
-| Stage Type | Description |
-|------------|-------------|
-| `reflect` | Self-analysis |
-| `plan` | Strategy formulation |
-| `evaluate` | Assessment |
+| Stage Type | Description          |
+| ---------- | -------------------- |
+| `reflect`  | Self-analysis        |
+| `plan`     | Strategy formulation |
+| `evaluate` | Assessment           |
 
 Color: `--phase-reasoning` (Green)
 
 ### Generation
+
 Creating new content and outputs.
 
-| Stage Type | Description |
-|------------|-------------|
+| Stage Type | Description      |
+| ---------- | ---------------- |
 | `generate` | Content creation |
 
 Color: `--phase-generation` (Blue)
 
 ### Persistence
+
 Storing and publishing results.
 
-| Stage Type | Description |
-|------------|-------------|
-| `store` | Internal persistence |
-| `publish` | External distribution |
+| Stage Type | Description           |
+| ---------- | --------------------- |
+| `store`    | Internal persistence  |
+| `publish`  | External distribution |
 
 Color: `--phase-persistence` (Dark Blue)
 
@@ -77,11 +83,17 @@ type WorkflowPhase =
 
 type WorkflowStageType =
   | "ingest"
-  | "select" | "transform" | "validate"
-  | "retrieve" | "search"
-  | "reflect" | "plan" | "evaluate"
+  | "select"
+  | "transform"
+  | "validate"
+  | "retrieve"
+  | "search"
+  | "reflect"
+  | "plan"
+  | "evaluate"
   | "generate"
-  | "store" | "publish";
+  | "store"
+  | "publish";
 ```
 
 ## Phase-to-Stage Mapping

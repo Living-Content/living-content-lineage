@@ -10,7 +10,7 @@ A **Lineage** is the complete provenance graph containing:
 - **Workflows** — Collections of related nodes within a phase
 - **Nodes** — Individual graph elements representing data, processes, or attestations
 
-```
+```plaintext
 Lineage
 ├── Phase: Acquisition
 │   └── Workflow (PhaseType: ingest)
@@ -35,14 +35,14 @@ Lineage
 
 ## Types
 
-| Concept | Type Name | Description |
-|---------|-----------|-------------|
-| Phase | `Phase` | 6 values: Acquisition, Preparation, Retrieval, Reasoning, Generation, Persistence |
-| Phase Type | `PhaseType` | Operation types: ingest, select, transform, validate, retrieve, search, reflect, plan, evaluate, generate, store, publish |
-| Workflow | `Workflow` | A named collection of nodes belonging to a phase |
-| Node | `LineageNodeData` | Individual graph element |
-| Asset Type | `AssetType` | Content types: Media, Document, DataObject, Dataset, Code, Model, Action, Attestation, Credential |
-| Node Type | `NodeType` | Visual categories: data, process, attestation, store, media, workflow |
+| Concept    | Type Name         | Description                                                                                                               |
+| ---------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Phase      | `Phase`           | 6 values: Acquisition, Preparation, Retrieval, Reasoning, Generation, Persistence                                         |
+| Phase Type | `PhaseType`       | Operation types: ingest, select, transform, validate, retrieve, search, reflect, plan, evaluate, generate, store, publish |
+| Workflow   | `Workflow`        | A named collection of nodes belonging to a phase                                                                          |
+| Node       | `LineageNodeData` | Individual graph element                                                                                                  |
+| Asset Type | `AssetType`       | Content types: Media, Document, DataObject, Dataset, Code, Model, Action, Attestation, Credential                         |
+| Node Type  | `NodeType`        | Visual categories: data, process, attestation, store, media, workflow                                                     |
 
 ## Relationships
 

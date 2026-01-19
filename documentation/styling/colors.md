@@ -6,14 +6,14 @@ The color system uses semantic variables organized by purpose.
 
 Workflow phases have distinct accent colors for visual identification:
 
-| Phase | Color | Variable |
-|-------|-------|----------|
-| Acquisition | Red | `--phase-acquisition: rgb(239, 45, 45)` |
-| Preparation | Coral | `--phase-preparation: rgb(255, 89, 94)` |
-| Retrieval | Yellow | `--phase-retrieval: rgb(255, 202, 58)` |
-| Reasoning | Green | `--phase-reasoning: rgb(138, 201, 38)` |
-| Generation | Blue | `--phase-generation: rgb(25, 130, 196)` |
-| Persistence | Dark Blue | `--phase-persistence: rgb(0, 84, 175)` |
+| Phase       | Color     | Variable                                |
+| ----------- | --------- | --------------------------------------- |
+| Acquisition | Red       | `--phase-acquisition: rgb(239, 45, 45)` |
+| Preparation | Coral     | `--phase-preparation: rgb(255, 89, 94)` |
+| Retrieval   | Yellow    | `--phase-retrieval: rgb(255, 202, 58)`  |
+| Reasoning   | Green     | `--phase-reasoning: rgb(138, 201, 38)`  |
+| Generation  | Blue      | `--phase-generation: rgb(25, 130, 196)` |
+| Persistence | Dark Blue | `--phase-persistence: rgb(0, 84, 175)`  |
 
 ### Variants
 
@@ -29,12 +29,12 @@ Each phase has background and muted variants:
 Hierarchical text colors from most to least prominent:
 
 ```css
---color-text-primary: #1a1a1a;    /* Headings, important text */
---color-text-secondary: #333333;  /* Body text */
---color-text-muted: #666666;      /* Secondary info */
---color-text-light: #888888;      /* Labels */
---color-text-faint: #999999;      /* Disabled, hints */
---color-text-subtle: #6b7280;     /* Subtle annotations */
+--color-text-primary: #1a1a1a; /* Headings, important text */
+--color-text-secondary: #333333; /* Body text */
+--color-text-muted: #666666; /* Secondary info */
+--color-text-light: #888888; /* Labels */
+--color-text-faint: #999999; /* Disabled, hints */
+--color-text-subtle: #6b7280; /* Subtle annotations */
 ```
 
 ## Surface Colors
@@ -42,21 +42,21 @@ Hierarchical text colors from most to least prominent:
 Background and panel colors:
 
 ```css
---color-bg-primary: #ffffff;      /* Main background */
---color-bg-secondary: #fafafa;    /* Subtle separation */
---color-bg-tertiary: #f5f5f5;     /* Stronger separation */
---color-bg-elevated: #ffffff;     /* Elevated panels */
+--color-bg-primary: #ffffff; /* Main background */
+--color-bg-secondary: #fafafa; /* Subtle separation */
+--color-bg-tertiary: #f5f5f5; /* Stronger separation */
+--color-bg-elevated: #ffffff; /* Elevated panels */
 
---color-surface: #ffffff;         /* Card background */
---color-surface-hover: #f5f5f5;   /* Hover state */
---color-surface-active: #ebebeb;  /* Active state */
+--color-surface: #ffffff; /* Card background */
+--color-surface-hover: #f5f5f5; /* Hover state */
+--color-surface-active: #ebebeb; /* Active state */
 --color-surface-subtle: rgba(0, 0, 0, 0.03);
 ```
 
 ## Border Colors
 
 ```css
---color-border: #dddddd;          /* Standard borders */
+--color-border: #dddddd; /* Standard borders */
 --color-border-light: rgba(0, 0, 0, 0.04);
 --color-border-soft: rgba(0, 0, 0, 0.06);
 --color-border-hover: rgba(0, 0, 0, 0.08);
@@ -96,6 +96,7 @@ For phase-aware components:
 ## Files
 
 Color definitions are in:
+
 - `src/styles/theme/colors.css` - Semantic colors
 - `src/styles/theme/phases.css` - Phase accent colors
 - `src/styles/theme/graph.css` - Graph-specific colors

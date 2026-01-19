@@ -6,8 +6,8 @@ import type { LineageGraph, LineageEdgeData, Workflow } from '../../../config/ty
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import type { SelectionTarget } from '../../../stores/lineageState.js';
 import { renderEdges, renderWorkflowEdges } from '../rendering/edgeRenderer.js';
-import { FADED_NODE_ALPHA } from '../../../config/constants.js';
 import { DEFAULT_NODE_ALPHA } from '../rendering/nodeRenderer.js';
+import { getCssVar } from '../../../theme/theme.js';
 import type { Container } from 'pixi.js';
 
 export interface VerticalAdjacencyMap {
@@ -96,7 +96,7 @@ function setNodeMapVisibility(
   nodeMap.forEach((node, nodeId) => {
     const highlighted = isHighlighted(nodeId);
     const selected = isSelected(nodeId);
-    setNodeAlpha(nodeId, highlighted ? 1 : FADED_NODE_ALPHA);
+    setNodeAlpha(nodeId, highlighted ? 1 : parseFloat(getCssVar('--faded-node-alpha')));
     node.setSelected(selected);
   });
 }
@@ -142,7 +142,7 @@ const highlightNode = (
 
   // Dim workflow nodes and edges (for collapsed view consistency)
   workflowNodeMap.forEach((node) => {
-    node.alpha = FADED_NODE_ALPHA;
+    node.alpha = parseFloat(getCssVar('--faded-node-alpha'));
     node.setSelected(false);
   });
 

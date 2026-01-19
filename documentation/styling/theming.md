@@ -54,14 +54,14 @@ src/styles/theme/
 2. Import it in `src/styles/theme/index.css`:
 
 ```css
-@import './overrides/dark.css';
-@import './overrides/high-contrast.css';
+@import "./overrides/dark.css";
+@import "./overrides/high-contrast.css";
 ```
 
 3. Add the theme option to `themeState.ts`:
 
 ```typescript
-export type ThemeName = 'light' | 'dark' | 'high-contrast' | 'system';
+export type ThemeName = "light" | "dark" | "high-contrast" | "system";
 ```
 
 ## Theme State Management
@@ -69,19 +69,24 @@ export type ThemeName = 'light' | 'dark' | 'high-contrast' | 'system';
 Theme state is managed in `src/stores/themeState.ts`:
 
 ```typescript
-import { themePreference, resolvedTheme, setTheme, cycleTheme } from '../stores/themeState.js';
+import {
+  themePreference,
+  resolvedTheme,
+  setTheme,
+  cycleTheme,
+} from "../stores/themeState.js";
 
 // Get current preference
-$themePreference  // 'light' | 'dark' | 'system'
+$themePreference; // 'light' | 'dark' | 'system'
 
 // Get resolved theme (what's actually applied)
-$resolvedTheme    // 'light' | 'dark'
+$resolvedTheme; // 'light' | 'dark'
 
 // Set theme
-setTheme('dark');
+setTheme("dark");
 
 // Cycle through themes
-cycleTheme();     // light -> dark -> system -> light
+cycleTheme(); // light -> dark -> system -> light
 ```
 
 ## ThemeToggle Component
@@ -97,6 +102,7 @@ The `ThemeToggle` component provides a UI for switching themes:
 ```
 
 Features:
+
 - Persists preference to localStorage
 - Respects system preference when set to 'system'
 - Listens for system theme changes

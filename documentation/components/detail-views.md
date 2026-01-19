@@ -4,62 +4,27 @@ Asset-specific detail views provide tailored displays for each asset type.
 
 ## Architecture
 
-```
-src/components/sidebar/
+```plaintext
+src/components/dataviewer/
   DetailView.svelte              # Router component
   detail/
-    MetricCard.svelte            # Large metric display
-    MetricRow.svelte             # Horizontal metric grid
     PropertyGroup.svelte         # Collapsible section
+    ActionsList.svelte           # Reusable C2PA actions display
+    CodeBlock.svelte             # Reusable source code display
+    DetailValue.svelte           # Dynamic value renderer
     views/
       ModelDetailView.svelte     # Model-specific
       CodeDetailView.svelte      # Code-specific
       DatasetDetailView.svelte   # Dataset-specific
       DocumentDetailView.svelte  # Document-specific
-      DataObjectDetailView.svelte
-      ActionDetailView.svelte
-      MediaDetailView.svelte
+      ActionDetailView.svelte    # Action-specific
+      MediaDetailView.svelte     # Media-specific
       AttestationDetailView.svelte
       CredentialDetailView.svelte
-      GenericDetailView.svelte   # Fallback
+      DefaultDetailView.svelte   # DataObject and fallback
 ```
 
 ## Shared Components
-
-### MetricCard
-
-Large metric display with optional phase accent.
-
-```svelte
-<MetricCard
-  value="12.0s"
-  label="Duration"
-  phase="Generation"
-  size="hero"        <!-- hero | large | medium -->
-/>
-```
-
-Props:
-- `value` - Display value (string or number)
-- `label` - Metric label
-- `unit` - Optional unit suffix
-- `phase` - Workflow phase for color accent
-- `size` - Size variant (hero: 48px, large: 32px, medium: 18px)
-
-### MetricRow
-
-Grid container for MetricCards.
-
-```svelte
-<MetricRow columns={3}>
-  <MetricCard value="10" label="Chunks" />
-  <MetricCard value="50%" label="Confidence" />
-  <MetricCard value="0.015" label="Avg Score" />
-</MetricRow>
-```
-
-Props:
-- `columns` - Number of columns (2, 3, or 4)
 
 ### PropertyGroup
 
@@ -67,8 +32,8 @@ Collapsible section with title.
 
 ```svelte
 <PropertyGroup title="Model Info" collapsible={false}>
-  <MetaRow label="Provider" value="anthropic" />
-  <MetaRow label="Model" value="claude-sonnet-4-5" />
+  <PropertyRow label="Provider" value="anthropic" />
+  <PropertyRow label="Model" value="claude-sonnet-4-5" />
 </PropertyGroup>
 
 <PropertyGroup title="Signature" collapsed>
@@ -77,27 +42,69 @@ Collapsible section with title.
 ```
 
 Props:
+
 - `title` - Section title
 - `collapsed` - Initial collapsed state (default: false)
 - `collapsible` - Whether section can be collapsed (default: true)
 
-## Creating a New Detail View
+### ActionsList
 
-1. Create a new file in `src/components/sidebar/detail/views/`:
+Reusable component for displaying C2PA actions. Used by ActionDetailView, MediaDetailView, and ModelDetailView.
 
 ```svelte
 <script lang="ts">
-  import type { LineageNodeData } from '../../../../types.js';
-  import { extractAssertionData, formatDuration } from '../../../../services/sidebar/assertionParsers.js';
-  import MetricCard from '../MetricCard.svelte';
-  import MetricRow from '../MetricRow.svelte';
+  import type { C2paAction } from '../../../services/dataviewer/parsing/assertionParsers.js';
+</script>
+
+<ActionsList
+  actions={c2paActions.actions}
+  title="Actions"
+  collapsed={true}
+/>
+```
+
+Props:
+
+- `actions` - Array of C2paAction objects
+- `title` - Section title (default: "Actions")
+- `collapsed` - Initial collapsed state (default: true)
+
+### CodeBlock
+
+Reusable component for displaying source code. Used by CodeDetailView and DefaultDetailView.
+
+```svelte
+<CodeBlock
+  code={sourceCode}
+  title="Source Code"
+  collapsed={true}
+/>
+```
+
+Props:
+
+- `code` - Source code string to display
+- `title` - Section title (default: "Source Code")
+- `collapsed` - Initial collapsed state (default: true)
+
+## Creating a New Detail View
+
+1. Create a new file in `src/components/dataviewer/detail/views/`:
+
+```svelte
+<script lang="ts">
+  import type { LineageNodeData } from '../../../../config/types.js';
+  import { extractAssertionData, formatDuration } from '../../../../services/dataviewer/parsing/assertionParsers.js';
   import PropertyGroup from '../PropertyGroup.svelte';
-  import MetaRow from '../../MetaRow.svelte';
+  import PropertyRow from '../../PropertyRow.svelte';
+  import ActionsList from '../ActionsList.svelte';
+  import CodeBlock from '../CodeBlock.svelte';
 
   export let node: LineageNodeData;
 
   $: assetManifest = node.assetManifest;
   $: assertions = extractAssertionData(assetManifest?.assertions);
+  $: c2paActions = assertions.c2paActions;
   $: phase = node.phase;
 
   // Extract type-specific data
@@ -105,14 +112,13 @@ Props:
 </script>
 
 <div class="my-detail-view">
-  <MetricRow columns={2}>
-    <MetricCard value="..." label="..." {phase} size="hero" />
-    <MetricCard value="..." label="..." {phase} size="large" />
-  </MetricRow>
-
   <PropertyGroup title="Info" collapsible={false}>
-    <MetaRow label="Field" value="..." />
+    <PropertyRow label="Field" value="..." />
   </PropertyGroup>
+
+  {#if c2paActions?.actions}
+    <ActionsList actions={c2paActions.actions} />
+  {/if}
 </div>
 
 <style>
@@ -124,7 +130,7 @@ Props:
 </style>
 ```
 
-2. Add to the router in `DetailView.svelte`:
+1. Add to the router in `DetailView.svelte`:
 
 ```svelte
 {:else if assetType === 'MyType'}
@@ -135,7 +141,24 @@ Props:
 
 Each detail view follows this structure:
 
-1. **Hero metrics** - Large prominent numbers at the top
-2. **Primary content** - Key type-specific information
-3. **Secondary metadata** - Collapsible details
-4. **Signature** - Always collapsed at bottom
+1. **Primary info** - Key type-specific information (non-collapsible)
+2. **Secondary metadata** - Additional details (collapsible)
+3. **Actions** - C2PA actions if available (collapsible, use ActionsList)
+4. **Source code** - If available (collapsible, use CodeBlock)
+
+## Asset Type Routing
+
+The `DetailView.svelte` router maps asset types to views:
+
+| Asset Type    | View Component        |
+| ------------- | --------------------- |
+| Model         | ModelDetailView       |
+| Code          | CodeDetailView        |
+| Dataset       | DatasetDetailView     |
+| Document      | DocumentDetailView    |
+| Action        | ActionDetailView      |
+| Media         | MediaDetailView       |
+| Attestation   | AttestationDetailView |
+| Credential    | CredentialDetailView  |
+| DataObject    | DefaultDetailView     |
+| (unspecified) | DefaultDetailView     |

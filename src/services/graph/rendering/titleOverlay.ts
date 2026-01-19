@@ -21,14 +21,53 @@ export interface TitleOverlayData {
 }
 
 /**
- * Create title overlay with workflow metadata.
+ * Title overlay text elements.
  */
-export function createTitleOverlay(stage: Container, data: TitleOverlayData): TitleOverlay {
-  const container = new Container();
-  container.eventMode = 'passive';
-  stage.addChild(container);
+export interface TitleOverlayElements {
+  uuidText: Text;
+  titleText: Text;
+  dateText: Text;
+}
 
-  const dateStr = new Date()
+/**
+ * Animation controller for title overlay hover effects.
+ */
+export interface TitleAnimationController {
+  cleanup: () => void;
+}
+
+/**
+ * Creates title overlay text styles.
+ */
+const createTextStyles = (): { uuid: TextStyle; title: TextStyle; date: TextStyle } => ({
+  uuid: new TextStyle({
+    fontFamily: getCssVar('--font-mono'),
+    fontSize: parseInt(getCssVar('--title-uuid-font-size')),
+    fontWeight: '500',
+    fill: getColor('--color-node-text'),
+    letterSpacing: parseFloat(getCssVar('--title-uuid-letter-spacing')),
+  }),
+  title: new TextStyle({
+    fontFamily: getCssVar('--font-sans'),
+    fontSize: parseInt(getCssVar('--title-main-font-size')),
+    fontWeight: '600',
+    fill: getColor('--color-node-text'),
+    letterSpacing: parseFloat(getCssVar('--title-main-letter-spacing')),
+  }),
+  date: new TextStyle({
+    fontFamily: getCssVar('--font-sans'),
+    fontSize: parseInt(getCssVar('--title-date-font-size')),
+    fontWeight: '600',
+    fill: getColor('--color-title-secondary'),
+    letterSpacing: parseFloat(getCssVar('--title-date-letter-spacing')),
+  }),
+});
+
+/**
+ * Formats the current date for display.
+ */
+const formatDateString = (): string =>
+  new Date()
     .toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -36,103 +75,163 @@ export function createTitleOverlay(stage: Container, data: TitleOverlayData): Ti
     })
     .toUpperCase();
 
-  const uuidStyle = new TextStyle({
-    fontFamily: getCssVar('--font-mono'),
-    fontSize: 11,
-    fontWeight: '500',
-    fill: getColor('--color-node-text'),
-    letterSpacing: 0.5,
-  });
+/**
+ * Pure creation of title overlay text elements (no side effects).
+ */
+export const createTitleOverlayElements = (data: TitleOverlayData): TitleOverlayElements => {
+  const styles = createTextStyles();
+  const dateStr = formatDateString();
 
-  const titleStyle = new TextStyle({
-    fontFamily: getCssVar('--font-sans'),
-    fontSize: 18,
-    fontWeight: '600',
-    fill: getColor('--color-node-text'),
-    letterSpacing: -0.3,
-  });
+  const uuidText = new Text({ text: data.lineageId, style: styles.uuid });
+  const titleText = new Text({ text: data.title, style: styles.title });
+  const dateText = new Text({ text: dateStr, style: styles.date });
 
-  const dateStyle = new TextStyle({
-    fontFamily: getCssVar('--font-sans'),
-    fontSize: 11,
-    fontWeight: '600',
-    fill: getColor('--color-title-secondary'),
-    letterSpacing: 0.5,
-  });
+  const secondaryAlpha = parseFloat(getCssVar('--title-secondary-alpha'));
+  uuidText.alpha = secondaryAlpha;
+  dateText.alpha = secondaryAlpha;
 
-  const uuidText = new Text({ text: data.lineageId, style: uuidStyle });
-  container.addChild(uuidText);
+  return { uuidText, titleText, dateText };
+};
 
-  const titleText = new Text({ text: data.title, style: titleStyle });
-  container.addChild(titleText);
+/**
+ * Attaches title overlay elements to a container (explicit side effect).
+ */
+export const attachTitleOverlayElements = (
+  container: Container,
+  elements: TitleOverlayElements
+): void => {
+  container.addChild(elements.uuidText);
+  container.addChild(elements.titleText);
+  container.addChild(elements.dateText);
+};
 
-  const dateText = new Text({ text: dateStr, style: dateStyle });
-  container.addChild(dateText);
-
-  uuidText.alpha = 0.5;
-  dateText.alpha = 0.5;
+/**
+ * Sets up hover animation for title overlay (returns controller with cleanup).
+ */
+export const setupTitleAnimation = (
+  container: Container,
+  elements: TitleOverlayElements
+): TitleAnimationController => {
   let targetAlpha = 0.5;
   let fadeAnimationId: number | null = null;
 
-  function animateAlpha(): void {
-    const diff = targetAlpha - uuidText.alpha;
+  const animateAlpha = (): void => {
+    const diff = targetAlpha - elements.uuidText.alpha;
     if (Math.abs(diff) < 0.01) {
-      uuidText.alpha = targetAlpha;
-      dateText.alpha = targetAlpha;
+      elements.uuidText.alpha = targetAlpha;
+      elements.dateText.alpha = targetAlpha;
       fadeAnimationId = null;
       return;
     }
-    uuidText.alpha += diff * 0.15;
-    dateText.alpha += diff * 0.15;
+    elements.uuidText.alpha += diff * 0.15;
+    elements.dateText.alpha += diff * 0.15;
     fadeAnimationId = requestAnimationFrame(animateAlpha);
-  }
+  };
 
   container.eventMode = 'static';
   container.cursor = 'pointer';
-  container.on('pointerenter', () => {
+
+  const onPointerEnter = (): void => {
     targetAlpha = 1;
     if (!fadeAnimationId) fadeAnimationId = requestAnimationFrame(animateAlpha);
-  });
-  container.on('pointerleave', () => {
+  };
+
+  const onPointerLeave = (): void => {
     targetAlpha = 0.5;
     if (!fadeAnimationId) fadeAnimationId = requestAnimationFrame(animateAlpha);
-  });
+  };
+
+  container.on('pointerenter', onPointerEnter);
+  container.on('pointerleave', onPointerLeave);
+
+  return {
+    cleanup: () => {
+      if (fadeAnimationId) {
+        cancelAnimationFrame(fadeAnimationId);
+      }
+      container.off('pointerenter', onPointerEnter);
+      container.off('pointerleave', onPointerLeave);
+    },
+  };
+};
+
+/**
+ * Positions elements in fixed mode (top-left of screen).
+ */
+const positionElementsFixed = (elements: TitleOverlayElements): void => {
+  const panelMargin = parseInt(getCssVar('--panel-margin'));
+  const logoWidth = parseInt(getCssVar('--logo-width'));
+  const uuidToTitle = parseInt(getCssVar('--title-uuid-to-title'));
+  const titleToDate = parseInt(getCssVar('--title-title-to-date'));
+  const titleLeftGap = parseInt(getCssVar('--title-left-gap'));
+  const leftEdge = panelMargin + logoWidth + titleLeftGap;
+
+  elements.uuidText.position.set(leftEdge, panelMargin);
+  elements.titleText.position.set(leftEdge, panelMargin + uuidToTitle);
+  elements.dateText.position.set(leftEdge, panelMargin + uuidToTitle + titleToDate);
+};
+
+/**
+ * Positions elements relative to a node and viewport.
+ */
+const positionElementsRelative = (
+  elements: TitleOverlayElements,
+  leftmostNode: GraphNode,
+  viewportState: ViewportState
+): void => {
+  const uuidToTitle = parseInt(getCssVar('--title-uuid-to-title'));
+  const titleToDate = parseInt(getCssVar('--title-title-to-date'));
+  const totalHeight = uuidToTitle + titleToDate;
+
+  const screenX = viewportState.x + leftmostNode.position.x * viewportState.scale;
+  const screenY = viewportState.y + leftmostNode.position.y * viewportState.scale;
+  const nodeTop = screenY - (leftmostNode.nodeHeight / 2) * viewportState.scale;
+  const leftEdge = screenX - (leftmostNode.nodeWidth / 2) * viewportState.scale;
+  const nodeGap = parseInt(getCssVar('--title-node-gap'));
+  const uuidY = nodeTop - totalHeight - nodeGap;
+
+  elements.uuidText.position.set(leftEdge, uuidY);
+  elements.titleText.position.set(leftEdge, uuidY + uuidToTitle);
+  elements.dateText.position.set(leftEdge, uuidY + uuidToTitle + titleToDate);
+};
+
+/**
+ * Create title overlay with workflow metadata (orchestrator maintaining current API).
+ */
+export function createTitleOverlay(stage: Container, data: TitleOverlayData): TitleOverlay {
+  const container = new Container();
+  container.eventMode = 'passive';
+  stage.addChild(container);
+
+  // Create and attach elements
+  const elements = createTitleOverlayElements(data);
+  attachTitleOverlayElements(container, elements);
+
+  // Setup animation
+  const animationController = setupTitleAnimation(container, elements);
 
   let currentMode: 'fixed' | 'relative' = 'fixed';
 
-  function setVisible(visible: boolean): void {
+  const setVisible = (visible: boolean): void => {
     container.visible = visible;
-  }
+  };
 
-  function setMode(mode: 'fixed' | 'relative'): void {
+  const setMode = (mode: 'fixed' | 'relative'): void => {
     currentMode = mode;
     if (mode === 'fixed') {
-      const leftEdge = 160;
-      uuidText.position.set(leftEdge, 20);
-      titleText.position.set(leftEdge, 34);
-      dateText.position.set(leftEdge, 57);
+      positionElementsFixed(elements);
     }
-  }
+  };
 
-  function updatePosition(leftmostNode: GraphNode, viewportState: ViewportState): void {
+  const updatePosition = (leftmostNode: GraphNode, viewportState: ViewportState): void => {
     if (currentMode === 'fixed') return;
+    positionElementsRelative(elements, leftmostNode, viewportState);
+  };
 
-    const screenX = viewportState.x + leftmostNode.position.x * viewportState.scale;
-    const screenY = viewportState.y + leftmostNode.position.y * viewportState.scale;
-    const nodeTop = screenY - (leftmostNode.nodeHeight / 2) * viewportState.scale;
-    const leftEdge = screenX - (leftmostNode.nodeWidth / 2) * viewportState.scale;
-
-    uuidText.position.set(leftEdge, nodeTop - 68);
-    titleText.position.set(leftEdge, nodeTop - 48);
-    dateText.position.set(leftEdge, nodeTop - 25);
-  }
-
-  function destroy(): void {
-    if (fadeAnimationId) {
-      cancelAnimationFrame(fadeAnimationId);
-    }
+  const destroy = (): void => {
+    animationController.cleanup();
     container.destroy({ children: true });
-  }
+  };
 
   // Initialize in fixed mode
   setMode('fixed');

@@ -5,24 +5,24 @@ The typography system defines a consistent scale for text hierarchy.
 ## Font Families
 
 ```css
---font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
---font-mono: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+--font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+--font-mono: "SF Mono", Monaco, "Cascadia Code", monospace;
 ```
 
 ## Font Size Scale
 
 From largest to smallest:
 
-| Variable | Size | Usage |
-|----------|------|-------|
-| `--font-size-hero` | 48px | Primary metrics ("12.0s") |
-| `--font-size-display` | 36px | Large display numbers |
-| `--font-size-large` | 32px | Secondary metrics |
-| `--font-size-title` | 24px | Page/section titles |
-| `--font-size-heading` | 18px | Section headers |
-| `--font-size-body` | 14px | Body text |
-| `--font-size-small` | 12px | Labels, captions |
-| `--font-size-tiny` | 10px | Badges, fine print |
+| Variable              | Size | Usage                     |
+| --------------------- | ---- | ------------------------- |
+| `--font-size-hero`    | 48px | Primary metrics ("12.0s") |
+| `--font-size-display` | 36px | Large display numbers     |
+| `--font-size-large`   | 32px | Secondary metrics         |
+| `--font-size-title`   | 24px | Page/section titles       |
+| `--font-size-heading` | 18px | Section headers           |
+| `--font-size-body`    | 14px | Body text                 |
+| `--font-size-small`   | 12px | Labels, captions          |
+| `--font-size-tiny`    | 10px | Badges, fine print        |
 
 ## Font Weights
 
@@ -36,21 +36,21 @@ From largest to smallest:
 ## Line Heights
 
 ```css
---line-height-tight: 1.1;    /* Large metrics */
---line-height-snug: 1.3;     /* Headings */
---line-height-normal: 1.5;   /* Body text */
---line-height-relaxed: 1.6;  /* Readable paragraphs */
---line-height-loose: 1.8;    /* Spacious text */
+--line-height-tight: 1.1; /* Large metrics */
+--line-height-snug: 1.3; /* Headings */
+--line-height-normal: 1.5; /* Body text */
+--line-height-relaxed: 1.6; /* Readable paragraphs */
+--line-height-loose: 1.8; /* Spacious text */
 ```
 
 ## Letter Spacing
 
 ```css
---letter-spacing-tight: -0.02em;  /* Large text */
---letter-spacing-normal: 0;       /* Body text */
---letter-spacing-wide: 0.02em;    /* Slight emphasis */
---letter-spacing-wider: 0.05em;   /* Uppercase labels */
---letter-spacing-caps: 0.1em;     /* All caps */
+--letter-spacing-tight: -0.02em; /* Large text */
+--letter-spacing-normal: 0; /* Body text */
+--letter-spacing-wide: 0.02em; /* Slight emphasis */
+--letter-spacing-wider: 0.05em; /* Uppercase labels */
+--letter-spacing-caps: 0.1em; /* All caps */
 ```
 
 ## Usage Examples
@@ -101,10 +101,10 @@ From largest to smallest:
 
 The MetricCard component uses these size presets:
 
-| Size | Font Size Variable |
-|------|-------------------|
-| `hero` | `--font-size-hero` (48px) |
-| `large` | `--font-size-large` (32px) |
+| Size     | Font Size Variable           |
+| -------- | ---------------------------- |
+| `hero`   | `--font-size-hero` (48px)    |
+| `large`  | `--font-size-large` (32px)   |
 | `medium` | `--font-size-heading` (18px) |
 
 ## File

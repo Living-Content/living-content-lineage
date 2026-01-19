@@ -10,6 +10,7 @@
   } from '../../../../services/dataviewer/parsing/assertionParsers.js';
   import PropertyGroup from '../PropertyGroup.svelte';
   import PropertyRow from '../../PropertyRow.svelte';
+  import CodeBlock from '../CodeBlock.svelte';
 
   export let node: LineageNodeData;
 
@@ -23,8 +24,6 @@
   $: functionDisplay = code?.function ?? '-';
   $: moduleDisplay = code?.module ?? '-';
   $: computationDisplay = code?.computation ?? '-';
-
-  let sourceCollapsed = true;
 </script>
 
 <div class="code-detail-view">
@@ -52,9 +51,7 @@
   {/if}
 
   {#if sourceCode}
-    <PropertyGroup title="Source Code" bind:collapsed={sourceCollapsed}>
-      <pre class="source-code"><code>{sourceCode}</code></pre>
-    </PropertyGroup>
+    <CodeBlock code={sourceCode} />
   {/if}
 </div>
 
@@ -63,24 +60,5 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-lg, 16px);
-  }
-
-  .source-code {
-    margin: 0;
-    padding: var(--space-md, 12px);
-    background: var(--code-block-bg, rgba(0, 0, 0, 0.04));
-    border: 1px solid var(--code-block-border, rgba(0, 0, 0, 0.04));
-    border-radius: var(--radius-md, 8px);
-    overflow-x: auto;
-    font-family: var(--font-mono);
-    font-size: var(--font-size-small, 12px);
-    line-height: var(--line-height-relaxed, 1.6);
-    color: var(--code-text-color, var(--color-text-secondary));
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-
-  .source-code code {
-    font-family: inherit;
   }
 </style>

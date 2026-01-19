@@ -142,7 +142,7 @@ export interface LineageNodeData {
   assetType?: AssetType;
   shape: NodeShape;
   workflowId?: string;
-  phase?: Phase;
+  phase: Phase;
   manifest?: LineageManifestSummary;
   assetManifest?: AssetManifest;
   description?: string;
@@ -171,7 +171,7 @@ export interface LineageEdgeData {
 export interface Workflow {
   id: string;
   label: string;
-  phase?: Phase;
+  phase: Phase;
   xStart: number;
   xEnd: number;
 }

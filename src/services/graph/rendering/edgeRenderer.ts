@@ -6,14 +6,7 @@
 import { Container, Graphics } from 'pixi.js';
 import type { LineageEdgeData, Workflow } from '../../../config/types.js';
 import type { GraphNode } from './nodeRenderer.js';
-import { getColor } from '../../../theme/theme.js';
-import {
-  EDGE_WIDTH,
-  EDGE_DOT_RADIUS,
-  WORKFLOW_EDGE_WIDTH,
-  WORKFLOW_DOT_RADIUS,
-  FADED_NODE_ALPHA,
-} from '../../../config/constants.js';
+import { getColor, getCssVar } from '../../../theme/theme.js';
 import { drawDot } from './rendererUtils.js';
 
 export type ViewMode = 'lineage' | 'workflow';
@@ -40,8 +33,8 @@ export const renderEdges = (
   dotLayer?.removeChildren();
 
   const { view, selectedId, highlightedIds } = options;
-  const edgeWidth = view === 'lineage' ? WORKFLOW_EDGE_WIDTH : EDGE_WIDTH;
-  const dotRadius = view === 'lineage' ? WORKFLOW_DOT_RADIUS : EDGE_DOT_RADIUS;
+  const edgeWidth = parseInt(getCssVar(view === 'lineage' ? '--workflow-edge-width' : '--edge-width'));
+  const dotRadius = parseInt(getCssVar(view === 'lineage' ? '--workflow-dot-radius' : '--edge-dot-radius'));
 
   const lineGraphics = new Graphics();
   const fadedLineGraphics = new Graphics();
@@ -109,8 +102,9 @@ export const renderEdges = (
     }
   }
 
-  fadedLineGraphics.alpha = FADED_NODE_ALPHA;
-  fadedDotGraphics.alpha = FADED_NODE_ALPHA;
+  const fadedAlpha = parseFloat(getCssVar('--faded-node-alpha'));
+  fadedLineGraphics.alpha = fadedAlpha;
+  fadedDotGraphics.alpha = fadedAlpha;
 
   edgeLayer.addChild(fadedLineGraphics);
   edgeLayer.addChild(lineGraphics);
@@ -146,7 +140,8 @@ export const renderWorkflowEdges = (
       workflow.id === selectedWorkflowId ||
       nextWorkflowId === selectedWorkflowId;
 
-    const alpha = isConnected ? 1 : FADED_NODE_ALPHA;
+    const fadedAlpha = parseFloat(getCssVar('--faded-node-alpha'));
+    const alpha = isConnected ? 1 : fadedAlpha;
 
     const baseColor = workflow.phase
       ? getColor(`--phase-${workflow.phase.toLowerCase()}`)
@@ -157,12 +152,15 @@ export const renderWorkflowEdges = (
     const endX = targetNode.position.x - targetNode.nodeWidth / 2;
     const endY = targetNode.position.y;
 
+    const workflowEdgeWidth = parseInt(getCssVar('--workflow-edge-width'));
+    const workflowDotRadius = parseInt(getCssVar('--workflow-dot-radius'));
+
     graphics.moveTo(startX, startY);
     graphics.lineTo(endX, endY);
-    graphics.stroke({ width: WORKFLOW_EDGE_WIDTH, color: baseColor, alpha });
+    graphics.stroke({ width: workflowEdgeWidth, color: baseColor, alpha });
 
-    drawDot(graphics, startX, startY, WORKFLOW_DOT_RADIUS, baseColor, alpha);
-    drawDot(graphics, endX, endY, WORKFLOW_DOT_RADIUS, baseColor, alpha);
+    drawDot(graphics, startX, startY, workflowDotRadius, baseColor, alpha);
+    drawDot(graphics, endX, endY, workflowDotRadius, baseColor, alpha);
   }
 
   layer.addChild(graphics);

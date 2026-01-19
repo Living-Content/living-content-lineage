@@ -3,7 +3,7 @@
  * Shows asset type icon on left, with type label and optional main label.
  */
 import { Container, Graphics, Sprite, Ticker } from 'pixi.js';
-import { ASSET_TYPE_ICON_PATHS, getColor, getPhaseColorHex } from '../../../theme/theme.js';
+import { getAssetIconPath, getColor, getCssVar } from '../../../theme/theme.js';
 import type { AssetType, LineageNodeData } from '../../../config/types.js';
 import { ASSET_TYPE_LABELS } from '../../../config/labels.js';
 import { GEOMETRY } from '../../../config/animationConstants.js';
@@ -49,8 +49,7 @@ const getAssetTypeLabel = (assetType?: AssetType): string => {
 };
 
 const getIconPath = (assetType?: AssetType): string => {
-  if (!assetType) return ASSET_TYPE_ICON_PATHS.DataObject;
-  return ASSET_TYPE_ICON_PATHS[assetType] ?? ASSET_TYPE_ICON_PATHS.DataObject;
+  return getAssetIconPath(assetType ?? 'DataObject');
 };
 
 /**
@@ -68,7 +67,7 @@ export function createGraphNode(
   group.label = node.id;
 
   const nodeScale = options.scale ?? 1;
-  const color = getPhaseColorHex(node.phase);
+  const color = getCssVar(`--phase-${node.phase.toLowerCase()}`);
   const dims = getScaledDimensions(nodeScale);
 
   // Determine render mode based on node type and options
@@ -78,7 +77,7 @@ export function createGraphNode(
     // Workflow nodes: use icon-based node with workflow type
     const renderOptions: NodeRenderOptions = options.renderOptions ?? {
       mode: 'simple',
-      iconPath: ASSET_TYPE_ICON_PATHS.Action,
+      iconPath: getAssetIconPath('Action'),
       typeLabel: node.label,
     };
 

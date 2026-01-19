@@ -1,22 +1,19 @@
 /**
  * Node creation and layout for the graph.
- * Handles creating graph nodes and icon nodes, then repositioning with edge gaps.
+ * Handles creating graph nodes and repositioning with edge gaps.
  */
 import type { Ticker, Container } from 'pixi.js';
 import type { LineageNodeData } from '../../../config/types.js';
-import { createGraphNode, type GraphNode, DEFAULT_NODE_ALPHA } from '../rendering/nodeRenderer.js';
-import { createIconNode } from '../rendering/iconNodeRenderer.js';
-import { getIconNodeConfig } from '../../../theme/theme.js';
-import { EDGE_GAP } from '../../../config/constants.js';
-import { selectNode } from '../../../stores/lineageState.js';
-
-interface HoverPayload {
-  title: string;
-  nodeType: string;
-  screenX: number;
-  screenY: number;
-  size: number;
-}
+import type { GraphNode } from '../rendering/nodeRenderer.js';
+import { getCssVar } from '../../../theme/theme.js';
+import {
+  createNodeElement,
+  addElementsToLayer,
+  populateElementMap,
+  type HoverPayload,
+  type CreateElementConfig,
+  type HoverCallbackConfig,
+} from './graphLayout.js';
 
 interface NodeCreatorCallbacks {
   onHover: (payload: HoverPayload) => void;
@@ -35,6 +32,30 @@ interface NodeCreatorDeps {
 }
 
 /**
+ * Builds the unified element config from node creator deps.
+ */
+const buildElementConfig = (
+  deps: NodeCreatorDeps,
+  nodeMap: Map<string, GraphNode>
+): CreateElementConfig => {
+  const hoverConfig: HoverCallbackConfig = {
+    container: deps.container,
+    getSelectedNodeId: deps.getSelectedNodeId,
+    setNodeAlpha: deps.setNodeAlpha,
+    onHover: deps.callbacks.onHover,
+    onHoverEnd: deps.callbacks.onHoverEnd,
+  };
+
+  return {
+    graphScale: deps.graphScale,
+    ticker: deps.ticker,
+    selectionLayer: deps.selectionLayer,
+    hoverConfig,
+    nodeMap,
+  };
+};
+
+/**
  * Creates all nodes from lineage data and adds them to the node layer.
  */
 export const createNodes = async (
@@ -42,54 +63,14 @@ export const createNodes = async (
   nodeMap: Map<string, GraphNode>,
   deps: NodeCreatorDeps
 ): Promise<void> => {
-  const { container, nodeLayer, selectionLayer, graphScale, ticker, callbacks, getSelectedNodeId, setNodeAlpha } = deps;
-  const nodeCreationPromises: Promise<void>[] = [];
+  const config = buildElementConfig(deps, nodeMap);
 
-  for (const node of nodes) {
-    const nodeCallbacks = {
-      onClick: () => selectNode(node),
-      onHover: () => {
-        container.style.cursor = 'pointer';
-        if (!getSelectedNodeId()) setNodeAlpha(node.id, 1);
-        const renderedNode = nodeMap.get(node.id);
-        if (renderedNode) {
-          const bounds = renderedNode.getBounds();
-          const hoverIconConfig = getIconNodeConfig(node.nodeType);
-          callbacks.onHover({
-            title: node.title ?? node.label,
-            nodeType: node.nodeType,
-            screenX: bounds.x + bounds.width / 2,
-            screenY: bounds.y,
-            size: hoverIconConfig?.size ?? 28,
-          });
-        }
-      },
-      onHoverEnd: () => {
-        container.style.cursor = 'grab';
-        if (!getSelectedNodeId()) setNodeAlpha(node.id, DEFAULT_NODE_ALPHA);
-        callbacks.onHoverEnd();
-      },
-    };
+  const elements = await Promise.all(
+    nodes.map((node) => createNodeElement(node, config))
+  );
 
-    const iconConfig = getIconNodeConfig(node.nodeType);
-    if (iconConfig) {
-      const promise = createIconNode(node, graphScale, ticker, nodeCallbacks, {
-        iconPath: iconConfig.iconPath,
-        size: iconConfig.size,
-        selectionLayer,
-      }).then((iconNode) => {
-        nodeLayer.addChild(iconNode);
-        nodeMap.set(node.id, iconNode);
-      });
-      nodeCreationPromises.push(promise);
-    } else {
-      const graphNode = createGraphNode(node, graphScale, ticker, nodeCallbacks, { selectionLayer });
-      nodeLayer.addChild(graphNode);
-      nodeMap.set(node.id, graphNode);
-    }
-  }
-
-  await Promise.all(nodeCreationPromises);
+  addElementsToLayer(elements, deps.nodeLayer);
+  populateElementMap(elements, nodeMap);
 };
 
 /**
@@ -114,7 +95,7 @@ export const repositionNodesWithGaps = (nodeMap: Map<string, GraphNode>): void =
       maxHalfWidth = Math.max(maxHalfWidth, node.nodeWidth / 2);
     }
 
-    const newX = rightEdge === -Infinity ? group[0].position.x : rightEdge + EDGE_GAP + maxHalfWidth;
+    const newX = rightEdge === -Infinity ? group[0].position.x : rightEdge + parseInt(getCssVar('--edge-gap')) + maxHalfWidth;
 
     for (const node of group) {
       node.position.x = newX;

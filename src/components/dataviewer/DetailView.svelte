@@ -8,12 +8,11 @@
   import CodeDetailView from './detail/views/CodeDetailView.svelte';
   import DatasetDetailView from './detail/views/DatasetDetailView.svelte';
   import DocumentDetailView from './detail/views/DocumentDetailView.svelte';
-  import DataObjectDetailView from './detail/views/DataObjectDetailView.svelte';
   import ActionDetailView from './detail/views/ActionDetailView.svelte';
   import MediaDetailView from './detail/views/MediaDetailView.svelte';
   import AttestationDetailView from './detail/views/AttestationDetailView.svelte';
   import CredentialDetailView from './detail/views/CredentialDetailView.svelte';
-  import GenericDetailView from './detail/views/GenericDetailView.svelte';
+  import DefaultDetailView from './detail/views/DefaultDetailView.svelte';
 
   export let node: LineageNodeData;
 
@@ -30,8 +29,6 @@
     <DatasetDetailView {node} />
   {:else if assetType === 'Document'}
     <DocumentDetailView {node} />
-  {:else if assetType === 'DataObject'}
-    <DataObjectDetailView {node} />
   {:else if assetType === 'Action'}
     <ActionDetailView {node} />
   {:else if assetType === 'Media'}
@@ -41,7 +38,7 @@
   {:else if assetType === 'Credential'}
     <CredentialDetailView {node} />
   {:else}
-    <GenericDetailView {node} />
+    <DefaultDetailView {node} />
   {/if}
 </div>
 
