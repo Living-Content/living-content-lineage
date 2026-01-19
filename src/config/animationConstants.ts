@@ -22,6 +22,8 @@ export const ANIMATION_TIMINGS = {
   PANEL_DETAIL_DURATION: 0.2,
   /** Viewport pan animation duration (seconds) */
   VIEWPORT_PAN_DURATION: 0.3,
+  /** Text mode transition duration (seconds) */
+  TEXT_MODE_DURATION: 0.25,
 };
 
 export const GEOMETRY = {

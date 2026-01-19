@@ -12,7 +12,7 @@ import { createWorkflowLabels } from '../rendering/workflowLabelRenderer.js';
 import { createViewportState, createViewportHandlers } from '../interaction/viewport.js';
 import { createLODController, type LODLayers } from './lodController.js';
 import { createTitleOverlay } from '../rendering/titleOverlay.js';
-import { LOD_THRESHOLD } from '../../../config/constants.js';
+import { LOD_THRESHOLD, TEXT_SIMPLIFY_THRESHOLD } from '../../../config/constants.js';
 import { clearSelection } from '../../../stores/lineageState.js';
 import { buildVerticalAdjacencyMap } from '../interaction/selectionHighlighter.js';
 import { createNodeAnimationController } from '../interaction/nodeAnimationController.js';
@@ -128,6 +128,26 @@ export async function createGraphController({
   app.stage.addChild(workflowLabels.container);
   workflowLabels.update(viewportState);
 
+  // Text simplification state
+  let isTextSimplified = false;
+
+  const updateNodeTextModes = (simplified: boolean): void => {
+    const targetMode = simplified ? 'simple' : 'detailed';
+    nodeMap.forEach((node) => {
+      if (node.updateMode) {
+        node.updateMode(targetMode);
+      }
+    });
+  };
+
+  const checkTextSimplifyThreshold = (scale: number): void => {
+    const shouldSimplify = scale < TEXT_SIMPLIFY_THRESHOLD;
+    if (shouldSimplify !== isTextSimplified) {
+      isTextSimplified = shouldSimplify;
+      updateNodeTextModes(shouldSimplify);
+    }
+  };
+
   // Helper functions
   const updateTitlePosition = (): void => {
     const firstWorkflow = lineageData.workflows[0];
@@ -190,6 +210,7 @@ export async function createGraphController({
   const viewportHandlers = createViewportHandlers(app.canvas, viewport, container, viewportState, {
     onZoom: (scale) => {
       lodController.checkThreshold(scale);
+      checkTextSimplifyThreshold(scale);
       workflowLabels.update(viewportState);
       if (!lodController.state.isCollapsed && !lodController.state.isAnimating) cullAndRender();
       else if (lodController.state.isCollapsed) updateTitlePosition();

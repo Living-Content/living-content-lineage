@@ -9,9 +9,12 @@ export const ZOOM_MAX = 1.3;
 export const ZOOM_DEFAULT = 0.8;
 export const ZOOM_FACTOR = 0.95;
 
-// LOD (Level of Detail) 
-export const LOD_THRESHOLD = 0.3;           
+// LOD (Level of Detail)
+export const LOD_THRESHOLD = 0.3;
 export const LOD_ANIMATION_MS = 300;
+
+// Text simplification threshold (switches from detailed to simple node labels)
+export const TEXT_SIMPLIFY_THRESHOLD = 0.5;
 
 // Workflow nodes (collapsed view)
 export const WORKFLOW_NODE_SCALE = 4.0;

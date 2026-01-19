@@ -12,7 +12,7 @@ Data flowing through the pipeline.
 | -------------- | -------------------------------- |
 | **Media**      | Images, video, audio files       |
 | **Document**   | Text content, queries, responses |
-| **DataObject** | Structured data objects          |
+| **Result**     | Output data from operations      |
 | **Dataset**    | Collections of retrieved chunks  |
 
 ### Process Assets

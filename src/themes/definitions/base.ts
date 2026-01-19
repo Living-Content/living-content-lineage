@@ -12,7 +12,6 @@ export const baseTokens = {
   'panel-margin': '25px',
   'panel-margin-mobile': '25px',
   'header-height': '48px',
-  'workflow-label-height': '30px',
   'panel-max-width': '800px',
   'logo-width': '126px',
 
@@ -44,7 +43,7 @@ export const baseTokens = {
   // Workflow labels
   'workflow-label-font-size': '20px',
   'workflow-label-letter-spacing': '-0.5px',
-  'workflow-label-top-padding': '80px',
+  'workflow-label-top-padding': '100px',
   'workflow-label-line-start': '30px',
   'workflow-label-dot-size': '2px',
   'workflow-label-dot-gap': '4px',

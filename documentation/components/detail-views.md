@@ -21,7 +21,7 @@ src/components/dataviewer/
       MediaDetailView.svelte     # Media-specific
       AttestationDetailView.svelte
       CredentialDetailView.svelte
-      DefaultDetailView.svelte   # DataObject and fallback
+      DefaultDetailView.svelte   # Result and fallback
 ```
 
 ## Shared Components
@@ -160,5 +160,5 @@ The `DetailView.svelte` router maps asset types to views:
 | Media         | MediaDetailView       |
 | Attestation   | AttestationDetailView |
 | Credential    | CredentialDetailView  |
-| DataObject    | DefaultDetailView     |
+| Result        | DefaultDetailView     |
 | (unspecified) | DefaultDetailView     |

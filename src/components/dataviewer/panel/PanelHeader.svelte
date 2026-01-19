@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { PhaseType, AssetType } from '../../../config/types.js';
+  import type { Phase, AssetType } from '../../../config/types.js';
   import ContextBadges from '../detail/ContextBadges.svelte';
 
-  export let phase: PhaseType | undefined = undefined;
+  export let phase: Phase | undefined = undefined;
   export let workflowId: string | undefined = undefined;
   export let assetType: AssetType | undefined = undefined;
   export let workflowLabel: string | undefined = undefined;

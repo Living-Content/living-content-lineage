@@ -31,7 +31,7 @@
       "description": "Specific asset content or process type",
       "type": "string",
       "enum": [
-        "Media", "Document", "DataObject", "Dataset",
+        "Media", "Document", "Result", "Dataset",
         "Code", "Model", "Action",
         "Attestation", "Credential"
       ]

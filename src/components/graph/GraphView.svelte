@@ -119,43 +119,4 @@
   :global(#graph-container:active) {
     cursor: grabbing;
   }
-
-  :global(.workflow-labels) {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-  }
-
-  :global(.workflow-label) {
-    position: absolute;
-    top: calc(var(--panel-margin) + var(--header-height));
-    font-size: 20px;
-    font-weight: 500;
-    color: var(--color-text-primary);
-    letter-spacing: -0.01em;
-    padding: 0;
-    border-radius: 0;
-    background: transparent;
-    border: none;
-  }
-
-  :global(.workflow-divider) {
-    position: absolute;
-    top: calc(var(--panel-margin) + var(--header-height) + var(--workflow-label-height));
-    bottom: 20px;
-    border-left: 1px dashed var(--color-divider);
-  }
-
-  :global(.edge-overlay) {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-    z-index: 1;
-  }
 </style>

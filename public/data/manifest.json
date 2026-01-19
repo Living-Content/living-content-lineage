@@ -155,7 +155,7 @@
       "id": "data-consumed-query",
       "label": "Consumed",
       "title": "Validated Query",
-      "asset_type": "DataObject",
+      "asset_type": "Result",
       "description": "The user's question after parsing and validation, ready for processing."
     },
     {
@@ -179,7 +179,7 @@
       "id": "data-selected-tool",
       "label": "Selected",
       "title": "Tool Selection",
-      "asset_type": "DataObject",
+      "asset_type": "Result",
       "description": "The decision to use the knowledge query tool for answering this question.",
       "manifest_url": "./assets/data-selected-tool.json"
     },
@@ -218,7 +218,7 @@
       "id": "data-reflection",
       "label": "Reflected",
       "title": "User Intent",
-      "asset_type": "DataObject",
+      "asset_type": "Result",
       "description": "Determined that the user wants to explore and understand the database contents.",
       "manifest_url": "./assets/data-reflection.json"
     },
@@ -242,7 +242,7 @@
       "id": "data-plan",
       "label": "Planned",
       "title": "Search Strategy",
-      "asset_type": "DataObject",
+      "asset_type": "Result",
       "description": "The search strategy: query the knowledge base for database content overview.",
       "manifest_url": "./assets/data-plan.json"
     },
@@ -281,7 +281,7 @@
       "id": "data-evaluation",
       "label": "Evaluated",
       "title": "Relevance Rankings",
-      "asset_type": "DataObject",
+      "asset_type": "Result",
       "description": "The ranked list of documents deemed most useful for answering the question."
     },
     {
@@ -321,7 +321,7 @@
       "id": "data-saved-response",
       "label": "Saved",
       "title": "Saved Response",
-      "asset_type": "DataObject",
+      "asset_type": "Result",
       "description": "The response has been saved to the conversation history for continuity."
     }
   ],

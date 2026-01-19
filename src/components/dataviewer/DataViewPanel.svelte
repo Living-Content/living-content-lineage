@@ -169,18 +169,14 @@
     min-width: 320px;
   }
 
-  .liquid-wrapper.dragged {
-    /* Position is set via inline styles */
-  }
-
   .liquid-wrapper.detail-open {
     z-index: 100;
     left: var(--panel-margin);
-    top: var(--header-height);
+    top: calc(var(--header-height) + var(--panel-margin) * 2);
     transform: none;
     width: calc(50vw - var(--panel-margin) * 2);
     max-width: var(--panel-max-width);
-    height: calc(100vh - var(--header-height) - var(--panel-margin));
+    height: calc(100vh - var(--header-height) - var(--panel-margin) * 3);
   }
 
   .liquid-wrapper.hidden {

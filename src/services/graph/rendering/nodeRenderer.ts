@@ -3,6 +3,7 @@
  * Shows asset type icon on left, with type label and optional main label.
  */
 import { Container, Graphics, Sprite, Ticker } from 'pixi.js';
+import gsap from 'gsap';
 import { getCssVarColorHex, getCssVar, getCssVarInt, type CssVar } from '../../../themes/index.js';
 import { getAssetIconPath } from '../../../config/icons.js';
 import type { AssetType, LineageNodeData } from '../../../config/types.js';
@@ -28,6 +29,8 @@ export interface GraphNode extends Container {
   isChevronShape: boolean;
   setSelected: (selected: boolean) => void;
   selectionRing?: Graphics;
+  updateMode?: (mode: NodeViewMode) => void;
+  currentMode?: NodeViewMode;
 }
 
 export type NodeViewMode = 'simple' | 'detailed';
@@ -51,7 +54,7 @@ const getAssetTypeLabel = (assetType?: AssetType): string => {
 };
 
 const getIconPath = (assetType?: AssetType): string => {
-  return getAssetIconPath(assetType ?? 'DataObject');
+  return getAssetIconPath(assetType ?? 'Result');
 };
 
 /**
@@ -120,15 +123,23 @@ export function createGraphNode(
     const iconPath = getIconPath(node.assetType);
     const useChevron = isChevronNode(node);
     const shapeType: NodeShapeType = useChevron ? 'chevron' : 'pill';
+    const mainLabel = node.title ?? node.label;
 
-    const renderOptions: NodeRenderOptions = options.renderOptions ?? {
-      mode: 'detailed',
+    // Track current mode and loaded icon for mode switching
+    let currentMode: NodeViewMode = options.renderOptions?.mode ?? 'detailed';
+    let loadedIcon: HTMLImageElement | null = null;
+    let currentSprite: Sprite | null = null;
+    let isTransitioning = false;
+
+    const createRenderOptions = (mode: NodeViewMode): NodeRenderOptions => ({
+      mode,
       iconPath,
       typeLabel,
-      mainLabel: node.title ?? node.label,
-    };
+      mainLabel: mode === 'detailed' ? mainLabel : undefined,
+    });
 
-    const nodeHeight = (renderOptions.mode === 'detailed' ? BASE_NODE_HEIGHT_DETAILED : BASE_NODE_HEIGHT_SIMPLE) * nodeScale;
+    const renderOptions = createRenderOptions(currentMode);
+    const nodeHeight = (currentMode === 'detailed' ? BASE_NODE_HEIGHT_DETAILED : BASE_NODE_HEIGHT_SIMPLE) * nodeScale;
     const nodeWidth = calculateNodeWidth(renderOptions, dims, nodeScale, shapeType);
 
     // Create placeholder first, then update with icon
@@ -146,9 +157,11 @@ export function createGraphNode(
     sprite.width = nodeWidth;
     sprite.height = nodeHeight;
     group.addChild(sprite);
+    currentSprite = sprite;
 
     // Load icon and update texture
     loadIcon(renderOptions.iconPath).then((iconImage) => {
+      loadedIcon = iconImage;
       const texture = createNodeTexture(
         renderOptions,
         color,
@@ -164,6 +177,61 @@ export function createGraphNode(
     group.nodeWidth = nodeWidth;
     group.nodeHeight = nodeHeight;
     group.isChevronShape = useChevron;
+    group.currentMode = currentMode;
+
+    // Store original dimensions (keep width constant across mode changes)
+    const originalWidth = nodeWidth;
+    const originalHeight = nodeHeight;
+
+    // Mode switching with crossfade animation (keeps same width)
+    group.updateMode = (newMode: NodeViewMode): void => {
+      if (newMode === currentMode || isTransitioning) return;
+      isTransitioning = true;
+
+      const newRenderOptions = createRenderOptions(newMode);
+      const newDims = getScaledDimensions(nodeScale);
+
+      const newTexture = createNodeTexture(
+        newRenderOptions,
+        color,
+        originalWidth,
+        originalHeight,
+        loadedIcon,
+        newDims,
+        shapeType
+      );
+
+      const newSprite = new Sprite(newTexture);
+      newSprite.anchor.set(0.5, 0.5);
+      newSprite.width = originalWidth;
+      newSprite.height = originalHeight;
+      newSprite.alpha = 0;
+      group.addChild(newSprite);
+
+      const oldSprite = currentSprite;
+
+      gsap.to(newSprite, {
+        alpha: 1,
+        duration: 0.25,
+        ease: 'power2.out',
+      });
+
+      gsap.to(oldSprite, {
+        alpha: 0,
+        duration: 0.2,
+        ease: 'power2.in',
+        onComplete: () => {
+          if (oldSprite) {
+            group.removeChild(oldSprite);
+            oldSprite.destroy();
+          }
+          currentSprite = newSprite;
+          currentMode = newMode;
+          group.currentMode = newMode;
+          isTransitioning = false;
+        },
+      });
+    };
   }
 
   const x = ((node.x ?? 0.5) - 0.5) * graphScale;

@@ -52,6 +52,7 @@ export const getScaledDimensions = (scale: number): ScaledDimensions => {
 /**
  * Calculate the total width of a node based on its render options.
  * For chevron shapes, adds extra width for the arrow point.
+ * Width is based on the longest text line across both display modes.
  */
 export const calculateNodeWidth = (
   options: NodeRenderOptions,
@@ -70,16 +71,13 @@ export const calculateNodeWidth = (
   const textStartX = contentOffset + dims.leftPadding + dims.iconDiameter + dims.iconTextGap;
   const rightPadding = BASE_RIGHT_PADDING * scale;
 
-  let baseWidth: number;
-  if (options.mode === 'detailed' && options.mainLabel) {
-    const typeWidth = measureText(options.typeLabel, dims.typeLabelFontSize);
-    const mainWidth = measureText(options.mainLabel, dims.mainLabelFontSize);
-    const maxTextWidth = Math.max(typeWidth, mainWidth);
-    baseWidth = textStartX + maxTextWidth + rightPadding;
-  } else {
-    const typeWidth = measureText(options.typeLabel, dims.simpleTypeFontSize);
-    baseWidth = textStartX + typeWidth + rightPadding;
-  }
+  // Calculate width for all text variants and use the longest
+  const typeWidthDetailed = measureText(options.typeLabel, dims.typeLabelFontSize);
+  const typeWidthSimple = measureText(options.typeLabel, dims.simpleTypeFontSize);
+  const mainWidth = options.mainLabel ? measureText(options.mainLabel, dims.typeLabelFontSize) : 0;
+  const maxTextWidth = Math.max(typeWidthDetailed, typeWidthSimple, mainWidth);
+
+  const baseWidth = textStartX + maxTextWidth + rightPadding;
 
   // Add extra width for shape (e.g., chevron arrow point)
   return baseWidth + shape.getExtraWidth(nodeHeight);

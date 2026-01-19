@@ -41,7 +41,7 @@ Lineage
 | Phase Type | `PhaseType`       | Operation types: ingest, select, transform, validate, retrieve, search, reflect, plan, evaluate, generate, store, publish |
 | Workflow   | `Workflow`        | A named collection of nodes belonging to a phase                                                                          |
 | Node       | `LineageNodeData` | Individual graph element                                                                                                  |
-| Asset Type | `AssetType`       | Content types: Media, Document, DataObject, Dataset, Code, Model, Action, Attestation, Credential                         |
+| Asset Type | `AssetType`       | Content types: Media, Document, Result, Dataset, Code, Model, Action, Attestation, Credential                              |
 | Node Type  | `NodeType`        | Visual categories: data, process, attestation, store, media, workflow                                                     |
 
 ## Relationships
