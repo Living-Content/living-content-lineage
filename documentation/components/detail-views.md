@@ -11,16 +11,19 @@ src/components/dataviewer/
   SummaryView.svelte             # Node summary with cards (config-driven)
   DetailView.svelte              # Full details view (config-driven)
   AttestationPanel.svelte        # Footer panel for attestation info
+  PropertyRow.svelte             # Label/value row for details
   panel/
-    PanelHeader.svelte           # Header with breadcrumb navigation
+    PanelHeader.svelte           # Header with context badges
     NodeContent.svelte           # Node content wrapper
   detail/
     PropertyGroup.svelte         # Collapsible section
     ActionsList.svelte           # Reusable C2PA actions display
     CodeBlock.svelte             # Reusable source code display
     DetailValue.svelte           # Dynamic value renderer
+    DetailDataSection.svelte     # Section for additional data
     NodeCard.svelte              # Node display card (pill shape)
     ContextBadges.svelte         # Phase/step breadcrumb badges
+    AdditionalData.svelte        # Displays non-configured fields
   cards/
     DataCard.svelte              # Metric display card
     CardSection.svelte           # Combined metrics and properties
@@ -28,13 +31,66 @@ src/components/dataviewer/
 
 The system uses a **config-driven approach** rather than per-asset-type view components. Field display is controlled by `src/config/displayConfig.ts`.
 
+## Display Configuration
+
+Each asset type has a display configuration that defines which fields appear in card views vs detail views:
+
+```typescript
+interface FieldDisplayConfig {
+  type: DataCardType;       // Rendering type
+  isCard: boolean;          // Show in summary view
+  isDetail: boolean;        // Show in detail view
+  label?: string;           // Override display label
+  summarySpan?: 1 | 2 | 3 | 4;  // Grid column span
+  detailSpan?: 1 | 2 | 3 | 4;
+  source?: string;          // Data path (dot notation)
+}
+```
+
+### Data Card Types
+
+Available rendering types for field display:
+
+| Type | Description |
+| ---- | ----------- |
+| `metric` | Numeric value (tokens, counts) |
+| `text` | Simple text value |
+| `text-preview` | Truncated text with expand |
+| `badge` | Small label/tag |
+| `status` | Verified/Valid/Error indicator |
+| `duration` | Formatted time duration |
+| `datetime` | Date/time display |
+| `percentage` | 0-100% with visual |
+| `dimensions` | width x height |
+| `filesize` | Formatted bytes (KB, MB) |
+| `hash` | Truncated hash with copy |
+| `number` | Generic number |
+| `code` | Syntax-highlighted code block |
+| `markdown` | Rendered markdown content |
+| `list` | Array of strings |
+| `chunk-list` | RAG chunks with scores |
+| `key-value` | Flexible pairs |
+
+### Asset Type Configuration
+
+| Asset Type | Card Fields |
+| ---------- | ----------- |
+| Model | Model ID, provider, input/output tokens |
+| Code | Function, module, duration |
+| Action | Duration, input/output/total tokens |
+| Document | Duration, response length, model |
+| Dataset | Chunks retrieved, similarity, confidence |
+| Media | Format, dimensions, file size |
+| Result | Token counts, evaluation scores |
+| Claim | Status, algorithm |
+
 ## Step Overview
 
 When a step is selected (collapsed view), `StepOverview.svelte` displays an aggregate view:
 
-- **Inputs** — Nodes receiving edges from outside the step
-- **Processing** — Process count and total duration
-- **Outputs** — Nodes sending edges outside the step
+- **Inputs** - Nodes receiving edges from outside the step
+- **Processing** - Process count and total duration
+- **Outputs** - Nodes sending edges outside the step
 
 ## Shared Components
 
@@ -79,7 +135,7 @@ Props:
 
 ### CodeBlock
 
-Reusable component for displaying source code.
+Reusable component for displaying source code with syntax highlighting.
 
 ```svelte
 <CodeBlock
@@ -131,83 +187,52 @@ Props:
 
 - `value` - Display value
 - `label` - Label text
-- `type` - Data type for formatting
+- `type` - Data card type for formatting
 - `phase` - Phase for color accent
 - `span` - Grid column span (1-4)
 - `size` - "default" or "compact"
 
-## Creating a New Detail View
+### CardSection
 
-1. Create a new file in `src/components/dataviewer/detail/views/`:
-
-```svelte
-<script lang="ts">
-  import type { LineageNodeData } from '../../../../config/types.js';
-  import { extractAssertionData, formatDuration } from '../../../../services/dataviewer/parsing/assertionParsers.js';
-  import PropertyGroup from '../PropertyGroup.svelte';
-  import PropertyRow from '../../PropertyRow.svelte';
-  import ActionsList from '../ActionsList.svelte';
-  import CodeBlock from '../CodeBlock.svelte';
-
-  export let node: LineageNodeData;
-
-  $: assetManifest = node.assetManifest;
-  $: assertions = extractAssertionData(assetManifest?.assertions);
-  $: c2paActions = assertions.c2paActions;
-  $: phase = node.phase;
-
-  // Extract type-specific data
-  $: myData = assertions.model;
-</script>
-
-<div class="my-detail-view">
-  <PropertyGroup title="Info" collapsible={false}>
-    <PropertyRow label="Field" value="..." />
-  </PropertyGroup>
-
-  {#if c2paActions?.actions}
-    <ActionsList actions={c2paActions.actions} />
-  {/if}
-</div>
-
-<style>
-  .my-detail-view {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-lg, 16px);
-  }
-</style>
-```
-
-2. Add to the router in `DetailView.svelte`:
+Combines metrics and properties in a unified layout.
 
 ```svelte
-{:else if assetType === 'MyType'}
-  <MyDetailView {node} />
+<CardSection
+  {node}
+  {assertions}
+  {content}
+  {computed}
+/>
 ```
 
-## View Structure Convention
+Props:
 
-Each detail view follows this structure:
+- `node` - LineageNodeData
+- `assertions` - Parsed assertion data
+- `content` - Asset content
+- `computed` - Computed values (duration, etc.)
 
-1. **Primary info** - Key type-specific information (non-collapsible)
-2. **Secondary metadata** - Additional details (collapsible)
-3. **Actions** - C2PA actions if available (collapsible, use ActionsList)
-4. **Source code** - If available (collapsible, use CodeBlock)
+## Data Sources
 
-## Asset Type Configuration
+Field configurations use dot-notation paths to locate data:
 
-Display configuration is defined in `src/config/displayConfig.ts`:
+| Prefix | Source |
+| ------ | ------ |
+| `node.*` | LineageNodeData fields |
+| `manifest.*` | AssetManifest fields |
+| `content.*` | Asset content fields |
+| `assertions.*` | Parsed assertion data |
+| `computed.*` | Computed values |
 
-| Asset Type | Card Fields                              |
-| ---------- | ---------------------------------------- |
-| Model      | Model ID, provider, input/output tokens  |
-| Code       | Function, module, duration               |
-| Action     | Duration, input/output/total tokens      |
-| Document   | Duration, response length, model         |
-| Dataset    | Chunks retrieved, similarity, confidence |
-| Media      | Format, dimensions, file size            |
-| Result     | Token counts, evaluation scores          |
-| Claim      | Status, algorithm                        |
+Example paths:
 
-Each asset type defines which fields appear in card view vs detail view through the `fields` configuration.
+- `assertions.model.modelId` - Model ID from lco.model assertion
+- `content.query` - Query text from content
+- `manifest.attestation.alg` - Algorithm from attestation
+- `computed.duration` - Computed duration value
+
+## Files
+
+- Display configuration: `src/config/displayConfig.ts`
+- Card types: `src/config/cardTypes.ts`
+- Assertion parsing: `src/services/dataviewer/parsing/assertionParsers.ts`

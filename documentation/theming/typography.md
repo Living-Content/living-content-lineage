@@ -107,15 +107,14 @@ const lineHeight = getCssVarFloat('--line-height-normal');
 }
 ```
 
-## MetricCard Sizes
+## DataCard Sizes
 
-The MetricCard component uses these size presets:
+The DataCard component uses these size presets:
 
-| Size     | Font Size Variable           |
-| -------- | ---------------------------- |
-| `hero`   | `--font-size-hero` (48px)    |
-| `large`  | `--font-size-large` (32px)   |
-| `medium` | `--font-size-heading` (18px) |
+| Size      | Font Size Variable           |
+| --------- | ---------------------------- |
+| `default` | `--font-size-heading` (18px) |
+| `compact` | `--font-size-body` (14px)    |
 
 ## File
 

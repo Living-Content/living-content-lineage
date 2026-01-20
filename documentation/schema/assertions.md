@@ -103,7 +103,10 @@ Resource usage metrics.
 {
   "label": "lco.usage",
   "data": {
-    "duration_ms": 12029.63
+    "input_tokens": 245,
+    "output_tokens": 89,
+    "total_tokens": 334,
+    "duration_ms": 1243.5
   }
 }
 ```
@@ -135,6 +138,8 @@ const assertions = extractAssertionData(manifest.assertions);
 // Access typed data
 assertions.model?.provider; // "anthropic"
 assertions.model?.modelId; // "claude-sonnet-4-5"
-assertions.usage?.durationMs; // 12029.63
+assertions.usage?.durationMs; // 1243.5
+assertions.usage?.inputTokens; // 245
+assertions.usage?.outputTokens; // 89
 assertions.code?.function; // "_stream_llm_response"
 ```

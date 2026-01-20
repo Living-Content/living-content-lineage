@@ -50,6 +50,8 @@ interface AssetManifest {
   content?: AssetContent;           // Type-specific content
   ingredients?: ManifestIngredient[];
   environmentalImpact?: EnvironmentalImpact;
+  inputs?: string[];                // Input asset IDs
+  outputs?: string[];               // Output asset IDs
 }
 
 interface Attestation {
