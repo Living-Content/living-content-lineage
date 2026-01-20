@@ -3,12 +3,13 @@
    * Displays hierarchical context badges: Phase > Step > Asset Type.
    * Each badge is color-coded based on the phase.
    */
-  import type { Phase, AssetType } from '../../../config/types.js';
+  import type { Phase, AssetType, Step } from '../../../config/types.ts';
   import { formatAssetTypeLabel } from '../../../config/labels.js';
 
   export let phase: Phase | undefined = undefined;
-  export let step: string | undefined = undefined;
+  export let step: Step | string | undefined = undefined;
   export let assetType: AssetType | undefined = undefined;
+  export let workflowId: string | undefined = undefined;
 
   $: phaseClass = phase ? `phase-${phase.toLowerCase()}` : '';
   $: typeLabel = assetType ? formatAssetTypeLabel(assetType) : undefined;
@@ -17,6 +18,7 @@
   $: items = [
     typeLabel ? { label: typeLabel, type: 'type' } : null,
     step ? { label: step, type: 'step' } : null,
+    workflowId ? { label: workflowId, type: 'workflow' } : null,
     phase ? { label: phase, type: 'phase' } : null,
   ].filter(Boolean) as Array<{ label: string; type: string }>;
 </script>

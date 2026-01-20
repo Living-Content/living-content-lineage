@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { Phase, AssetType } from '../../../config/types.js';
+  import type { Phase, AssetType, Step } from '../../../config/types.ts';
   import ContextBadges from '../detail/ContextBadges.svelte';
 
   export let phase: Phase | undefined = undefined;
-  export let step: string | undefined = undefined;
+  export let step: Step | string | undefined = undefined;
   export let assetType: AssetType | undefined = undefined;
   export let showCloseButton = false;
   export let isNodeSelected = false;
