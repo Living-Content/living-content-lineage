@@ -8,7 +8,7 @@
   import PanelHeader from './panel/PanelHeader.svelte';
   import NodeContent from './panel/NodeContent.svelte';
   import StepOverview from './StepOverview.svelte';
-  import SignaturePanel from './SignaturePanel.svelte';
+  import AttestationPanel from './AttestationPanel.svelte';
 
   let wrapperElement: HTMLElement;
   let contentLayer: HTMLElement;
@@ -127,7 +127,7 @@
       onStartDrag={handleStartDrag}
     />
 
-    <div class="panel-scroll-area" class:has-footer={$selectedNode?.assetManifest?.signatureInfo} bind:this={scrollArea}>
+    <div class="panel-scroll-area" class:has-footer={$selectedNode?.assetManifest?.attestation} bind:this={scrollArea}>
       <div class="panel-content">
         {#if $loadError}
           <p class="panel-placeholder">{$loadError}</p>
@@ -146,10 +146,10 @@
       </div>
     </div>
 
-    {#if $selectedNode?.assetManifest?.signatureInfo}
+    {#if $selectedNode?.assetManifest?.attestation}
       <div class="panel-footer" class:expanded={signatureExpanded}>
-        <SignaturePanel
-          signatureInfo={$selectedNode.assetManifest.signatureInfo}
+        <AttestationPanel
+          attestation={$selectedNode.assetManifest.attestation}
           bind:expanded={signatureExpanded}
         />
       </div>
@@ -187,6 +187,11 @@
     inset: 0;
     pointer-events: none;
     overflow: hidden;
+    border-radius: 12px;
+  }
+
+  .liquid-wrapper:global(.solid) {
+    background: rgb(255, 255, 255);
     border-radius: 12px;
   }
 

@@ -81,7 +81,7 @@ export const createIconNode = async (
   group.label = node.id;
 
   const size = options.size ?? getCssVarInt('--icon-node-size');
-  const color = getCssVar(`--phase-${node.phase.toLowerCase()}` as CssVar);
+  const color = getCssVar('--claim-icon-color');
 
   const svgContent = await loadSvgContent(options.iconPath);
   const texture = await createIconTextureAsync(svgContent, color, size);

@@ -4,11 +4,16 @@ Technical documentation for the Living Content Lineage visualization system.
 
 ## Contents
 
+### Core Concepts
+
+- [Lineage Hierarchy](./lineage-hierarchy.md) - Conceptual hierarchy and zoom levels
+
 ### Schema Documentation
 
-- [Asset Types](./schema/asset-types.md) - The 9 asset types and their data structures
+- [Asset Types](./schema/asset-types.md) - The 8 asset types and their data structures
 - [Assertions](./schema/assertions.md) - Assertion labels and data formats
-- [Workflow Phases](./schema/workflow-phases.md) - The 6 workflow phases and stage types
+- [Phases and Steps](./schema/workflow-phases.md) - The 6 phases and their steps
+- [Adapters](./schema/adapters.md) - Manifest adapter interface and type guards
 
 ### Component Documentation
 

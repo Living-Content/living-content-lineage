@@ -8,8 +8,7 @@ const VALID_ASSET_TYPES: Record<string, AssetType> = {
   Code: 'Code',
   Model: 'Model',
   Action: 'Action',
-  Attestation: 'Attestation',
-  Credential: 'Credential',
+  Claim: 'Claim',
 };
 
 export const mapAssetType = (assetType: string): AssetType => {

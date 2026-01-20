@@ -44,6 +44,24 @@ export const isMobile = (): boolean => {
   return typeof window !== 'undefined' && window.innerWidth <= 900;
 };
 
+/**
+ * Skip the liquid SVG filter on WebKit browsers (Safari, iOS).
+ * WebKit can't apply SVG filters to GPU-composited animated elements.
+ */
+export const skipFilter = (): boolean => {
+  if (typeof window === 'undefined') return false;
+
+  // Safari desktop exposes window.safari
+  if ('safari' in window) return true;
+
+  // iOS: all browsers use WebKit. Detect iPad (reports MacIntel) via touch points.
+  const isIOS =
+    /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  return isIOS;
+};
+
 export const getBlobConfig = (width: number, height: number): BlobConfig => {
   const base = Math.min(width, height);
   const minRadius = Math.round(base * LIQUID_CONFIG.minRadiusRatio);

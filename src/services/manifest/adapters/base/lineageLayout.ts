@@ -134,8 +134,8 @@ export const computeLayout = (
     }
   });
 
-  // Place attestations above verified nodes
-  manifest.attestations.forEach((attest) => {
+  // Place claims above verified nodes
+  manifest.claims.forEach((attest) => {
     const verifiedId = attest.verifies[0];
     const verifiedPos = verifiedId ? positions.get(verifiedId) : undefined;
     if (verifiedPos) {

@@ -36,7 +36,7 @@
   --step-label-dot-gap: 4px;
   --phase-badge-top: 160px;
   --default-node-size: 14px;
-  --attestation-icon-size: 56px;
+  --claim-icon-size: 56px;
   --icon-node-size: 40px;
   --icon-node-ring-padding: 6px;
   --icon-node-ring-width: 3px;
@@ -163,9 +163,10 @@
   --node-compute-color: rgb(255, 107, 107);
   --node-compute-border: rgb(255, 107, 107);
   --node-compute-icon: rgb(255, 107, 107);
-  --node-attestation-color: rgb(107, 203, 119);
-  --node-attestation-border: rgb(107, 203, 119);
-  --node-attestation-icon: rgb(107, 203, 119);
+  --node-claim-color: rgb(107, 203, 119);
+  --node-claim-border: rgb(107, 203, 119);
+  --node-claim-icon: rgb(107, 203, 119);
+  --claim-icon-color: rgb(255, 255, 255);
   --node-filter-color: rgb(77, 150, 255);
   --node-filter-border: rgb(77, 150, 255);
   --node-filter-icon: rgb(77, 150, 255);
@@ -191,7 +192,7 @@
   --filter-icon-amber: invert(62%) sepia(83%) saturate(1500%) hue-rotate(16deg) brightness(97%) contrast(95%);
   --color-workflow-compute: rgb(99, 102, 241);
   --color-workflow-data: rgb(26, 26, 26);
-  --color-workflow-attestation: rgb(34, 197, 94);
+  --color-workflow-claim: rgb(34, 197, 94);
   --color-impact-minimal: rgb(74, 222, 128);
   --color-impact-available: rgb(75, 85, 99);
   --color-impact-unknown: rgb(156, 163, 175);

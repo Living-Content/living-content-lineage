@@ -1,7 +1,7 @@
 /**
  * Shared type guard utilities.
  */
-import type { Phase } from './types.js';
+import type { Phase, Attestation } from './types.js';
 
 const VALID_PHASES: readonly string[] = [
   'Acquisition',
@@ -36,4 +36,13 @@ export const validatePhase = (value: string | undefined, context: string): Phase
     throw new Error(`Invalid phase "${value}" for ${context}. Valid phases: ${VALID_PHASES.join(', ')}`);
   }
   return value;
+};
+
+/** Type guard for Attestation objects */
+export const isAttestation = (value: unknown): value is Attestation => {
+  if (!isRecord(value)) return false;
+  if (typeof value.alg !== 'string') return false;
+  if (typeof value.issuer !== 'string') return false;
+  if (typeof value.time !== 'string') return false;
+  return true;
 };

@@ -1,6 +1,6 @@
-# Workflow Phases
+# Phases and Steps
 
-The lineage system organizes workflow stages into 6 logical phases.
+The lineage system organizes operations into 6 logical phases, each containing specific steps.
 
 ## Phases
 
@@ -8,9 +8,9 @@ The lineage system organizes workflow stages into 6 logical phases.
 
 Getting input data into the pipeline.
 
-| Stage Type | Description            |
-| ---------- | ---------------------- |
-| `ingest`   | Initial data ingestion |
+| Step     | Description            |
+| -------- | ---------------------- |
+| `ingest` | Initial data ingestion |
 
 Color: `--phase-acquisition` (Red)
 
@@ -18,7 +18,7 @@ Color: `--phase-acquisition` (Red)
 
 Selecting, transforming, and validating inputs.
 
-| Stage Type  | Description           |
+| Step        | Description           |
 | ----------- | --------------------- |
 | `select`    | Choose specific data  |
 | `transform` | Modify data format    |
@@ -30,7 +30,7 @@ Color: `--phase-preparation` (Coral)
 
 Fetching additional context and data.
 
-| Stage Type | Description             |
+| Step       | Description             |
 | ---------- | ----------------------- |
 | `retrieve` | Get known internal data |
 | `search`   | Find external data      |
@@ -41,7 +41,7 @@ Color: `--phase-retrieval` (Yellow)
 
 AI/ML processing and analysis.
 
-| Stage Type | Description          |
+| Step       | Description          |
 | ---------- | -------------------- |
 | `reflect`  | Self-analysis        |
 | `plan`     | Strategy formulation |
@@ -53,7 +53,7 @@ Color: `--phase-reasoning` (Green)
 
 Creating new content and outputs.
 
-| Stage Type | Description      |
+| Step       | Description      |
 | ---------- | ---------------- |
 | `generate` | Content creation |
 
@@ -63,17 +63,17 @@ Color: `--phase-generation` (Blue)
 
 Storing and publishing results.
 
-| Stage Type | Description           |
-| ---------- | --------------------- |
-| `store`    | Internal persistence  |
-| `publish`  | External distribution |
+| Step      | Description           |
+| --------- | --------------------- |
+| `store`   | Internal persistence  |
+| `publish` | External distribution |
 
 Color: `--phase-persistence` (Dark Blue)
 
 ## TypeScript Types
 
 ```typescript
-type WorkflowPhase =
+type Phase =
   | "Acquisition"
   | "Preparation"
   | "Retrieval"
@@ -81,7 +81,7 @@ type WorkflowPhase =
   | "Generation"
   | "Persistence";
 
-type WorkflowStageType =
+type Step =
   | "ingest"
   | "select"
   | "transform"
@@ -96,11 +96,11 @@ type WorkflowStageType =
   | "publish";
 ```
 
-## Phase-to-Stage Mapping
+## Step-to-Phase Mapping
 
 ```typescript
-function workflowStageTypeToPhase(stageType: WorkflowStageType): WorkflowPhase {
-  switch (stageType) {
+function stepToPhase(step: Step): Phase {
+  switch (step) {
     case "ingest":
       return "Acquisition";
     case "select":
@@ -125,15 +125,14 @@ function workflowStageTypeToPhase(stageType: WorkflowStageType): WorkflowPhase {
 
 ## Using Phase Colors
 
-Assets inherit their accent color from their parent stage's workflow phase:
+Assets inherit their accent color from their step's parent phase:
 
 ```svelte
-<MetricCard
+<DataCard
   value={durationDisplay}
   label="Duration"
   phase={node.phase}
-  size="hero"
 />
 ```
 
-The phase is automatically passed to detail views via `node.phase`.
+The phase is automatically available on nodes via `node.phase`.

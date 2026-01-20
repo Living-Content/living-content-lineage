@@ -1,4 +1,5 @@
 import { isRecord } from '../../../../config/utils.js';
+import type { Attestation } from '../../../../config/types.js';
 
 /**
  * Step definition - a specific operation within a workflow phase.
@@ -24,27 +25,16 @@ export interface Asset {
 }
 
 /**
- * Attestation definition in the manifest.
+ * Claim node definition in the manifest.
+ * Represents a verification point in the lineage graph.
  */
-export interface Attestation {
+export interface Claim {
   id: string;
   label: string;
   title?: string;
   step: string;
   verifies: string[];
   description?: string;
-}
-
-/**
- * Claim - the proof/attestation attached to a signed manifest.
- * Can be TEE attestation, certificate (VC), or merkle hash.
- */
-export interface Claim {
-  type?: 'merkle' | 'certificate' | 'tee';
-  provider?: 'EQTY' | 'C2PA' | 'LCO';
-  alg: string;
-  issuer: string;
-  time: string;
 }
 
 /**
@@ -57,7 +47,7 @@ export interface SignedManifest {
   format: string;
   instance_id: string;
   assertions: Array<{ label: string; data: unknown }>;
-  claim: Claim;
+  attestation: Attestation;
 }
 
 /**
@@ -73,7 +63,33 @@ export interface Manifest {
   manifests: Record<string, SignedManifest>;
   steps: Step[];
   assets: Asset[];
-  attestations: Attestation[];
+  claims: Claim[];
+}
+
+// Type Guards
+
+export function isStep(raw: unknown): raw is Step {
+  if (!isRecord(raw)) return false;
+  if (typeof raw.id !== 'string') return false;
+  if (typeof raw.label !== 'string') return false;
+  return true;
+}
+
+export function isAsset(raw: unknown): raw is Asset {
+  if (!isRecord(raw)) return false;
+  if (typeof raw.id !== 'string') return false;
+  if (typeof raw.label !== 'string') return false;
+  if (typeof raw.asset_type !== 'string') return false;
+  return true;
+}
+
+export function isClaim(raw: unknown): raw is Claim {
+  if (!isRecord(raw)) return false;
+  if (typeof raw.id !== 'string') return false;
+  if (typeof raw.label !== 'string') return false;
+  if (typeof raw.step !== 'string') return false;
+  if (!Array.isArray(raw.verifies)) return false;
+  return true;
 }
 
 export function isManifest(raw: unknown): raw is Manifest {
@@ -86,6 +102,6 @@ export function isManifest(raw: unknown): raw is Manifest {
   if (!isRecord(raw.manifests)) return false;
   if (!Array.isArray(raw.steps)) return false;
   if (!Array.isArray(raw.assets)) return false;
-  if (!Array.isArray(raw.attestations)) return false;
+  if (!Array.isArray(raw.claims)) return false;
   return true;
 }

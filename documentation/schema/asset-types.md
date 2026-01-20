@@ -1,6 +1,6 @@
 # Asset Types
 
-The lineage system defines 9 asset types organized into 3 categories.
+The lineage system defines 8 asset types organized into 3 categories.
 
 ## Categories
 
@@ -8,12 +8,12 @@ The lineage system defines 9 asset types organized into 3 categories.
 
 Data flowing through the pipeline.
 
-| Type           | Description                      |
-| -------------- | -------------------------------- |
-| **Media**      | Images, video, audio files       |
-| **Document**   | Text content, queries, responses |
-| **Result**     | Output data from operations      |
-| **Dataset**    | Collections of retrieved chunks  |
+| Type         | Description                      |
+| ------------ | -------------------------------- |
+| **Media**    | Images, video, audio files       |
+| **Document** | Text content, queries, responses |
+| **Result**   | Output data from operations      |
+| **Dataset**  | Collections of retrieved chunks  |
 
 ### Process Assets
 
@@ -27,12 +27,11 @@ Transformations and computations.
 
 ### Verification Assets
 
-Trust and attestation records.
+Trust and verification records.
 
-| Type            | Description          |
-| --------------- | -------------------- |
-| **Attestation** | Verification records |
-| **Credential**  | Identity credentials |
+| Type      | Description                                    |
+| --------- | ---------------------------------------------- |
+| **Claim** | Verification node in the lineage graph         |
 
 ## Asset Manifest Structure
 
@@ -40,17 +39,25 @@ All assets share a common manifest structure:
 
 ```typescript
 interface AssetManifest {
-  claimGenerator?: string; // Generator identifier
+  claimGenerator?: string;          // Generator identifier
   claimGeneratorInfo?: GeneratorInfo[];
-  title?: string; // Display title
-  format?: string; // MIME type or format
-  instanceId?: string; // Unique identifier
+  title?: string;                   // Display title
+  format?: string;                  // MIME type or format
+  instanceId?: string;              // Unique identifier
   assertions?: ManifestAssertion[]; // Type-specific data
-  signatureInfo?: SignatureInfo; // Cryptographic signature
-  sourceCode?: string; // For Code assets
-  content?: AssetContent; // Type-specific content
-  ingredients?: ManifestIngredient[]; // Referenced assets
+  attestation?: Attestation;        // Cryptographic proof
+  sourceCode?: string;              // For Code assets
+  content?: AssetContent;           // Type-specific content
+  ingredients?: ManifestIngredient[];
   environmentalImpact?: EnvironmentalImpact;
+}
+
+interface Attestation {
+  alg: string;                      // Algorithm (e.g., "ES256")
+  issuer: string;                   // DID or identifier
+  time: string;                     // ISO timestamp
+  type?: 'merkle' | 'certificate' | 'tee';
+  provider?: 'EQTY' | 'C2PA' | 'LCO';
 }
 ```
 

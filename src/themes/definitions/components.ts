@@ -20,7 +20,7 @@ export const componentTokens = {
   // Workflow colors
   'color-workflow-compute': 'rgb(99, 102, 241)',
   'color-workflow-data': 'rgb(26, 26, 26)',
-  'color-workflow-attestation': 'rgb(34, 197, 94)',
+  'color-workflow-claim': 'rgb(34, 197, 94)',
 
   // Impact indicator colors
   'color-impact-minimal': 'rgb(74, 222, 128)',

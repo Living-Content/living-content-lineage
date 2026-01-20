@@ -1,17 +1,17 @@
-import type { AssetManifest, ManifestSignatureInfo, ClaimType, ClaimProvider } from '../../../../config/types.js';
+import type { AssetManifest, Attestation, AttestationType, AttestationProvider } from '../../../../config/types.js';
 import { isRecord } from '../../../../config/utils.js';
 
-function normalizeClaim(raw: Record<string, unknown>): ManifestSignatureInfo | undefined {
-  // Read from 'claim' with fallback to 'signature_info' for backwards compatibility
-  const claimSource = isRecord(raw.claim) ? raw.claim : (isRecord(raw.signature_info) ? raw.signature_info : undefined);
-  if (!claimSource) return undefined;
+function normalizeAttestation(raw: Record<string, unknown>): Attestation | undefined {
+  // Read from 'attestation' with fallback to 'signature_info' for backwards compatibility
+  const source = isRecord(raw.attestation) ? raw.attestation : (isRecord(raw.signature_info) ? raw.signature_info : undefined);
+  if (!source) return undefined;
 
   return {
-    alg: String(claimSource.alg ?? ''),
-    issuer: String(claimSource.issuer ?? ''),
-    time: String(claimSource.time ?? ''),
-    type: claimSource.type as ClaimType | undefined,
-    provider: claimSource.provider as ClaimProvider | undefined,
+    alg: String(source.alg ?? ''),
+    issuer: String(source.issuer ?? ''),
+    time: String(source.time ?? ''),
+    type: source.type as AttestationType | undefined,
+    provider: source.provider as AttestationProvider | undefined,
   };
 }
 
@@ -66,7 +66,7 @@ export function normalizeAssetManifest(raw: unknown): AssetManifest | undefined 
     format: raw.format ? String(raw.format) : undefined,
     instanceId: raw.instance_id ? String(raw.instance_id) : undefined,
     assertions,
-    signatureInfo: normalizeClaim(raw),
+    attestation: normalizeAttestation(raw),
     sourceCode: raw.source_code ? String(raw.source_code) : undefined,
     content: normalizeAssetContent(raw.content),
     ingredients: normalizeIngredients(raw.ingredients),

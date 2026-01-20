@@ -30,7 +30,7 @@
           }
         }
       ],
-      "claim": {
+      "attestation": {
         "type": "certificate",
         "provider": "LCO",
         "alg": "ES256",
@@ -319,10 +319,10 @@
     }
   ],
 
-  "attestations": [
+  "claims": [
     {
-      "id": "attest-generate",
-      "label": "Attestation",
+      "id": "claim-generate",
+      "label": "Claim",
       "step": "generate",
       "verifies": ["data-generated-response"],
       "description": "Cryptographic proof that this response was generated in a secure, tamper-proof environment."

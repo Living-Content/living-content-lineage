@@ -13,9 +13,9 @@ flow and transformations.
 **Features:**
 
 - **Node types** — Data, Process, Attestation, with visual distinction by color
-- **Hierarchical organization** — Lineage → Phases → Workflows → Nodes
-- **C2PA metadata** — Nodes carry manifest data including signatures and assertions
-- **Level-of-detail** — Zoom out to see collapsed workflow view, zoom in for full detail
+- **Hierarchical organization** — Lineage → Content Session → Workflow → Phase → Step → Nodes
+- **C2PA metadata** — Nodes carry manifest data including claims and assertions
+- **Level-of-detail** — Zoom out to see collapsed step view, zoom in for full workflow detail
 - **Environmental impact** — Displays CO2 and energy metrics when available
 - **Attestation edges** — Green "gate" connectors show cryptographic verification
 
@@ -58,38 +58,36 @@ npm run format
 src/
 ├── main.ts                    # Entry point
 ├── App.svelte                 # Root shell component
-├── types.ts                   # Core type definitions
 ├── config/
+│   ├── types.ts               # Core type definitions
 │   └── constants.ts           # Rendering constants
 ├── stores/
 │   ├── lineageState.ts        # Graph data and selection state
 │   └── uiState.ts             # Loading, panels, errors
-├── manifest/
-│   ├── registry.ts            # Manifest adapter resolution
-│   └── adapters/
-│       ├── manifestAdapter.ts # Adapter interface
-│       ├── c2pa/              # C2PA standard adapter
-│       ├── eqty/              # EQTY variant adapter
-│       └── custom/            # Custom manifest adapter
 ├── services/
+│   └── manifest/
+│       ├── registry.ts        # Manifest adapter resolution
+│       └── adapters/
+│           ├── manifestAdapter.ts # Adapter interface
+│           ├── c2pa/          # C2PA standard adapter
+│           ├── eqty/          # EQTY variant adapter
+│           └── custom/        # Custom manifest adapter
 │   └── graph/
-│       ├── graphController.ts # Main orchestrator
-│       ├── nodeRenderer.ts    # Pill-shaped node rendering
-│       ├── edgeRenderer.ts    # Edge and arrow rendering
-│       ├── metaEdgeRenderer.ts# Collapsed view edges
-│       ├── stageLabelRenderer.ts # Stage header labels
-│       ├── viewport.ts        # Zoom/pan transforms
-│       ├── lodController.ts   # Level-of-detail state
-│       └── titleOverlay.ts    # Collapsed view title
+│       ├── layout/
+│       │   └── graphController.ts # Main orchestrator
+│       └── rendering/
+│           ├── nodeRenderer.ts    # Pill-shaped node rendering
+│           ├── edgeRenderer.ts    # Edge and arrow rendering
+│           └── stepLabelRenderer.ts # Step header labels
 ├── components/
 │   ├── GraphView.svelte       # Canvas container
 │   ├── Header.svelte          # Top navigation
-│   └── sidebar/
-│       ├── SidebarPanel.svelte
-│       ├── DetailView.svelte
+│   └── dataviewer/
+│       ├── DataViewPanel.svelte
+│       ├── StepOverview.svelte
 │       ├── SummaryView.svelte
-│       └── ...
-└── styles/                    # CSS stylesheets
+│       └── DetailView.svelte
+└── themes/                    # Theme system
 ```
 
 ## Tech Stack
@@ -104,11 +102,11 @@ src/
 
 The visualization consumes manifest JSON files with:
 
-- **workflows** — Collections of nodes within a phase, each with a PhaseType
+- **steps** — Collections of nodes within a phase, each with a Step type
 - **assets** — Data nodes (documents, models, code)
 - **computations** — Processing steps with inputs/outputs
 - **attestations** — Cryptographic verification records
-- **manifests** — C2PA metadata (signatures, assertions)
+- **manifests** — C2PA metadata (claims, assertions)
 
 See `public/data/manifest.json` for an example and `documentation/lineage-hierarchy.md` for the complete type hierarchy.
 

@@ -52,7 +52,7 @@ export const baseTokens = {
 
   // Node sizing
   'default-node-size': '14px',
-  'attestation-icon-size': '56px',
+  'claim-icon-size': '56px',
   'icon-node-size': '40px',
   'icon-node-ring-padding': '6px',
   'icon-node-ring-width': '3px',

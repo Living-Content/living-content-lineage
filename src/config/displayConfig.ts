@@ -150,25 +150,15 @@ export const DISPLAY_CONFIGS: Record<AssetType, AssetDisplayConfig> = {
   },
 
   // Verification Types
-  Attestation: {
+  Claim: {
     cardColumns: 4,
     fields: {
       'status': { type: 'status', isCard: true, isDetail: true, label: 'Status', source: 'computed.status', summarySpan: 2, detailSpan: 2 },
-      'algorithm': { type: 'badge', isCard: true, isDetail: true, label: 'Algorithm', source: 'manifest.signatureInfo.alg', summarySpan: 2, detailSpan: 2 },
-      'issuer': { type: 'text', isCard: false, isDetail: true, label: 'Issuer', source: 'manifest.signatureInfo.issuer' },
+      'algorithm': { type: 'badge', isCard: true, isDetail: true, label: 'Algorithm', source: 'manifest.attestation.alg', summarySpan: 2, detailSpan: 2 },
+      'issuer': { type: 'text', isCard: false, isDetail: true, label: 'Issuer', source: 'manifest.attestation.issuer' },
     }
   },
 
-  Credential: {
-    cardColumns: 4,
-    fields: {
-      'status': { type: 'status', isCard: true, isDetail: true, label: 'Status', source: 'computed.status', summarySpan: 2, detailSpan: 2 },
-      'issuer': { type: 'text', isCard: true, isDetail: true, label: 'Issuer', source: 'manifest.signatureInfo.issuer', summarySpan: 2, detailSpan: 2 },
-      'validFrom': { type: 'datetime', isCard: false, isDetail: true, label: 'Valid From', source: 'content.validFrom' },
-      'validUntil': { type: 'datetime', isCard: false, isDetail: true, label: 'Valid Until', source: 'content.validUntil' },
-      'subject': { type: 'text', isCard: false, isDetail: true, label: 'Subject', source: 'content.subject' },
-    }
-  },
 };
 
 /**

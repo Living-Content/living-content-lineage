@@ -30,13 +30,13 @@ const buildManifestSummary = (
         data: assertion.data,
       }))
     : undefined;
-  const signatureInfo = record.claim
+  const attestation = record.attestation
     ? {
-        alg: String(record.claim.alg ?? ''),
-        issuer: String(record.claim.issuer ?? ''),
-        time: String(record.claim.time ?? ''),
-        type: record.claim.type,
-        provider: record.claim.provider,
+        alg: String(record.attestation.alg ?? ''),
+        issuer: String(record.attestation.issuer ?? ''),
+        time: String(record.attestation.time ?? ''),
+        type: record.attestation.type,
+        provider: record.attestation.provider,
       }
     : undefined;
   return {
@@ -45,7 +45,7 @@ const buildManifestSummary = (
     format: record.format,
     instanceId: record.instance_id,
     assertions,
-    signatureInfo,
+    attestation,
   };
 };
 
@@ -111,8 +111,8 @@ export const buildLineageGraph = (
     });
   });
 
-  // Create nodes for attestations
-  manifest.attestations.forEach((attest) => {
+  // Create nodes for claims
+  manifest.claims.forEach((attest) => {
     const pos = positions.get(attest.id) ?? { x: 0, y: 100, step: 'unknown' };
     const phase = stepPhaseMap.get(pos.step);
     if (!phase) throw new Error(`Missing phase for step ${pos.step}`);
@@ -120,8 +120,8 @@ export const buildLineageGraph = (
       id: attest.id,
       label: attest.label,
       title: attest.title,
-      nodeType: 'attestation',
-      assetType: 'Attestation',
+      nodeType: 'claim',
+      assetType: 'Claim',
       shape: 'circle',
       x: pos.x,
       y: pos.y,
@@ -157,7 +157,7 @@ export const buildLineageGraph = (
   });
 
   // Add attestation edges
-  manifest.attestations.forEach((attest) => {
+  manifest.claims.forEach((attest) => {
     attest.verifies.forEach((verifiedId) => {
       edgeList.push({ source: verifiedId, target: attest.id, isGate: true });
     });
@@ -165,7 +165,7 @@ export const buildLineageGraph = (
 
   // Determine node roles based on edge connections
   nodes.forEach((node) => {
-    if (node.nodeType === 'attestation' || actionSet.has(node.id)) return;
+    if (node.nodeType === 'claim' || actionSet.has(node.id)) return;
     const hasIncoming = edgeList.some(
       (edge) => edge.target === node.id && !edge.isGate
     );

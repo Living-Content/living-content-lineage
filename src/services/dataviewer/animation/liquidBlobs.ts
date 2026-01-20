@@ -9,6 +9,7 @@ import {
   calculateBlobs,
   getAnimConfig,
   isMobile,
+  skipFilter,
 } from './blobCalculation.js';
 
 export type { Blob } from './blobCalculation.js';
@@ -30,15 +31,24 @@ export class BlobManager {
 
   /**
    * Fill container with animated blobs, then blur, then solidify.
+   * Falls back to simple fade on WebKit due to SVG filter compositing bug.
    */
   fill(width: number, height: number, ease?: string): gsap.core.Timeline {
     this.kill();
+
+    const tl = gsap.timeline();
+
+    if (skipFilter()) {
+      this.solidifyInternal();
+      this.timeline = tl;
+      return tl;
+    }
+
     this.unsolidify();
     this.baseBlobs = calculateBlobs(width, height);
     this.expansionBlobs = [];
     this.createElements(this.baseBlobs, height);
 
-    const tl = gsap.timeline();
     const blobTl = this.animateBlobsInternal(this.baseBlobs, width, height, ease);
     tl.add(blobTl);
     tl.add(() => {
@@ -56,12 +66,20 @@ export class BlobManager {
    */
   expand(width: number, height: number, ease?: string): gsap.core.Timeline {
     this.kill();
+
+    const tl = gsap.timeline();
+
+    if (skipFilter()) {
+      this.solidifyInternal();
+      this.timeline = tl;
+      return tl;
+    }
+
     this.unsolidify();
     const allBlobs = calculateBlobs(width, height);
     this.expansionBlobs = allBlobs;
     this.createElements(this.expansionBlobs, height);
 
-    const tl = gsap.timeline();
     const blobTl = this.animateBlobsInternal(this.expansionBlobs, width, height, ease);
     tl.add(blobTl);
     tl.add(() => {
@@ -103,9 +121,12 @@ export class BlobManager {
   private solidifyInternal(): void {
     if (this.isSolid) return;
     this.container.classList.remove('liquid');
-    this.container.style.background = 'rgb(255, 255, 255)';
     this.container.style.filter = 'none';
+    this.container.style.backdropFilter = '';
+    this.container.style.setProperty('-webkit-backdrop-filter', '');
     this.container.innerHTML = '';
+    // Add solid to wrapper (grandparent: blob-container -> shape-layer -> wrapper)
+    this.container.parentElement?.parentElement?.classList.add('solid');
     this.isSolid = true;
   }
 
@@ -116,6 +137,7 @@ export class BlobManager {
     this.container.style.filter = '';
     this.container.innerHTML = '';
     this.container.classList.add('liquid');
+    this.container.parentElement?.parentElement?.classList.remove('solid');
     this.isSolid = false;
   }
 

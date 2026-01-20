@@ -3,7 +3,7 @@ import type { AssetType, NodeType } from './types.js';
 export const NODE_TYPE_LABELS: Record<NodeType, string> = {
   data: 'Data',
   process: 'Process',
-  attestation: 'Verification',
+  claim: 'Claim',
   store: 'Storage',
   media: 'Media',
   workflow: 'Workflow',
@@ -17,8 +17,7 @@ export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   Code: 'Code',
   Model: 'Model',
   Action: 'Action',
-  Attestation: 'Attestation',
-  Credential: 'Credential',
+  Claim: 'Claim',
 };
 
 export const formatNodeTypeLabel = (nodeType: NodeType): string => {

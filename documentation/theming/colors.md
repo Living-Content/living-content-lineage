@@ -4,7 +4,7 @@ The color system uses semantic variables organized by purpose. Colors are define
 
 ## Phase Colors
 
-Workflow phases have distinct accent colors for visual identification:
+Phases have distinct accent colors for visual identification:
 
 | Phase       | Color     | Variable                                |
 | ----------- | --------- | --------------------------------------- |

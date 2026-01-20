@@ -40,9 +40,9 @@
     actionType: assertions.c2paActions?.actions?.[0]?.action?.replace('c2pa.', ''),
     agent: assertions.c2paActions?.actions?.[0]?.softwareAgent?.name,
     // Attestation/Credential fields
-    status: node.assetManifest?.signatureInfo ? 'Verified' : undefined,
-    algorithm: node.assetManifest?.signatureInfo?.alg,
-    issuer: node.assetManifest?.signatureInfo?.issuer,
+    status: node.assetManifest?.attestation ? 'Verified' : undefined,
+    algorithm: node.assetManifest?.attestation?.alg,
+    issuer: node.assetManifest?.attestation?.issuer,
     // Document fields
     query: (content as Record<string, unknown>).query,
     response: (content as Record<string, unknown>).response,

@@ -45,7 +45,7 @@ export type AssetCategory = "Content" | "Process" | "Verification";
  * Specific asset content or process type.
  * - Content: Data flowing through the pipeline (Media, Document, Result, Dataset)
  * - Process: Transformations/computations (Code, Model, Action)
- * - Verification: Trust/attestation (Attestation, Credential)
+ * - Verification: Trust/claims (Claim)
  */
 export type AssetType =
   // Content
@@ -53,7 +53,7 @@ export type AssetType =
   // Process
   | "Code" | "Model" | "Action"
   // Verification
-  | "Attestation" | "Credential";
+  | "Claim";
 
 /**
  * Visual node category for rendering in the lineage graph.
@@ -61,7 +61,7 @@ export type AssetType =
 export type NodeType =
   | "data"
   | "process"
-  | "attestation"
+  | "claim"
   | "store"
   | "media"
   | "workflow";
@@ -80,20 +80,20 @@ export interface ManifestAssertion {
   data: unknown;
 }
 
-/** Signature mechanism type */
-export type ClaimType = 'merkle' | 'certificate' | 'tee';
+/** Attestation mechanism type */
+export type AttestationType = 'merkle' | 'certificate' | 'tee';
 
-/** Signature provider/standard */
-export type ClaimProvider = 'EQTY' | 'C2PA' | 'LCO';
+/** Attestation provider/standard */
+export type AttestationProvider = 'EQTY' | 'C2PA' | 'LCO';
 
-export interface ManifestSignatureInfo {
+export interface Attestation {
   alg: string;
   issuer: string;
   time: string;
-  /** Type of signature: merkle tree, certificate chain, or TEE attestation */
-  type?: ClaimType;
-  /** Provider/standard that created the signature */
-  provider?: ClaimProvider;
+  /** Type of attestation: merkle tree, certificate chain, or TEE */
+  type?: AttestationType;
+  /** Provider/standard that created the attestation */
+  provider?: AttestationProvider;
 }
 
 export interface ManifestIngredient {
@@ -122,7 +122,7 @@ export interface AssetManifest {
   format?: string;
   instanceId?: string;
   assertions?: ManifestAssertion[];
-  signatureInfo?: ManifestSignatureInfo;
+  attestation?: Attestation;
   sourceCode?: string;
   content?: AssetContent;
   ingredients?: ManifestIngredient[];
@@ -137,7 +137,7 @@ export interface LineageManifestSummary {
   format?: string;
   instanceId?: string;
   assertions?: ManifestAssertion[];
-  signatureInfo?: ManifestSignatureInfo;
+  attestation?: Attestation;
 }
 
 export interface LineageNodeData {
@@ -205,9 +205,8 @@ export const assetTypeToNodeType = (assetType: AssetType): NodeType => {
       return "store";
     case "Media":
       return "media";
-    case "Attestation":
-    case "Credential":
-      return "attestation";
+    case "Claim":
+      return "claim";
   }
 };
 
@@ -251,8 +250,7 @@ export const assetTypeToCategory = (assetType: AssetType): AssetCategory => {
     case "Model":
     case "Action":
       return "Process";
-    case "Attestation":
-    case "Credential":
+    case "Claim":
       return "Verification";
   }
 };

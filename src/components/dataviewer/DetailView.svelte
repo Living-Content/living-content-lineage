@@ -68,9 +68,9 @@
     startTime: assertions.action?.startTime ?? assertions.execution?.executionStartTime,
     endTime: assertions.action?.endTime ?? assertions.execution?.executionEndTime,
     // Attestation/Credential fields
-    status: assetManifest?.signatureInfo ? 'Verified' : undefined,
-    algorithm: assetManifest?.signatureInfo?.alg,
-    issuer: assetManifest?.signatureInfo?.issuer,
+    status: assetManifest?.attestation ? 'Verified' : undefined,
+    algorithm: assetManifest?.attestation?.alg,
+    issuer: assetManifest?.attestation?.issuer,
     // Document fields
     query: (content as Record<string, unknown>).query,
     response: (content as Record<string, unknown>).response,

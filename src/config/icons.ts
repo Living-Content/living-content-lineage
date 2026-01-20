@@ -18,10 +18,10 @@ export function getPhaseIconPath(phase: Phase): string {
 export function getIconNodeConfig(
   nodeType: NodeType
 ): { size: number; iconPath: string } | null {
-  if (nodeType === 'attestation') {
+  if (nodeType === 'claim') {
     return {
-      size: getCssVarInt('--attestation-icon-size'),
-      iconPath: getAssetIconPath('Attestation'),
+      size: getCssVarInt('--claim-icon-size'),
+      iconPath: getAssetIconPath('Claim'),
     };
   }
   return null;

@@ -1,28 +1,40 @@
 # Detail View Components
 
-Asset-specific detail views provide tailored displays for each asset type.
+Asset-specific detail views are driven by configuration in `displayConfig.ts`.
 
 ## Architecture
 
 ```plaintext
 src/components/dataviewer/
-  DetailView.svelte              # Router component
+  DataViewPanel.svelte           # Main panel container
+  StepOverview.svelte            # Aggregate view for selected step
+  SummaryView.svelte             # Node summary with cards (config-driven)
+  DetailView.svelte              # Full details view (config-driven)
+  AttestationPanel.svelte        # Footer panel for attestation info
+  panel/
+    PanelHeader.svelte           # Header with breadcrumb navigation
+    NodeContent.svelte           # Node content wrapper
   detail/
     PropertyGroup.svelte         # Collapsible section
     ActionsList.svelte           # Reusable C2PA actions display
     CodeBlock.svelte             # Reusable source code display
     DetailValue.svelte           # Dynamic value renderer
-    views/
-      ModelDetailView.svelte     # Model-specific
-      CodeDetailView.svelte      # Code-specific
-      DatasetDetailView.svelte   # Dataset-specific
-      DocumentDetailView.svelte  # Document-specific
-      ActionDetailView.svelte    # Action-specific
-      MediaDetailView.svelte     # Media-specific
-      AttestationDetailView.svelte
-      CredentialDetailView.svelte
-      DefaultDetailView.svelte   # Result and fallback
+    NodeCard.svelte              # Node display card (pill shape)
+    ContextBadges.svelte         # Phase/step breadcrumb badges
+  cards/
+    DataCard.svelte              # Metric display card
+    CardSection.svelte           # Combined metrics and properties
 ```
+
+The system uses a **config-driven approach** rather than per-asset-type view components. Field display is controlled by `src/config/displayConfig.ts`.
+
+## Step Overview
+
+When a step is selected (collapsed view), `StepOverview.svelte` displays an aggregate view:
+
+- **Inputs** — Nodes receiving edges from outside the step
+- **Processing** — Process count and total duration
+- **Outputs** — Nodes sending edges outside the step
 
 ## Shared Components
 
@@ -49,13 +61,9 @@ Props:
 
 ### ActionsList
 
-Reusable component for displaying C2PA actions. Used by ActionDetailView, MediaDetailView, and ModelDetailView.
+Reusable component for displaying C2PA actions.
 
 ```svelte
-<script lang="ts">
-  import type { C2paAction } from '../../../services/dataviewer/parsing/assertionParsers.js';
-</script>
-
 <ActionsList
   actions={c2paActions.actions}
   title="Actions"
@@ -71,7 +79,7 @@ Props:
 
 ### CodeBlock
 
-Reusable component for displaying source code. Used by CodeDetailView and DefaultDetailView.
+Reusable component for displaying source code.
 
 ```svelte
 <CodeBlock
@@ -86,6 +94,47 @@ Props:
 - `code` - Source code string to display
 - `title` - Section title (default: "Source Code")
 - `collapsed` - Initial collapsed state (default: true)
+
+### NodeCard
+
+Displays a node in card form matching the graph node visual style.
+
+```svelte
+<NodeCard
+  title="Knowledge Retriever"
+  assetType="Code"
+  phase="Retrieval"
+/>
+```
+
+Props:
+
+- `title` - Node title
+- `assetType` - Asset type for icon
+- `phase` - Phase for color accent
+
+### DataCard
+
+Metric display card with phase-colored accent.
+
+```svelte
+<DataCard
+  value={3}
+  label="Processes"
+  type="number"
+  phase="Reasoning"
+  size="compact"
+/>
+```
+
+Props:
+
+- `value` - Display value
+- `label` - Label text
+- `type` - Data type for formatting
+- `phase` - Phase for color accent
+- `span` - Grid column span (1-4)
+- `size` - "default" or "compact"
 
 ## Creating a New Detail View
 
@@ -130,7 +179,7 @@ Props:
 </style>
 ```
 
-1. Add to the router in `DetailView.svelte`:
+2. Add to the router in `DetailView.svelte`:
 
 ```svelte
 {:else if assetType === 'MyType'}
@@ -146,19 +195,19 @@ Each detail view follows this structure:
 3. **Actions** - C2PA actions if available (collapsible, use ActionsList)
 4. **Source code** - If available (collapsible, use CodeBlock)
 
-## Asset Type Routing
+## Asset Type Configuration
 
-The `DetailView.svelte` router maps asset types to views:
+Display configuration is defined in `src/config/displayConfig.ts`:
 
-| Asset Type    | View Component        |
-| ------------- | --------------------- |
-| Model         | ModelDetailView       |
-| Code          | CodeDetailView        |
-| Dataset       | DatasetDetailView     |
-| Document      | DocumentDetailView    |
-| Action        | ActionDetailView      |
-| Media         | MediaDetailView       |
-| Attestation   | AttestationDetailView |
-| Credential    | CredentialDetailView  |
-| Result        | DefaultDetailView     |
-| (unspecified) | DefaultDetailView     |
+| Asset Type | Card Fields                              |
+| ---------- | ---------------------------------------- |
+| Model      | Model ID, provider, input/output tokens  |
+| Code       | Function, module, duration               |
+| Action     | Duration, input/output/total tokens      |
+| Document   | Duration, response length, model         |
+| Dataset    | Chunks retrieved, similarity, confidence |
+| Media      | Format, dimensions, file size            |
+| Result     | Token counts, evaluation scores          |
+| Claim      | Status, algorithm                        |
+
+Each asset type defines which fields appear in card view vs detail view through the `fields` configuration.
