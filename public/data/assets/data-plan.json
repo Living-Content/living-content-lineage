@@ -18,7 +18,9 @@
     }
   ],
   "content": {
-    "description": "Data output from Plan",
+    "description": "Search strategy for database content overview",
+    "strategy_summary": "Query knowledge base for collection metadata, document types, and sample items",
+    "query_count": 2,
     "execution_plan": {
       "plan_id": "plan_0",
       "addressing_gaps": [

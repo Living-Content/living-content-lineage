@@ -62,6 +62,21 @@
   .span-3 { grid-column: span 3; }
   .span-4 { grid-column: span 4; }
 
+  /* Compact styling for 1-span cards */
+  .span-1 {
+    padding: var(--space-md, 12px);
+    min-height: 60px;
+    gap: var(--space-xs, 4px);
+  }
+
+  .span-1 .card-label {
+    font-size: 10px;
+  }
+
+  .span-1 .value {
+    font-size: 20px !important;
+  }
+
   .card-value {
     display: flex;
     align-items: baseline;
@@ -87,6 +102,10 @@
     text-transform: uppercase;
     letter-spacing: var(--letter-spacing-wider, 0.05em);
     color: var(--metric-label-color, var(--color-text-light));
+    min-height: 2.4em;
+    line-height: 1.2;
+    display: flex;
+    align-items: flex-end;
   }
 
   /* Phase-based accent colors */

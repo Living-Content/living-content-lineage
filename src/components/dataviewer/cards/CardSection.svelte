@@ -29,6 +29,17 @@
   /** Number of columns for the metric grid */
   export let columns: 2 | 3 | 4 = 4;
 
+  /** View mode - affects which span to use */
+  export let viewMode: 'summary' | 'detail' = 'detail';
+
+  /** Get effective span based on view mode */
+  function getSpan(config: FieldDisplayConfig): 1 | 2 | 3 | 4 {
+    if (viewMode === 'summary') {
+      return config.summarySpan ?? 2;
+    }
+    return config.detailSpan ?? 2;
+  }
+
   $: hasMetrics = metrics.length > 0;
   $: hasProperties = properties.length > 0;
 </script>
@@ -41,7 +52,7 @@
           {value}
           label={config.label ?? key}
           type={config.type}
-          span={config.span}
+          span={getSpan(config)}
           unit={config.unit}
           {phase}
         />

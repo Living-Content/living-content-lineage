@@ -19,6 +19,7 @@
   import PropertyGroup from './detail/PropertyGroup.svelte';
   import PropertyRow from './PropertyRow.svelte';
   import CodeBlock from './detail/CodeBlock.svelte';
+  import MarkdownValue from './detail/MarkdownValue.svelte';
   import AdditionalData from './detail/AdditionalData.svelte';
 
   export let node: LineageNodeData;
@@ -120,6 +121,13 @@
     }))
     .filter(({ value }) => value !== undefined && value !== null && value !== '' && value !== '-');
 
+  // Separate markdown and code fields for special rendering
+  $: markdownFields = detailOnlyWithValues.filter(({ config }) => config.type === 'markdown');
+  $: codeFields = detailOnlyWithValues.filter(({ config }) => config.type === 'code');
+  $: regularDetailFields = detailOnlyWithValues.filter(({ config }) =>
+    config.type !== 'markdown' && config.type !== 'code'
+  );
+
   // Configured field keys to exclude from fallback/additional data
   $: configuredKeys = new Set(Object.keys(displayConfig.fields));
 
@@ -147,9 +155,10 @@
     .sort(([a], [b]) => a.localeCompare(b));
 
   $: hasCardData = metricsWithValues.length > 0 || propertiesWithValues.length > 0;
-  $: hasDetailData = detailOnlyWithValues.length > 0;
+  $: hasDetailData = regularDetailFields.length > 0;
   $: hasUnconfiguredFields = unconfiguredSimpleFields.length > 0;
-  $: hasSourceCode = assetManifest?.sourceCode;
+  $: hasMarkdownFields = markdownFields.length > 0;
+  $: hasCodeFields = codeFields.length > 0;
 </script>
 
 <div class="detail-view">
@@ -159,12 +168,13 @@
       properties={propertiesWithValues}
       {phase}
       columns={displayConfig.cardColumns ?? 4}
+      viewMode="detail"
     />
   {/if}
 
   {#if hasDetailData}
     <PropertyGroup title="Details" collapsible={false}>
-      {#each detailOnlyWithValues as { key, value, config } (key)}
+      {#each regularDetailFields as { key, value, config } (key)}
         <PropertyRow
           label={config.label ?? key}
           value={String(value ?? '-')}
@@ -181,9 +191,15 @@
     </PropertyGroup>
   {/if}
 
-  {#if hasSourceCode}
-    <CodeBlock code={assetManifest?.sourceCode ?? ''} />
-  {/if}
+  {#each codeFields as { key, value, config } (key)}
+    <CodeBlock code={String(value ?? '')} title={config.label ?? key} />
+  {/each}
+
+  {#each markdownFields as { key, value, config } (key)}
+    <PropertyGroup title={config.label ?? key} collapsed={true}>
+      <MarkdownValue value={String(value ?? '')} />
+    </PropertyGroup>
+  {/each}
 
   {#if additionalData.length > 0}
     <AdditionalData data={additionalData} />

@@ -121,6 +121,7 @@
       properties={propertiesWithValues}
       {phase}
       columns={displayConfig.cardColumns ?? 4}
+      viewMode="summary"
     />
   {:else if fallbackEntries.length > 0}
     <div class="property-list">

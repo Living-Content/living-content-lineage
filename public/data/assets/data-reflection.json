@@ -18,7 +18,7 @@
     }
   ],
   "content": {
-    "description": "Data output from Reflect",
+    "description": "Analysis of user intent and information needs",
     "reasoning_trace": "This is iteration 1, and no artwork data has been retrieved yet. The user is asking what content exists in the database. This is an exploratory query seeking a high-level overview of the collection rather than specific items. To fulfill this request, we should retrieve domain context information including collection statistics, document types, content categories, and sample items. Since this is a general overview question, we don't need to search for specific artworks but rather provide metadata about the collection itself.",
     "data_quality_assessment": "No data has been retrieved yet, so a data quality assessment is not possible at this stage.",
     "gaps": [

@@ -17,8 +17,10 @@ export interface FieldDisplayConfig {
   isDetail: boolean;
   /** Override display label */
   label?: string;
-  /** Grid column span for metric cards (1-4) */
-  span?: 1 | 2 | 3 | 4;
+  /** Grid column span for summary view */
+  summarySpan?: 1 | 2 | 3 | 4;
+  /** Grid column span for detail view */
+  detailSpan?: 1 | 2 | 3 | 4;
   /** For text-preview type: truncation length */
   truncateAt?: number;
   /** Unit suffix for metrics (e.g., "ms", "KB") */
@@ -51,10 +53,10 @@ export const DISPLAY_CONFIGS: Record<AssetType, AssetDisplayConfig> = {
   Model: {
     cardColumns: 4,
     fields: {
-      'modelId': { type: 'text', isCard: true, isDetail: true, label: 'Model ID', source: 'assertions.model.modelId', span: 2 },
-      'provider': { type: 'text', isCard: true, isDetail: true, label: 'Provider', source: 'assertions.model.provider', span: 2 },
-      'tokens.input': { type: 'metric', isCard: true, isDetail: true, label: 'Input Tokens', source: 'assertions.usage.inputTokens', span: 2 },
-      'tokens.output': { type: 'metric', isCard: true, isDetail: true, label: 'Output Tokens', source: 'assertions.usage.outputTokens', span: 2 },
+      'modelId': { type: 'text', isCard: true, isDetail: true, label: 'Model ID', source: 'assertions.model.modelId', summarySpan: 2, detailSpan: 2 },
+      'provider': { type: 'text', isCard: true, isDetail: true, label: 'Provider', source: 'assertions.model.provider', summarySpan: 2, detailSpan: 2 },
+      'tokens.input': { type: 'metric', isCard: true, isDetail: true, label: 'Input Tokens', source: 'assertions.usage.inputTokens', summarySpan: 2, detailSpan: 2 },
+      'tokens.output': { type: 'metric', isCard: true, isDetail: true, label: 'Output Tokens', source: 'assertions.usage.outputTokens', summarySpan: 2, detailSpan: 2 },
       'computation': { type: 'text', isCard: false, isDetail: true, label: 'Computation', source: 'assertions.model.computation' },
       'maxTokens': { type: 'number', isCard: false, isDetail: true, label: 'Max Tokens', source: 'assertions.model.parameters.maxTokens' },
       'temperature': { type: 'number', isCard: false, isDetail: true, label: 'Temperature', source: 'assertions.model.parameters.temperature' },
@@ -64,9 +66,9 @@ export const DISPLAY_CONFIGS: Record<AssetType, AssetDisplayConfig> = {
   Code: {
     cardColumns: 4,
     fields: {
-      'function': { type: 'text', isCard: true, isDetail: true, label: 'Function', source: 'assertions.code.function', span: 2 },
-      'module': { type: 'text', isCard: true, isDetail: true, label: 'Module', source: 'assertions.code.module', span: 2 },
-      'duration': { type: 'duration', isCard: true, isDetail: true, label: 'Duration', source: 'computed.duration', span: 4 },
+      'function': { type: 'text', isCard: true, isDetail: true, label: 'Function', source: 'assertions.code.function', summarySpan: 2, detailSpan: 2 },
+      'module': { type: 'text', isCard: true, isDetail: true, label: 'Module', source: 'assertions.code.module', summarySpan: 2, detailSpan: 2 },
+      'duration': { type: 'duration', isCard: true, isDetail: true, label: 'Duration', source: 'computed.duration', summarySpan: 4, detailSpan: 4 },
       'hash': { type: 'hash', isCard: false, isDetail: true, label: 'Hash', source: 'assertions.code.hash' },
       'sourceCode': { type: 'code', isCard: false, isDetail: true, label: 'Source Code', source: 'manifest.sourceCode' },
       'startTime': { type: 'datetime', isCard: false, isDetail: true, label: 'Start Time', source: 'assertions.execution.startTime' },
@@ -77,10 +79,10 @@ export const DISPLAY_CONFIGS: Record<AssetType, AssetDisplayConfig> = {
   Action: {
     cardColumns: 4,
     fields: {
-      'duration': { type: 'duration', isCard: true, isDetail: false, label: 'Duration', source: 'computed.duration', span: 2 },
-      'inputTokens': { type: 'metric', isCard: true, isDetail: true, label: 'Input Tokens', span: 2 },
-      'outputTokens': { type: 'metric', isCard: true, isDetail: true, label: 'Output Tokens', span: 2 },
-      'totalTokens': { type: 'metric', isCard: true, isDetail: true, label: 'Total Tokens', span: 2 },
+      'duration': { type: 'duration', isCard: true, isDetail: false, label: 'Duration', source: 'computed.duration', summarySpan: 2, detailSpan: 2 },
+      'inputTokens': { type: 'metric', isCard: true, isDetail: true, label: 'Input Tokens', summarySpan: 2, detailSpan: 2 },
+      'outputTokens': { type: 'metric', isCard: true, isDetail: true, label: 'Output Tokens', summarySpan: 2, detailSpan: 2 },
+      'totalTokens': { type: 'metric', isCard: true, isDetail: true, label: 'Total Tokens', summarySpan: 2, detailSpan: 2 },
       'actionType': { type: 'badge', isCard: false, isDetail: true, label: 'Action Type', source: 'computed.actionType' },
       'agent': { type: 'text', isCard: false, isDetail: true, label: 'Agent', source: 'assertions.c2paActions.actions.0.softwareAgent.name' },
       'function': { type: 'text', isCard: false, isDetail: true, label: 'Function', source: 'assertions.action.function' },
@@ -94,23 +96,22 @@ export const DISPLAY_CONFIGS: Record<AssetType, AssetDisplayConfig> = {
   Document: {
     cardColumns: 4,
     fields: {
-      'query': { type: 'text-preview', isCard: true, isDetail: true, label: 'Query', truncateAt: 80, source: 'content.query', span: 2 },
-      'response': { type: 'text-preview', isCard: true, isDetail: true, label: 'Response', truncateAt: 80, source: 'content.response', span: 2 },
-      'messageCount': { type: 'metric', isCard: true, isDetail: true, label: 'Messages', source: 'content.message_count', span: 4 },
-      'charCount': { type: 'metric', isCard: false, isDetail: true, label: 'Characters', source: 'content.char_count' },
-      'contentHash': { type: 'hash', isCard: false, isDetail: true, label: 'Content Hash', source: 'content.content_hash' },
-      'fullQuery': { type: 'markdown', isCard: false, isDetail: true, label: 'Full Query', source: 'content.query' },
-      'fullResponse': { type: 'markdown', isCard: false, isDetail: true, label: 'Full Response', source: 'content.response' },
+      'durationMs': { type: 'duration', isCard: true, isDetail: false, label: 'Duration', summarySpan: 2, detailSpan: 2 },
+      'responseLength': { type: 'metric', isCard: true, isDetail: false, label: 'Response Length', summarySpan: 2, detailSpan: 2 },
+      'model': { type: 'text', isCard: true, isDetail: true, label: 'Model', summarySpan: 2, detailSpan: 2 },
+      'maxTokens': { type: 'metric', isCard: true, isDetail: true, label: 'Max Tokens', summarySpan: 2, detailSpan: 2 },
+      'query': { type: 'markdown', isCard: false, isDetail: true, label: 'Query' },
+      'response': { type: 'markdown', isCard: false, isDetail: true, label: 'Response' },
     }
   },
 
   Dataset: {
     cardColumns: 4,
     fields: {
-      'chunksRetrieved': { type: 'metric', isCard: true, isDetail: true, label: 'Chunks Retrieved', span: 2 },
-      'avgSimilarity': { type: 'percentage', isCard: true, isDetail: true, label: 'Avg Similarity', span: 2 },
-      'confidence': { type: 'percentage', isCard: true, isDetail: true, label: 'Confidence', span: 2 },
-      'messageCount': { type: 'metric', isCard: true, isDetail: true, label: 'Messages', span: 2 },
+      'chunksRetrieved': { type: 'metric', isCard: true, isDetail: true, label: 'Chunks Retrieved', summarySpan: 2, detailSpan: 2 },
+      'avgSimilarity': { type: 'percentage', isCard: true, isDetail: true, label: 'Avg Similarity', summarySpan: 2, detailSpan: 2 },
+      'confidence': { type: 'percentage', isCard: true, isDetail: true, label: 'Confidence', summarySpan: 2, detailSpan: 2 },
+      'messageCount': { type: 'metric', isCard: true, isDetail: true, label: 'Messages', summarySpan: 2, detailSpan: 2 },
       'searchQuery': { type: 'text', isCard: false, isDetail: true, label: 'Search Query' },
       'resultCount': { type: 'metric', isCard: false, isDetail: true, label: 'Result Count' },
       'chunks': { type: 'chunk-list', isCard: false, isDetail: true, label: 'Retrieved Chunks' },
@@ -121,9 +122,9 @@ export const DISPLAY_CONFIGS: Record<AssetType, AssetDisplayConfig> = {
   Media: {
     cardColumns: 4,
     fields: {
-      'format': { type: 'badge', isCard: true, isDetail: true, label: 'Format', source: 'manifest.format', span: 2 },
-      'dimensions': { type: 'dimensions', isCard: true, isDetail: true, label: 'Dimensions', source: 'computed.dimensions', span: 2 },
-      'fileSize': { type: 'filesize', isCard: true, isDetail: true, label: 'File Size', source: 'content.size', span: 4 },
+      'format': { type: 'badge', isCard: true, isDetail: true, label: 'Format', source: 'manifest.format', summarySpan: 2, detailSpan: 2 },
+      'dimensions': { type: 'dimensions', isCard: true, isDetail: true, label: 'Dimensions', source: 'computed.dimensions', summarySpan: 2, detailSpan: 2 },
+      'fileSize': { type: 'filesize', isCard: true, isDetail: true, label: 'File Size', source: 'content.size', summarySpan: 4, detailSpan: 4 },
       'mimeType': { type: 'text', isCard: false, isDetail: true, label: 'MIME Type', source: 'manifest.format' },
       'duration': { type: 'duration', isCard: false, isDetail: true, label: 'Duration', source: 'content.duration' },
     }
@@ -132,9 +133,16 @@ export const DISPLAY_CONFIGS: Record<AssetType, AssetDisplayConfig> = {
   Result: {
     cardColumns: 4,
     fields: {
-      'inputTokens': { type: 'metric', isCard: true, isDetail: true, label: 'Input Tokens', span: 2 },
-      'outputTokens': { type: 'metric', isCard: true, isDetail: true, label: 'Output Tokens', span: 2 },
-      'totalTokens': { type: 'metric', isCard: true, isDetail: true, label: 'Total Tokens', span: 4 },
+      'inputTokens': { type: 'metric', isCard: true, isDetail: true, label: 'Input Tokens', summarySpan: 2, detailSpan: 2 },
+      'outputTokens': { type: 'metric', isCard: true, isDetail: true, label: 'Output Tokens', summarySpan: 2, detailSpan: 2 },
+      'totalTokens': { type: 'metric', isCard: true, isDetail: true, label: 'Total Tokens', summarySpan: 4, detailSpan: 4 },
+      // Evaluation fields (1-span each for compact display)
+      'averageScore': { type: 'percentage', isCard: true, isDetail: true, label: 'Avg Score', summarySpan: 2, detailSpan: 1 },
+      'documentCount': { type: 'metric', isCard: true, isDetail: true, label: 'Docs', summarySpan: 2, detailSpan: 1 },
+      'documentsAboveThreshold': { type: 'metric', isCard: true, isDetail: true, label: 'Above Threshold', summarySpan: 2, detailSpan: 1 },
+      'threshold': { type: 'percentage', isCard: true, isDetail: true, label: 'Threshold', summarySpan: 2, detailSpan: 1 },
+      'topScore': { type: 'percentage', isCard: true, isDetail: true, label: 'Top Score', summarySpan: 2, detailSpan: 1 },
+      // Detail-only fields
       'preview': { type: 'text-preview', isCard: false, isDetail: true, label: 'Preview', truncateAt: 100, source: 'content.preview' },
       'fullContent': { type: 'markdown', isCard: false, isDetail: true, label: 'Full Content', source: 'content.content' },
       'metadata': { type: 'key-value', isCard: false, isDetail: true, label: 'Metadata', source: 'content.metadata' },
@@ -145,8 +153,8 @@ export const DISPLAY_CONFIGS: Record<AssetType, AssetDisplayConfig> = {
   Attestation: {
     cardColumns: 4,
     fields: {
-      'status': { type: 'status', isCard: true, isDetail: true, label: 'Status', source: 'computed.status', span: 2 },
-      'algorithm': { type: 'badge', isCard: true, isDetail: true, label: 'Algorithm', source: 'manifest.signatureInfo.alg', span: 2 },
+      'status': { type: 'status', isCard: true, isDetail: true, label: 'Status', source: 'computed.status', summarySpan: 2, detailSpan: 2 },
+      'algorithm': { type: 'badge', isCard: true, isDetail: true, label: 'Algorithm', source: 'manifest.signatureInfo.alg', summarySpan: 2, detailSpan: 2 },
       'issuer': { type: 'text', isCard: false, isDetail: true, label: 'Issuer', source: 'manifest.signatureInfo.issuer' },
     }
   },
@@ -154,8 +162,8 @@ export const DISPLAY_CONFIGS: Record<AssetType, AssetDisplayConfig> = {
   Credential: {
     cardColumns: 4,
     fields: {
-      'status': { type: 'status', isCard: true, isDetail: true, label: 'Status', source: 'computed.status', span: 2 },
-      'issuer': { type: 'text', isCard: true, isDetail: true, label: 'Issuer', source: 'manifest.signatureInfo.issuer', span: 2 },
+      'status': { type: 'status', isCard: true, isDetail: true, label: 'Status', source: 'computed.status', summarySpan: 2, detailSpan: 2 },
+      'issuer': { type: 'text', isCard: true, isDetail: true, label: 'Issuer', source: 'manifest.signatureInfo.issuer', summarySpan: 2, detailSpan: 2 },
       'validFrom': { type: 'datetime', isCard: false, isDetail: true, label: 'Valid From', source: 'content.validFrom' },
       'validUntil': { type: 'datetime', isCard: false, isDetail: true, label: 'Valid Until', source: 'content.validUntil' },
       'subject': { type: 'text', isCard: false, isDetail: true, label: 'Subject', source: 'content.subject' },
