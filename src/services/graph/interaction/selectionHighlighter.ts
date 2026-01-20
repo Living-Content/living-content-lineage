@@ -4,10 +4,10 @@
  * Uses blur filters for non-highlighted nodes in detail view.
  */
 import { BlurFilter, type Container } from 'pixi.js';
-import type { LineageEdgeData, LineageNodeData, Workflow, Phase } from '../../../config/types.js';
+import type { LineageEdgeData, LineageNodeData, StepUI, Phase } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import type { SelectionTarget } from '../../../stores/lineageState.js';
-import { renderEdges, renderWorkflowEdges } from '../rendering/edgeRenderer.js';
+import { renderEdges, renderStepEdges } from '../rendering/edgeRenderer.js';
 import { DEFAULT_NODE_ALPHA } from '../rendering/nodeRenderer.js';
 import { getCssVarFloat, getCssVarInt } from '../../../themes/index.js';
 
@@ -135,11 +135,11 @@ export const buildVerticalAdjacencyMap = (
 
 export interface SelectionHighlighterDeps {
   nodeMap: Map<string, GraphNode>;
-  workflowNodeMap: Map<string, GraphNode>;
+  stepNodeMap: Map<string, GraphNode>;
   edgeLayer: Container;
-  workflowEdgeLayer: Container;
+  stepEdgeLayer: Container;
   edges: LineageEdgeData[];
-  workflows: Workflow[];
+  steps: StepUI[];
   verticalAdjacency: VerticalAdjacencyMap;
   setNodeAlpha: (nodeId: string, alpha: number) => void;
   useBlur?: boolean;
@@ -183,8 +183,8 @@ export const applySelectionHighlight = (
     return;
   }
 
-  if (selection.type === 'workflow') {
-    highlightWorkflow(selection.workflowId, deps);
+  if (selection.type === 'step') {
+    highlightStep(selection.stepId, deps);
   } else {
     highlightNode(selection.nodeId, deps);
   }
@@ -198,7 +198,7 @@ const highlightNode = (
   selectedId: string,
   deps: SelectionHighlighterDeps
 ): void => {
-  const { nodeMap, workflowNodeMap, edgeLayer, workflowEdgeLayer, edges, workflows, verticalAdjacency, setNodeAlpha, useBlur = false } = deps;
+  const { nodeMap, stepNodeMap, edgeLayer, stepEdgeLayer, edges, steps, verticalAdjacency, setNodeAlpha, useBlur = false } = deps;
   const verticallyConnected = verticalAdjacency.getConnectedNodeIds(selectedId);
   const styles = getFadeStyles();
 
@@ -211,8 +211,8 @@ const highlightNode = (
     useBlur
   );
 
-  // Dim all workflow nodes (for collapsed view consistency)
-  workflowNodeMap.forEach((node) => {
+  // Dim all step nodes (for collapsed view consistency)
+  stepNodeMap.forEach((node) => {
     applyNodeFade(node, false, useBlur, styles);
     node.setSelected(false);
   });
@@ -222,22 +222,22 @@ const highlightNode = (
     selectedId,
     highlightedIds: verticallyConnected,
   });
-  renderWorkflowEdges(workflowEdgeLayer, workflows, workflowNodeMap, '');
+  renderStepEdges(stepEdgeLayer, steps, stepNodeMap, '');
 };
 
 /**
- * Applies selection highlighting to a workflow node.
+ * Applies selection highlighting to a step node.
  */
-const highlightWorkflow = (
-  workflowId: string,
+const highlightStep = (
+  stepId: string,
   deps: SelectionHighlighterDeps
 ): void => {
-  const { nodeMap, workflowNodeMap, workflowEdgeLayer, workflows, setNodeAlpha, useBlur = false } = deps;
+  const { nodeMap, stepNodeMap, stepEdgeLayer, steps, setNodeAlpha, useBlur = false } = deps;
   const styles = getFadeStyles();
 
-  // Highlight only selected workflow node
-  workflowNodeMap.forEach((node, nodeId) => {
-    const highlighted = nodeId === workflowId;
+  // Highlight only selected step node
+  stepNodeMap.forEach((node, nodeId) => {
+    const highlighted = nodeId === stepId;
     applyNodeFade(node, highlighted, useBlur, styles);
     node.setSelected(highlighted);
   });
@@ -251,14 +251,14 @@ const highlightWorkflow = (
     useBlur
   );
 
-  renderWorkflowEdges(workflowEdgeLayer, workflows, workflowNodeMap, workflowId);
+  renderStepEdges(stepEdgeLayer, steps, stepNodeMap, stepId);
 };
 
 /**
  * Clears all selection visuals, restoring default state (no blur).
  */
 export const clearSelectionVisuals = (deps: SelectionHighlighterDeps): void => {
-  const { nodeMap, workflowNodeMap, edgeLayer, workflowEdgeLayer, edges, workflows, setNodeAlpha } = deps;
+  const { nodeMap, stepNodeMap, edgeLayer, stepEdgeLayer, edges, steps, setNodeAlpha } = deps;
 
   nodeMap.forEach((node, nodeId) => {
     setNodeAlpha(nodeId, DEFAULT_NODE_ALPHA);
@@ -266,7 +266,7 @@ export const clearSelectionVisuals = (deps: SelectionHighlighterDeps): void => {
     node.setSelected(false);
   });
 
-  workflowNodeMap.forEach((node) => {
+  stepNodeMap.forEach((node) => {
     node.alpha = DEFAULT_NODE_ALPHA;
     setNodeBlur(node, 0);
     node.setSelected(false);
@@ -277,7 +277,7 @@ export const clearSelectionVisuals = (deps: SelectionHighlighterDeps): void => {
     selectedId: null,
     highlightedIds: null,
   });
-  renderWorkflowEdges(workflowEdgeLayer, workflows, workflowNodeMap, null);
+  renderStepEdges(stepEdgeLayer, steps, stepNodeMap, null);
 };
 
 /**
@@ -287,19 +287,19 @@ export const applyPhaseFilter = (
   phase: Phase | null,
   deps: SelectionHighlighterDeps
 ): void => {
-  const { nodeMap, workflowNodeMap, workflows } = deps;
+  const { nodeMap, stepNodeMap, steps } = deps;
   const { blurStrength } = getFadeStyles();
 
   if (!phase) {
     // Clear filter - remove blur from all nodes
     nodeMap.forEach((node) => setNodeBlur(node, 0));
-    workflowNodeMap.forEach((node) => setNodeBlur(node, 0));
+    stepNodeMap.forEach((node) => setNodeBlur(node, 0));
     return;
   }
 
-  // Build set of workflow IDs that match the phase
-  const matchingWorkflowIds = new Set(
-    workflows.filter((w) => w.phase === phase).map((w) => w.id)
+  // Build set of step IDs that match the phase
+  const matchingStepIds = new Set(
+    steps.filter((s) => s.phase === phase).map((s) => s.id)
   );
 
   // Blur nodes that don't match the phase
@@ -308,9 +308,9 @@ export const applyPhaseFilter = (
     setNodeBlur(node, matches ? 0 : blurStrength);
   });
 
-  // Blur workflow nodes that don't match
-  workflowNodeMap.forEach((node, workflowId) => {
-    const matches = matchingWorkflowIds.has(workflowId);
+  // Blur step nodes that don't match
+  stepNodeMap.forEach((node, stepId) => {
+    const matches = matchingStepIds.has(stepId);
     setNodeBlur(node, matches ? 0 : blurStrength);
   });
 };

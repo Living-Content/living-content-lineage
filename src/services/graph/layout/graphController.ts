@@ -7,8 +7,8 @@ import { loadManifest } from '../../manifest/registry.js';
 import { ManifestLoadError, type ManifestErrorInfo } from '../../manifest/errors.js';
 import type { LineageGraph } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
-import { renderEdges, renderWorkflowEdges } from '../rendering/edgeRenderer.js';
-import { createWorkflowLabels } from '../rendering/workflowLabelRenderer.js';
+import { renderEdges, renderStepEdges } from '../rendering/edgeRenderer.js';
+import { createStepLabels } from '../rendering/workflowLabelRenderer.js';
 import { createViewportState, createViewportHandlers } from '../interaction/viewport.js';
 import { createLODController, type LODLayers } from './lodController.js';
 import { createTitleOverlay } from '../rendering/titleOverlay.js';
@@ -18,7 +18,7 @@ import { clearPhaseFilter } from '../../../stores/uiState.js';
 import { buildVerticalAdjacencyMap } from '../interaction/selectionHighlighter.js';
 import { createNodeAnimationController } from '../interaction/nodeAnimationController.js';
 import { createNodes, repositionNodesWithGaps } from './nodeCreator.js';
-import { recalculateWorkflowBounds, createWorkflowNodes, calculateTopNodeInfo, calculateBottomNodeInfo } from './workflowCreator.js';
+import { recalculateStepBounds, createStepNodes, calculateTopNodeInfo, calculateBottomNodeInfo } from './workflowCreator.js';
 import { initializePixi } from './pixiSetup.js';
 import { createStoreSubscriptions } from './graphSubscriptions.js';
 import { createViewportManager, createResizeHandler } from './viewportManager.js';
@@ -85,12 +85,12 @@ export async function createGraphController({
   // Create title overlay
   const titleOverlay = createTitleOverlay(app.stage, {
     title: lineageData.title ?? 'Lineage',
-    lineageId: lineageData.lineageId ?? '',
+    workflowId: lineageData.workflowId ?? '',
   });
 
   // Node maps
   const nodeMap = new Map<string, GraphNode>();
-  const workflowNodeMap = new Map<string, GraphNode>();
+  const stepNodeMap = new Map<string, GraphNode>();
 
   // Build adjacency map and animation controller
   const verticalAdjacency = buildVerticalAdjacencyMap(lineageData.nodes, lineageData.edges);
@@ -109,26 +109,26 @@ export async function createGraphController({
   });
 
   repositionNodesWithGaps(nodeMap);
-  recalculateWorkflowBounds(lineageData.workflows, nodeMap, graphScale);
+  recalculateStepBounds(lineageData.steps, nodeMap, graphScale);
 
-  // Create workflow nodes
-  createWorkflowNodes(lineageData.workflows, lineageData.nodes, lineageData.edges, workflowNodeMap, {
+  // Create step nodes
+  createStepNodes(lineageData.steps, lineageData.nodes, lineageData.edges, stepNodeMap, {
     container,
-    workflowNodeLayer: layers.workflowNodeLayer,
+    stepNodeLayer: layers.stepNodeLayer,
     selectionLayer: layers.selectionLayer,
     graphScale,
     ticker: app.ticker,
     callbacks: { onHover: callbacks.onHover, onHoverEnd: callbacks.onHoverEnd },
   });
 
-  renderWorkflowEdges(layers.workflowEdgeLayer, lineageData.workflows, workflowNodeMap, null);
+  renderStepEdges(layers.stepEdgeLayer, lineageData.steps, stepNodeMap, null);
 
-  // Workflow labels
+  // Step labels
   const topNodeInfo = calculateTopNodeInfo(nodeMap);
   const bottomNodeInfo = calculateBottomNodeInfo(nodeMap);
-  const workflowLabels = createWorkflowLabels(lineageData.workflows, workflowNodeMap, topNodeInfo);
-  app.stage.addChild(workflowLabels.container);
-  workflowLabels.update(viewportState);
+  const stepLabels = createStepLabels(lineageData.steps, stepNodeMap, topNodeInfo);
+  app.stage.addChild(stepLabels.container);
+  stepLabels.update(viewportState);
 
   // Text simplification state
   let isTextSimplified = false;
@@ -152,8 +152,8 @@ export async function createGraphController({
 
   // Helper functions
   const updateTitlePosition = (): void => {
-    const firstWorkflow = lineageData.workflows[0];
-    const leftmostNode = firstWorkflow ? workflowNodeMap.get(firstWorkflow.id) : null;
+    const firstStep = lineageData.steps[0];
+    const leftmostNode = firstStep ? stepNodeMap.get(firstStep.id) : null;
     if (leftmostNode) titleOverlay.updatePosition(leftmostNode, viewportState);
   };
 
@@ -174,16 +174,16 @@ export async function createGraphController({
   const lodLayers: LODLayers = {
     nodeLayer: layers.nodeLayer,
     edgeLayer: layers.edgeLayer,
-    workflowNodeLayer: layers.workflowNodeLayer,
-    workflowEdgeLayer: layers.workflowEdgeLayer,
-    workflowLayer: workflowLabels.container,
+    stepNodeLayer: layers.stepNodeLayer,
+    stepEdgeLayer: layers.stepEdgeLayer,
+    stepLayer: stepLabels.container,
   };
 
   const lodController = createLODController(lodLayers, {
     onCollapseStart: () => { clearSelection(); titleOverlay.setMode('relative'); },
     onCollapseEnd: updateTitlePosition,
     onExpandStart: () => { clearSelection(); clearPhaseFilter(); titleOverlay.setMode('fixed'); },
-    onExpandEnd: () => { workflowLabels.update(viewportState); cullAndRender(); },
+    onExpandEnd: () => { stepLabels.update(viewportState); cullAndRender(); },
   });
 
   // Viewport manager
@@ -191,7 +191,7 @@ export async function createGraphController({
     nodeMap,
     viewport,
     viewportState,
-    workflowLabelsUpdate: workflowLabels.update,
+    stepLabelsUpdate: stepLabels.update,
     cullAndRender,
     topNodeInfo,
     bottomNodeInfo,
@@ -200,16 +200,16 @@ export async function createGraphController({
   // Store subscriptions
   const subscriptions = createStoreSubscriptions({
     nodeMap,
-    workflowNodeMap,
+    stepNodeMap,
     edgeLayer: layers.edgeLayer,
-    workflowEdgeLayer: layers.workflowEdgeLayer,
+    stepEdgeLayer: layers.stepEdgeLayer,
     edges: lineageData.edges,
-    workflows: lineageData.workflows,
+    steps: lineageData.steps,
     verticalAdjacency,
     setNodeAlpha: animationController.setNodeAlpha,
     centerSelectedNode: viewportManager.centerOnNode,
-    setWorkflowLabelsPhaseFilter: workflowLabels.setPhaseFilter,
-    setWorkflowLabelsVisible: workflowLabels.setVisible,
+    setStepLabelsPhaseFilter: stepLabels.setPhaseFilter,
+    setStepLabelsVisible: stepLabels.setVisible,
     zoomToBounds: viewportManager.zoomToBounds,
   });
 
@@ -218,13 +218,13 @@ export async function createGraphController({
     onZoom: (scale) => {
       lodController.checkThreshold(scale);
       checkTextSimplifyThreshold(scale);
-      workflowLabels.update(viewportState);
+      stepLabels.update(viewportState);
       if (!lodController.state.isCollapsed && !lodController.state.isAnimating) cullAndRender();
       else if (lodController.state.isCollapsed) updateTitlePosition();
       callbacks.onSimpleViewChange(scale < LOD_THRESHOLD);
     },
     onPan: () => {
-      workflowLabels.update(viewportState);
+      stepLabels.update(viewportState);
       if (!lodController.state.isCollapsed && !lodController.state.isAnimating) cullAndRender();
       else if (lodController.state.isCollapsed) updateTitlePosition();
     },
@@ -248,7 +248,7 @@ export async function createGraphController({
     container,
     viewportState,
     app,
-    workflowLabelsUpdate: workflowLabels.update,
+    stepLabelsUpdate: stepLabels.update,
     cullAndRender,
     updateTitlePosition,
     centerSelectedNode: viewportManager.centerOnNode,

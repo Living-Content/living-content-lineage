@@ -2,7 +2,7 @@
   "$schema": "https://livingcontent.org/schemas/lineage/v1.json",
   "manifest_type": "custom",
   "version": "1.0.0",
-  "lineage_id": "e12a317d-5365-474e-ae24-d22de0514954",
+  "workflow_id": "e12a317d-5365-474e-ae24-d22de0514954",
   "title": "What's in the database?",
   "description": "A retrieval-augmented generation pipeline that processes user questions through multiple AI stages to produce informed answers.",
   "content_session_id": "2f7fbc02-40e7-4b5d-8ede-fff8541f976c",
@@ -30,7 +30,9 @@
           }
         }
       ],
-      "signature_info": {
+      "claim": {
+        "type": "certificate",
+        "provider": "LCO",
         "alg": "ES256",
         "issuer": "did:key:zQ3shwc61yUNaJZBX2L9mZd3xhWjTEqD52dA3JxBnZnu78E3d",
         "time": "2026-01-14T18:15:35Z"
@@ -38,7 +40,7 @@
     }
   },
 
-  "workflows": [
+  "steps": [
     { "id": "ingest", "label": "Ingest", "type": "ingest", "phase": "Acquisition" },
     { "id": "select", "label": "Select", "type": "select", "phase": "Preparation" },
     { "id": "retrieve", "label": "Retrieve", "type": "retrieve", "phase": "Retrieval" },
@@ -63,7 +65,7 @@
       "label": "Consume",
       "title": "Query Validator",
       "asset_type": "Action",
-      "workflowId": "ingest",
+      "step": "ingest",
       "description": "Receives and validates the user's question, preparing it for the AI pipeline.",
       "manifest_url": "./actions/action-consume-query.json"
     },
@@ -96,7 +98,7 @@
       "label": "Select",
       "title": "Tool Selector",
       "asset_type": "Action",
-      "workflowId": "select",
+      "step": "select",
       "description": "Uses AI to analyze the question and pick the right tool to answer it.",
       "manifest_url": "./actions/action-select-tool.json"
     },
@@ -121,7 +123,7 @@
       "label": "Retrieve",
       "title": "History Retriever",
       "asset_type": "Action",
-      "workflowId": "retrieve",
+      "step": "retrieve",
       "description": "Looks up previous messages in this conversation for context.",
       "manifest_url": "./actions/action-retrieve-history.json"
     },
@@ -154,7 +156,7 @@
       "label": "Reflect",
       "title": "Intent Analyzer",
       "asset_type": "Action",
-      "workflowId": "reflect",
+      "step": "reflect",
       "description": "Analyzes what the user really wants to know beyond the literal question.",
       "manifest_url": "./actions/action-reflect.json"
     },
@@ -187,7 +189,7 @@
       "label": "Plan",
       "title": "Strategy Planner",
       "asset_type": "Action",
-      "workflowId": "plan",
+      "step": "plan",
       "description": "Creates a strategy for finding the best information to answer the question.",
       "manifest_url": "./actions/action-plan.json"
     },
@@ -212,7 +214,7 @@
       "label": "Search",
       "title": "Knowledge Retriever",
       "asset_type": "Action",
-      "workflowId": "search",
+      "step": "search",
       "description": "Searches the knowledge base to find relevant documents and information.",
       "manifest_url": "./actions/action-retrieve.json"
     },
@@ -245,7 +247,7 @@
       "label": "Evaluate",
       "title": "Relevance Evaluator",
       "asset_type": "Action",
-      "workflowId": "evaluate",
+      "step": "evaluate",
       "description": "Uses AI to score and rank retrieved documents by relevance.",
       "manifest_url": "./actions/action-evaluate.json"
     },
@@ -278,7 +280,7 @@
       "label": "Generate",
       "title": "Response Generator",
       "asset_type": "Action",
-      "workflowId": "generate",
+      "step": "generate",
       "description": "Uses Claude to synthesize the information into a helpful answer.",
       "manifest_url": "./actions/action-generate-response.json"
     },
@@ -303,7 +305,7 @@
       "label": "Save",
       "title": "Response Archiver",
       "asset_type": "Action",
-      "workflowId": "store",
+      "step": "store",
       "description": "Saves the response and records its complete provenance chain.",
       "manifest_url": "./actions/action-save-response.json"
     },
@@ -321,7 +323,7 @@
     {
       "id": "attest-generate",
       "label": "Attestation",
-      "workflowId": "generate",
+      "step": "generate",
       "verifies": ["data-generated-response"],
       "description": "Cryptographic proof that this response was generated in a secure, tamper-proof environment."
     }

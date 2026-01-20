@@ -1,13 +1,13 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
-  import { clearSelection, selectedNode, selectedWorkflow } from '../../stores/lineageState.js';
+  import { clearSelection, selectedNode, selectedStep } from '../../stores/lineageState.js';
   import { isDetailOpen, loadError, setDetailOpen, closeDetailPanel } from '../../stores/uiState.js';
   import { hasDetailContent } from '../../services/dataviewer/parsing/detailContent.js';
   import { createDragHandler } from '../../services/dataviewer/interaction/dragHandler.js';
   import { createAnimationOrchestrator } from '../../services/dataviewer/animation/animationOrchestrator.js';
   import PanelHeader from './panel/PanelHeader.svelte';
   import NodeContent from './panel/NodeContent.svelte';
-  import WorkflowOverview from './WorkflowOverview.svelte';
+  import StepOverview from './StepOverview.svelte';
   import SignaturePanel from './SignaturePanel.svelte';
 
   let wrapperElement: HTMLElement;
@@ -37,8 +37,8 @@
   });
 
   $: detailAvailable = $selectedNode ? hasDetailContent($selectedNode) : false;
-  $: panelHidden = !$selectedNode && !$selectedWorkflow && !$loadError;
-  $: showCloseButton = !!$selectedNode || !!$selectedWorkflow;
+  $: panelHidden = !$selectedNode && !$selectedStep && !$loadError;
+  $: showCloseButton = !!$selectedNode || !!$selectedStep;
 
   $: if (!panelHidden && wasHidden && wrapperElement) {
     handleEntrance();
@@ -116,19 +116,18 @@
 
   <aside class="panel-content-layer" bind:this={contentLayer}>
     <PanelHeader
-      phase={$selectedNode?.phase}
-      workflowId={$selectedNode?.workflowId}
+      phase={$selectedNode?.phase ?? $selectedStep?.phase}
+      step={$selectedNode?.step ?? $selectedStep?.stepId}
       assetType={$selectedNode?.assetType}
-      workflowLabel={$selectedWorkflow?.label}
       {showCloseButton}
       isNodeSelected={!!$selectedNode}
-      isWorkflowSelected={!!$selectedWorkflow}
+      isStepSelected={!!$selectedStep}
       {isDragging}
       onClose={handleClose}
       onStartDrag={handleStartDrag}
     />
 
-    <div class="panel-scroll-area" bind:this={scrollArea}>
+    <div class="panel-scroll-area" class:has-footer={$selectedNode?.assetManifest?.signatureInfo} bind:this={scrollArea}>
       <div class="panel-content">
         {#if $loadError}
           <p class="panel-placeholder">{$loadError}</p>
@@ -139,8 +138,8 @@
             {detailAvailable}
             onOpenDetails={openDetails}
           />
-        {:else if $selectedWorkflow}
-          <WorkflowOverview nodes={$selectedWorkflow.nodes} edges={$selectedWorkflow.edges} />
+        {:else if $selectedStep}
+          <StepOverview nodes={$selectedStep.nodes} edges={$selectedStep.edges} />
         {:else}
           <p class="panel-placeholder">Select a node to view details</p>
         {/if}
@@ -225,9 +224,13 @@
   .panel-scroll-area {
     flex: 1;
     overflow-y: auto;
-    padding: 0 20px 60px 20px;
+    padding: 0 20px 20px 20px;
     width: 0;
     min-width: 100%;
+  }
+
+  .panel-scroll-area.has-footer {
+    padding-bottom: 60px;
   }
 
   .panel-footer {

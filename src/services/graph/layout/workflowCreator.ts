@@ -1,11 +1,11 @@
 /**
- * Workflow node creation and bounds calculation.
+ * Step node creation and bounds calculation.
  */
 import type { Ticker, Container } from 'pixi.js';
-import type { LineageNodeData, Workflow, LineageEdgeData } from '../../../config/types.js';
+import type { LineageNodeData, StepUI, LineageEdgeData } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import {
-  createWorkflowElement,
+  createStepElement,
   addElementsToLayer,
   populateElementMap,
   type HoverPayload,
@@ -13,30 +13,30 @@ import {
   type HoverCallbackConfig,
 } from './graphLayout.js';
 
-interface WorkflowCreatorCallbacks {
+interface StepCreatorCallbacks {
   onHover: (payload: HoverPayload) => void;
   onHoverEnd: () => void;
 }
 
-interface WorkflowCreatorDeps {
+interface StepCreatorDeps {
   container: HTMLElement;
-  workflowNodeLayer: Container;
+  stepNodeLayer: Container;
   selectionLayer: Container;
   graphScale: number;
   ticker: Ticker;
-  callbacks: WorkflowCreatorCallbacks;
+  callbacks: StepCreatorCallbacks;
 }
 
 /**
- * Builds the unified element config from workflow creator deps.
+ * Builds the unified element config from step creator deps.
  */
 const buildElementConfig = (
-  deps: WorkflowCreatorDeps,
-  workflowNodeMap: Map<string, GraphNode>
+  deps: StepCreatorDeps,
+  stepNodeMap: Map<string, GraphNode>
 ): CreateElementConfig => {
   const hoverConfig: HoverCallbackConfig = {
     container: deps.container,
-    getSelectedNodeId: () => null, // Workflow nodes don't have alpha changes on hover
+    getSelectedNodeId: () => null, // Step nodes don't have alpha changes on hover
     onHover: deps.callbacks.onHover,
     onHoverEnd: deps.callbacks.onHoverEnd,
   };
@@ -46,26 +46,26 @@ const buildElementConfig = (
     ticker: deps.ticker,
     selectionLayer: deps.selectionLayer,
     hoverConfig,
-    nodeMap: workflowNodeMap,
+    nodeMap: stepNodeMap,
   };
 };
 
 /**
- * Recalculates workflow bounds based on the positioned nodes within each workflow.
+ * Recalculates step bounds based on the positioned nodes within each step.
  */
-export const recalculateWorkflowBounds = (
-  workflows: Workflow[],
+export const recalculateStepBounds = (
+  steps: StepUI[],
   nodeMap: Map<string, GraphNode>,
   graphScale: number
 ): void => {
-  const workflowPadding = 0.04 * graphScale;
+  const stepPadding = 0.04 * graphScale;
 
-  for (const workflow of workflows) {
+  for (const step of steps) {
     let minX = Infinity;
     let maxX = -Infinity;
 
     nodeMap.forEach((node) => {
-      if (node.nodeData.workflowId === workflow.id) {
+      if (node.nodeData.step === step.id) {
         const halfW = node.nodeWidth / 2;
         minX = Math.min(minX, node.position.x - halfW);
         maxX = Math.max(maxX, node.position.x + halfW);
@@ -73,34 +73,34 @@ export const recalculateWorkflowBounds = (
     });
 
     if (minX !== Infinity) {
-      workflow.xStart = (minX - workflowPadding) / graphScale + 0.5;
-      workflow.xEnd = (maxX + workflowPadding) / graphScale + 0.5;
+      step.xStart = (minX - stepPadding) / graphScale + 0.5;
+      step.xEnd = (maxX + stepPadding) / graphScale + 0.5;
     }
   }
 };
 
 /**
- * Creates workflow nodes (collapsed view representation).
+ * Creates step nodes (collapsed view representation).
  */
-export const createWorkflowNodes = (
-  workflows: Workflow[],
+export const createStepNodes = (
+  steps: StepUI[],
   nodes: LineageNodeData[],
   edges: LineageEdgeData[],
-  workflowNodeMap: Map<string, GraphNode>,
-  deps: WorkflowCreatorDeps
+  stepNodeMap: Map<string, GraphNode>,
+  deps: StepCreatorDeps
 ): void => {
-  const config = buildElementConfig(deps, workflowNodeMap);
+  const config = buildElementConfig(deps, stepNodeMap);
 
-  const elements = workflows.map((workflow) =>
-    createWorkflowElement(workflow, nodes, edges, config)
+  const elements = steps.map((step) =>
+    createStepElement(step, nodes, edges, config)
   );
 
-  addElementsToLayer(elements, deps.workflowNodeLayer);
-  populateElementMap(elements, workflowNodeMap);
+  addElementsToLayer(elements, deps.stepNodeLayer);
+  populateElementMap(elements, stepNodeMap);
 };
 
 /**
- * Calculates info about the topmost node for workflow label positioning.
+ * Calculates info about the topmost node for step label positioning.
  */
 export const calculateTopNodeInfo = (
   nodeMap: Map<string, GraphNode>

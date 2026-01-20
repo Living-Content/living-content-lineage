@@ -17,10 +17,10 @@ export type Phase =
   | "Persistence";
 
 /**
- * Specific workflow operation type.
- * Each phase type belongs to a single phase.
+ * Specific step operation type within a workflow.
+ * Each step belongs to a single phase.
  */
-export type PhaseType =
+export type Step =
   // Acquisition - Getting input data into the pipeline
   | "ingest"
   // Preparation - Selecting, transforming, validating inputs
@@ -81,19 +81,19 @@ export interface ManifestAssertion {
 }
 
 /** Signature mechanism type */
-export type SignatureType = 'merkle' | 'certificate' | 'tee';
+export type ClaimType = 'merkle' | 'certificate' | 'tee';
 
 /** Signature provider/standard */
-export type SignatureProvider = 'EQTY' | 'C2PA' | 'LCO';
+export type ClaimProvider = 'EQTY' | 'C2PA' | 'LCO';
 
 export interface ManifestSignatureInfo {
   alg: string;
   issuer: string;
   time: string;
   /** Type of signature: merkle tree, certificate chain, or TEE attestation */
-  type?: SignatureType;
+  type?: ClaimType;
   /** Provider/standard that created the signature */
-  provider?: SignatureProvider;
+  provider?: ClaimProvider;
 }
 
 export interface ManifestIngredient {
@@ -147,7 +147,7 @@ export interface LineageNodeData {
   nodeType: NodeType;
   assetType?: AssetType;
   shape: NodeShape;
-  workflowId?: string;
+  step?: string;
   phase: Phase;
   manifest?: LineageManifestSummary;
   assetManifest?: AssetManifest;
@@ -172,7 +172,7 @@ export interface LineageEdgeData {
   isGate?: boolean;
 }
 
-export interface Workflow {
+export interface StepUI {
   id: string;
   label: string;
   phase: Phase;
@@ -182,10 +182,11 @@ export interface Workflow {
 
 export interface LineageGraph {
   title?: string;
-  lineageId?: string;
+  workflowId?: string;
+  contentSessionId?: string;
   nodes: LineageNodeData[];
   edges: LineageEdgeData[];
-  workflows: Workflow[];
+  steps: StepUI[];
 }
 
 /**
@@ -211,10 +212,10 @@ export const assetTypeToNodeType = (assetType: AssetType): NodeType => {
 };
 
 /**
- * Maps a phase type to its parent phase.
+ * Maps a step to its parent phase.
  */
-export const phaseTypeToPhase = (phaseType: PhaseType): Phase => {
-  switch (phaseType) {
+export const stepToPhase = (step: Step): Phase => {
+  switch (step) {
     case "ingest":
       return "Acquisition";
     case "select":

@@ -108,7 +108,9 @@
     ],
     "total_chunks": 10
   },
-  "signature_info": {
+  "claim": {
+    "type": "certificate",
+    "provider": "LCO",
     "alg": "ES256",
     "issuer": "did:key:zQ3shwc61yUNaJZBX2L9mZd3xhWjTEqD52dA3JxBnZnu78E3d",
     "time": "2026-01-14T18:15:25Z"

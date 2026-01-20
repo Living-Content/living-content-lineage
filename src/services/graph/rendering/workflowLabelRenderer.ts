@@ -1,10 +1,10 @@
 /**
- * Renders workflow labels at the top of the graph view.
+ * Renders step labels at the top of the graph view.
  * Labels are created once and positions updated on viewport changes.
  * Each label has a dotted vertical line extending down toward the nodes.
  */
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
-import type { Workflow, Phase } from '../../../config/types.js';
+import type { StepUI, Phase } from '../../../config/types.js';
 import type { ViewportState } from '../interaction/viewport.js';
 import type { GraphNode } from './nodeRenderer.js';
 import { getCssVarColorHex, getCssVar, getCssVarInt, getCssVarFloat, type CssVar } from '../../../themes/index.js';
@@ -12,23 +12,23 @@ import { setPhaseFilter } from '../../../stores/uiState.js';
 
 
 /**
- * Gets the color for a workflow based on its phase.
+ * Gets the color for a step based on its phase.
  */
-const getWorkflowColor = (phase?: Phase): number => {
+const getStepColor = (phase?: Phase): number => {
   if (!phase) return getCssVarColorHex('--color-edge');
   return getCssVarColorHex(`--phase-${phase.toLowerCase()}` as CssVar);
 };
 
 /**
- * Creates a text style for workflow labels.
+ * Creates a text style for step labels.
  */
 const createLabelStyle = (color: number): TextStyle => {
   return new TextStyle({
     fontFamily: getCssVar('--font-sans'),
-    fontSize: getCssVarInt('--workflow-label-font-size'),
+    fontSize: getCssVarInt('--step-label-font-size'),
     fontWeight: '600',
     fill: color,
-    letterSpacing: getCssVarFloat('--workflow-label-letter-spacing'),
+    letterSpacing: getCssVarFloat('--step-label-letter-spacing'),
   });
 };
 
@@ -38,9 +38,9 @@ export interface TopNodeInfo {
 }
 
 /**
- * A single workflow label entry with its visual elements.
+ * A single step label entry with its visual elements.
  */
-export interface WorkflowLabelEntry {
+export interface StepLabelEntry {
   labelContainer: Container;
   label: Text;
   line: Graphics;
@@ -49,7 +49,7 @@ export interface WorkflowLabelEntry {
   phase: Phase;
 }
 
-export interface WorkflowLabels {
+export interface StepLabels {
   update: (viewportState: ViewportState) => void;
   setPhaseFilter: (activePhase: Phase | null) => void;
   setVisible: (visible: boolean) => void;
@@ -57,40 +57,40 @@ export interface WorkflowLabels {
 }
 
 /**
- * Pure creation of a single workflow label entry (no container attachment).
+ * Pure creation of a single step label entry (no container attachment).
  */
-export const createWorkflowLabelEntry = (
-  workflow: Workflow,
-  workflowNode: GraphNode | undefined
-): WorkflowLabelEntry => {
-  const worldX = workflowNode ? workflowNode.position.x : 0;
-  const color = getWorkflowColor(workflow.phase);
+export const createStepLabelEntry = (
+  step: StepUI,
+  stepNode: GraphNode | undefined
+): StepLabelEntry => {
+  const worldX = stepNode ? stepNode.position.x : 0;
+  const color = getStepColor(step.phase);
 
-  const label = new Text({ text: workflow.label, style: createLabelStyle(color) });
+  const label = new Text({ text: step.label, style: createLabelStyle(color) });
   label.anchor.set(0.5, 0);
-  label.position.y = getCssVarInt('--workflow-label-top-padding');
+  label.position.y = getCssVarInt('--step-label-top-padding');
 
   // Wrap label in clickable container
   const labelContainer = new Container();
   labelContainer.eventMode = 'static';
   labelContainer.cursor = 'pointer';
   labelContainer.addChild(label);
-  labelContainer.on('pointertap', () => setPhaseFilter(workflow.phase));
+  labelContainer.on('pointertap', () => setPhaseFilter(step.phase));
 
   const line = new Graphics();
 
-  return { labelContainer, label, line, worldX, color, phase: workflow.phase };
+  return { labelContainer, label, line, worldX, color, phase: step.phase };
 };
 
 /**
- * Batch creation of label entries from workflows (no container attachment).
+ * Batch creation of label entries from steps (no container attachment).
  */
 export const createLabelEntries = (
-  workflows: Workflow[],
-  workflowNodeMap: Map<string, GraphNode>
-): WorkflowLabelEntry[] => {
-  return workflows.map((workflow) =>
-    createWorkflowLabelEntry(workflow, workflowNodeMap.get(workflow.id))
+  steps: StepUI[],
+  stepNodeMap: Map<string, GraphNode>
+): StepLabelEntry[] => {
+  return steps.map((step) =>
+    createStepLabelEntry(step, stepNodeMap.get(step.id))
   );
 };
 
@@ -99,7 +99,7 @@ export const createLabelEntries = (
  */
 export const attachLabelEntriesToContainer = (
   container: Container,
-  entries: WorkflowLabelEntry[]
+  entries: StepLabelEntry[]
 ): void => {
   for (const entry of entries) {
     container.addChild(entry.labelContainer);
@@ -111,7 +111,7 @@ export const attachLabelEntriesToContainer = (
  * Updates a single label entry position based on viewport state.
  */
 const updateLabelEntryPosition = (
-  entry: WorkflowLabelEntry,
+  entry: StepLabelEntry,
   viewportState: ViewportState,
   topPadding: number,
   globalTopY: number
@@ -123,15 +123,15 @@ const updateLabelEntryPosition = (
   entry.line.clear();
   if (globalTopY === Infinity) return;
 
-  const startY = topPadding + getCssVarInt('--workflow-label-line-start');
+  const startY = topPadding + getCssVarInt('--step-label-line-start');
   const endY = globalTopY;
   if (endY <= startY) return;
 
   const fadeDistance = (endY - startY) * 0.6;
   const fadeStartY = startY + fadeDistance;
 
-  const dotSize = getCssVarInt('--workflow-label-dot-size');
-  const dotGap = getCssVarInt('--workflow-label-dot-gap');
+  const dotSize = getCssVarInt('--step-label-dot-size');
+  const dotGap = getCssVarInt('--step-label-dot-gap');
 
   let currentY = startY;
   while (currentY < endY) {
@@ -147,19 +147,19 @@ const updateLabelEntryPosition = (
 };
 
 /**
- * Creates workflow labels once. Call update() on viewport changes.
- * Uses workflowNodeMap positions so labels align with collapsed workflow nodes.
+ * Creates step labels once. Call update() on viewport changes.
+ * Uses stepNodeMap positions so labels align with collapsed step nodes.
  */
-export function createWorkflowLabels(
-  workflows: Workflow[],
-  workflowNodeMap: Map<string, GraphNode>,
+export function createStepLabels(
+  steps: StepUI[],
+  stepNodeMap: Map<string, GraphNode>,
   topNodeInfo: TopNodeInfo | null
-): WorkflowLabels {
+): StepLabels {
   const container = new Container();
-  const topPadding = getCssVarInt('--workflow-label-top-padding');
+  const topPadding = getCssVarInt('--step-label-top-padding');
 
   // Create and attach entries
-  const entries = createLabelEntries(workflows, workflowNodeMap);
+  const entries = createLabelEntries(steps, stepNodeMap);
   attachLabelEntriesToContainer(container, entries);
 
   const update = (viewportState: ViewportState): void => {

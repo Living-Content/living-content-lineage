@@ -40,7 +40,9 @@
 
   "source_code": "@chain_link(computation=\"save_response\", output_asset_type=\"document\")\nasync def _record_response_lineage(\n    query_ctx,\n    full_response: str,\n) -> dict:\n    \"\"\"Record response in lineage graph.\n\n    Note: Actual message persistence is handled by core/tasks/query.py\n    after streaming completes. This function only creates the lineage entry.\n    \"\"\"\n    return {\n        \"response_length\": len(full_response),\n        \"request_message_id\": query_ctx.request_message_id,\n        \"response_message_id\": query_ctx.response_message_id,\n    }",
 
-  "signature_info": {
+  "claim": {
+    "type": "certificate",
+    "provider": "LCO",
     "alg": "ES256",
     "issuer": "did:key:zQ3shwc61yUNaJZBX2L9mZd3xhWjTEqD52dA3JxBnZnu78E3d",
     "time": "2026-01-14T18:15:35Z"

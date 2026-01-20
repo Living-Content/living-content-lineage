@@ -1,14 +1,18 @@
+import { isRecord } from '../../../../config/utils.js';
+
 /**
- * Workflow definition in the lineage manifest.
- * Workflows group related nodes within a phase.
+ * Step definition - a specific operation within a workflow phase.
  */
-export interface LineageWorkflow {
+export interface Step {
   id: string;
   label: string;
   type?: string;
   phase?: string;
 }
 
+/**
+ * Asset definition in the manifest.
+ */
 export interface Asset {
   id: string;
   label: string;
@@ -16,77 +20,71 @@ export interface Asset {
   asset_type: string;
   description?: string;
   manifest_url?: string;
-  workflowId?: string;
+  step?: string;
 }
 
 /**
- * Asset manifest loaded from manifest_url.
- * For Action assets, includes inputs/outputs for edge building.
+ * Attestation definition in the manifest.
  */
-export interface LineageAssetManifest {
-  claim_generator?: string;
-  claim_generator_info?: Array<{ name: string; version: string }>;
-  title?: string;
-  format?: string;
-  instance_id?: string;
-  assertions?: Array<{ label: string; data: unknown }>;
-  signature_info?: {
-    alg: string;
-    issuer: string;
-    time: string;
-  };
-  source_code?: string;
-  content?: Record<string, unknown>;
-  inputs?: string[];
-  outputs?: string[];
-}
-
-export interface LineageAttestation {
+export interface Attestation {
   id: string;
   label: string;
   title?: string;
-  workflowId: string;
+  step: string;
   verifies: string[];
   description?: string;
 }
 
-export interface LineageManifestRecord {
+/**
+ * Claim - the proof/attestation attached to a signed manifest.
+ * Can be TEE attestation, certificate (VC), or merkle hash.
+ */
+export interface Claim {
+  type?: 'merkle' | 'certificate' | 'tee';
+  provider?: 'EQTY' | 'C2PA' | 'LCO';
+  alg: string;
+  issuer: string;
+  time: string;
+}
+
+/**
+ * SignedManifest - a manifest record with an executed claim attached.
+ */
+export interface SignedManifest {
   claim_generator: string;
   claim_generator_info: Array<{ name: string; version: string }>;
   title: string;
   format: string;
   instance_id: string;
   assertions: Array<{ label: string; data: unknown }>;
-  signature_info: {
-    alg: string;
-    issuer: string;
-    time: string;
-  };
+  claim: Claim;
 }
 
-export interface LineageManifest {
+/**
+ * The complete workflow manifest file structure.
+ */
+export interface Manifest {
   manifest_type: string;
   title: string;
   description: string;
-  lineage_id: string;
+  workflow_id: string;
+  content_session_id?: string;
   active_manifest: string;
-  manifests: Record<string, LineageManifestRecord>;
-  workflows: LineageWorkflow[];
+  manifests: Record<string, SignedManifest>;
+  steps: Step[];
   assets: Asset[];
-  attestations: LineageAttestation[];
+  attestations: Attestation[];
 }
 
-import { isRecord } from '../../../../config/utils.js';
-
-export function isLineageManifest(raw: unknown): raw is LineageManifest {
+export function isManifest(raw: unknown): raw is Manifest {
   if (!isRecord(raw)) return false;
   if (typeof raw.manifest_type !== 'string') return false;
   if (typeof raw.title !== 'string') return false;
   if (typeof raw.description !== 'string') return false;
-  if (typeof raw.lineage_id !== 'string') return false;
+  if (typeof raw.workflow_id !== 'string') return false;
   if (typeof raw.active_manifest !== 'string') return false;
   if (!isRecord(raw.manifests)) return false;
-  if (!Array.isArray(raw.workflows)) return false;
+  if (!Array.isArray(raw.steps)) return false;
   if (!Array.isArray(raw.assets)) return false;
   if (!Array.isArray(raw.attestations)) return false;
   return true;

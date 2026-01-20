@@ -41,13 +41,13 @@ export const baseTokens = {
   'faded-node-alpha': '0.25',
   'faded-node-blur': '3',
 
-  // Workflow labels
-  'workflow-label-font-size': '20px',
-  'workflow-label-letter-spacing': '-0.5px',
-  'workflow-label-top-padding': '100px',
-  'workflow-label-line-start': '30px',
-  'workflow-label-dot-size': '2px',
-  'workflow-label-dot-gap': '4px',
+  // Step labels (for step view)
+  'step-label-font-size': '20px',
+  'step-label-letter-spacing': '-0.5px',
+  'step-label-top-padding': '100px',
+  'step-label-line-start': '30px',
+  'step-label-dot-size': '2px',
+  'step-label-dot-gap': '4px',
   'phase-badge-top': '160px',
 
   // Node sizing

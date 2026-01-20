@@ -17,9 +17,9 @@ export interface LODState {
 export interface LODLayers {
   nodeLayer: Container;
   edgeLayer: Container;
-  workflowNodeLayer: Container;
-  workflowEdgeLayer: Container;
-  workflowLayer: Container;
+  stepNodeLayer: Container;
+  stepEdgeLayer: Container;
+  stepLayer: Container;
 }
 
 export interface LODCallbacks {
@@ -76,8 +76,8 @@ export function createLODController(
     isAnimating: false,
   };
 
-  const detailLayers = [layers.nodeLayer, layers.edgeLayer, layers.workflowLayer];
-  const workflowLayers = [layers.workflowNodeLayer, layers.workflowEdgeLayer];
+  const workflowViewLayers = [layers.nodeLayer, layers.edgeLayer, layers.stepLayer];
+  const stepViewLayers = [layers.stepNodeLayer, layers.stepEdgeLayer];
 
   function collapse(): void {
     if (state.isAnimating) return;
@@ -85,7 +85,7 @@ export function createLODController(
     state.isCollapsed = true;
     callbacks.onCollapseStart?.();
 
-    animateCrossfade(detailLayers, workflowLayers, () => {
+    animateCrossfade(workflowViewLayers, stepViewLayers, () => {
       state.isAnimating = false;
       callbacks.onCollapseEnd?.();
     });
@@ -97,7 +97,7 @@ export function createLODController(
     state.isCollapsed = false;
     callbacks.onExpandStart?.();
 
-    animateCrossfade(workflowLayers, detailLayers, () => {
+    animateCrossfade(stepViewLayers, workflowViewLayers, () => {
       state.isAnimating = false;
       callbacks.onExpandEnd?.();
     });

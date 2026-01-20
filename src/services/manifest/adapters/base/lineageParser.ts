@@ -6,15 +6,16 @@ import type {
   LineageManifestSummary,
   LineageNodeData,
   Phase,
+  StepUI,
 } from '../../../../config/types.js';
 import { isRecord, validatePhase } from '../../../../config/utils.js';
 import { assetTypeToNodeType } from '../../../../config/types.js';
-import type { LineageManifest, LineageManifestRecord } from './lineageTypes.js';
+import type { Manifest, SignedManifest } from './lineageTypes.js';
 import { computeLayout } from './lineageLayout.js';
 import { getCssVar } from '../../../../themes/index.js';
 
 const buildManifestSummary = (
-  record?: LineageManifestRecord
+  record?: SignedManifest
 ): LineageManifestSummary | undefined => {
   if (!record) return undefined;
   const claimGeneratorInfo = Array.isArray(record.claim_generator_info)
@@ -29,11 +30,13 @@ const buildManifestSummary = (
         data: assertion.data,
       }))
     : undefined;
-  const signatureInfo = isRecord(record.signature_info)
+  const signatureInfo = record.claim
     ? {
-        alg: String(record.signature_info.alg ?? ''),
-        issuer: String(record.signature_info.issuer ?? ''),
-        time: String(record.signature_info.time ?? ''),
+        alg: String(record.claim.alg ?? ''),
+        issuer: String(record.claim.issuer ?? ''),
+        time: String(record.claim.time ?? ''),
+        type: record.claim.type,
+        provider: record.claim.provider,
       }
     : undefined;
   return {
@@ -51,7 +54,7 @@ const buildManifestSummary = (
  * Actions are first-class assets with inputs/outputs in their manifests.
  */
 export const buildLineageGraph = (
-  manifest: LineageManifest,
+  manifest: Manifest,
   assetManifests: Map<string, AssetManifest>,
   mapAssetType: (assetType: string) => AssetType
 ): LineageGraph => {
@@ -59,14 +62,14 @@ export const buildLineageGraph = (
   const activeManifest = manifest.manifests[activeManifestId];
   const manifestSummary = buildManifestSummary(activeManifest);
 
-  const { positions, workflows } = computeLayout(manifest, assetManifests);
+  const { positions, steps } = computeLayout(manifest, assetManifests);
   const nodes: LineageNodeData[] = [];
 
-  // Build workflow-to-phase mapping
-  const workflowPhaseMap = new Map<string, Phase>();
-  manifest.workflows.forEach((workflow) => {
-    const phase = validatePhase(workflow.phase, `workflow ${workflow.id}`);
-    workflowPhaseMap.set(workflow.id, phase);
+  // Build step-to-phase mapping
+  const stepPhaseMap = new Map<string, Phase>();
+  manifest.steps.forEach((step) => {
+    const phase = validatePhase(step.phase, `step ${step.id}`);
+    stepPhaseMap.set(step.id, phase);
   });
 
   // Build asset type map for edge classification
@@ -77,12 +80,12 @@ export const buildLineageGraph = (
 
   // Create nodes for all assets
   manifest.assets.forEach((asset) => {
-    const pos = positions.get(asset.id) ?? { x: 0, y: 200, workflowId: 'unknown' };
+    const pos = positions.get(asset.id) ?? { x: 0, y: 200, step: 'unknown' };
     const assetManifest = assetManifests.get(asset.id);
     const mappedAssetType = mapAssetType(asset.asset_type);
     const nodeType = assetTypeToNodeType(mappedAssetType);
-    const phase = workflowPhaseMap.get(pos.workflowId);
-    if (!phase) throw new Error(`Missing phase for workflow ${pos.workflowId}`);
+    const phase = stepPhaseMap.get(pos.step);
+    if (!phase) throw new Error(`Missing phase for step ${pos.step}`);
 
     nodes.push({
       id: asset.id,
@@ -93,7 +96,7 @@ export const buildLineageGraph = (
       shape: 'circle',
       x: pos.x,
       y: pos.y,
-      workflowId: pos.workflowId,
+      step: pos.step,
       phase,
       description: asset.description,
       assetManifest,
@@ -110,9 +113,9 @@ export const buildLineageGraph = (
 
   // Create nodes for attestations
   manifest.attestations.forEach((attest) => {
-    const pos = positions.get(attest.id) ?? { x: 0, y: 100, workflowId: 'unknown' };
-    const phase = workflowPhaseMap.get(pos.workflowId);
-    if (!phase) throw new Error(`Missing phase for workflow ${pos.workflowId}`);
+    const pos = positions.get(attest.id) ?? { x: 0, y: 100, step: 'unknown' };
+    const phase = stepPhaseMap.get(pos.step);
+    if (!phase) throw new Error(`Missing phase for step ${pos.step}`);
     nodes.push({
       id: attest.id,
       label: attest.label,
@@ -122,7 +125,7 @@ export const buildLineageGraph = (
       shape: 'circle',
       x: pos.x,
       y: pos.y,
-      workflowId: pos.workflowId,
+      step: pos.step,
       phase,
       description: attest.description,
       role: 'sink',
@@ -186,9 +189,10 @@ export const buildLineageGraph = (
 
   return {
     title: manifest.title,
-    lineageId: manifest.lineage_id,
+    workflowId: manifest.workflow_id,
+    contentSessionId: manifest.content_session_id,
     nodes,
     edges,
-    workflows
+    steps,
   };
 }

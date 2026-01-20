@@ -1,25 +1,25 @@
 import type { LineageGraph } from '../../../../config/types.js';
 import type { ManifestAdapter } from '../manifestAdapter.js';
 import {
-  getLineageAssetManifestRequests,
-  parseLineageManifest,
+  getAssetManifestRequests,
+  parseManifest,
 } from '../base/lineageAdapter.js';
-import { isLineageManifest, type LineageManifest } from '../base/lineageTypes.js';
+import { isManifest, type Manifest } from '../base/lineageTypes.js';
 import { isCustomManifest } from './customTypes.js';
 import { mapAssetType } from '../assetTypeMapper.js';
 
-export const customAdapter: ManifestAdapter<LineageManifest> = {
+export const customAdapter: ManifestAdapter<Manifest> = {
   type: 'custom',
-  isCompatible(raw: unknown): raw is LineageManifest {
-    return isCustomManifest(raw) && isLineageManifest(raw);
+  isCompatible(raw: unknown): raw is Manifest {
+    return isCustomManifest(raw) && isManifest(raw);
   },
-  getAssetManifestRequests(raw: LineageManifest, baseUrl: URL) {
-    return getLineageAssetManifestRequests(raw, baseUrl);
+  getAssetManifestRequests(raw: Manifest, baseUrl: URL) {
+    return getAssetManifestRequests(raw, baseUrl);
   },
   parse(
-    raw: LineageManifest,
+    raw: Manifest,
     assetManifests: Map<string, unknown>
   ): LineageGraph {
-    return parseLineageManifest(raw, assetManifests, mapAssetType);
+    return parseManifest(raw, assetManifests, mapAssetType);
   },
 };

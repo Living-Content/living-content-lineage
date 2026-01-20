@@ -3,14 +3,14 @@
  * Provides atomic functions for element creation, layer management, and map population.
  */
 import type { Container, Ticker } from 'pixi.js';
-import type { LineageNodeData, Workflow, LineageEdgeData } from '../../../config/types.js';
+import type { LineageNodeData, StepUI, LineageEdgeData } from '../../../config/types.js';
 import { createGraphNode, type GraphNode, DEFAULT_NODE_ALPHA, type NodeRenderOptions } from '../rendering/nodeRenderer.js';
 import { createIconNode } from '../rendering/iconNodeRenderer.js';
 import { getIconNodeConfig, getPhaseIconPath } from '../../../config/icons.js';
 import { WORKFLOW_NODE_SCALE } from '../../../config/constants.js';
-import { selectNode, selectWorkflow } from '../../../stores/lineageState.js';
+import { selectNode, selectStep } from '../../../stores/lineageState.js';
 
-export type ElementType = 'workflow' | 'node';
+export type ElementType = 'step' | 'node';
 
 export interface GraphElement {
   id: string;
@@ -129,33 +129,33 @@ export const createNodeElement = async (
 };
 
 /**
- * Creates a workflow element for the collapsed view.
+ * Creates a step element for the collapsed view.
  */
-export const createWorkflowElement = (
-  workflow: Workflow,
+export const createStepElement = (
+  step: StepUI,
   nodes: LineageNodeData[],
   edges: LineageEdgeData[],
   config: CreateElementConfig
 ): GraphElement => {
   const { graphScale, ticker, selectionLayer, hoverConfig } = config;
 
-  const workflowNodes = nodes.filter((n) => n.workflowId === workflow.id);
-  const workflowNodeData: LineageNodeData = {
-    id: `workflow-${workflow.id}`,
-    label: workflow.label,
+  const stepNodes = nodes.filter((n) => n.step === step.id);
+  const stepNodeData: LineageNodeData = {
+    id: `step-${step.id}`,
+    label: step.label,
     nodeType: 'workflow',
     shape: 'circle',
-    workflowId: workflow.id,
-    phase: workflow.phase,
-    x: (workflow.xStart + workflow.xEnd) / 2,
+    step: step.id,
+    phase: step.phase,
+    x: (step.xStart + step.xEnd) / 2,
     y: 0.5,
   };
 
-  const phaseIconPath = getPhaseIconPath(workflow.phase);
-  const workflowRenderOptions: NodeRenderOptions = {
+  const phaseIconPath = getPhaseIconPath(step.phase);
+  const stepRenderOptions: NodeRenderOptions = {
     mode: 'simple',
     iconPath: phaseIconPath,
-    typeLabel: workflow.label,
+    typeLabel: step.label,
   };
 
   // Create a reference object so callbacks can access the node after creation
@@ -163,18 +163,18 @@ export const createWorkflowElement = (
 
   const nodeCallbacks = {
     onClick: () => {
-      const workflowEdges = edges.filter(
-        (e) => workflowNodes.some((n) => n.id === e.source) || workflowNodes.some((n) => n.id === e.target)
+      const stepEdges = edges.filter(
+        (e) => stepNodes.some((n) => n.id === e.source) || stepNodes.some((n) => n.id === e.target)
       );
-      selectWorkflow({ workflowId: workflow.id, label: workflow.label, nodes: workflowNodes, edges: workflowEdges });
+      selectStep({ stepId: step.id, label: step.label, phase: step.phase, nodes: stepNodes, edges: stepEdges });
     },
     onHover: () => {
       hoverConfig.container.style.cursor = 'pointer';
-      const workflowNode = nodeRef.current;
-      if (workflowNode) {
-        const bounds = workflowNode.getBounds();
+      const stepNode = nodeRef.current;
+      if (stepNode) {
+        const bounds = stepNode.getBounds();
         hoverConfig.onHover({
-          title: workflow.label,
+          title: step.label,
           nodeType: 'workflow',
           screenX: bounds.x + bounds.width / 2,
           screenY: bounds.y,
@@ -188,14 +188,14 @@ export const createWorkflowElement = (
     },
   };
 
-  const workflowNode = createGraphNode(workflowNodeData, graphScale, ticker, nodeCallbacks, {
+  const stepGraphNode = createGraphNode(stepNodeData, graphScale, ticker, nodeCallbacks, {
     scale: WORKFLOW_NODE_SCALE,
-    renderOptions: workflowRenderOptions,
+    renderOptions: stepRenderOptions,
     selectionLayer,
   });
-  nodeRef.current = workflowNode;
+  nodeRef.current = stepGraphNode;
 
-  return createGraphElement(workflow.id, 'workflow', workflowNodeData, workflowNode);
+  return createGraphElement(step.id, 'step', stepNodeData, stepGraphNode);
 };
 
 /**

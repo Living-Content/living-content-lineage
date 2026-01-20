@@ -17,7 +17,7 @@ export interface TitleOverlay {
 
 export interface TitleOverlayData {
   title: string;
-  lineageId: string;
+  workflowId: string;
 }
 
 /**
@@ -82,7 +82,7 @@ export const createTitleOverlayElements = (data: TitleOverlayData): TitleOverlay
   const styles = createTextStyles();
   const dateStr = formatDateString();
 
-  const uuidText = new Text({ text: data.lineageId, style: styles.uuid });
+  const uuidText = new Text({ text: data.workflowId, style: styles.uuid });
   const titleText = new Text({ text: data.title, style: styles.title });
   const dateText = new Text({ text: dateStr, style: styles.date });
 

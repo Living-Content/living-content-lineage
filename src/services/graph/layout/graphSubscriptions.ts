@@ -5,7 +5,7 @@
 import { Container } from 'pixi.js';
 import { selection, type SelectionTarget } from '../../../stores/lineageState.js';
 import { isDetailOpen, phaseFilter } from '../../../stores/uiState.js';
-import type { LineageEdgeData, Phase, Workflow } from '../../../config/types.js';
+import type { LineageEdgeData, Phase, StepUI } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import { renderEdges } from '../rendering/edgeRenderer.js';
 import {
@@ -18,16 +18,16 @@ import {
 
 export interface SubscriptionContext {
   nodeMap: Map<string, GraphNode>;
-  workflowNodeMap: Map<string, GraphNode>;
+  stepNodeMap: Map<string, GraphNode>;
   edgeLayer: Container;
-  workflowEdgeLayer: Container;
+  stepEdgeLayer: Container;
   edges: LineageEdgeData[];
-  workflows: Workflow[];
+  steps: StepUI[];
   verticalAdjacency: VerticalAdjacencyMap;
   setNodeAlpha: (nodeId: string, alpha: number) => void;
   centerSelectedNode: (nodeId: string) => void;
-  setWorkflowLabelsPhaseFilter: (phase: Phase | null) => void;
-  setWorkflowLabelsVisible: (visible: boolean) => void;
+  setStepLabelsPhaseFilter: (phase: Phase | null) => void;
+  setStepLabelsVisible: (visible: boolean) => void;
   zoomToBounds: (nodeId?: string) => void;
 }
 
@@ -56,11 +56,11 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
 
   const getHighlighterDeps = (useBlur: boolean = false): SelectionHighlighterDeps => ({
     nodeMap: ctx.nodeMap,
-    workflowNodeMap: ctx.workflowNodeMap,
+    stepNodeMap: ctx.stepNodeMap,
     edgeLayer: ctx.edgeLayer,
-    workflowEdgeLayer: ctx.workflowEdgeLayer,
+    stepEdgeLayer: ctx.stepEdgeLayer,
     edges: ctx.edges,
-    workflows: ctx.workflows,
+    steps: ctx.steps,
     verticalAdjacency: ctx.verticalAdjacency,
     setNodeAlpha: ctx.setNodeAlpha,
     useBlur,
@@ -77,8 +77,8 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
         ctx.centerSelectedNode(sel.nodeId);
       }
 
-      // When a workflow is selected, render edges with no node selection
-      if (sel.type === 'workflow') {
+      // When a step is selected, render edges with no node selection
+      if (sel.type === 'step') {
         renderEdges(ctx.edgeLayer, ctx.edges, ctx.nodeMap, {
           view: 'workflow',
           selectedId: null,
@@ -94,8 +94,8 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
     const wasOpen = state.detailPanelOpen;
     state.detailPanelOpen = open;
 
-    // Hide workflow labels when entering detail view, show when exiting
-    ctx.setWorkflowLabelsVisible(!open);
+    // Hide step labels when entering detail view, show when exiting
+    ctx.setStepLabelsVisible(!open);
 
     // Re-apply selection highlighting when detail panel toggles (to toggle blur mode)
     if (state.currentSelection && wasOpen !== open) {
@@ -113,7 +113,7 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
 
   const unsubscribePhaseFilter = phaseFilter.subscribe((phase) => {
     state.currentPhaseFilter = phase;
-    ctx.setWorkflowLabelsPhaseFilter(phase);
+    ctx.setStepLabelsPhaseFilter(phase);
 
     if (phase) {
       // Phase filter always uses blur

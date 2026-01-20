@@ -14,7 +14,7 @@ export interface ViewportManagerDeps {
   nodeMap: Map<string, GraphNode>;
   viewport: Container;
   viewportState: ViewportState;
-  workflowLabelsUpdate: (state: ViewportState) => void;
+  stepLabelsUpdate: (state: ViewportState) => void;
   cullAndRender: () => void;
   topNodeInfo: TopNodeInfo | null;
   bottomNodeInfo: TopNodeInfo | null;
@@ -30,7 +30,7 @@ export interface ViewportManager {
  * Creates a viewport manager with node centering capabilities.
  */
 export function createViewportManager(deps: ViewportManagerDeps): ViewportManager {
-  const { nodeMap, viewport, viewportState, workflowLabelsUpdate, cullAndRender, topNodeInfo, bottomNodeInfo } = deps;
+  const { nodeMap, viewport, viewportState, stepLabelsUpdate, cullAndRender, topNodeInfo, bottomNodeInfo } = deps;
 
   function centerOnNode(nodeId: string): void {
     const node = nodeMap.get(nodeId);
@@ -54,7 +54,7 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
       onUpdate: () => {
         viewport.position.set(viewportState.x, viewportState.y);
         viewport.scale.set(viewportState.scale);
-        workflowLabelsUpdate(viewportState);
+        stepLabelsUpdate(viewportState);
         cullAndRender();
       },
     });
@@ -109,7 +109,7 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
       onUpdate: () => {
         viewport.position.set(viewportState.x, viewportState.y);
         viewport.scale.set(viewportState.scale);
-        workflowLabelsUpdate(viewportState);
+        stepLabelsUpdate(viewportState);
         cullAndRender();
       },
     });
@@ -130,7 +130,7 @@ export interface ResizeHandlerDeps {
   container: HTMLElement;
   viewportState: ViewportState;
   app: { resize: () => void };
-  workflowLabelsUpdate: (state: ViewportState) => void;
+  stepLabelsUpdate: (state: ViewportState) => void;
   cullAndRender: () => void;
   updateTitlePosition: () => void;
   centerSelectedNode: (nodeId: string) => void;
@@ -154,7 +154,7 @@ export function createResizeHandler(deps: ResizeHandlerDeps): {
       deps.viewportState.width = deps.container.clientWidth;
       deps.viewportState.height = deps.container.clientHeight;
       deps.app.resize();
-      deps.workflowLabelsUpdate(deps.viewportState);
+      deps.stepLabelsUpdate(deps.viewportState);
 
       const selectedNodeId = deps.getSelectedNodeId();
       if (deps.getDetailPanelOpen() && selectedNodeId) {

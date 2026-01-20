@@ -23,7 +23,9 @@
     }
   ],
   "source_code": "@chain_link(\n    computation=\"retrieve\",\n    input_asset_type=\"document\",\n    output_asset_type=\"dataset\",\n)\nasync def _retrieve_documents(\n    query_ctx,\n    plan: dict,\n    user_query: str,\n) -> dict:\n    \"\"\"Execute search against knowledge base.\n    \n    Performs:\n    - Hybrid search (semantic + keyword)\n    - Metadata filtering\n    - Reciprocal rank fusion reranking\n    \"\"\"\n    benchmark = get_current_benchmark()\n    search_config = plan.get(\"search_config\", {})\n    \n    if benchmark:\n        benchmark.start_timer(\"retrieval\")\n    \n    # Get embeddings for query\n    embeddings_client = get_config(\"tools.knowledge.embeddings.client\")\n    query_embedding = await get_text_embedding(\n        embeddings_client,\n        user_query\n    )\n    \n    # Execute hybrid search\n    results = await knowledge_search(\n        query_ctx.knowledge_manager,\n        query_embedding=query_embedding,\n        query_text=user_query,\n        limit=search_config.get(\"results_limit\", 10),\n        hybrid=search_config.get(\"hybrid_search\", True),\n        reranker=search_config.get(\"reranker\", \"rrf\"),\n    )\n    \n    if benchmark:\n        retrieval_time = benchmark.stop_timer(\"retrieval\")\n        benchmark.log_info(f\"Retrieved {len(results)} documents in {retrieval_time:.0f}ms\")\n    \n    return {\n        \"document_count\": len(results),\n        \"search_type\": \"hybrid\" if search_config.get(\"hybrid_search\") else \"semantic\",\n        \"reranker\": search_config.get(\"reranker\", \"rrf\"),\n        \"_documents\": results,  # Internal use\n    }",
-  "signature_info": {
+  "claim": {
+    "type": "certificate",
+    "provider": "LCO",
     "alg": "ES256",
     "issuer": "did:key:zQ3shwc61yUNaJZBX2L9mZd3xhWjTEqD52dA3JxBnZnu78E3d",
     "time": "2026-01-14T18:15:24Z"

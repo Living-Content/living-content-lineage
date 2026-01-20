@@ -14,9 +14,12 @@
   export let phase: Phase | undefined = undefined;
   export let span: 1 | 2 | 3 | 4 = 1;
   export let unit: string = '';
+  /** Size variant: compact removes min-heights for dense layouts */
+  export let size: 'default' | 'compact' = 'default';
 
   $: phaseClass = phase ? `phase-${phase.toLowerCase()}` : '';
   $: spanClass = `span-${span}`;
+  $: sizeClass = size === 'compact' ? 'size-compact' : '';
   $: formatter = getFormatter(type);
   $: displayValue = formatter(value);
 
@@ -32,7 +35,7 @@
   }
 </script>
 
-<div class="data-card {phaseClass} {spanClass}">
+<div class="data-card {phaseClass} {spanClass} {sizeClass}">
   <div class="card-label">{label}</div>
   <div class="card-value">
     <span class="value" style="font-size: {fontSize}">{displayValue}</span>
@@ -75,6 +78,22 @@
 
   .span-1 .value {
     font-size: 20px !important;
+  }
+
+  /* Compact size variant - no min-heights */
+  .size-compact {
+    padding: var(--space-sm, 8px) var(--space-md, 12px);
+    min-height: auto;
+    gap: var(--space-xs, 4px);
+  }
+
+  .size-compact .card-label {
+    font-size: 10px;
+    min-height: auto;
+  }
+
+  .size-compact .value {
+    font-size: 18px !important;
   }
 
   .card-value {

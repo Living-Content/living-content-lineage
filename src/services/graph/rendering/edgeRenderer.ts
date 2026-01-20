@@ -4,7 +4,7 @@
  * Edges render on top of nodes.
  */
 import { Container, Graphics } from 'pixi.js';
-import type { LineageEdgeData, Workflow } from '../../../config/types.js';
+import type { LineageEdgeData, StepUI } from '../../../config/types.js';
 import type { GraphNode } from './nodeRenderer.js';
 import { getCssVarColorHex, getCssVarInt, getCssVarFloat } from '../../../themes/index.js';
 import { drawChevron } from './rendererUtils.js';
@@ -108,31 +108,31 @@ export const renderEdges = (
 };
 
 /**
- * Renders edges between workflow nodes in lineage view.
- * Workflows are connected in order.
+ * Renders edges between step nodes in lineage view.
+ * Steps are connected in order.
  */
-export const renderWorkflowEdges = (
+export const renderStepEdges = (
   layer: Container,
-  workflows: Workflow[],
-  workflowNodeMap: Map<string, GraphNode>,
-  selectedWorkflowId: string | null
+  steps: StepUI[],
+  stepNodeMap: Map<string, GraphNode>,
+  selectedStepId: string | null
 ): void => {
   layer.removeChildren();
   const graphics = new Graphics();
-  const workflowOrder = workflows.map((w) => w.id);
+  const stepOrder = steps.map((s) => s.id);
   const color = getCssVarColorHex('--color-edge');
   const workflowEdgeWidth = getCssVarInt('--workflow-edge-width');
   const fadedAlpha = getCssVarFloat('--faded-node-alpha');
 
-  for (let i = 0; i < workflowOrder.length - 1; i++) {
-    const nextWorkflowId = workflowOrder[i + 1];
-    const sourceNode = workflowNodeMap.get(workflowOrder[i]);
-    const targetNode = workflowNodeMap.get(nextWorkflowId);
+  for (let i = 0; i < stepOrder.length - 1; i++) {
+    const nextStepId = stepOrder[i + 1];
+    const sourceNode = stepNodeMap.get(stepOrder[i]);
+    const targetNode = stepNodeMap.get(nextStepId);
     if (!sourceNode || !targetNode) continue;
 
-    const isConnected = selectedWorkflowId === null ||
-      workflowOrder[i] === selectedWorkflowId ||
-      nextWorkflowId === selectedWorkflowId;
+    const isConnected = selectedStepId === null ||
+      stepOrder[i] === selectedStepId ||
+      nextStepId === selectedStepId;
 
     const alpha = isConnected ? 0.5 : fadedAlpha;
 

@@ -1,10 +1,10 @@
-import type { AssetManifest, Workflow } from '../../../../config/types.js';
+import type { AssetManifest, StepUI } from '../../../../config/types.js';
 import { validatePhase } from '../../../../config/utils.js';
-import type { LineageManifest } from './lineageTypes.js';
+import type { Manifest } from './lineageTypes.js';
 
 export interface LayoutResult {
-  positions: Map<string, { x: number; y: number; workflowId: string }>;
-  workflows: Workflow[];
+  positions: Map<string, { x: number; y: number; step: string }>;
+  steps: StepUI[];
 }
 
 const HORIZONTAL_GAP = 0.2;
@@ -15,16 +15,16 @@ const VERTICAL_GAP = 0.08;
  * Actions drive the layout - they have inputs and outputs that determine flow.
  */
 export const computeLayout = (
-  manifest: LineageManifest,
+  manifest: Manifest,
   assetManifests: Map<string, AssetManifest>
 ): LayoutResult => {
-  const positions = new Map<string, { x: number; y: number; workflowId: string }>();
+  const positions = new Map<string, { x: number; y: number; step: string }>();
 
   // Build maps for asset types and Action inputs/outputs
   const assetTypes = new Map<string, string>();
   const actionInputs = new Map<string, string[]>();
   const actionOutputs = new Map<string, string[]>();
-  const actionWorkflows = new Map<string, string>();
+  const actionSteps = new Map<string, string>();
 
   manifest.assets.forEach((asset) => {
     assetTypes.set(asset.id, asset.asset_type);
@@ -32,7 +32,7 @@ export const computeLayout = (
       const actionManifest = assetManifests.get(asset.id);
       actionInputs.set(asset.id, actionManifest?.inputs ?? []);
       actionOutputs.set(asset.id, actionManifest?.outputs ?? []);
-      actionWorkflows.set(asset.id, asset.workflowId ?? 'unknown');
+      actionSteps.set(asset.id, asset.step ?? 'unknown');
     }
   });
 
@@ -48,13 +48,13 @@ export const computeLayout = (
   let currentX = 0.1;
   const placedAssets = new Set<string>();
 
-  // Process Actions in order (they maintain the workflow order from manifest)
+  // Process Actions in order (they maintain the step order from manifest)
   const orderedActions = manifest.assets.filter((a) => a.asset_type === 'Action');
 
   orderedActions.forEach((action) => {
     const inputs = actionInputs.get(action.id) ?? [];
     const outputs = actionOutputs.get(action.id) ?? [];
-    const workflowId = actionWorkflows.get(action.id) ?? 'unknown';
+    const step = actionSteps.get(action.id) ?? 'unknown';
 
     // Filter inputs that aren't Actions
     const dataInputs = inputs.filter((id) => !actionSet.has(id));
@@ -85,7 +85,7 @@ export const computeLayout = (
         positions.set(inputId, {
           x: currentX,
           y: startY + idx * VERTICAL_GAP,
-          workflowId,
+          step,
         });
         placedAssets.add(inputId);
       });
@@ -96,7 +96,7 @@ export const computeLayout = (
     positions.set(action.id, {
       x: currentX,
       y: 0.5,
-      workflowId,
+      step,
     });
 
     // Place auxiliary inputs to the LEFT of the Action (fan-in pattern)
@@ -108,7 +108,7 @@ export const computeLayout = (
         positions.set(inputId, {
           x: inputX,
           y: startY + idx * VERTICAL_GAP,
-          workflowId,
+          step,
         });
         placedAssets.add(inputId);
       });
@@ -126,7 +126,7 @@ export const computeLayout = (
         positions.set(outputId, {
           x: currentX,
           y: startY + idx * VERTICAL_GAP,
-          workflowId,
+          step,
         });
         placedAssets.add(outputId);
       });
@@ -142,38 +142,38 @@ export const computeLayout = (
       positions.set(attest.id, {
         x: verifiedPos.x,
         y: verifiedPos.y - VERTICAL_GAP,
-        workflowId: attest.workflowId,
+        step: attest.step,
       });
     }
   });
 
-  // Calculate workflow bounds from node positions
-  const workflowMinX = new Map<string, number>();
-  const workflowMaxX = new Map<string, number>();
+  // Calculate step bounds from node positions
+  const stepMinX = new Map<string, number>();
+  const stepMaxX = new Map<string, number>();
 
   positions.forEach((pos) => {
-    const wfId = pos.workflowId;
-    if (!workflowMinX.has(wfId) || pos.x < workflowMinX.get(wfId)!) {
-      workflowMinX.set(wfId, pos.x);
+    const stepId = pos.step;
+    if (!stepMinX.has(stepId) || pos.x < stepMinX.get(stepId)!) {
+      stepMinX.set(stepId, pos.x);
     }
-    if (!workflowMaxX.has(wfId) || pos.x > workflowMaxX.get(wfId)!) {
-      workflowMaxX.set(wfId, pos.x);
+    if (!stepMaxX.has(stepId) || pos.x > stepMaxX.get(stepId)!) {
+      stepMaxX.set(stepId, pos.x);
     }
   });
 
   const padding = 0.04;
-  const workflows: Workflow[] = manifest.workflows.map((workflow) => {
-    const phase = validatePhase(workflow.phase, `workflow ${workflow.id}`);
-    const minX = workflowMinX.get(workflow.id) ?? 0;
-    const maxX = workflowMaxX.get(workflow.id) ?? 0;
+  const steps: StepUI[] = manifest.steps.map((step) => {
+    const phase = validatePhase(step.phase, `step ${step.id}`);
+    const minX = stepMinX.get(step.id) ?? 0;
+    const maxX = stepMaxX.get(step.id) ?? 0;
     return {
-      id: workflow.id,
-      label: workflow.label,
+      id: step.id,
+      label: step.label,
       phase,
       xStart: minX - padding,
       xEnd: maxX + padding,
     };
   });
 
-  return { positions, workflows };
+  return { positions, steps };
 };

@@ -1,5 +1,19 @@
-import type { AssetManifest } from '../../../../config/types.js';
+import type { AssetManifest, ManifestSignatureInfo, ClaimType, ClaimProvider } from '../../../../config/types.js';
 import { isRecord } from '../../../../config/utils.js';
+
+function normalizeClaim(raw: Record<string, unknown>): ManifestSignatureInfo | undefined {
+  // Read from 'claim' with fallback to 'signature_info' for backwards compatibility
+  const claimSource = isRecord(raw.claim) ? raw.claim : (isRecord(raw.signature_info) ? raw.signature_info : undefined);
+  if (!claimSource) return undefined;
+
+  return {
+    alg: String(claimSource.alg ?? ''),
+    issuer: String(claimSource.issuer ?? ''),
+    time: String(claimSource.time ?? ''),
+    type: claimSource.type as ClaimType | undefined,
+    provider: claimSource.provider as ClaimProvider | undefined,
+  };
+}
 
 function toCamelCase(value: string): string {
   return value.replace(/_([a-z])/g, (_match, letter: string) =>
@@ -52,13 +66,7 @@ export function normalizeAssetManifest(raw: unknown): AssetManifest | undefined 
     format: raw.format ? String(raw.format) : undefined,
     instanceId: raw.instance_id ? String(raw.instance_id) : undefined,
     assertions,
-    signatureInfo: isRecord(raw.signature_info)
-      ? {
-          alg: String(raw.signature_info.alg ?? ''),
-          issuer: String(raw.signature_info.issuer ?? ''),
-          time: String(raw.signature_info.time ?? ''),
-        }
-      : undefined,
+    signatureInfo: normalizeClaim(raw),
     sourceCode: raw.source_code ? String(raw.source_code) : undefined,
     content: normalizeAssetContent(raw.content),
     ingredients: normalizeIngredients(raw.ingredients),

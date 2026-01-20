@@ -8,8 +8,8 @@ export interface LayerGroup {
   selectionLayer: Container;
   nodeLayer: Container;
   edgeLayer: Container;
-  workflowNodeLayer: Container;
-  workflowEdgeLayer: Container;
+  stepNodeLayer: Container;
+  stepEdgeLayer: Container;
 }
 
 export interface PixiContext {
@@ -42,26 +42,26 @@ export async function initializePixi(container: HTMLElement): Promise<PixiContex
 
 /**
  * Create the layer hierarchy for rendering order.
- * Order: selection → nodes → edges → workflow nodes → workflow edges
+ * Order: selection → nodes → edges → step nodes → step edges
  */
 export function createLayerHierarchy(viewport: Container): LayerGroup {
   const selectionLayer = new Container();
   const nodeLayer = new Container();
   const edgeLayer = new Container();
-  const workflowNodeLayer = new Container();
-  const workflowEdgeLayer = new Container();
+  const stepNodeLayer = new Container();
+  const stepEdgeLayer = new Container();
 
-  viewport.addChild(selectionLayer, nodeLayer, edgeLayer, workflowNodeLayer, workflowEdgeLayer);
+  viewport.addChild(selectionLayer, nodeLayer, edgeLayer, stepNodeLayer, stepEdgeLayer);
 
-  // Workflow layers start hidden (shown during LOD collapse)
-  workflowNodeLayer.visible = false;
-  workflowEdgeLayer.visible = false;
+  // Step layers start hidden (shown during LOD collapse to step view)
+  stepNodeLayer.visible = false;
+  stepEdgeLayer.visible = false;
 
   return {
     selectionLayer,
     nodeLayer,
     edgeLayer,
-    workflowNodeLayer,
-    workflowEdgeLayer,
+    stepNodeLayer,
+    stepEdgeLayer,
   };
 }

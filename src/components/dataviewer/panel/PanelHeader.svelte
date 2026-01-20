@@ -3,12 +3,11 @@
   import ContextBadges from '../detail/ContextBadges.svelte';
 
   export let phase: Phase | undefined = undefined;
-  export let workflowId: string | undefined = undefined;
+  export let step: string | undefined = undefined;
   export let assetType: AssetType | undefined = undefined;
-  export let workflowLabel: string | undefined = undefined;
   export let showCloseButton = false;
   export let isNodeSelected = false;
-  export let isWorkflowSelected = false;
+  export let isStepSelected = false;
   export let isDragging = false;
 
   export let onClose: () => void = () => {};
@@ -18,10 +17,8 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="panel-header" class:dragging={isDragging} on:mousedown={onStartDrag}>
   <div class="panel-header-content">
-    {#if isNodeSelected}
-      <ContextBadges {phase} {workflowId} {assetType} />
-    {:else if isWorkflowSelected}
-      <span class="panel-title">{workflowLabel}</span>
+    {#if isNodeSelected || isStepSelected}
+      <ContextBadges {phase} {step} {assetType} />
     {:else}
       <span class="panel-title">CONTEXT</span>
     {/if}
