@@ -14,7 +14,6 @@ export type ViewMode = 'lineage' | 'workflow';
 export interface EdgeRenderOptions {
   view: ViewMode;
   selectedId: string | null;
-  highlightedIds: Set<string> | null;
 }
 
 /**
@@ -30,7 +29,7 @@ export const renderEdges = (
 ): void => {
   edgeLayer.removeChildren();
 
-  const { view, selectedId, highlightedIds } = options;
+  const { view, selectedId } = options;
   const edgeWidth = getCssVarInt(view === 'lineage' ? '--workflow-edge-width' : '--edge-width');
   const dotRadius = getCssVarInt(view === 'lineage' ? '--workflow-dot-radius' : '--edge-dot-radius');
   const color = getCssVarColorHex('--color-edge');
@@ -40,10 +39,6 @@ export const renderEdges = (
   const dotGraphics = new Graphics();
   const fadedDotGraphics = new Graphics();
 
-  const allHighlighted = highlightedIds && selectedId
-    ? new Set([selectedId, ...highlightedIds])
-    : null;
-
   for (const edge of edges) {
     const sourceNode = nodeMap.get(edge.source);
     const targetNode = nodeMap.get(edge.target);
@@ -51,10 +46,10 @@ export const renderEdges = (
 
     if (sourceNode.culled && targetNode.culled) continue;
 
+    // Edge is highlighted if no selection, or if selected node is an endpoint
     const isHighlighted = selectedId === null ||
-      (allHighlighted !== null &&
-        allHighlighted.has(edge.source) &&
-        allHighlighted.has(edge.target));
+      edge.source === selectedId ||
+      edge.target === selectedId;
 
     const targetLineGraphics = isHighlighted ? lineGraphics : fadedLineGraphics;
     const targetDotGraphics = isHighlighted ? dotGraphics : fadedDotGraphics;

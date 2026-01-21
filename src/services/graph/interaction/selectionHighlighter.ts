@@ -4,7 +4,7 @@
  * Uses blur filters for non-highlighted nodes in detail view.
  */
 import { BlurFilter, type Container } from 'pixi.js';
-import type { LineageEdgeData, LineageNodeData, StepUI, Phase } from '../../../config/types.js';
+import type { LineageEdgeData, StepUI, Phase } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import type { SelectionTarget } from '../../../stores/lineageState.js';
 import { renderEdges, renderStepEdges } from '../rendering/edgeRenderer.js';
@@ -71,68 +71,6 @@ const applyNodeFade = (
   }
 };
 
-export interface VerticalAdjacencyMap {
-  map: Map<string, Set<string>>;
-  getConnectedNodeIds: (nodeId: string) => Set<string>;
-}
-
-/**
- * Builds a map of vertically-connected nodes from edge data.
- */
-export const buildVerticalAdjacencyMap = (
-  nodes: LineageNodeData[],
-  edges: LineageEdgeData[]
-): VerticalAdjacencyMap => {
-  const nodePositions = new Map<string, { x: number; y: number }>();
-  for (const node of nodes) {
-    nodePositions.set(node.id, { x: node.x ?? 0.5, y: node.y ?? 0.5 });
-  }
-
-  const adjacencyMap = new Map<string, Set<string>>();
-  for (const edge of edges) {
-    const sourcePos = nodePositions.get(edge.source);
-    const targetPos = nodePositions.get(edge.target);
-    if (!sourcePos || !targetPos) continue;
-
-    const dx = Math.abs(targetPos.x - sourcePos.x);
-    const dy = Math.abs(targetPos.y - sourcePos.y);
-    const isVertical = dy > dx;
-
-    if (isVertical) {
-      if (!adjacencyMap.has(edge.source)) adjacencyMap.set(edge.source, new Set());
-      if (!adjacencyMap.has(edge.target)) adjacencyMap.set(edge.target, new Set());
-      adjacencyMap.get(edge.source)!.add(edge.target);
-      adjacencyMap.get(edge.target)!.add(edge.source);
-    }
-  }
-
-  const getConnectedNodeIds = (nodeId: string): Set<string> => {
-    const connected = new Set<string>();
-    const visited = new Set<string>();
-    const queue = [nodeId];
-
-    while (queue.length > 0) {
-      const current = queue.shift()!;
-      if (visited.has(current)) continue;
-      visited.add(current);
-
-      const neighbors = adjacencyMap.get(current);
-      if (neighbors) {
-        for (const neighbor of neighbors) {
-          connected.add(neighbor);
-          if (!visited.has(neighbor)) {
-            queue.push(neighbor);
-          }
-        }
-      }
-    }
-
-    return connected;
-  };
-
-  return { map: adjacencyMap, getConnectedNodeIds };
-};
-
 export interface SelectionHighlighterDeps {
   nodeMap: Map<string, GraphNode>;
   stepNodeMap: Map<string, GraphNode>;
@@ -140,7 +78,6 @@ export interface SelectionHighlighterDeps {
   stepEdgeLayer: Container;
   edges: LineageEdgeData[];
   steps: StepUI[];
-  verticalAdjacency: VerticalAdjacencyMap;
   setNodeAlpha: (nodeId: string, alpha: number) => void;
   useBlur?: boolean;
 }
@@ -192,21 +129,20 @@ export const applySelectionHighlight = (
 
 /**
  * Applies selection highlighting to a specific node.
- * Fades non-connected nodes and highlights the selection path.
+ * Fades all other nodes.
  */
 const highlightNode = (
   selectedId: string,
   deps: SelectionHighlighterDeps
 ): void => {
-  const { nodeMap, stepNodeMap, edgeLayer, stepEdgeLayer, edges, steps, verticalAdjacency, setNodeAlpha, useBlur = false } = deps;
-  const verticallyConnected = verticalAdjacency.getConnectedNodeIds(selectedId);
+  const { nodeMap, stepNodeMap, edgeLayer, stepEdgeLayer, edges, steps, setNodeAlpha, useBlur = false } = deps;
   const styles = getFadeStyles();
 
-  // Highlight nodes in expanded view
+  // Highlight only the selected node
   setNodeMapVisibility(
     nodeMap,
     setNodeAlpha,
-    (id) => id === selectedId || verticallyConnected.has(id),
+    (id) => id === selectedId,
     (id) => id === selectedId,
     useBlur
   );
@@ -220,7 +156,6 @@ const highlightNode = (
   renderEdges(edgeLayer, edges, nodeMap, {
     view: 'workflow',
     selectedId,
-    highlightedIds: verticallyConnected,
   });
   renderStepEdges(stepEdgeLayer, steps, stepNodeMap, '');
 };
@@ -275,7 +210,6 @@ export const clearSelectionVisuals = (deps: SelectionHighlighterDeps): void => {
   renderEdges(edgeLayer, edges, nodeMap, {
     view: 'workflow',
     selectedId: null,
-    highlightedIds: null,
   });
   renderStepEdges(stepEdgeLayer, steps, stepNodeMap, null);
 };

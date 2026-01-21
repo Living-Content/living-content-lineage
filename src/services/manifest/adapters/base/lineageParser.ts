@@ -145,29 +145,32 @@ export const buildLineageGraph = (
     });
   });
 
-  // Build edges from Action inputs/outputs
+  // Build edges from asset inputs/outputs
   const edgeList: Array<{ source: string; target: string; isGate?: boolean }> = [];
   const actionSet = new Set<string>();
 
-  // Identify Action assets and build edge connections
+  // First pass: identify Actions
   manifest.assets.forEach((asset) => {
     if (mapAssetType(asset.asset_type) === 'Action') {
       actionSet.add(asset.id);
-      const actionManifest = assetManifests.get(asset.id);
-      // Prefer inputs/outputs from asset (workflow decorator), fallback to manifest
-      const inputs = asset.inputs ?? actionManifest?.inputs ?? [];
-      const outputs = asset.outputs ?? actionManifest?.outputs ?? [];
-
-      // Connect inputs to this Action
-      inputs.forEach((inputId) => {
-        edgeList.push({ source: inputId, target: asset.id });
-      });
-
-      // Connect this Action to outputs
-      outputs.forEach((outputId) => {
-        edgeList.push({ source: asset.id, target: outputId });
-      });
     }
+  });
+
+  // Second pass: build edge connections from all assets
+  manifest.assets.forEach((asset) => {
+    const assetManifest = assetManifests.get(asset.id);
+    const inputs = asset.inputs ?? assetManifest?.inputs ?? [];
+    const outputs = asset.outputs ?? assetManifest?.outputs ?? [];
+
+    // Connect inputs to this asset
+    inputs.forEach((inputId) => {
+      edgeList.push({ source: inputId, target: asset.id });
+    });
+
+    // Connect this asset to outputs
+    outputs.forEach((outputId) => {
+      edgeList.push({ source: asset.id, target: outputId });
+    });
   });
 
   // Add attestation edges

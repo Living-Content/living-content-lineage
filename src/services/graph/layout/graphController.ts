@@ -15,7 +15,6 @@ import { createTitleOverlay } from '../rendering/titleOverlay.js';
 import { LOD_THRESHOLD, TEXT_SIMPLIFY_THRESHOLD, VIEWPORT_TOP_MARGIN, VIEWPORT_BOTTOM_MARGIN } from '../../../config/constants.js';
 import { clearSelection } from '../../../stores/lineageState.js';
 import { clearPhaseFilter } from '../../../stores/uiState.js';
-import { buildVerticalAdjacencyMap } from '../interaction/selectionHighlighter.js';
 import { createNodeAnimationController } from '../interaction/nodeAnimationController.js';
 import { createNodes, repositionNodesWithGaps } from './nodeCreator.js';
 import { recalculateStepBounds, createStepNodes, calculateTopNodeInfo, calculateBottomNodeInfo } from './workflowCreator.js';
@@ -92,8 +91,7 @@ export async function createGraphController({
   const nodeMap = new Map<string, GraphNode>();
   const stepNodeMap = new Map<string, GraphNode>();
 
-  // Build adjacency map and animation controller
-  const verticalAdjacency = buildVerticalAdjacencyMap(lineageData.nodes, lineageData.edges);
+  // Animation controller
   const animationController = createNodeAnimationController(nodeMap);
 
   // Create nodes
@@ -162,11 +160,9 @@ export async function createGraphController({
     Culler.shared.cull(layers.nodeLayer, app.screen);
     const selection = subscriptions.state.currentSelection;
     const nodeId = selection?.type === 'node' ? selection.nodeId : null;
-    const connected = nodeId ? verticalAdjacency.getConnectedNodeIds(nodeId) : null;
     renderEdges(layers.edgeLayer, lineageData.edges, nodeMap, {
       view: 'workflow',
       selectedId: nodeId,
-      highlightedIds: connected,
     });
   };
 
@@ -205,7 +201,6 @@ export async function createGraphController({
     stepEdgeLayer: layers.stepEdgeLayer,
     edges: lineageData.edges,
     steps: lineageData.steps,
-    verticalAdjacency,
     setNodeAlpha: animationController.setNodeAlpha,
     centerSelectedNode: viewportManager.centerOnNode,
     setStepLabelsPhaseFilter: stepLabels.setPhaseFilter,

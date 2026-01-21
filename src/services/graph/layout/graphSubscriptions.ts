@@ -13,7 +13,6 @@ import {
   applyPhaseFilter,
   clearSelectionVisuals,
   type SelectionHighlighterDeps,
-  type VerticalAdjacencyMap,
 } from '../interaction/selectionHighlighter.js';
 
 export interface SubscriptionContext {
@@ -23,7 +22,6 @@ export interface SubscriptionContext {
   stepEdgeLayer: Container;
   edges: LineageEdgeData[];
   steps: StepUI[];
-  verticalAdjacency: VerticalAdjacencyMap;
   setNodeAlpha: (nodeId: string, alpha: number) => void;
   centerSelectedNode: (nodeId: string) => void;
   setStepLabelsPhaseFilter: (phase: Phase | null) => void;
@@ -61,7 +59,6 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
     stepEdgeLayer: ctx.stepEdgeLayer,
     edges: ctx.edges,
     steps: ctx.steps,
-    verticalAdjacency: ctx.verticalAdjacency,
     setNodeAlpha: ctx.setNodeAlpha,
     useBlur,
   });
@@ -82,7 +79,6 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
         renderEdges(ctx.edgeLayer, ctx.edges, ctx.nodeMap, {
           view: 'workflow',
           selectedId: null,
-          highlightedIds: null,
         });
       }
     } else {
