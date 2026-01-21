@@ -80,12 +80,19 @@ export const buildLineageGraph = (
 
   // Create nodes for all assets
   manifest.assets.forEach((asset) => {
-    const pos = positions.get(asset.id) ?? { x: 0, y: 200, step: 'unknown' };
+    if (!asset.step) {
+      throw new Error(`Asset ${asset.id} missing step`);
+    }
+    const pos = positions.get(asset.id);
+    if (!pos) {
+      throw new Error(`Asset ${asset.id} missing position`);
+    }
+    const stepId = asset.step;
     const assetManifest = assetManifests.get(asset.id);
     const mappedAssetType = mapAssetType(asset.asset_type);
     const nodeType = assetTypeToNodeType(mappedAssetType);
-    const phase = stepPhaseMap.get(pos.step);
-    if (!phase) throw new Error(`Missing phase for step ${pos.step}`);
+    const phase = stepPhaseMap.get(stepId);
+    if (!phase) throw new Error(`Missing phase for step ${stepId}`);
 
     nodes.push({
       id: asset.id,
@@ -96,7 +103,7 @@ export const buildLineageGraph = (
       shape: 'circle',
       x: pos.x,
       y: pos.y,
-      step: pos.step,
+      step: stepId,
       phase,
       description: asset.description,
       assetManifest,
@@ -113,9 +120,16 @@ export const buildLineageGraph = (
 
   // Create nodes for claims
   manifest.claims.forEach((attest) => {
-    const pos = positions.get(attest.id) ?? { x: 0, y: 100, step: 'unknown' };
-    const phase = stepPhaseMap.get(pos.step);
-    if (!phase) throw new Error(`Missing phase for step ${pos.step}`);
+    if (!attest.step) {
+      throw new Error(`Claim ${attest.id} missing step`);
+    }
+    const pos = positions.get(attest.id);
+    if (!pos) {
+      throw new Error(`Claim ${attest.id} missing position`);
+    }
+    const stepId = attest.step;
+    const phase = stepPhaseMap.get(stepId);
+    if (!phase) throw new Error(`Missing phase for step ${stepId}`);
     nodes.push({
       id: attest.id,
       label: attest.label,
@@ -125,7 +139,7 @@ export const buildLineageGraph = (
       shape: 'circle',
       x: pos.x,
       y: pos.y,
-      step: pos.step,
+      step: stepId,
       phase,
       description: attest.description,
       role: 'sink',

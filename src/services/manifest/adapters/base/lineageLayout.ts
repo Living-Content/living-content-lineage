@@ -12,126 +12,44 @@ const VERTICAL_GAP = 0.08;
 
 /**
  * Computes layout positions for all assets.
- * Actions drive the layout - they have inputs and outputs that determine flow.
+ * Groups assets by step and lays them out horizontally.
  */
 export const computeLayout = (
   manifest: Manifest,
-  assetManifests: Map<string, AssetManifest>
+  _assetManifests: Map<string, AssetManifest>
 ): LayoutResult => {
   const positions = new Map<string, { x: number; y: number; step: string }>();
 
-  // Build maps for asset types and Action inputs/outputs
-  const assetTypes = new Map<string, string>();
-  const actionInputs = new Map<string, string[]>();
-  const actionOutputs = new Map<string, string[]>();
-  const actionSteps = new Map<string, string>();
-
+  // Group assets by step
+  const assetsByStep = new Map<string, typeof manifest.assets>();
   manifest.assets.forEach((asset) => {
-    assetTypes.set(asset.id, asset.asset_type);
-    if (asset.asset_type === 'Action') {
-      const actionManifest = assetManifests.get(asset.id);
-      actionInputs.set(asset.id, actionManifest?.inputs ?? []);
-      actionOutputs.set(asset.id, actionManifest?.outputs ?? []);
-      actionSteps.set(asset.id, asset.step ?? 'unknown');
+    if (!asset.step) {
+      throw new Error(`Asset ${asset.id} missing step`);
     }
+    if (!assetsByStep.has(asset.step)) {
+      assetsByStep.set(asset.step, []);
+    }
+    assetsByStep.get(asset.step)!.push(asset);
   });
 
-  // Build a set of Action IDs
-  const actionSet = new Set(actionInputs.keys());
-
-  // Track which assets are produced by Actions
-  const assetProducer = new Map<string, string>();
-  actionOutputs.forEach((outputs, actionId) => {
-    outputs.forEach((outputId) => assetProducer.set(outputId, actionId));
-  });
-
+  // Process steps in order
   let currentX = 0.1;
-  const placedAssets = new Set<string>();
+  manifest.steps.forEach((step) => {
+    const stepAssets = assetsByStep.get(step.id) ?? [];
+    if (stepAssets.length === 0) return;
 
-  // Process Actions in order (they maintain the step order from manifest)
-  const orderedActions = manifest.assets.filter((a) => a.asset_type === 'Action');
+    const totalHeight = (stepAssets.length - 1) * VERTICAL_GAP;
+    const startY = 0.5 - totalHeight / 2;
 
-  orderedActions.forEach((action) => {
-    const inputs = actionInputs.get(action.id) ?? [];
-    const outputs = actionOutputs.get(action.id) ?? [];
-    const step = actionSteps.get(action.id) ?? 'unknown';
-
-    // Filter inputs that aren't Actions
-    const dataInputs = inputs.filter((id) => !actionSet.has(id));
-
-    // Source inputs: not produced by other Actions and not yet placed
-    const sourceInputs = dataInputs.filter(
-      (id) => !assetProducer.has(id) && !placedAssets.has(id)
-    );
-
-    // Auxiliary inputs (Models, Code) stack below the Action
-    const auxiliaryInputs = sourceInputs.filter((id) => {
-      const type = assetTypes.get(id);
-      return type === 'Code' || type === 'Model';
-    });
-
-    // Data source inputs (Documents, etc.)
-    const dataSourceInputs = sourceInputs.filter((id) => {
-      const type = assetTypes.get(id);
-      return type !== 'Code' && type !== 'Model';
-    });
-
-    // Place data source inputs
-    if (dataSourceInputs.length > 0) {
-      const totalHeight = (dataSourceInputs.length - 1) * VERTICAL_GAP;
-      const startY = 0.5 - totalHeight / 2;
-
-      dataSourceInputs.forEach((inputId, idx) => {
-        positions.set(inputId, {
-          x: currentX,
-          y: startY + idx * VERTICAL_GAP,
-          step,
-        });
-        placedAssets.add(inputId);
+    stepAssets.forEach((asset, idx) => {
+      positions.set(asset.id, {
+        x: currentX,
+        y: startY + idx * VERTICAL_GAP,
+        step: step.id,
       });
-      currentX += HORIZONTAL_GAP;
-    }
-
-    // Place the Action
-    positions.set(action.id, {
-      x: currentX,
-      y: 0.5,
-      step,
     });
-
-    // Place auxiliary inputs to the LEFT of the Action (fan-in pattern)
-    if (auxiliaryInputs.length > 0) {
-      const inputX = currentX - HORIZONTAL_GAP;
-      const startY = 0.5 + VERTICAL_GAP;
-
-      auxiliaryInputs.forEach((inputId, idx) => {
-        positions.set(inputId, {
-          x: inputX,
-          y: startY + idx * VERTICAL_GAP,
-          step,
-        });
-        placedAssets.add(inputId);
-      });
-    }
 
     currentX += HORIZONTAL_GAP;
-
-    // Place outputs
-    const unplacedOutputs = outputs.filter((id) => !placedAssets.has(id));
-    if (unplacedOutputs.length > 0) {
-      const totalHeight = (unplacedOutputs.length - 1) * VERTICAL_GAP;
-      const startY = 0.5 - totalHeight / 2;
-
-      unplacedOutputs.forEach((outputId, idx) => {
-        positions.set(outputId, {
-          x: currentX,
-          y: startY + idx * VERTICAL_GAP,
-          step,
-        });
-        placedAssets.add(outputId);
-      });
-      currentX += HORIZONTAL_GAP;
-    }
   });
 
   // Place claims above verified nodes

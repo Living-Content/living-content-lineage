@@ -3,19 +3,19 @@ import { isRecord } from '../../config/utils.js';
 import type { ManifestAdapter } from './adapters/manifestAdapter.js';
 import { c2paAdapter } from './adapters/c2pa/c2paAdapter.js';
 import { eqtyAdapter } from './adapters/eqty/eqtyAdapter.js';
-import { customAdapter } from './adapters/custom/customAdapter.js';
+import { lcoAdapter } from './adapters/lco/lcoAdapter.js';
 import type { AssetLoadResult } from './errors.js';
 
 const ADAPTERS: ManifestAdapter<unknown>[] = [
+  lcoAdapter,
   c2paAdapter,
   eqtyAdapter,
-  customAdapter,
 ];
 
 export const getManifestType = (raw: unknown): ManifestType | null => {
   if (!isRecord(raw)) return null;
   const value = raw.manifest_type ?? raw.manifestType;
-  if (value === 'c2pa' || value === 'eqty' || value === 'custom') {
+  if (value === 'c2pa' || value === 'eqty' || value === 'lco') {
     return value;
   }
   return null;

@@ -4,6 +4,7 @@
   import { createGraphController } from '../../services/graph/layout/graphController.js';
   import { clearSelection, setLineageData } from '../../stores/lineageState.js';
   import { setLoadError, setLoading, setSimpleView } from '../../stores/uiState.js';
+  import { resolveManifestUrl } from '../../services/manifest/urlResolver.js';
   import PhaseFilterBadge from '../PhaseFilterBadge.svelte';
 
   let container: HTMLDivElement | null = null;
@@ -17,7 +18,7 @@
       setLoading(true);
       controller = await createGraphController({
         container,
-        manifestUrl: '/data/manifest.json',
+        manifestUrl: resolveManifestUrl(),
         callbacks: {
           onSimpleViewChange: (simple) => setSimpleView(simple),
           onHover: () => {},

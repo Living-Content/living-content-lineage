@@ -5,13 +5,16 @@ import {
   parseManifest,
 } from '../base/lineageAdapter.js';
 import { isManifest, type Manifest } from '../base/lineageTypes.js';
-import { isCustomManifest } from './customTypes.js';
+import { isLcoManifest } from './lcoTypes.js';
 import { mapAssetType } from '../assetTypeMapper.js';
 
-export const customAdapter: ManifestAdapter<Manifest> = {
-  type: 'custom',
+/**
+ * Adapter for LCO (Living Content) manifest format.
+ */
+export const lcoAdapter: ManifestAdapter<Manifest> = {
+  type: 'lco',
   isCompatible(raw: unknown): raw is Manifest {
-    return isCustomManifest(raw) && isManifest(raw);
+    return isLcoManifest(raw) && isManifest(raw);
   },
   getAssetManifestRequests(raw: Manifest, baseUrl: URL) {
     return getAssetManifestRequests(raw, baseUrl);
