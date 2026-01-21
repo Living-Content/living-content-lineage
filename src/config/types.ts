@@ -2,8 +2,6 @@
 export type { DataCardType } from './cardTypes.js';
 export type { FieldDisplayConfig, AssetDisplayConfig } from './displayConfig.js';
 
-export type ManifestType = "c2pa" | "eqty" | "lco";
-
 /**
  * High-level phase categorizing groups of workflows.
  * Phases represent logical pipeline segments from input to output.

@@ -21,10 +21,19 @@
   export let language: string = 'python';
 
   $: highlighted = hljs.highlight(code, { language, ignoreIllegals: true }).value;
+
+  const setHighlightedHtml = (node: HTMLElement, html: string) => {
+    node.innerHTML = html;
+    return {
+      update(newHtml: string) {
+        node.innerHTML = newHtml;
+      }
+    };
+  };
 </script>
 
 <PropertyGroup {title} {collapsed}>
-  <pre class="code-block"><code class="hljs">{@html highlighted}</code></pre>
+  <pre class="code-block"><code class="hljs" use:setHighlightedHtml={highlighted}></code></pre>
 </PropertyGroup>
 
 <style>

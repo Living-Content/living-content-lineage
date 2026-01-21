@@ -87,12 +87,10 @@ export const renderEdges = (
     } else {
       renderVerticalEdge(
         targetLineGraphics,
-        targetDotGraphics,
         sx, sy, tx, ty,
         sourceHalfH, targetHalfH,
         color,
-        edgeWidth,
-        dotRadius
+        edgeWidth
       );
     }
   }
@@ -200,13 +198,11 @@ const renderHorizontalEdge = (
 
 const renderVerticalEdge = (
   lineGraphics: Graphics,
-  dotGraphics: Graphics,
   sx: number, sy: number,
   tx: number, ty: number,
   sourceHalfH: number, targetHalfH: number,
   color: number,
-  edgeWidth: number,
-  dotRadius: number
+  edgeWidth: number
 ): void => {
   const goingDown = ty > sy;
   const startY = goingDown ? sy + sourceHalfH : sy - sourceHalfH;

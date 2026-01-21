@@ -22,6 +22,11 @@ export interface Asset {
   description?: string;
   manifest_url?: string;
   step?: string;
+  data?: Record<string, unknown>;
+  /** Input asset IDs for Action nodes (workflow decorator output) */
+  inputs?: string[];
+  /** Output asset IDs for Action nodes (workflow decorator output) */
+  outputs?: string[];
 }
 
 /**
@@ -54,7 +59,6 @@ export interface SignedManifest {
  * The complete workflow manifest file structure.
  */
 export interface Manifest {
-  manifest_type: string;
   title: string;
   description: string;
   workflow_id: string;
@@ -80,6 +84,9 @@ export function isAsset(raw: unknown): raw is Asset {
   if (typeof raw.id !== 'string') return false;
   if (typeof raw.label !== 'string') return false;
   if (typeof raw.asset_type !== 'string') return false;
+  // Validate inputs/outputs arrays if present
+  if (raw.inputs !== undefined && !Array.isArray(raw.inputs)) return false;
+  if (raw.outputs !== undefined && !Array.isArray(raw.outputs)) return false;
   return true;
 }
 
@@ -94,7 +101,6 @@ export function isClaim(raw: unknown): raw is Claim {
 
 export function isManifest(raw: unknown): raw is Manifest {
   if (!isRecord(raw)) return false;
-  if (typeof raw.manifest_type !== 'string') return false;
   if (typeof raw.title !== 'string') return false;
   if (typeof raw.description !== 'string') return false;
   if (typeof raw.workflow_id !== 'string') return false;

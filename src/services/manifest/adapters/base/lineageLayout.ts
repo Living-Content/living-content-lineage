@@ -1,4 +1,4 @@
-import type { AssetManifest, StepUI } from '../../../../config/types.js';
+import type { StepUI } from '../../../../config/types.js';
 import { validatePhase } from '../../../../config/utils.js';
 import type { Manifest } from './lineageTypes.js';
 
@@ -14,10 +14,7 @@ const VERTICAL_GAP = 0.08;
  * Computes layout positions for all assets.
  * Groups assets by step and lays them out horizontally.
  */
-export const computeLayout = (
-  manifest: Manifest,
-  _assetManifests: Map<string, AssetManifest>
-): LayoutResult => {
+export const computeLayout = (manifest: Manifest): LayoutResult => {
   const positions = new Map<string, { x: number; y: number; step: string }>();
 
   // Group assets by step

@@ -6,9 +6,8 @@ import type {
   LineageManifestSummary,
   LineageNodeData,
   Phase,
-  StepUI,
 } from '../../../../config/types.js';
-import { isRecord, validatePhase } from '../../../../config/utils.js';
+import { validatePhase } from '../../../../config/utils.js';
 import { assetTypeToNodeType } from '../../../../config/types.js';
 import type { Manifest, SignedManifest } from './lineageTypes.js';
 import { computeLayout } from './lineageLayout.js';
@@ -62,7 +61,7 @@ export const buildLineageGraph = (
   const activeManifest = manifest.manifests[activeManifestId];
   const manifestSummary = buildManifestSummary(activeManifest);
 
-  const { positions, steps } = computeLayout(manifest, assetManifests);
+  const { positions, steps } = computeLayout(manifest);
   const nodes: LineageNodeData[] = [];
 
   // Build step-to-phase mapping
@@ -155,8 +154,9 @@ export const buildLineageGraph = (
     if (mapAssetType(asset.asset_type) === 'Action') {
       actionSet.add(asset.id);
       const actionManifest = assetManifests.get(asset.id);
-      const inputs = actionManifest?.inputs ?? [];
-      const outputs = actionManifest?.outputs ?? [];
+      // Prefer inputs/outputs from asset (workflow decorator), fallback to manifest
+      const inputs = asset.inputs ?? actionManifest?.inputs ?? [];
+      const outputs = asset.outputs ?? actionManifest?.outputs ?? [];
 
       // Connect inputs to this Action
       inputs.forEach((inputId) => {

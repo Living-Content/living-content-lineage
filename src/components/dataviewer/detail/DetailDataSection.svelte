@@ -6,8 +6,7 @@
    * 2. Non-card detail data in middle (detail-only fields)
    * 3. Collapsible "Additional Data" section at bottom (unspecified key-value pairs)
    */
-  import type { Phase, AssetType, LineageNodeData } from '../../../config/types.js';
-  import type { FieldDisplayConfig, AssetDisplayConfig } from '../../../config/displayConfig.js';
+  import type { LineageNodeData } from '../../../config/types.js';
   import { getDisplayConfig, classifyCardFields, getDetailOnlyFields, getValueByPath, isConfiguredField } from '../../../config/displayConfig.js';
   import CardSection from '../cards/CardSection.svelte';
   import AdditionalData from './AdditionalData.svelte';

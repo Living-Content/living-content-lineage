@@ -16,9 +16,3 @@ export const mapAssetType = (assetType: string): AssetType => {
   if (!mapped) throw new Error(`Unsupported asset_type: ${assetType}`);
   return mapped;
 };
-
-export const mapC2paAssetType = (assetType: string): AssetType => {
-  if (assetType.startsWith('c2pa.types.model')) return 'Model';
-  if (assetType.startsWith('c2pa.types.dataset')) return 'Dataset';
-  return mapAssetType(assetType);
-};

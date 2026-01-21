@@ -157,8 +157,6 @@
   $: hasCardData = metricsWithValues.length > 0 || propertiesWithValues.length > 0;
   $: hasDetailData = regularDetailFields.length > 0;
   $: hasUnconfiguredFields = unconfiguredSimpleFields.length > 0;
-  $: hasMarkdownFields = markdownFields.length > 0;
-  $: hasCodeFields = codeFields.length > 0;
 </script>
 
 <div class="detail-view">

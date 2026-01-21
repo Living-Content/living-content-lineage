@@ -1,51 +1,8 @@
-import type { ManifestType, LineageGraph } from '../../config/types.js';
-import { isRecord } from '../../config/utils.js';
-import type { ManifestAdapter } from './adapters/manifestAdapter.js';
-import { c2paAdapter } from './adapters/c2pa/c2paAdapter.js';
-import { eqtyAdapter } from './adapters/eqty/eqtyAdapter.js';
-import { lcoAdapter } from './adapters/lco/lcoAdapter.js';
+import type { LineageGraph } from '../../config/types.js';
+import { getAssetManifestRequests, parseManifest } from './adapters/base/lineageAdapter.js';
+import { isManifest } from './adapters/base/lineageTypes.js';
+import { mapAssetType } from './adapters/assetTypeMapper.js';
 import type { AssetLoadResult } from './errors.js';
-
-const ADAPTERS: ManifestAdapter<unknown>[] = [
-  lcoAdapter,
-  c2paAdapter,
-  eqtyAdapter,
-];
-
-export const getManifestType = (raw: unknown): ManifestType | null => {
-  if (!isRecord(raw)) return null;
-  const value = raw.manifest_type ?? raw.manifestType;
-  if (value === 'c2pa' || value === 'eqty' || value === 'lco') {
-    return value;
-  }
-  return null;
-};
-
-export const getAdapter = (type: ManifestType): ManifestAdapter<unknown> => {
-  const adapter = ADAPTERS.find((candidate) => candidate.type === type);
-  if (!adapter) {
-    throw new Error(`Unsupported manifest type: ${type}`);
-  }
-  return adapter;
-};
-
-const resolveAdapter = (raw: unknown): ManifestAdapter<unknown> => {
-  const explicitType = getManifestType(raw);
-  if (explicitType) {
-    const adapter = getAdapter(explicitType);
-    if (!adapter.isCompatible(raw)) {
-      throw new Error(`Manifest did not match adapter for ${explicitType}`);
-    }
-    return adapter;
-  }
-
-  const compatible = ADAPTERS.filter((adapter) => adapter.isCompatible(raw));
-  if (compatible.length === 1) return compatible[0];
-  if (compatible.length === 0) {
-    throw new Error('Manifest type could not be determined');
-  }
-  throw new Error('Manifest matched multiple adapters');
-};
 
 export const loadManifest = async (url: string): Promise<LineageGraph> => {
   const manifestUrl = new URL(url, window.location.href);
@@ -55,10 +12,13 @@ export const loadManifest = async (url: string): Promise<LineageGraph> => {
   }
 
   const raw = (await response.json()) as unknown;
-  const adapter = resolveAdapter(raw);
+
+  if (!isManifest(raw)) {
+    throw new Error('Invalid manifest structure');
+  }
 
   const baseUrl = new URL('.', manifestUrl);
-  const assetRequests = adapter.getAssetManifestRequests(raw, baseUrl);
+  const assetRequests = getAssetManifestRequests(raw, baseUrl);
 
   const assetManifests = new Map<string, unknown>();
   const results: AssetLoadResult[] = await Promise.all(
@@ -82,5 +42,5 @@ export const loadManifest = async (url: string): Promise<LineageGraph> => {
     console.warn(`Failed to load ${failed.length} asset manifest(s):`, failed);
   }
 
-  return adapter.parse(raw, assetManifests);
+  return parseManifest(raw, assetManifests, mapAssetType);
 };
