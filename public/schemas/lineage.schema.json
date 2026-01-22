@@ -76,9 +76,17 @@
           "type": "string",
           "description": "Human-readable display name"
         },
+        "title": {
+          "type": "string",
+          "description": "Extended display title"
+        },
         "asset_type": {
           "$ref": "#/$defs/AssetType",
           "description": "Asset content or process type"
+        },
+        "step": {
+          "type": "string",
+          "description": "Workflow step this asset belongs to"
         },
         "description": {
           "type": "string",
@@ -86,11 +94,96 @@
         },
         "manifest_url": {
           "type": "string",
-          "format": "uri",
+          "format": "uri-reference",
           "description": "URL to the asset's detailed manifest"
+        },
+        "data": {
+          "type": "object",
+          "description": "Additional asset-specific data"
+        },
+        "inputs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Input asset IDs for edge relationships"
+        },
+        "outputs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Output asset IDs for edge relationships"
         }
       },
       "required": ["id", "label", "asset_type"]
+    },
+    "Claim": {
+      "description": "A claim (attestation) verifying assets in the lineage graph",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique claim identifier"
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable display label"
+        },
+        "title": {
+          "type": "string",
+          "description": "Extended display title"
+        },
+        "step": {
+          "type": "string",
+          "description": "Workflow step this claim belongs to"
+        },
+        "verifies": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Asset IDs this claim verifies"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional claim description"
+        },
+        "manifest_url": {
+          "type": "string",
+          "format": "uri-reference",
+          "description": "URL to the claim's detailed manifest with C2PA data"
+        }
+      },
+      "required": ["id", "label", "step", "verifies"]
+    },
+    "ClaimManifest": {
+      "description": "Detailed claim manifest with provider-specific attestation data",
+      "type": "object",
+      "properties": {
+        "claim_id": {
+          "type": "string",
+          "description": "Unique claim identifier"
+        },
+        "provider": {
+          "type": "string",
+          "enum": ["lco", "c2pa", "eqty", "titles"],
+          "description": "Claim provider (lco, c2pa, eqty, titles)"
+        },
+        "claim_type": {
+          "type": "string",
+          "enum": ["merkle", "ledger", "certificate", "tee"],
+          "description": "Type of attestation"
+        },
+        "attestation": {
+          "type": "object",
+          "description": "Provider-specific attestation data"
+        },
+        "signature": {
+          "type": "string",
+          "description": "Cryptographic signature"
+        },
+        "verification_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to verify the claim"
+        }
+      },
+      "required": ["claim_id", "provider", "claim_type"]
     }
   }
 }

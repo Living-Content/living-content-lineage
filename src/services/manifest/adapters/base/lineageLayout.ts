@@ -56,7 +56,7 @@ export const computeLayout = (manifest: Manifest): LayoutResult => {
     const outputAssets: Asset[] = [];
 
     assets.forEach((asset) => {
-      const type = asset.asset_type;
+      const type = asset.assetType;
       if (type === 'Code' || type === 'Model' || type === 'Action') {
         inputAssets.push(asset);
       } else {
@@ -66,7 +66,7 @@ export const computeLayout = (manifest: Manifest): LayoutResult => {
 
     // Sort input assets: Action first, then Code, then Model
     const typeOrder: Record<string, number> = { Action: 0, Code: 1, Model: 2 };
-    inputAssets.sort((a, b) => (typeOrder[a.asset_type] ?? 99) - (typeOrder[b.asset_type] ?? 99));
+    inputAssets.sort((a, b) => (typeOrder[a.assetType] ?? 99) - (typeOrder[b.assetType] ?? 99));
 
     // Position input assets (left column of group)
     inputAssets.forEach((asset, idx) => {

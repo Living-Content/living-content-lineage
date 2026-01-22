@@ -149,6 +149,7 @@ export interface LineageNodeData {
   phase: Phase;
   manifest?: LineageManifestSummary;
   assetManifest?: AssetManifest;
+  claimManifest?: unknown;
   description?: string;
   x?: number;
   y?: number;

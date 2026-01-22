@@ -58,7 +58,8 @@
       "label": "User Query",
       "asset_type": "Document",
       "description": "The original question asked by the user: \"What's in the database?\"",
-      "manifest_url": "./assets/data-user-query.json"
+      "manifest_url": "./assets/data-user-query.json",
+      "outputs": ["action-consume-query"]
     },
     {
       "id": "action-consume-query",
@@ -67,7 +68,9 @@
       "asset_type": "Action",
       "step": "ingest",
       "description": "Receives and validates the user's question, preparing it for the AI pipeline.",
-      "manifest_url": "./actions/action-consume-query.json"
+      "manifest_url": "./actions/action-consume-query.json",
+      "inputs": ["data-user-query"],
+      "outputs": ["data-consumed-query"]
     },
     {
       "id": "data-consumed-query",
@@ -75,7 +78,9 @@
       "title": "Validated Query",
       "asset_type": "Result",
       "description": "The user's question after parsing and validation, ready for processing.",
-      "manifest_url": "./assets/data-consumed-query.json"
+      "manifest_url": "./assets/data-consumed-query.json",
+      "inputs": ["action-consume-query"],
+      "outputs": ["action-select-tool"]
     },
     {
       "id": "model-select-tool",
@@ -83,7 +88,8 @@
       "title": "Gemini 2.5 Flash",
       "asset_type": "Model",
       "description": "Gemini 2.5 Flash - Google's lightweight model optimized for speed. Fast inference with low latency, ideal for quick classification tasks.",
-      "manifest_url": "./assets/model-select-tool.json"
+      "manifest_url": "./assets/model-select-tool.json",
+      "outputs": ["data-selected-tool"]
     },
     {
       "id": "code-select-tool",
@@ -91,7 +97,8 @@
       "title": "Tool Router",
       "asset_type": "Code",
       "description": "Analyzes the query and chooses the best tool to answer it. Selected the knowledge query tool.",
-      "manifest_url": "./assets/code-select-tool.json"
+      "manifest_url": "./assets/code-select-tool.json",
+      "outputs": ["data-selected-tool"]
     },
     {
       "id": "action-select-tool",
@@ -100,7 +107,9 @@
       "asset_type": "Action",
       "step": "select",
       "description": "Uses AI to analyze the question and pick the right tool to answer it.",
-      "manifest_url": "./actions/action-select-tool.json"
+      "manifest_url": "./actions/action-select-tool.json",
+      "inputs": ["data-consumed-query"],
+      "outputs": ["data-selected-tool"]
     },
     {
       "id": "data-selected-tool",
@@ -108,7 +117,9 @@
       "title": "Tool Selection",
       "asset_type": "Result",
       "description": "The decision to use the knowledge query tool for answering this question.",
-      "manifest_url": "./assets/data-selected-tool.json"
+      "manifest_url": "./assets/data-selected-tool.json",
+      "inputs": ["code-select-tool", "model-select-tool", "action-select-tool"],
+      "outputs": ["action-retrieve-history"]
     },
     {
       "id": "code-retrieve-history",
@@ -116,7 +127,8 @@
       "title": "History Lookup",
       "asset_type": "Code",
       "description": "Fetches previous messages from the conversation for context.",
-      "manifest_url": "./assets/code-retrieve-history.json"
+      "manifest_url": "./assets/code-retrieve-history.json",
+      "outputs": ["data-retrieved-history"]
     },
     {
       "id": "action-retrieve-history",
@@ -125,7 +137,9 @@
       "asset_type": "Action",
       "step": "retrieve",
       "description": "Looks up previous messages in this conversation for context.",
-      "manifest_url": "./actions/action-retrieve-history.json"
+      "manifest_url": "./actions/action-retrieve-history.json",
+      "inputs": ["data-selected-tool"],
+      "outputs": ["data-retrieved-history"]
     },
     {
       "id": "data-retrieved-history",
@@ -133,7 +147,9 @@
       "title": "Conversation History",
       "asset_type": "Dataset",
       "description": "No previous messages were found - this is the start of a new conversation.",
-      "manifest_url": "./assets/data-retrieved-history.json"
+      "manifest_url": "./assets/data-retrieved-history.json",
+      "inputs": ["code-retrieve-history", "action-retrieve-history"],
+      "outputs": ["action-reflect"]
     },
     {
       "id": "model-reflect",
@@ -141,7 +157,8 @@
       "title": "Gemini 2.5 Flash",
       "asset_type": "Model",
       "description": "Gemini 2.5 Flash - Google's lightweight model optimized for speed. Cost-effective for high-volume analysis tasks.",
-      "manifest_url": "./assets/model-reflect.json"
+      "manifest_url": "./assets/model-reflect.json",
+      "outputs": ["data-reflection"]
     },
     {
       "id": "code-reflect",
@@ -149,7 +166,8 @@
       "title": "Intent Analyzer",
       "asset_type": "Code",
       "description": "Examines the query to identify the user's underlying intent and information needs.",
-      "manifest_url": "./assets/code-reflect.json"
+      "manifest_url": "./assets/code-reflect.json",
+      "outputs": ["data-reflection"]
     },
     {
       "id": "action-reflect",
@@ -158,7 +176,9 @@
       "asset_type": "Action",
       "step": "reflect",
       "description": "Analyzes what the user really wants to know beyond the literal question.",
-      "manifest_url": "./actions/action-reflect.json"
+      "manifest_url": "./actions/action-reflect.json",
+      "inputs": ["data-retrieved-history"],
+      "outputs": ["data-reflection"]
     },
     {
       "id": "data-reflection",
@@ -166,7 +186,9 @@
       "title": "User Intent",
       "asset_type": "Result",
       "description": "Determined that the user wants to explore and understand the database contents.",
-      "manifest_url": "./assets/data-reflection.json"
+      "manifest_url": "./assets/data-reflection.json",
+      "inputs": ["code-reflect", "model-reflect", "action-reflect"],
+      "outputs": ["action-plan"]
     },
     {
       "id": "model-plan",
@@ -174,7 +196,8 @@
       "title": "Gemini 2.5 Flash",
       "asset_type": "Model",
       "description": "Gemini 2.5 Flash - Google's lightweight model optimized for speed. Efficient for structured planning and reasoning tasks.",
-      "manifest_url": "./assets/model-plan.json"
+      "manifest_url": "./assets/model-plan.json",
+      "outputs": ["data-plan"]
     },
     {
       "id": "code-plan",
@@ -182,7 +205,8 @@
       "title": "Strategy Builder",
       "asset_type": "Code",
       "description": "Develops a step-by-step plan for searching and retrieving knowledge.",
-      "manifest_url": "./assets/code-plan.json"
+      "manifest_url": "./assets/code-plan.json",
+      "outputs": ["data-plan"]
     },
     {
       "id": "action-plan",
@@ -191,7 +215,9 @@
       "asset_type": "Action",
       "step": "plan",
       "description": "Creates a strategy for finding the best information to answer the question.",
-      "manifest_url": "./actions/action-plan.json"
+      "manifest_url": "./actions/action-plan.json",
+      "inputs": ["data-reflection"],
+      "outputs": ["data-plan"]
     },
     {
       "id": "data-plan",
@@ -199,7 +225,9 @@
       "title": "Search Strategy",
       "asset_type": "Result",
       "description": "The search strategy: query the knowledge base for database content overview.",
-      "manifest_url": "./assets/data-plan.json"
+      "manifest_url": "./assets/data-plan.json",
+      "inputs": ["code-plan", "model-plan", "action-plan"],
+      "outputs": ["action-retrieve"]
     },
     {
       "id": "code-retrieve",
@@ -207,7 +235,8 @@
       "title": "Knowledge Search",
       "asset_type": "Code",
       "description": "Searches the knowledge base using the planned strategy.",
-      "manifest_url": "./assets/code-retrieve.json"
+      "manifest_url": "./assets/code-retrieve.json",
+      "outputs": ["data-retrieved-docs"]
     },
     {
       "id": "action-retrieve",
@@ -216,7 +245,9 @@
       "asset_type": "Action",
       "step": "search",
       "description": "Searches the knowledge base to find relevant documents and information.",
-      "manifest_url": "./actions/action-retrieve.json"
+      "manifest_url": "./actions/action-retrieve.json",
+      "inputs": ["data-plan"],
+      "outputs": ["data-retrieved-docs"]
     },
     {
       "id": "data-retrieved-docs",
@@ -224,7 +255,9 @@
       "title": "Retrieved Documents",
       "asset_type": "Dataset",
       "description": "Documents and records found in the knowledge base matching the query.",
-      "manifest_url": "./assets/data-retrieved-docs.json"
+      "manifest_url": "./assets/data-retrieved-docs.json",
+      "inputs": ["code-retrieve", "action-retrieve"],
+      "outputs": ["action-evaluate"]
     },
     {
       "id": "model-evaluate",
@@ -232,7 +265,8 @@
       "title": "Claude Sonnet 4.5",
       "asset_type": "Model",
       "description": "Claude Sonnet 4.5 - Anthropic's standard-tier model. Balances capability and cost, strong at nuanced evaluation and judgment tasks.",
-      "manifest_url": "./assets/model-evaluate.json"
+      "manifest_url": "./assets/model-evaluate.json",
+      "outputs": ["data-evaluation"]
     },
     {
       "id": "code-evaluate",
@@ -240,7 +274,8 @@
       "title": "Relevance Scorer",
       "asset_type": "Code",
       "description": "Scores and ranks the retrieved documents based on relevance to the question.",
-      "manifest_url": "./assets/code-evaluate.json"
+      "manifest_url": "./assets/code-evaluate.json",
+      "outputs": ["data-evaluation"]
     },
     {
       "id": "action-evaluate",
@@ -249,7 +284,9 @@
       "asset_type": "Action",
       "step": "evaluate",
       "description": "Uses AI to score and rank retrieved documents by relevance.",
-      "manifest_url": "./actions/action-evaluate.json"
+      "manifest_url": "./actions/action-evaluate.json",
+      "inputs": ["data-retrieved-docs"],
+      "outputs": ["data-evaluation"]
     },
     {
       "id": "data-evaluation",
@@ -257,7 +294,9 @@
       "title": "Relevance Rankings",
       "asset_type": "Result",
       "description": "The ranked list of documents deemed most useful for answering the question.",
-      "manifest_url": "./assets/data-evaluation.json"
+      "manifest_url": "./assets/data-evaluation.json",
+      "inputs": ["code-evaluate", "model-evaluate", "action-evaluate"],
+      "outputs": ["action-generate-response"]
     },
     {
       "id": "model-generate-response",
@@ -265,7 +304,8 @@
       "title": "Claude Sonnet 4.5",
       "asset_type": "Model",
       "description": "Claude Sonnet 4.5 - Anthropic's standard-tier model. Excellent at synthesis and natural language generation with nuanced understanding.",
-      "manifest_url": "./assets/model-generate-response.json"
+      "manifest_url": "./assets/model-generate-response.json",
+      "outputs": ["data-generated-response"]
     },
     {
       "id": "code-generate-response",
@@ -273,7 +313,8 @@
       "title": "Response Composer",
       "asset_type": "Code",
       "description": "Synthesizes the evaluated information into a coherent, helpful response.",
-      "manifest_url": "./assets/code-generate-response.json"
+      "manifest_url": "./assets/code-generate-response.json",
+      "outputs": ["data-generated-response"]
     },
     {
       "id": "action-generate-response",
@@ -282,7 +323,9 @@
       "asset_type": "Action",
       "step": "generate",
       "description": "Uses Claude to synthesize the information into a helpful answer.",
-      "manifest_url": "./actions/action-generate-response.json"
+      "manifest_url": "./actions/action-generate-response.json",
+      "inputs": ["data-evaluation"],
+      "outputs": ["data-generated-response"]
     },
     {
       "id": "data-generated-response",
@@ -290,7 +333,9 @@
       "title": "Generated Answer",
       "asset_type": "Document",
       "description": "The complete answer explaining what's in the database - a collection of digital art.",
-      "manifest_url": "./assets/data-generated-response.json"
+      "manifest_url": "./assets/data-generated-response.json",
+      "inputs": ["code-generate-response", "model-generate-response", "action-generate-response"],
+      "outputs": ["action-save-response"]
     },
     {
       "id": "code-save-response",
@@ -298,7 +343,8 @@
       "title": "Response Saver",
       "asset_type": "Code",
       "description": "Records the response and its lineage for future reference and auditing.",
-      "manifest_url": "./assets/code-save-response.json"
+      "manifest_url": "./assets/code-save-response.json",
+      "outputs": ["data-saved-response"]
     },
     {
       "id": "action-save-response",
@@ -307,7 +353,9 @@
       "asset_type": "Action",
       "step": "store",
       "description": "Saves the response and records its complete provenance chain.",
-      "manifest_url": "./actions/action-save-response.json"
+      "manifest_url": "./actions/action-save-response.json",
+      "inputs": ["data-generated-response"],
+      "outputs": ["data-saved-response"]
     },
     {
       "id": "data-saved-response",
@@ -315,7 +363,8 @@
       "title": "Saved Response",
       "asset_type": "Result",
       "description": "The response has been saved to the conversation history for continuity.",
-      "manifest_url": "./assets/data-saved-response.json"
+      "manifest_url": "./assets/data-saved-response.json",
+      "inputs": ["code-save-response", "action-save-response"]
     }
   ],
 

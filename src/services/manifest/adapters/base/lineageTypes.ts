@@ -18,20 +18,17 @@ export interface Asset {
   id: string;
   label: string;
   title?: string;
-  asset_type: string;
+  assetType: string;
   description?: string;
-  manifest_url?: string;
+  manifestUrl?: string;
   step?: string;
   data?: Record<string, unknown>;
-  /** Input asset IDs for Action nodes (workflow decorator output) */
   inputs?: string[];
-  /** Output asset IDs for Action nodes (workflow decorator output) */
   outputs?: string[];
 }
 
 /**
  * Claim node definition in the manifest.
- * Represents a verification point in the lineage graph.
  */
 export interface Claim {
   id: string;
@@ -40,17 +37,23 @@ export interface Claim {
   step: string;
   verifies: string[];
   description?: string;
+  manifestUrl?: string;
+  provider?: string;
+  claimType?: string;
+  attestation?: Record<string, unknown>;
+  signature?: string;
+  verificationUrl?: string;
 }
 
 /**
  * SignedManifest - a manifest record with an executed claim attached.
  */
 export interface SignedManifest {
-  claim_generator: string;
-  claim_generator_info: Array<{ name: string; version: string }>;
+  claimGenerator: string;
+  claimGeneratorInfo: Array<{ name: string; version: string }>;
   title: string;
   format: string;
-  instance_id: string;
+  instanceId: string;
   assertions: Array<{ label: string; data: unknown }>;
   attestation: Attestation;
 }
@@ -61,9 +64,9 @@ export interface SignedManifest {
 export interface Manifest {
   title: string;
   description: string;
-  workflow_id: string;
-  content_session_id?: string;
-  active_manifest: string;
+  workflowId: string;
+  contentSessionId?: string;
+  activeManifest: string;
   manifests: Record<string, SignedManifest>;
   steps: Step[];
   assets: Asset[];
@@ -83,8 +86,7 @@ export function isAsset(raw: unknown): raw is Asset {
   if (!isRecord(raw)) return false;
   if (typeof raw.id !== 'string') return false;
   if (typeof raw.label !== 'string') return false;
-  if (typeof raw.asset_type !== 'string') return false;
-  // Validate inputs/outputs arrays if present
+  if (typeof raw.assetType !== 'string') return false;
   if (raw.inputs !== undefined && !Array.isArray(raw.inputs)) return false;
   if (raw.outputs !== undefined && !Array.isArray(raw.outputs)) return false;
   return true;
@@ -103,8 +105,8 @@ export function isManifest(raw: unknown): raw is Manifest {
   if (!isRecord(raw)) return false;
   if (typeof raw.title !== 'string') return false;
   if (typeof raw.description !== 'string') return false;
-  if (typeof raw.workflow_id !== 'string') return false;
-  if (typeof raw.active_manifest !== 'string') return false;
+  if (typeof raw.workflowId !== 'string') return false;
+  if (typeof raw.activeManifest !== 'string') return false;
   if (!isRecord(raw.manifests)) return false;
   if (!Array.isArray(raw.steps)) return false;
   if (!Array.isArray(raw.assets)) return false;

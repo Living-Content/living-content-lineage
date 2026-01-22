@@ -45,6 +45,22 @@ function normalizeIngredients(raw: unknown): AssetManifest['ingredients'] {
     .filter((ingredient) => ingredient.title && ingredient.instanceId);
 }
 
+/**
+ * Normalizes inline asset data from bundled manifests.
+ *
+ * Handles the `data` field on assets in manifest-bundle.json.
+ */
+export function normalizeInlineData(data: Record<string, unknown>): AssetManifest | undefined {
+  if (!data || Object.keys(data).length === 0) return undefined;
+  return {
+    sourceCode: data.source_code ? String(data.source_code) : undefined,
+    content: normalizeAssetContent(data.content ?? data),
+  };
+}
+
+/**
+ * Normalizes external asset manifests loaded from separate files.
+ */
 export function normalizeAssetManifest(raw: unknown): AssetManifest | undefined {
   if (!isRecord(raw)) return undefined;
   const assertions = Array.isArray(raw.assertions)

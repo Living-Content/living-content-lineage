@@ -17,8 +17,8 @@ const buildManifestSummary = (
   record?: SignedManifest
 ): LineageManifestSummary | undefined => {
   if (!record) return undefined;
-  const claimGeneratorInfo = Array.isArray(record.claim_generator_info)
-    ? record.claim_generator_info.map((info) => ({
+  const claimGeneratorInfo = Array.isArray(record.claimGeneratorInfo)
+    ? record.claimGeneratorInfo.map((info) => ({
         name: info.name,
         version: info.version,
       }))
@@ -42,7 +42,7 @@ const buildManifestSummary = (
     claimGeneratorInfo,
     title: record.title,
     format: record.format,
-    instanceId: record.instance_id,
+    instanceId: record.instanceId,
     assertions,
     attestation,
   };
@@ -55,9 +55,10 @@ const buildManifestSummary = (
 export const buildLineageGraph = (
   manifest: Manifest,
   assetManifests: Map<string, AssetManifest>,
+  claimManifests: Map<string, unknown>,
   mapAssetType: (assetType: string) => AssetType
 ): LineageGraph => {
-  const activeManifestId = manifest.active_manifest;
+  const activeManifestId = manifest.activeManifest;
   const activeManifest = manifest.manifests[activeManifestId];
   const manifestSummary = buildManifestSummary(activeManifest);
 
@@ -74,7 +75,7 @@ export const buildLineageGraph = (
   // Build asset type map for edge classification
   const assetTypes = new Map<string, AssetType>();
   manifest.assets.forEach((asset) => {
-    assetTypes.set(asset.id, mapAssetType(asset.asset_type));
+    assetTypes.set(asset.id, mapAssetType(asset.assetType));
   });
 
   // Create nodes for all assets
@@ -88,7 +89,7 @@ export const buildLineageGraph = (
     }
     const stepId = asset.step;
     const assetManifest = assetManifests.get(asset.id);
-    const mappedAssetType = mapAssetType(asset.asset_type);
+    const mappedAssetType = mapAssetType(asset.assetType);
     const nodeType = assetTypeToNodeType(mappedAssetType);
     const phase = stepPhaseMap.get(stepId);
     if (!phase) throw new Error(`Missing phase for step ${stepId}`);
@@ -118,21 +119,22 @@ export const buildLineageGraph = (
   });
 
   // Create nodes for claims
-  manifest.claims.forEach((attest) => {
-    if (!attest.step) {
-      throw new Error(`Claim ${attest.id} missing step`);
+  manifest.claims.forEach((claim) => {
+    if (!claim.step) {
+      throw new Error(`Claim ${claim.id} missing step`);
     }
-    const pos = positions.get(attest.id);
+    const pos = positions.get(claim.id);
     if (!pos) {
-      throw new Error(`Claim ${attest.id} missing position`);
+      throw new Error(`Claim ${claim.id} missing position`);
     }
-    const stepId = attest.step;
+    const stepId = claim.step;
     const phase = stepPhaseMap.get(stepId);
     if (!phase) throw new Error(`Missing phase for step ${stepId}`);
+    const claimManifest = claimManifests.get(claim.id);
     nodes.push({
-      id: attest.id,
-      label: attest.label,
-      title: attest.title,
+      id: claim.id,
+      label: claim.label,
+      title: claim.title,
       nodeType: 'claim',
       assetType: 'Claim',
       shape: 'circle',
@@ -140,8 +142,9 @@ export const buildLineageGraph = (
       y: pos.y,
       step: stepId,
       phase,
-      description: attest.description,
+      description: claim.description,
       role: 'sink',
+      claimManifest,
     });
   });
 
@@ -151,7 +154,7 @@ export const buildLineageGraph = (
 
   // First pass: identify Actions
   manifest.assets.forEach((asset) => {
-    if (mapAssetType(asset.asset_type) === 'Action') {
+    if (mapAssetType(asset.assetType) === 'Action') {
       actionSet.add(asset.id);
     }
   });
