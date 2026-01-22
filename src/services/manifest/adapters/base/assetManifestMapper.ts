@@ -15,30 +15,13 @@ function normalizeAttestation(raw: Record<string, unknown>): Attestation | undef
   };
 }
 
-function toCamelCase(value: string): string {
-  return value.replace(/_([a-z])/g, (_match, letter: string) =>
-    letter.toUpperCase()
-  );
-}
-
-function normalizeAssetContent(
-  raw: unknown
-): AssetManifest['content'] | undefined {
-  if (!isRecord(raw)) return undefined;
-  const normalized: AssetManifest['content'] = {};
-  Object.entries(raw).forEach(([key, value]) => {
-    normalized[toCamelCase(key)] = value;
-  });
-  return normalized;
-}
-
 function normalizeIngredients(raw: unknown): AssetManifest['ingredients'] {
   if (!Array.isArray(raw)) return undefined;
   return raw
     .filter((ingredient) => isRecord(ingredient))
     .map((ingredient) => ({
       title: String(ingredient.title ?? ''),
-      instanceId: String(ingredient.instance_id ?? ''),
+      instanceId: String(ingredient.instanceId ?? ''),
       relationship: String(ingredient.relationship ?? ''),
       format: ingredient.format ? String(ingredient.format) : undefined,
     }))
@@ -49,17 +32,19 @@ function normalizeIngredients(raw: unknown): AssetManifest['ingredients'] {
  * Normalizes inline asset data from bundled manifests.
  *
  * Handles the `data` field on assets in manifest-bundle.json.
+ * Data is expected to already be camelCase from the backend.
  */
 export function normalizeInlineData(data: Record<string, unknown>): AssetManifest | undefined {
   if (!data || Object.keys(data).length === 0) return undefined;
   return {
-    sourceCode: data.source_code ? String(data.source_code) : undefined,
-    content: normalizeAssetContent(data.content ?? data),
+    sourceCode: data.sourceCode ? String(data.sourceCode) : undefined,
+    content: isRecord(data.content) ? data.content : data,
   };
 }
 
 /**
  * Normalizes external asset manifests loaded from separate files.
+ * Data is expected to already be camelCase from the backend.
  */
 export function normalizeAssetManifest(raw: unknown): AssetManifest | undefined {
   if (!isRecord(raw)) return undefined;
@@ -71,39 +56,39 @@ export function normalizeAssetManifest(raw: unknown): AssetManifest | undefined 
     : undefined;
 
   return {
-    claimGenerator: raw.claim_generator ? String(raw.claim_generator) : undefined,
-    claimGeneratorInfo: Array.isArray(raw.claim_generator_info)
-      ? raw.claim_generator_info.map((info) => ({
+    claimGenerator: raw.claimGenerator ? String(raw.claimGenerator) : undefined,
+    claimGeneratorInfo: Array.isArray(raw.claimGeneratorInfo)
+      ? raw.claimGeneratorInfo.map((info) => ({
           name: String((info as { name?: string }).name ?? ''),
           version: String((info as { version?: string }).version ?? ''),
         }))
       : undefined,
     title: raw.title ? String(raw.title) : undefined,
     format: raw.format ? String(raw.format) : undefined,
-    instanceId: raw.instance_id ? String(raw.instance_id) : undefined,
+    instanceId: raw.instanceId ? String(raw.instanceId) : undefined,
     assertions,
     attestation: normalizeAttestation(raw),
-    sourceCode: raw.source_code ? String(raw.source_code) : undefined,
-    content: normalizeAssetContent(raw.content),
+    sourceCode: raw.sourceCode ? String(raw.sourceCode) : undefined,
+    content: isRecord(raw.content) ? raw.content : undefined,
     ingredients: normalizeIngredients(raw.ingredients),
-    environmentalImpact: isRecord(raw.environmental_impact)
+    environmentalImpact: isRecord(raw.environmentalImpact)
       ? {
           co2Grams:
-            typeof raw.environmental_impact.co2_grams === 'number'
-              ? raw.environmental_impact.co2_grams
+            typeof raw.environmentalImpact.co2Grams === 'number'
+              ? raw.environmentalImpact.co2Grams
               : undefined,
           energyKwh:
-            typeof raw.environmental_impact.energy_kwh === 'number'
-              ? raw.environmental_impact.energy_kwh
+            typeof raw.environmentalImpact.energyKwh === 'number'
+              ? raw.environmentalImpact.energyKwh
               : undefined,
-          methodology: raw.environmental_impact.methodology
-            ? String(raw.environmental_impact.methodology)
+          methodology: raw.environmentalImpact.methodology
+            ? String(raw.environmentalImpact.methodology)
             : undefined,
-          source: raw.environmental_impact.source
-            ? String(raw.environmental_impact.source)
+          source: raw.environmentalImpact.source
+            ? String(raw.environmentalImpact.source)
             : undefined,
-          updatedAt: raw.environmental_impact.updated_at
-            ? String(raw.environmental_impact.updated_at)
+          updatedAt: raw.environmentalImpact.updatedAt
+            ? String(raw.environmentalImpact.updatedAt)
             : undefined,
         }
       : undefined,

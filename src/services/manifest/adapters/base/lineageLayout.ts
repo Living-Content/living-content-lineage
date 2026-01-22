@@ -8,7 +8,7 @@ export interface LayoutResult {
 }
 
 const HORIZONTAL_GAP = 0.15;
-const VERTICAL_GAP = 0.08;
+const VERTICAL_GAP = 0.05;
 
 /**
  * Extract node group ID from asset ID.
@@ -46,50 +46,113 @@ export const computeLayout = (manifest: Manifest): LayoutResult => {
 
   // Position each node group
   let currentX = 0.1;
+  let prevOutputX = 0.1; // Track where the previous output was placed
+
+  // Collect orphan Code/Model from groups without Actions - they'll attach to next Action
+  let pendingSupportingAssets: Asset[] = [];
 
   groupOrder.forEach((group) => {
     const assets = nodeGroups.get(group) ?? [];
     if (assets.length === 0) return;
 
-    // Separate into input assets (Code/Model/Action) and output assets (Result/Data/etc)
-    const inputAssets: Asset[] = [];
+    // Separate into: Action (connector), supporting (Code/Model), and outputs
+    let actionAsset: Asset | undefined;
+    const supportingAssets: Asset[] = [];
     const outputAssets: Asset[] = [];
 
     assets.forEach((asset) => {
       const type = asset.assetType;
-      if (type === 'Code' || type === 'Model' || type === 'Action') {
-        inputAssets.push(asset);
+      if (type === 'Action') {
+        actionAsset = asset;
+      } else if (type === 'Code' || type === 'Model') {
+        supportingAssets.push(asset);
       } else {
         outputAssets.push(asset);
       }
     });
 
-    // Sort input assets: Action first, then Code, then Model
-    const typeOrder: Record<string, number> = { Action: 0, Code: 1, Model: 2 };
-    inputAssets.sort((a, b) => (typeOrder[a.assetType] ?? 99) - (typeOrder[b.assetType] ?? 99));
+    // Sort supporting assets: Code first, then Model
+    const typeOrder: Record<string, number> = { Code: 0, Model: 1 };
+    supportingAssets.sort((a, b) => (typeOrder[a.assetType] ?? 99) - (typeOrder[b.assetType] ?? 99));
 
-    // Position input assets (left column of group)
-    inputAssets.forEach((asset, idx) => {
-      positions.set(asset.id, {
+    // Position Action at currentX (on main timeline)
+    if (actionAsset) {
+      positions.set(actionAsset.id, {
         x: currentX,
-        y: idx === 0 ? 0.5 : 0.5 + idx * VERTICAL_GAP,
-        step: asset.step ?? 'unknown',
+        y: 0.5,
+        step: actionAsset.step ?? 'unknown',
       });
-    });
 
-    // Position output assets (right column of group)
-    const outputX = currentX + HORIZONTAL_GAP;
-    outputAssets.forEach((asset, idx) => {
-      positions.set(asset.id, {
-        x: outputX,
-        y: idx === 0 ? 0.5 : 0.5 + idx * VERTICAL_GAP,
-        step: asset.step ?? 'unknown',
+      // Combine this group's Code/Model with any pending ones
+      const allSupporting = [...pendingSupportingAssets, ...supportingAssets];
+      allSupporting.sort((a, b) => (typeOrder[a.assetType] ?? 99) - (typeOrder[b.assetType] ?? 99));
+      pendingSupportingAssets = [];
+
+      // Output to the right of action
+      const outputX = currentX + HORIZONTAL_GAP;
+
+      // Code/Model go below PREVIOUS output (they feed into this action)
+      // For first step (no previous output), place to the LEFT of the action at same Y
+      const isFirstStep = prevOutputX === 0.1;
+      const supportingX = isFirstStep ? currentX - HORIZONTAL_GAP : prevOutputX;
+      allSupporting.forEach((asset, idx) => {
+        positions.set(asset.id, {
+          x: supportingX,
+          y: isFirstStep ? 0.5 + idx * VERTICAL_GAP : 0.5 + (idx + 1) * VERTICAL_GAP,
+          step: asset.step ?? 'unknown',
+        });
       });
-    });
 
-    // Move to next group (skip past both columns)
-    currentX = outputX + HORIZONTAL_GAP;
+      outputAssets.forEach((asset, idx) => {
+        positions.set(asset.id, {
+          x: outputX,
+          y: idx === 0 ? 0.5 : 0.5 + idx * VERTICAL_GAP,
+          step: asset.step ?? 'unknown',
+        });
+      });
+
+      prevOutputX = outputX;
+      currentX = outputX + HORIZONTAL_GAP;
+    } else if (outputAssets.length > 0) {
+      // No action but has outputs - source/ingest step
+      // Output on timeline
+      outputAssets.forEach((asset, idx) => {
+        positions.set(asset.id, {
+          x: currentX,
+          y: idx === 0 ? 0.5 : 0.5 + idx * VERTICAL_GAP,
+          step: asset.step ?? 'unknown',
+        });
+      });
+
+      // Any Code/Model in this group go below the output
+      supportingAssets.forEach((asset, idx) => {
+        positions.set(asset.id, {
+          x: currentX,
+          y: 0.5 + (outputAssets.length + idx) * VERTICAL_GAP,
+          step: asset.step ?? 'unknown',
+        });
+      });
+
+      prevOutputX = currentX;
+      currentX = currentX + HORIZONTAL_GAP;
+    } else if (supportingAssets.length > 0) {
+      // Only Code/Model, no action, no outputs - save for next Action
+      pendingSupportingAssets.push(...supportingAssets);
+    }
   });
+
+  // Any remaining pending Code/Model go under the last output
+  if (pendingSupportingAssets.length > 0) {
+    const typeOrder: Record<string, number> = { Code: 0, Model: 1 };
+    pendingSupportingAssets.sort((a, b) => (typeOrder[a.assetType] ?? 99) - (typeOrder[b.assetType] ?? 99));
+    pendingSupportingAssets.forEach((asset, idx) => {
+      positions.set(asset.id, {
+        x: prevOutputX,
+        y: 0.5 + (idx + 1) * VERTICAL_GAP,
+        step: asset.step ?? 'unknown',
+      });
+    });
+  }
 
   // Place claims above their verified nodes
   manifest.claims.forEach((claim) => {

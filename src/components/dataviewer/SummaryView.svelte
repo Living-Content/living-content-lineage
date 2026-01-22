@@ -23,8 +23,20 @@
   // Duration: prefer lco.action (Actions), fall back to lco.execution (Code)
   $: durationMs = assertions.action?.durationMs ?? assertions.execution?.executionDurationMs;
 
+  // Type-safe content access
+  type ContentWithNested = Record<string, unknown> & {
+    executionResult?: Record<string, unknown>;
+    executionPlan?: Record<string, unknown>;
+  };
+  $: typedContent = content as ContentWithNested;
+
   $: dataSource = {
+    // Spread content first
     ...content,
+    // Flatten nested objects from result data
+    ...(typedContent.executionResult ?? {}),
+    ...(typedContent.executionPlan ?? {}),
+    // Node-level fields
     ...node,
     // Model-specific fields (tokens from lco.usage assertion)
     modelId: assertions.model?.modelId,
@@ -43,21 +55,10 @@
     status: node.assetManifest?.attestation ? 'Verified' : undefined,
     algorithm: node.assetManifest?.attestation?.alg,
     issuer: node.assetManifest?.attestation?.issuer,
-    // Document fields
-    query: (content as Record<string, unknown>).query,
-    response: (content as Record<string, unknown>).response,
-    messageCount: (content as Record<string, unknown>).messageCount,
-    // Dataset fields
-    chunksRetrieved: (content as { execution_result?: { chunks_retrieved?: number } }).execution_result?.chunks_retrieved,
-    confidence: (content as { execution_result?: { confidence?: number } }).execution_result?.confidence,
     // Media fields
     format: node.assetManifest?.format,
     dimensions: formatDimensions(content as Record<string, unknown>),
     fileSize: (content as Record<string, unknown>).size,
-    // Token fields (from content for Result/Action types - already camelCase after normalization)
-    inputTokens: (content as Record<string, unknown>).inputTokens,
-    outputTokens: (content as Record<string, unknown>).outputTokens,
-    totalTokens: (content as Record<string, unknown>).totalTokens,
   };
 
   function formatDimensions(c: Record<string, unknown>): string | undefined {

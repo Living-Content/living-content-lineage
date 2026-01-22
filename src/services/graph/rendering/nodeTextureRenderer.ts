@@ -103,6 +103,30 @@ export const createNodeTexture = (
   return Texture.from(canvas);
 };
 
+/**
+ * Creates an icon-only texture with the icon rendered at the specified color.
+ * Used for Action nodes which are pure connectors without background shapes.
+ */
+export const createIconOnlyTexture = (
+  iconImage: HTMLImageElement | null,
+  color: string,
+  size: number
+): Texture => {
+  const { canvas, ctx } = createRetinaCanvas(size, size);
+
+  if (iconImage && iconImage.complete && iconImage.naturalWidth > 0) {
+    // Draw the icon
+    ctx.drawImage(iconImage, 0, 0, size, size);
+
+    // Apply color by using source-in composite mode
+    ctx.globalCompositeOperation = 'source-in';
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, size, size);
+  }
+
+  return Texture.from(canvas);
+};
+
 export const createKnockoutNodeTexture = (
   label: string,
   color: string,

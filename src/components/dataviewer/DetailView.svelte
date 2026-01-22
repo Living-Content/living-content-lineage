@@ -43,11 +43,21 @@
     return undefined;
   }
 
+  // Type-safe content access
+  type ContentWithNested = Record<string, unknown> & {
+    executionResult?: Record<string, unknown>;
+    executionPlan?: Record<string, unknown>;
+  };
+  $: typedContent = content as ContentWithNested;
+
   // Build merged dataSource for consistent field access
   // This allows getValueByPath to find both configured AND content fields
   $: dataSource = {
     // Spread content first so explicit fields can override
     ...content,
+    // Flatten nested objects from result data
+    ...(typedContent.executionResult ?? {}),
+    ...(typedContent.executionPlan ?? {}),
     // Node-level fields
     ...node,
     // Model-specific fields (tokens from lco.usage assertion)
@@ -71,21 +81,10 @@
     status: assetManifest?.attestation ? 'Verified' : undefined,
     algorithm: assetManifest?.attestation?.alg,
     issuer: assetManifest?.attestation?.issuer,
-    // Document fields
-    query: (content as Record<string, unknown>).query,
-    response: (content as Record<string, unknown>).response,
-    messageCount: (content as Record<string, unknown>).messageCount,
-    // Dataset fields
-    chunksRetrieved: (content as { execution_result?: { chunks_retrieved?: number } }).execution_result?.chunks_retrieved,
-    confidence: (content as { execution_result?: { confidence?: number } }).execution_result?.confidence,
     // Media fields
     format: assetManifest?.format,
     dimensions: formatDimensions(content as Record<string, unknown>),
     fileSize: (content as Record<string, unknown>).size,
-    // Token fields (from content for Result/Action types - already camelCase after normalization)
-    inputTokens: (content as Record<string, unknown>).inputTokens,
-    outputTokens: (content as Record<string, unknown>).outputTokens,
-    totalTokens: (content as Record<string, unknown>).totalTokens,
     // Source code
     sourceCode: assetManifest?.sourceCode,
   };
@@ -121,11 +120,12 @@
     }))
     .filter(({ value }) => value !== undefined && value !== null && value !== '' && value !== '-');
 
-  // Separate markdown and code fields for special rendering
+  // Separate special field types for custom rendering
   $: markdownFields = detailOnlyWithValues.filter(({ config }) => config.type === 'markdown');
   $: codeFields = detailOnlyWithValues.filter(({ config }) => config.type === 'code');
+  $: keyValueFields = detailOnlyWithValues.filter(({ config }) => config.type === 'key-value');
   $: regularDetailFields = detailOnlyWithValues.filter(({ config }) =>
-    config.type !== 'markdown' && config.type !== 'code'
+    config.type !== 'markdown' && config.type !== 'code' && config.type !== 'key-value'
   );
 
   // Configured field keys to exclude from fallback/additional data
@@ -188,6 +188,16 @@
       {/each}
     </PropertyGroup>
   {/if}
+
+  {#each keyValueFields as { key, value, config } (key)}
+    {#if value && typeof value === 'object'}
+      <PropertyGroup title={config.label ?? key} collapsible={false}>
+        {#each Object.entries(value) as [k, v] (k)}
+          <PropertyRow label={k} value={typeof v === 'object' ? JSON.stringify(v) : String(v ?? '-')} />
+        {/each}
+      </PropertyGroup>
+    {/if}
+  {/each}
 
   {#each codeFields as { key, value, config } (key)}
     <CodeBlock code={String(value ?? '')} title={config.label ?? key} />

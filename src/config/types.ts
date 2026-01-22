@@ -41,13 +41,15 @@ export type AssetCategory = "Content" | "Process" | "Verification";
 
 /**
  * Specific asset content or process type.
- * - Content: Data flowing through the pipeline (Media, Document, Result, Dataset)
+ * - Content: Data flowing through the pipeline (Media, Document, Data)
  * - Process: Transformations/computations (Code, Model, Action)
  * - Verification: Trust/claims (Claim)
+ *
+ * Note: Result and Dataset are removed. Use Document, Data, or Media instead.
  */
 export type AssetType =
   // Content
-  | "Media" | "Document" | "Result" | "Dataset"
+  | "Media" | "Document" | "Data"
   // Process
   | "Code" | "Model" | "Action"
   // Verification
@@ -197,10 +199,9 @@ export const assetTypeToNodeType = (assetType: AssetType): NodeType => {
     case "Code":
     case "Action":
       return "process";
-    case "Result":
     case "Document":
       return "data";
-    case "Dataset":
+    case "Data":
       return "store";
     case "Media":
       return "media";
@@ -242,8 +243,7 @@ export const assetTypeToCategory = (assetType: AssetType): AssetCategory => {
   switch (assetType) {
     case "Media":
     case "Document":
-    case "Result":
-    case "Dataset":
+    case "Data":
       return "Content";
     case "Code":
     case "Model":

@@ -11,16 +11,15 @@ import type { AssetType } from './types.js';
 export interface FieldDisplayConfig {
   /** The rendering type for this field */
   type: DataCardType;
-  /** Show in card/summary view */
+  /**
+   * Show as a card in summary view, compact card in detail view.
+   * If false or omitted, shows only in detail view (not as card).
+   */
   isCard: boolean;
-  /** Show in detail view (always true if isCard is true) */
-  isDetail: boolean;
   /** Override display label */
   label?: string;
-  /** Grid column span for summary view */
-  summarySpan?: 1 | 2 | 3 | 4;
-  /** Grid column span for detail view */
-  detailSpan?: 1 | 2 | 3 | 4;
+  /** Grid column span (used in both summary and detail views) */
+  span?: 1 | 2 | 3 | 4;
   /** For text-preview type: truncation length */
   truncateAt?: number;
   /** Unit suffix for metrics (e.g., "ms", "KB") */
@@ -47,105 +46,99 @@ export interface AssetDisplayConfig {
 
 /**
  * Default display configs keyed by AssetType.
+ *
+ * isCard: true  → shows as a card in summary view, compact card in detail view
+ * isCard: false → shows only in detail view (not as card)
  */
 export const DISPLAY_CONFIGS: Record<AssetType, AssetDisplayConfig> = {
   // Process Types
   Model: {
     cardColumns: 4,
     fields: {
-      'modelId': { type: 'text', isCard: true, isDetail: true, label: 'Model ID', source: 'assertions.model.modelId', summarySpan: 2, detailSpan: 2 },
-      'provider': { type: 'text', isCard: true, isDetail: true, label: 'Provider', source: 'assertions.model.provider', summarySpan: 2, detailSpan: 2 },
-      'tokens.input': { type: 'metric', isCard: true, isDetail: true, label: 'Input Tokens', source: 'assertions.usage.inputTokens', summarySpan: 2, detailSpan: 2 },
-      'tokens.output': { type: 'metric', isCard: true, isDetail: true, label: 'Output Tokens', source: 'assertions.usage.outputTokens', summarySpan: 2, detailSpan: 2 },
-      'computation': { type: 'text', isCard: false, isDetail: true, label: 'Computation', source: 'assertions.model.computation' },
-      'maxTokens': { type: 'number', isCard: false, isDetail: true, label: 'Max Tokens', source: 'assertions.model.parameters.maxTokens' },
-      'temperature': { type: 'number', isCard: false, isDetail: true, label: 'Temperature', source: 'assertions.model.parameters.temperature' },
+      // Note: model name is already shown as title, don't duplicate
+      'inputTokens': { type: 'metric', isCard: true, label: 'Input Tokens', source: 'content.inputTokens', span: 2 },
+      'outputTokens': { type: 'metric', isCard: true, label: 'Output Tokens', source: 'content.outputTokens', span: 2 },
+      'totalDurationMs': { type: 'duration', isCard: true, label: 'Duration', source: 'content.totalDurationMs', span: 2 },
+      'temperature': { type: 'number', isCard: true, label: 'Temperature', source: 'content.temperature', span: 2 },
+      'maxTokens': { type: 'metric', isCard: false, label: 'Max Tokens', source: 'content.maxTokens' },
     }
   },
 
   Code: {
     cardColumns: 4,
     fields: {
-      'function': { type: 'text', isCard: true, isDetail: true, label: 'Function', source: 'assertions.code.function', summarySpan: 2, detailSpan: 2 },
-      'module': { type: 'text', isCard: true, isDetail: true, label: 'Module', source: 'assertions.code.module', summarySpan: 2, detailSpan: 2 },
-      'duration': { type: 'duration', isCard: true, isDetail: true, label: 'Duration', source: 'computed.duration', summarySpan: 4, detailSpan: 4 },
-      'hash': { type: 'hash', isCard: false, isDetail: true, label: 'Hash', source: 'assertions.code.hash' },
-      'sourceCode': { type: 'code', isCard: false, isDetail: true, label: 'Source Code', source: 'manifest.sourceCode' },
-      'startTime': { type: 'datetime', isCard: false, isDetail: true, label: 'Start Time', source: 'assertions.execution.startTime' },
-      'endTime': { type: 'datetime', isCard: false, isDetail: true, label: 'End Time', source: 'assertions.execution.endTime' },
+      'durationMs': { type: 'duration', isCard: true, label: 'Duration', source: 'content.durationMs', span: 2 },
+      'arguments': { type: 'key-value', isCard: false, label: 'Arguments', source: 'content.arguments' },
+      'sourceCode': { type: 'code', isCard: false, label: 'Source Code', source: 'content.sourceCode' },
     }
   },
 
   Action: {
+    // Action is now a pure connector node with no data payload
+    // Just displays title and description, connects inputs to outputs
     cardColumns: 4,
-    fields: {
-      'duration': { type: 'duration', isCard: true, isDetail: false, label: 'Duration', source: 'computed.duration', summarySpan: 2, detailSpan: 2 },
-      'inputTokens': { type: 'metric', isCard: true, isDetail: true, label: 'Input Tokens', summarySpan: 2, detailSpan: 2 },
-      'outputTokens': { type: 'metric', isCard: true, isDetail: true, label: 'Output Tokens', summarySpan: 2, detailSpan: 2 },
-      'totalTokens': { type: 'metric', isCard: true, isDetail: true, label: 'Total Tokens', summarySpan: 2, detailSpan: 2 },
-      'actionType': { type: 'badge', isCard: false, isDetail: true, label: 'Action Type', source: 'computed.actionType' },
-      'agent': { type: 'text', isCard: false, isDetail: true, label: 'Agent', source: 'assertions.c2paActions.actions.0.softwareAgent.name' },
-      'function': { type: 'text', isCard: false, isDetail: true, label: 'Function', source: 'assertions.action.function' },
-      'startTime': { type: 'datetime', isCard: false, isDetail: true, label: 'Start Time', source: 'assertions.action.startTime' },
-      'endTime': { type: 'datetime', isCard: false, isDetail: true, label: 'End Time', source: 'assertions.action.endTime' },
-      'agentVersion': { type: 'text', isCard: false, isDetail: true, label: 'Agent Version', source: 'assertions.c2paActions.actions.0.softwareAgent.version' },
-    }
+    fields: {}
   },
 
   // Content Types
   Document: {
     cardColumns: 4,
     fields: {
-      'durationMs': { type: 'duration', isCard: true, isDetail: false, label: 'Duration', summarySpan: 2, detailSpan: 2 },
-      'responseLength': { type: 'metric', isCard: true, isDetail: false, label: 'Response Length', summarySpan: 2, detailSpan: 2 },
-      'model': { type: 'text', isCard: true, isDetail: true, label: 'Model', summarySpan: 2, detailSpan: 2 },
-      'maxTokens': { type: 'metric', isCard: true, isDetail: true, label: 'Max Tokens', summarySpan: 2, detailSpan: 2 },
-      'query': { type: 'markdown', isCard: false, isDetail: true, label: 'Query' },
-      'response': { type: 'markdown', isCard: false, isDetail: true, label: 'Response' },
+      // === INGEST (user query arriving) ===
+      'query': { type: 'text-preview', isCard: true, label: 'Query', source: 'content.query', span: 4, truncateAt: 150 },
+      'toolId': { type: 'badge', isCard: true, label: 'Requested Tool', source: 'content.toolId', span: 2 },
+      'messageCount': { type: 'metric', isCard: true, label: 'Messages', source: 'content.messageCount', span: 2 },
+      'value': { type: 'text-preview', isCard: true, label: 'Content', source: 'content.value', span: 4, truncateAt: 100 },
+
+      // === REFLECT (gap analysis) ===
+      'gaps': { type: 'list', isCard: true, label: 'Knowledge Gaps', source: 'content.gaps', span: 4 },
+      'requirements': { type: 'list', isCard: false, label: 'Requirements', source: 'content.requirements' },
+      'reasoningTrace': { type: 'text-preview', isCard: false, label: 'Reasoning', source: 'content.reasoningTrace', truncateAt: 500 },
+      'dataQualityAssessment': { type: 'text-preview', isCard: true, label: 'Data Quality', source: 'content.dataQualityAssessment', span: 4, truncateAt: 200 },
+
+      // === PLAN (query planning) ===
+      'queries': { type: 'list', isCard: true, label: 'Planned Queries', source: 'content.queries', span: 4 },
+      'executionPlan': { type: 'key-value', isCard: false, label: 'Execution Plan', source: 'content.executionPlan' },
+
+      // === EVALUATE (sufficiency check) ===
+      'isSufficient': { type: 'status', isCard: true, label: 'Data Sufficient', source: 'content.isSufficient', span: 2 },
+      'iteration': { type: 'metric', isCard: true, label: 'Iteration', source: 'content.iteration', span: 2 },
+      'shouldContinue': { type: 'status', isCard: true, label: 'Continue?', source: 'content.shouldContinue', span: 2 },
+
+      // === SELECT (tool selection) ===
+      'candidates': { type: 'list', isCard: false, label: 'Candidates', source: 'content.candidates' },
+      'llmResponse': { type: 'text-preview', isCard: false, label: 'Selection Reasoning', source: 'content.llmResponse', truncateAt: 300 },
+
+      // === STORE (persistence) ===
+      'responseLength': { type: 'metric', isCard: true, label: 'Response Length', source: 'content.responseLength', span: 2 },
+      'requestMessageId': { type: 'text', isCard: false, label: 'Request ID', source: 'content.requestMessageId' },
+      'responseMessageId': { type: 'text', isCard: false, label: 'Response ID', source: 'content.responseMessageId' },
     }
   },
 
-  Dataset: {
+  Data: {
     cardColumns: 4,
     fields: {
-      'chunksRetrieved': { type: 'metric', isCard: true, isDetail: true, label: 'Chunks Retrieved', summarySpan: 2, detailSpan: 2 },
-      'avgSimilarity': { type: 'percentage', isCard: true, isDetail: true, label: 'Avg Similarity', summarySpan: 2, detailSpan: 2 },
-      'confidence': { type: 'percentage', isCard: true, isDetail: true, label: 'Confidence', summarySpan: 2, detailSpan: 2 },
-      'messageCount': { type: 'metric', isCard: true, isDetail: true, label: 'Messages', summarySpan: 2, detailSpan: 2 },
-      'searchQuery': { type: 'text', isCard: false, isDetail: true, label: 'Search Query' },
-      'resultCount': { type: 'metric', isCard: false, isDetail: true, label: 'Result Count' },
-      'chunks': { type: 'chunk-list', isCard: false, isDetail: true, label: 'Retrieved Chunks' },
-      'gapsAddressed': { type: 'list', isCard: false, isDetail: true, label: 'Gaps Addressed' },
+      // === RETRIEVE (search results) ===
+      'count': { type: 'metric', isCard: true, label: 'Results Found', source: 'content.count', span: 2 },
+      'totalChunks': { type: 'metric', isCard: true, label: 'Chunks', source: 'content.totalChunks', span: 2 },
+      'success': { type: 'status', isCard: true, label: 'Status', source: 'content.success', span: 2 },
+      'evaluationSummary': { type: 'text-preview', isCard: true, label: 'Summary', source: 'content.evaluationSummary', span: 4, truncateAt: 200 },
+      'chunks': { type: 'list', isCard: false, label: 'Retrieved Chunks', source: 'content.chunks' },
+
+      // === HISTORY (conversation) ===
+      'messageCount': { type: 'metric', isCard: true, label: 'Messages', source: 'content.messageCount', span: 2 },
     }
   },
 
   Media: {
     cardColumns: 4,
     fields: {
-      'format': { type: 'badge', isCard: true, isDetail: true, label: 'Format', source: 'manifest.format', summarySpan: 2, detailSpan: 2 },
-      'dimensions': { type: 'dimensions', isCard: true, isDetail: true, label: 'Dimensions', source: 'computed.dimensions', summarySpan: 2, detailSpan: 2 },
-      'fileSize': { type: 'filesize', isCard: true, isDetail: true, label: 'File Size', source: 'content.size', summarySpan: 4, detailSpan: 4 },
-      'mimeType': { type: 'text', isCard: false, isDetail: true, label: 'MIME Type', source: 'manifest.format' },
-      'duration': { type: 'duration', isCard: false, isDetail: true, label: 'Duration', source: 'content.duration' },
-    }
-  },
-
-  Result: {
-    cardColumns: 4,
-    fields: {
-      'inputTokens': { type: 'metric', isCard: true, isDetail: true, label: 'Input Tokens', summarySpan: 2, detailSpan: 2 },
-      'outputTokens': { type: 'metric', isCard: true, isDetail: true, label: 'Output Tokens', summarySpan: 2, detailSpan: 2 },
-      'totalTokens': { type: 'metric', isCard: true, isDetail: true, label: 'Total Tokens', summarySpan: 4, detailSpan: 4 },
-      // Evaluation fields (1-span each for compact display)
-      'averageScore': { type: 'percentage', isCard: true, isDetail: true, label: 'Avg Score', summarySpan: 2, detailSpan: 1 },
-      'documentCount': { type: 'metric', isCard: true, isDetail: true, label: 'Docs', summarySpan: 2, detailSpan: 1 },
-      'documentsAboveThreshold': { type: 'metric', isCard: true, isDetail: true, label: 'Above Threshold', summarySpan: 2, detailSpan: 1 },
-      'threshold': { type: 'percentage', isCard: true, isDetail: true, label: 'Threshold', summarySpan: 2, detailSpan: 1 },
-      'topScore': { type: 'percentage', isCard: true, isDetail: true, label: 'Top Score', summarySpan: 2, detailSpan: 1 },
-      // Detail-only fields
-      'preview': { type: 'text-preview', isCard: false, isDetail: true, label: 'Preview', truncateAt: 100, source: 'content.preview' },
-      'fullContent': { type: 'markdown', isCard: false, isDetail: true, label: 'Full Content', source: 'content.content' },
-      'metadata': { type: 'key-value', isCard: false, isDetail: true, label: 'Metadata', source: 'content.metadata' },
+      'format': { type: 'badge', isCard: true, label: 'Format', source: 'manifest.format', span: 2 },
+      'dimensions': { type: 'dimensions', isCard: true, label: 'Dimensions', source: 'computed.dimensions', span: 2 },
+      'fileSize': { type: 'filesize', isCard: true, label: 'File Size', source: 'content.size', span: 4 },
+      'mimeType': { type: 'text', isCard: false, label: 'MIME Type', source: 'manifest.format' },
+      'duration': { type: 'duration', isCard: false, label: 'Duration', source: 'content.duration' },
     }
   },
 
@@ -153,9 +146,9 @@ export const DISPLAY_CONFIGS: Record<AssetType, AssetDisplayConfig> = {
   Claim: {
     cardColumns: 4,
     fields: {
-      'status': { type: 'status', isCard: true, isDetail: true, label: 'Status', source: 'computed.status', summarySpan: 2, detailSpan: 2 },
-      'algorithm': { type: 'badge', isCard: true, isDetail: true, label: 'Algorithm', source: 'manifest.attestation.alg', summarySpan: 2, detailSpan: 2 },
-      'issuer': { type: 'text', isCard: false, isDetail: true, label: 'Issuer', source: 'manifest.attestation.issuer' },
+      'status': { type: 'status', isCard: true, label: 'Status', source: 'computed.status', span: 2 },
+      'algorithm': { type: 'badge', isCard: true, label: 'Algorithm', source: 'manifest.attestation.alg', span: 2 },
+      'issuer': { type: 'text', isCard: false, label: 'Issuer', source: 'manifest.attestation.issuer' },
     }
   },
 
@@ -174,23 +167,25 @@ export const getDisplayConfig = (assetType: AssetType | undefined): AssetDisplay
 
 /**
  * Get only card-designated fields from a config.
+ * These appear in summary view and as compact cards in detail view.
  */
 export const getCardFields = (config: AssetDisplayConfig): [string, FieldDisplayConfig][] => {
   return Object.entries(config.fields).filter(([, field]) => field.isCard);
 };
 
 /**
- * Get only detail-only fields (not shown in cards) from a config.
+ * Get only detail-only fields (not shown as cards) from a config.
+ * These only appear in detail view, below the compact cards.
  */
 export const getDetailOnlyFields = (config: AssetDisplayConfig): [string, FieldDisplayConfig][] => {
-  return Object.entries(config.fields).filter(([, field]) => field.isDetail && !field.isCard);
+  return Object.entries(config.fields).filter(([, field]) => !field.isCard);
 };
 
 /**
- * Get all detail fields (card + detail-only) from a config.
+ * Get all fields from a config.
  */
 export const getAllDetailFields = (config: AssetDisplayConfig): [string, FieldDisplayConfig][] => {
-  return Object.entries(config.fields).filter(([, field]) => field.isDetail);
+  return Object.entries(config.fields);
 };
 
 /**

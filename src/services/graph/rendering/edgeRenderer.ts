@@ -136,7 +136,7 @@ export const renderStepEdges = (
 
     // Calculate control points for cubic bezier curve
     const dx = endX - startX;
-    const controlOffset = Math.abs(dx) * 0.4;
+    const controlOffset = Math.abs(dx) * 0.2;
 
     graphics.moveTo(startX, startY);
     graphics.bezierCurveTo(
@@ -175,7 +175,7 @@ const renderHorizontalEdge = (
 
   // Calculate control points for cubic bezier curve
   const dx = endX - startX;
-  const controlOffset = Math.abs(dx) * 0.4;
+  const controlOffset = Math.abs(dx) * 0.2;
 
   lineGraphics.moveTo(startX, sy);
   lineGraphics.bezierCurveTo(
@@ -205,7 +205,7 @@ const renderVerticalEdge = (
 
   // Calculate control points for cubic bezier curve
   const dy = endY - startY;
-  const controlOffset = Math.abs(dy) * 0.4;
+  const controlOffset = Math.abs(dy) * 0.2;
 
   lineGraphics.moveTo(sx, startY);
   lineGraphics.bezierCurveTo(

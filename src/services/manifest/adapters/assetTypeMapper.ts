@@ -3,8 +3,7 @@ import type { AssetType } from '../../../config/types.js';
 const VALID_ASSET_TYPES: Record<string, AssetType> = {
   Media: 'Media',
   Document: 'Document',
-  Result: 'Result',
-  Dataset: 'Dataset',
+  Data: 'Data',
   Code: 'Code',
   Model: 'Model',
   Action: 'Action',

@@ -149,8 +149,17 @@ export const buildLineageGraph = (
   });
 
   // Build edges from asset inputs/outputs
+  const edgeSet = new Set<string>();
   const edgeList: Array<{ source: string; target: string; isGate?: boolean }> = [];
   const actionSet = new Set<string>();
+
+  const addEdge = (source: string, target: string, isGate?: boolean) => {
+    const key = `${source}->${target}`;
+    if (!edgeSet.has(key)) {
+      edgeSet.add(key);
+      edgeList.push({ source, target, isGate });
+    }
+  };
 
   // First pass: identify Actions
   manifest.assets.forEach((asset) => {
@@ -167,19 +176,19 @@ export const buildLineageGraph = (
 
     // Connect inputs to this asset
     inputs.forEach((inputId) => {
-      edgeList.push({ source: inputId, target: asset.id });
+      addEdge(inputId, asset.id);
     });
 
     // Connect this asset to outputs
     outputs.forEach((outputId) => {
-      edgeList.push({ source: asset.id, target: outputId });
+      addEdge(asset.id, outputId);
     });
   });
 
   // Add attestation edges
   manifest.claims.forEach((attest) => {
     attest.verifies.forEach((verifiedId) => {
-      edgeList.push({ source: verifiedId, target: attest.id, isGate: true });
+      addEdge(verifiedId, attest.id, true);
     });
   });
 
@@ -209,8 +218,8 @@ export const buildLineageGraph = (
 
   return {
     title: manifest.title,
-    workflowId: manifest.workflow_id,
-    contentSessionId: manifest.content_session_id,
+    workflowId: manifest.workflowId,
+    contentSessionId: manifest.contentSessionId,
     nodes,
     edges,
     steps,

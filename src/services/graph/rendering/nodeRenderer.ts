@@ -16,7 +16,7 @@ import {
   calculateNodeWidth,
   getScaledDimensions,
 } from './nodeTextMeasurement.js';
-import { createNodeTexture, type NodeShapeType } from './nodeTextureRenderer.js';
+import { createNodeTexture, createIconOnlyTexture, type NodeShapeType } from './nodeTextureRenderer.js';
 import { getShape } from './nodeShapes.js';
 
 export const DEFAULT_NODE_ALPHA = 1;
@@ -116,6 +116,24 @@ export function createGraphNode(
 
     group.nodeWidth = nodeWidth;
     group.nodeHeight = nodeHeight;
+    group.isChevronShape = false;
+  } else if (node.assetType === 'Action') {
+    // Action nodes: icon-only connector (just the icon, no shape behind it)
+    const iconPath = getIconPath(node.assetType);
+    const iconSize = BASE_NODE_HEIGHT_DETAILED * nodeScale; // Same height as other nodes
+
+    loadIcon(iconPath).then((iconImage) => {
+      // Create a colored texture from the icon (can't tint black SVGs directly)
+      const texture = createIconOnlyTexture(iconImage, color, iconSize);
+      const sprite = new Sprite(texture);
+      sprite.anchor.set(0.5, 0.5);
+      sprite.width = iconSize;
+      sprite.height = iconSize;
+      group.addChild(sprite);
+    });
+
+    group.nodeWidth = iconSize;
+    group.nodeHeight = iconSize;
     group.isChevronShape = false;
   } else {
     // Asset nodes: use icon-based node with asset type
@@ -391,7 +409,16 @@ export function createGraphNode(
 
   group.setSelected = createSelectionAnimator(selectionRing, drawSelectionRing);
 
-  attachNodeInteraction(group, callbacks);
+  // Action nodes are pure connectors - not selectable, no hover cursor
+  const isActionNode = node.assetType === 'Action';
+  if (!isActionNode) {
+    attachNodeInteraction(group, callbacks);
+  } else {
+    // Still need basic event mode for graph interactions, but no pointer cursor
+    group.eventMode = 'static';
+    group.cursor = 'default';
+    group.cullable = true;
+  }
 
   return group;
 }
