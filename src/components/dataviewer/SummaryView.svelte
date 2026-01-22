@@ -4,14 +4,14 @@
    * Displays card-designated fields using hybrid layout (metrics + properties).
    * Uses display config to determine which fields to show.
    */
-  import type { LineageNodeData } from '../../config/types.js';
+  import type { TraceNodeData } from '../../config/types.js';
   import { getDisplayConfig, classifyCardFields, getValueByPath } from '../../config/displayConfig.js';
   import { extractAssertionData, formatDuration } from '../../services/dataviewer/parsing/assertionParsers.js';
   import CardSection from './cards/CardSection.svelte';
   import ImpactSection from './ImpactSection.svelte';
   import PropertyRow from './PropertyRow.svelte';
 
-  export let node: LineageNodeData;
+  export let node: TraceNodeData;
 
   $: assetType = node.assetType;
   $: phase = node.phase;

@@ -5,7 +5,7 @@
 import { Culler } from 'pixi.js';
 import { loadManifest } from '../../manifest/registry.js';
 import { ManifestLoadError, type ManifestErrorInfo } from '../../manifest/errors.js';
-import type { LineageGraph } from '../../../config/types.js';
+import type { Trace } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import { renderEdges, renderStepEdges } from '../rendering/edgeRenderer.js';
 import { createStepLabels } from '../rendering/workflowLabelRenderer.js';
@@ -13,7 +13,7 @@ import { createViewportState, createViewportHandlers } from '../interaction/view
 import { createLODController, type LODLayers } from './lodController.js';
 import { createTitleOverlay } from '../rendering/titleOverlay.js';
 import { LOD_THRESHOLD, TEXT_SIMPLIFY_THRESHOLD, VIEWPORT_TOP_MARGIN, VIEWPORT_BOTTOM_MARGIN } from '../../../config/constants.js';
-import { clearSelection } from '../../../stores/lineageState.js';
+import { clearSelection } from '../../../stores/traceState.js';
 import { clearPhaseFilter } from '../../../stores/uiState.js';
 import { createNodeAnimationController } from '../interaction/nodeAnimationController.js';
 import { createNodes, repositionNodesWithGaps } from './nodeCreator.js';
@@ -34,7 +34,7 @@ interface GraphControllerCallbacks {
   onSimpleViewChange: (isSimple: boolean) => void;
   onHover: (payload: HoverPayload) => void;
   onHoverEnd: () => void;
-  onLoaded: (data: LineageGraph) => void;
+  onLoaded: (data: Trace) => void;
   onError: (error: ManifestErrorInfo) => void;
 }
 
@@ -54,11 +54,11 @@ export async function createGraphController({
   callbacks,
 }: GraphControllerOptions): Promise<GraphController | null> {
   // Load manifest data
-  let lineageData: LineageGraph;
+  let traceData: Trace;
   try {
-    lineageData = await loadManifest(manifestUrl);
+    traceData = await loadManifest(manifestUrl);
   } catch (error) {
-    console.error('Failed to load lineage manifest', error);
+    console.error('Failed to load trace manifest', error);
     callbacks.onError({
       message: 'Failed to load manifest',
       details: error instanceof ManifestLoadError ? error.message : String(error),
@@ -66,7 +66,7 @@ export async function createGraphController({
     });
     return null;
   }
-  callbacks.onLoaded(lineageData);
+  callbacks.onLoaded(traceData);
 
   // Initialize Pixi and layers
   const pixi = await initializePixi(container);
@@ -83,8 +83,8 @@ export async function createGraphController({
 
   // Create title overlay
   const titleOverlay = createTitleOverlay(app.stage, {
-    title: lineageData.title ?? 'Lineage',
-    workflowId: lineageData.workflowId ?? '',
+    title: traceData.title ?? 'Trace',
+    workflowId: traceData.workflowId ?? '',
   });
 
   // Node maps
@@ -95,7 +95,7 @@ export async function createGraphController({
   const animationController = createNodeAnimationController(nodeMap);
 
   // Create nodes
-  await createNodes(lineageData.nodes, nodeMap, {
+  await createNodes(traceData.nodes, nodeMap, {
     container,
     nodeLayer: layers.nodeLayer,
     selectionLayer: layers.selectionLayer,
@@ -107,10 +107,10 @@ export async function createGraphController({
   });
 
   repositionNodesWithGaps(nodeMap);
-  recalculateStepBounds(lineageData.steps, nodeMap, graphScale);
+  recalculateStepBounds(traceData.steps, nodeMap, graphScale);
 
   // Create step nodes
-  createStepNodes(lineageData.steps, lineageData.nodes, lineageData.edges, stepNodeMap, {
+  createStepNodes(traceData.steps, traceData.nodes, traceData.edges, stepNodeMap, {
     container,
     stepNodeLayer: layers.stepNodeLayer,
     selectionLayer: layers.selectionLayer,
@@ -119,12 +119,12 @@ export async function createGraphController({
     callbacks: { onHover: callbacks.onHover, onHoverEnd: callbacks.onHoverEnd },
   });
 
-  renderStepEdges(layers.stepEdgeLayer, lineageData.steps, stepNodeMap, null);
+  renderStepEdges(layers.stepEdgeLayer, traceData.steps, stepNodeMap, null);
 
   // Step labels
   const topNodeInfo = calculateTopNodeInfo(nodeMap);
   const bottomNodeInfo = calculateBottomNodeInfo(nodeMap);
-  const stepLabels = createStepLabels(lineageData.steps, stepNodeMap, topNodeInfo);
+  const stepLabels = createStepLabels(traceData.steps, stepNodeMap, topNodeInfo);
   app.stage.addChild(stepLabels.container);
   stepLabels.update(viewportState);
 
@@ -150,7 +150,7 @@ export async function createGraphController({
 
   // Helper functions
   const updateTitlePosition = (): void => {
-    const firstStep = lineageData.steps[0];
+    const firstStep = traceData.steps[0];
     const leftmostNode = firstStep ? stepNodeMap.get(firstStep.id) : null;
     if (leftmostNode) titleOverlay.updatePosition(leftmostNode, viewportState);
   };
@@ -160,7 +160,7 @@ export async function createGraphController({
     Culler.shared.cull(layers.nodeLayer, app.screen);
     const selection = subscriptions.state.currentSelection;
     const nodeId = selection?.type === 'node' ? selection.nodeId : null;
-    renderEdges(layers.edgeLayer, lineageData.edges, nodeMap, {
+    renderEdges(layers.edgeLayer, traceData.edges, nodeMap, {
       view: 'workflow',
       selectedId: nodeId,
     });
@@ -199,8 +199,8 @@ export async function createGraphController({
     stepNodeMap,
     edgeLayer: layers.edgeLayer,
     stepEdgeLayer: layers.stepEdgeLayer,
-    edges: lineageData.edges,
-    steps: lineageData.steps,
+    edges: traceData.edges,
+    steps: traceData.steps,
     setNodeAlpha: animationController.setNodeAlpha,
     centerSelectedNode: viewportManager.centerOnNode,
     setStepLabelsPhaseFilter: stepLabels.setPhaseFilter,

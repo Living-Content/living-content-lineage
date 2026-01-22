@@ -6,7 +6,7 @@ import { Container, Graphics, Sprite, Ticker } from 'pixi.js';
 import gsap from 'gsap';
 import { getCssVarColorHex, getCssVar, getCssVarInt, type CssVar } from '../../../themes/index.js';
 import { getAssetIconPath } from '../../../config/icons.js';
-import type { AssetType, LineageNodeData } from '../../../config/types.js';
+import type { AssetType, TraceNodeData } from '../../../config/types.js';
 import { ASSET_TYPE_LABELS } from '../../../config/labels.js';
 import { attachNodeInteraction, createSelectionAnimator, type NodeCallbacks } from '../interaction/nodeInteraction.js';
 import { loadIcon } from '../interaction/iconLoader.js';
@@ -22,7 +22,7 @@ import { getShape } from './nodeShapes.js';
 export const DEFAULT_NODE_ALPHA = 1;
 
 export interface GraphNode extends Container {
-  nodeData: LineageNodeData;
+  nodeData: TraceNodeData;
   nodeWidth: number;
   nodeHeight: number;
   baseScale: number;
@@ -54,14 +54,14 @@ const getAssetTypeLabel = (assetType?: AssetType): string => {
 };
 
 const getIconPath = (assetType?: AssetType): string => {
-  return getAssetIconPath(assetType ?? 'Result');
+  return getAssetIconPath(assetType ?? 'Data');
 };
 
 /**
  * Determines if a node should render with a chevron shape.
  * Action nodes use chevron shape to convey flow direction.
  */
-const isChevronNode = (node: LineageNodeData): boolean => {
+const isChevronNode = (node: TraceNodeData): boolean => {
   return node.nodeType === 'process' && node.assetType === 'Action';
 };
 
@@ -69,7 +69,7 @@ const isChevronNode = (node: LineageNodeData): boolean => {
  * Creates a graph node with icon and knockout text.
  */
 export function createGraphNode(
-  node: LineageNodeData,
+  node: TraceNodeData,
   graphScale: number,
   ticker: Ticker,
   callbacks: NodeCallbacks,

@@ -1,6 +1,6 @@
 # Asset Types
 
-The lineage system defines 8 asset types organized into 3 categories.
+The trace system defines 7 asset types organized into 3 categories.
 
 ## Categories
 
@@ -12,8 +12,7 @@ Data flowing through the pipeline.
 | ------------ | -------------------------------- |
 | **Media**    | Images, video, audio files       |
 | **Document** | Text content, queries, responses |
-| **Result**   | Output data from operations      |
-| **Dataset**  | Collections of retrieved chunks  |
+| **Data**     | Generic data and results         |
 
 ### Process Assets
 
@@ -31,7 +30,7 @@ Trust and verification records.
 
 | Type      | Description                                    |
 | --------- | ---------------------------------------------- |
-| **Claim** | Verification node in the lineage graph         |
+| **Claim** | Verification node in the trace                 |
 
 ## Asset Manifest Structure
 
@@ -95,7 +94,7 @@ Execution flow in `lco.execution` assertion:
 
 Source code in `sourceCode` field.
 
-### Dataset
+### Data
 
 Located in `content` field:
 

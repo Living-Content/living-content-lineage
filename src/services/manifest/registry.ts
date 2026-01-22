@@ -1,6 +1,6 @@
-import type { LineageGraph } from '../../config/types.js';
-import { getAssetManifestRequests, getClaimManifestRequests, parseManifest } from './adapters/base/lineageAdapter.js';
-import { isManifest } from './adapters/base/lineageTypes.js';
+import type { Trace } from '../../config/types.js';
+import { getAssetManifestRequests, getClaimManifestRequests, parseManifest } from './adapters/base/traceAdapter.js';
+import { isManifest } from './adapters/base/traceTypes.js';
 import { mapAssetType } from './adapters/assetTypeMapper.js';
 import type { AssetManifestRequest } from './adapters/assetManifestRequest.js';
 import type { AssetLoadResult } from './errors.js';
@@ -33,7 +33,7 @@ const fetchManifests = async (
 /**
  * Loads a manifest from a URL and fetches all external asset and claim manifests.
  */
-export const loadManifest = async (url: string): Promise<LineageGraph> => {
+export const loadManifest = async (url: string): Promise<Trace> => {
   const manifestUrl = new URL(url, window.location.href);
   const response = await fetch(manifestUrl.toString());
   if (!response.ok) {

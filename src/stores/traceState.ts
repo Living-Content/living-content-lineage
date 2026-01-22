@@ -1,25 +1,25 @@
 /**
- * Stores for lineage data and current selection.
+ * Stores for trace data and current selection.
  * These are the single source of truth - components and the graph controller
  * subscribe to these stores directly.
  */
 import { derived, writable } from 'svelte/store';
-import type { LineageEdgeData, LineageGraph, LineageNodeData } from '../config/types.js';
+import type { TraceEdgeData, Trace, TraceNodeData } from '../config/types.js';
 
 export interface StepData {
   stepId: string;
   label: string;
-  phase: LineageNodeData['phase'];
-  nodes: LineageNodeData[];
-  edges: LineageEdgeData[];
+  phase: TraceNodeData['phase'];
+  nodes: TraceNodeData[];
+  edges: TraceEdgeData[];
 }
 
 export type SelectionTarget =
   | { type: 'step'; stepId: string; data: StepData }
-  | { type: 'node'; nodeId: string; data: LineageNodeData }
+  | { type: 'node'; nodeId: string; data: TraceNodeData }
   | null;
 
-export const lineageData = writable<LineageGraph | null>(null);
+export const trace = writable<Trace | null>(null);
 export const selection = writable<SelectionTarget>(null);
 
 let currentSelectionKey: string | null = null;
@@ -38,8 +38,8 @@ export const clearSelection = (): void => {
   selection.set(null);
 };
 
-export const setLineageData = (data: LineageGraph): void => {
-  lineageData.set(data);
+export const setTrace = (data: Trace): void => {
+  trace.set(data);
 };
 
 // Derived stores
@@ -52,7 +52,7 @@ export const selectedStep = derived(selection, ($selection) =>
 );
 
 // Convenience functions
-export const selectNode = (node: LineageNodeData): void => {
+export const selectNode = (node: TraceNodeData): void => {
   select({ type: 'node', nodeId: node.id, data: node });
 };
 

@@ -1,15 +1,15 @@
 /**
- * Unified edge rendering for both lineage and workflow views.
+ * Unified edge rendering for both trace and workflow views.
  * Edges have dots at both ends that sit on the edge of nodes.
  * Edges render on top of nodes.
  */
 import { Container, Graphics } from 'pixi.js';
-import type { LineageEdgeData, StepUI } from '../../../config/types.js';
+import type { TraceEdgeData, StepUI } from '../../../config/types.js';
 import type { GraphNode } from './nodeRenderer.js';
 import { getCssVarColorHex, getCssVarInt, getCssVarFloat } from '../../../themes/index.js';
 import { drawChevron } from './rendererUtils.js';
 
-export type ViewMode = 'lineage' | 'workflow';
+export type ViewMode = 'trace' | 'workflow';
 
 export interface EdgeRenderOptions {
   view: ViewMode;
@@ -19,19 +19,19 @@ export interface EdgeRenderOptions {
 /**
  * Unified edge rendering for both views.
  * - 'workflow' view: renders edges between nodes within a workflow
- * - 'lineage' view: renders edges between workflow nodes
+ * - 'trace' view: renders edges between workflow nodes
  */
 export const renderEdges = (
   edgeLayer: Container,
-  edges: LineageEdgeData[],
+  edges: TraceEdgeData[],
   nodeMap: Map<string, GraphNode>,
   options: EdgeRenderOptions
 ): void => {
   edgeLayer.removeChildren();
 
   const { view, selectedId } = options;
-  const edgeWidth = getCssVarInt(view === 'lineage' ? '--workflow-edge-width' : '--edge-width');
-  const dotRadius = getCssVarInt(view === 'lineage' ? '--workflow-dot-radius' : '--edge-dot-radius');
+  const edgeWidth = getCssVarInt(view === 'trace' ? '--workflow-edge-width' : '--edge-width');
+  const dotRadius = getCssVarInt(view === 'trace' ? '--workflow-dot-radius' : '--edge-dot-radius');
   const color = getCssVarColorHex('--color-edge');
 
   const lineGraphics = new Graphics();
@@ -101,7 +101,7 @@ export const renderEdges = (
 };
 
 /**
- * Renders edges between step nodes in lineage view.
+ * Renders edges between step nodes in trace view.
  * Steps are connected in order.
  */
 export const renderStepEdges = (

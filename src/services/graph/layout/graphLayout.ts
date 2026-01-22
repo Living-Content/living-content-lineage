@@ -3,19 +3,19 @@
  * Provides atomic functions for element creation, layer management, and map population.
  */
 import type { Container, Ticker } from 'pixi.js';
-import type { LineageNodeData, StepUI, LineageEdgeData } from '../../../config/types.js';
+import type { TraceNodeData, StepUI, TraceEdgeData } from '../../../config/types.js';
 import { createGraphNode, type GraphNode, DEFAULT_NODE_ALPHA, type NodeRenderOptions } from '../rendering/nodeRenderer.js';
 import { createIconNode } from '../rendering/iconNodeRenderer.js';
 import { getIconNodeConfig, getPhaseIconPath } from '../../../config/icons.js';
 import { WORKFLOW_NODE_SCALE } from '../../../config/constants.js';
-import { selectNode, selectStep } from '../../../stores/lineageState.js';
+import { selectNode, selectStep } from '../../../stores/traceState.js';
 
 export type ElementType = 'step' | 'node';
 
 export interface GraphElement {
   id: string;
   type: ElementType;
-  data: LineageNodeData;
+  data: TraceNodeData;
   graphNode: GraphNode;
 }
 
@@ -93,7 +93,7 @@ export const createHoverCallbacks = (
  * Creates a node element with appropriate rendering (icon or standard).
  */
 export const createNodeElement = async (
-  node: LineageNodeData,
+  node: TraceNodeData,
   config: CreateElementConfig
 ): Promise<GraphElement> => {
   const { graphScale, ticker, selectionLayer, hoverConfig, nodeMap } = config;
@@ -133,14 +133,14 @@ export const createNodeElement = async (
  */
 export const createStepElement = (
   step: StepUI,
-  nodes: LineageNodeData[],
-  edges: LineageEdgeData[],
+  nodes: TraceNodeData[],
+  edges: TraceEdgeData[],
   config: CreateElementConfig
 ): GraphElement => {
   const { graphScale, ticker, selectionLayer, hoverConfig } = config;
 
   const stepNodes = nodes.filter((n) => n.step === step.id);
-  const stepNodeData: LineageNodeData = {
+  const stepNodeData: TraceNodeData = {
     id: `step-${step.id}`,
     label: step.label,
     nodeType: 'workflow',
@@ -253,7 +253,7 @@ export const addElementToMap = (
 export const createGraphElement = (
   id: string,
   type: ElementType,
-  data: LineageNodeData,
+  data: TraceNodeData,
   graphNode: GraphNode
 ): GraphElement => ({
   id,

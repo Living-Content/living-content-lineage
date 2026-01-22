@@ -79,9 +79,8 @@ Available rendering types for field display:
 | Code | Function, module, duration |
 | Action | Duration, input/output/total tokens |
 | Document | Duration, response length, model |
-| Dataset | Chunks retrieved, similarity, confidence |
+| Data | Chunks retrieved, similarity, confidence |
 | Media | Format, dimensions, file size |
-| Result | Token counts, evaluation scores |
 | Claim | Status, algorithm |
 
 ## Step Overview
@@ -207,7 +206,7 @@ Combines metrics and properties in a unified layout.
 
 Props:
 
-- `node` - LineageNodeData
+- `node` - TraceNodeData
 - `assertions` - Parsed assertion data
 - `content` - Asset content
 - `computed` - Computed values (duration, etc.)
@@ -218,7 +217,7 @@ Field configurations use dot-notation paths to locate data:
 
 | Prefix | Source |
 | ------ | ------ |
-| `node.*` | LineageNodeData fields |
+| `node.*` | TraceNodeData fields |
 | `manifest.*` | AssetManifest fields |
 | `content.*` | Asset content fields |
 | `assertions.*` | Parsed assertion data |

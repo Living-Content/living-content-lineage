@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { LineageNodeData } from '../../../config/types.js';
+  import type { TraceNodeData } from '../../../config/types.js';
   import SummaryView from '../SummaryView.svelte';
   import DetailView from '../DetailView.svelte';
 
-  export let node: LineageNodeData;
+  export let node: TraceNodeData;
   export let showDetailContent = false;
   export let detailAvailable = false;
   export let onOpenDetails: () => void = () => {};

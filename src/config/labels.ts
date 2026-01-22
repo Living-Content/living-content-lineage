@@ -12,8 +12,7 @@ export const NODE_TYPE_LABELS: Record<NodeType, string> = {
 export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   Media: 'Media',
   Document: 'Document',
-  Result: 'Result',
-  Dataset: 'Dataset',
+  Data: 'Data',
   Code: 'Code',
   Model: 'Model',
   Action: 'Action',

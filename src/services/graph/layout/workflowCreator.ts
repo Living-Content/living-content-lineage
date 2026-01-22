@@ -2,7 +2,7 @@
  * Step node creation and bounds calculation.
  */
 import type { Ticker, Container } from 'pixi.js';
-import type { LineageNodeData, StepUI, LineageEdgeData } from '../../../config/types.js';
+import type { TraceNodeData, StepUI, TraceEdgeData } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import {
   createStepElement,
@@ -84,8 +84,8 @@ export const recalculateStepBounds = (
  */
 export const createStepNodes = (
   steps: StepUI[],
-  nodes: LineageNodeData[],
-  edges: LineageEdgeData[],
+  nodes: TraceNodeData[],
+  edges: TraceEdgeData[],
   stepNodeMap: Map<string, GraphNode>,
   deps: StepCreatorDeps
 ): void => {

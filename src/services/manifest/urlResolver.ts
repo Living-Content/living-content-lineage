@@ -2,7 +2,7 @@
  * Resolves the manifest URL from the lco_manifest query parameter.
  *
  * The lco_manifest param format is: {gaim_id}_{workflow_id}
- * This builds the API URL: https://{gaimId}.api.livingcontent.co/lineage/{workflowId}/manifest
+ * This builds the API URL: https://{gaimId}.api.livingcontent.co/trace/{workflowId}/manifest
  */
 
 interface ManifestParams {
@@ -35,7 +35,7 @@ function buildApiUrl(gaimId: string, workflowId: string): string {
     ? 'https://localhost:8000'
     : `https://${gaimId}.api.livingcontent.co`;
 
-  return `${apiBaseUrl}/lineage/${workflowId}/manifest`;
+  return `${apiBaseUrl}/trace/${workflowId}/manifest`;
 }
 
 /**

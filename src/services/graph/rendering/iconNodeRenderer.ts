@@ -1,11 +1,11 @@
 /**
- * Icon-based node rendering for the lineage graph.
+ * Icon-based node rendering for the trace.
  * Renders circular nodes with SVG icons instead of text labels.
  * Uses texture caching for performance.
  */
 import { Container, Graphics, Sprite, Texture, Ticker } from 'pixi.js';
 import { getCssVarColorHex, getCssVar, getCssVarInt } from '../../../themes/index.js';
-import type { LineageNodeData } from '../../../config/types.js';
+import type { TraceNodeData } from '../../../config/types.js';
 import { DEFAULT_NODE_ALPHA, type GraphNode } from './nodeRenderer.js';
 import { attachNodeInteraction, createSelectionAnimator, type NodeCallbacks } from '../interaction/nodeInteraction.js';
 import { createRetinaCanvas } from './rendererUtils.js';
@@ -70,7 +70,7 @@ const createIconTextureAsync = async (
  * Returns a GraphNode-compatible container with the icon rendered inside.
  */
 export const createIconNode = async (
-  node: LineageNodeData,
+  node: TraceNodeData,
   graphScale: number,
   ticker: Ticker,
   callbacks: NodeCallbacks,

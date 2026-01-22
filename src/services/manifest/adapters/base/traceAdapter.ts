@@ -1,8 +1,8 @@
-import type { AssetManifest, AssetType, LineageGraph } from '../../../../config/types.js';
+import type { AssetManifest, AssetType, Trace } from '../../../../config/types.js';
 import type { AssetManifestRequest } from '../assetManifestRequest.js';
-import type { Manifest } from './lineageTypes.js';
+import type { Manifest } from './traceTypes.js';
 import { normalizeAssetManifest, normalizeInlineData } from './assetManifestMapper.js';
-import { buildLineageGraph } from './lineageParser.js';
+import { buildTrace } from './traceParser.js';
 
 /**
  * Extracts asset manifest fetch requests from a manifest.
@@ -48,7 +48,7 @@ export const parseManifest = (
   assetManifests: Map<string, unknown>,
   claimManifests: Map<string, unknown>,
   mapAssetType: (assetType: string) => AssetType
-): LineageGraph => {
+): Trace => {
   const normalizedAssetManifests = new Map<string, AssetManifest>();
 
   // Process externally-loaded asset manifests
@@ -69,5 +69,5 @@ export const parseManifest = (
     }
   });
 
-  return buildLineageGraph(manifest, normalizedAssetManifests, claimManifests, mapAssetType);
+  return buildTrace(manifest, normalizedAssetManifests, claimManifests, mapAssetType);
 };

@@ -1,7 +1,7 @@
 {
-  "name": "living-content-lineage",
+  "name": "living-content-tracer",
   "version": "1.0.0",
-  "description": "Interactive lineage visualization with C2PA-aligned metadata",
+  "description": "Interactive trace visualization with C2PA-aligned metadata",
   "type": "module",
   "scripts": {
     "theme:generate": "tsx scripts/generate-theme.ts",

@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import type { GraphController } from '../../services/graph/layout/graphController.js';
   import { createGraphController } from '../../services/graph/layout/graphController.js';
-  import { clearSelection, setLineageData } from '../../stores/lineageState.js';
+  import { clearSelection, setTrace } from '../../stores/traceState.js';
   import { setLoadError, setLoading, setSimpleView } from '../../stores/uiState.js';
   import { resolveManifestUrl } from '../../services/manifest/urlResolver.js';
   import PhaseFilterBadge from '../PhaseFilterBadge.svelte';
@@ -25,7 +25,7 @@
           onHoverEnd: () => {},
           onLoaded: (data) => {
             setLoadError(null);
-            setLineageData(data);
+            setTrace(data);
           },
           onError: (error) => {
             setLoadError(error.message + (error.details ? `: ${error.details}` : ''));

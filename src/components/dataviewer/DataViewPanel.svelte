@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
-  import { clearSelection, selectedNode, selectedStep } from '../../stores/lineageState.js';
+  import { clearSelection, selectedNode, selectedStep } from '../../stores/traceState.js';
   import { isDetailOpen, loadError, setDetailOpen, closeDetailPanel } from '../../stores/uiState.js';
   import { hasDetailContent } from '../../services/dataviewer/parsing/detailContent.js';
   import { createDragHandler } from '../../services/dataviewer/interaction/dragHandler.js';

@@ -1,6 +1,6 @@
 # Phases and Steps
 
-The lineage system organizes operations into 6 logical phases, each containing specific steps.
+The trace system organizes operations into 6 logical phases, each containing specific steps.
 
 ## Phases
 

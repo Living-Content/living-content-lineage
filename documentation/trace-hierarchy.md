@@ -1,11 +1,11 @@
 # Conceptual Hierarchy
 
-The lineage visualization represents provenance data using a hierarchical model.
+The trace visualization represents provenance data using a hierarchical model.
 
 ## Hierarchy
 
 ```plaintext
-Lineage (overarching concept)
+Trace (overarching concept)
 └── Content Session (UUID4) - zoomed out view
     └── Workflow (UUID4) - one execution/query
         ├── Phase: Acquisition
@@ -41,7 +41,7 @@ Lineage (overarching concept)
 | Phase                | `Phase`              | 6 values: Acquisition, Preparation, Retrieval, Reasoning, Generation, Persistence           |
 | Step                 | `Step`               | Operation types: ingest, select, transform, validate, retrieve, search, reflect, plan, etc. |
 | Step UI              | `StepUI`             | Layout bounds for a step in the visualization                                                |
-| Node                 | `LineageNodeData`    | Individual graph element                                                                     |
+| Node                 | `TraceNodeData`      | Individual graph element                                                                     |
 | Asset Type           | `AssetType`          | Content types: Media, Document, Result, Dataset, Code, Model, Action, Claim                  |
 | Node Type            | `NodeType`           | Visual categories: data, process, claim, store, media, workflow                              |
 | Attestation Type     | `AttestationType`    | Proof mechanism: merkle, certificate, tee                                                    |
@@ -49,7 +49,7 @@ Lineage (overarching concept)
 
 ## Relationships
 
-- A **Lineage** contains multiple **Content Sessions**
+- A **Trace** contains multiple **Content Sessions**
 - Each **Content Session** contains multiple **Workflows**
 - Each **Workflow** contains multiple **Phases**
 - Each **Phase** contains multiple **Steps**
@@ -63,7 +63,7 @@ This is a **format-agnostic abstraction layer** that maps multiple standards (C2
 
 | Term          | Description                                                    |
 | ------------- | -------------------------------------------------------------- |
-| **Claim**     | A verification node in the lineage graph (not C2PA's "Claim")  |
+| **Claim**     | A verification node in the trace (not C2PA's "Claim")    |
 | **Attestation** | Cryptographic proof backing a signed manifest                |
 
 Adapters translate format-specific concepts into this unified model:

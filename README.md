@@ -1,6 +1,6 @@
-# Living Content Lineage
+# Living Content Tracer
 
-Interactive visualization for content lineage and provenance, aligned with the
+Interactive visualization for content trace and provenance, aligned with the
 [C2PA (Coalition for Content Provenance and Authenticity)](https://c2pa.org/)
 standard.
 
@@ -13,7 +13,7 @@ flow and transformations.
 **Features:**
 
 - **Node types** — Data, Process, Attestation, with visual distinction by color
-- **Hierarchical organization** — Lineage → Content Session → Workflow → Phase → Step → Nodes
+- **Hierarchical organization** — Trace → Content Session → Workflow → Phase → Step → Nodes
 - **C2PA metadata** — Nodes carry manifest data including claims and assertions
 - **Level-of-detail** — Zoom out to see collapsed step view, zoom in for full workflow detail
 - **Environmental impact** — Displays CO2 and energy metrics when available
@@ -62,7 +62,7 @@ src/
 │   ├── types.ts               # Core type definitions
 │   └── constants.ts           # Rendering constants
 ├── stores/
-│   ├── lineageState.ts        # Graph data and selection state
+│   ├── traceState.ts          # Graph data and selection state
 │   └── uiState.ts             # Loading, panels, errors
 ├── services/
 │   └── manifest/
@@ -108,7 +108,7 @@ The visualization consumes manifest JSON files with:
 - **attestations** — Cryptographic verification records
 - **manifests** — C2PA metadata (claims, assertions)
 
-See `public/data/manifest.json` for an example and `documentation/lineage-hierarchy.md` for the complete type hierarchy.
+See `public/data/manifest.json` for an example and `documentation/trace-hierarchy.md` for the complete type hierarchy.
 
 ## License
 

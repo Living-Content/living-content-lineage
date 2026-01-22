@@ -3,20 +3,20 @@
    * Aggregate view for a selected step.
    * Shows Inputs → Processing → Outputs using the app's card-based design system.
    */
-  import type { LineageEdgeData, LineageNodeData, Phase } from '../../config/types.js';
+  import type { TraceEdgeData, TraceNodeData, Phase } from '../../config/types.js';
   import { extractAssertionData, formatDuration } from '../../services/dataviewer/parsing/assertionParsers.js';
   import DetailSection from './DetailSection.svelte';
   import DataCard from './cards/DataCard.svelte';
   import NodeCard from './detail/NodeCard.svelte';
 
-  export let nodes: LineageNodeData[];
-  export let edges: LineageEdgeData[];
+  export let nodes: TraceNodeData[];
+  export let edges: TraceEdgeData[];
 
   // Derive phase from the first node (all nodes in a step share the same phase)
   $: phase = nodes[0]?.phase as Phase | undefined;
 
   // Get total duration from process nodes
-  function getTotalDurationMs(processNodes: LineageNodeData[]): number {
+  function getTotalDurationMs(processNodes: TraceNodeData[]): number {
     let totalMs = 0;
     for (const node of processNodes) {
       const assertions = extractAssertionData(node.assetManifest?.assertions);

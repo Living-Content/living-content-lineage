@@ -3,7 +3,7 @@
    * Detail view - renders asset details with special handling for known field types.
    * Uses merged dataSource pattern for consistent field access.
    */
-  import type { LineageNodeData } from '../../config/types.js';
+  import type { TraceNodeData } from '../../config/types.js';
   import {
     getDisplayConfig,
     classifyCardFields,
@@ -22,7 +22,7 @@
   import MarkdownValue from './detail/MarkdownValue.svelte';
   import AdditionalData from './detail/AdditionalData.svelte';
 
-  export let node: LineageNodeData;
+  export let node: TraceNodeData;
 
   let assertions: ParsedAssertionData;
 

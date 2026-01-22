@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://livingcontent.org/schemas/lineage.schema.json",
-  "title": "Living Content Lineage Schema",
-  "description": "Schema definitions for workflow stages and asset types in Living Content lineage graphs",
+  "$id": "https://livingcontent.org/schemas/trace.schema.json",
+  "title": "Living Content Trace Schema",
+  "description": "Schema definitions for workflow stages and asset types in Living Content traces",
 
   "$defs": {
     "WorkflowPhase": {
@@ -115,7 +115,7 @@
       "required": ["id", "label", "asset_type"]
     },
     "Claim": {
-      "description": "A claim (attestation) verifying assets in the lineage graph",
+      "description": "A claim (attestation) verifying assets in the trace",
       "type": "object",
       "properties": {
         "id": {

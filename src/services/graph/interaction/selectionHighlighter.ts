@@ -4,9 +4,9 @@
  * Uses blur filters for non-highlighted nodes in detail view.
  */
 import { BlurFilter, type Container } from 'pixi.js';
-import type { LineageEdgeData, StepUI, Phase } from '../../../config/types.js';
+import type { TraceEdgeData, StepUI, Phase } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
-import type { SelectionTarget } from '../../../stores/lineageState.js';
+import type { SelectionTarget } from '../../../stores/traceState.js';
 import { renderEdges, renderStepEdges } from '../rendering/edgeRenderer.js';
 import { DEFAULT_NODE_ALPHA } from '../rendering/nodeRenderer.js';
 import { getCssVarFloat, getCssVarInt } from '../../../themes/index.js';
@@ -76,7 +76,7 @@ export interface SelectionHighlighterDeps {
   stepNodeMap: Map<string, GraphNode>;
   edgeLayer: Container;
   stepEdgeLayer: Container;
-  edges: LineageEdgeData[];
+  edges: TraceEdgeData[];
   steps: StepUI[];
   setNodeAlpha: (nodeId: string, alpha: number) => void;
   useBlur?: boolean;

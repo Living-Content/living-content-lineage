@@ -6,14 +6,14 @@
    * 2. Non-card detail data in middle (detail-only fields)
    * 3. Collapsible "Additional Data" section at bottom (unspecified key-value pairs)
    */
-  import type { LineageNodeData } from '../../../config/types.js';
+  import type { TraceNodeData } from '../../../config/types.js';
   import { getDisplayConfig, classifyCardFields, getDetailOnlyFields, getValueByPath, isConfiguredField } from '../../../config/displayConfig.js';
   import CardSection from '../cards/CardSection.svelte';
   import AdditionalData from './AdditionalData.svelte';
   import PropertyGroup from './PropertyGroup.svelte';
   import PropertyRow from '../PropertyRow.svelte';
 
-  export let node: LineageNodeData;
+  export let node: TraceNodeData;
 
   $: assetType = node.assetType;
   $: phase = node.phase;

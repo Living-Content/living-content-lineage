@@ -1,12 +1,12 @@
-# Living Content Lineage Documentation
+# Living Content Tracer Documentation
 
-Technical documentation for the Living Content Lineage visualization system.
+Technical documentation for the Living Content Tracer visualization system.
 
 ## Contents
 
 ### Core Concepts
 
-- [Lineage Hierarchy](./lineage-hierarchy.md) - Conceptual hierarchy and zoom levels
+- [Trace Hierarchy](./trace-hierarchy.md) - Conceptual hierarchy and zoom levels
 
 ### Schema Documentation
 

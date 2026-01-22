@@ -1,5 +1,5 @@
 /**
- * Workflow title overlay with title and lineage ID.
+ * Workflow title overlay with title and workflow ID.
  * Only visible in collapsed (workflow) view.
  */
 import { Container, Text, TextStyle } from 'pixi.js';

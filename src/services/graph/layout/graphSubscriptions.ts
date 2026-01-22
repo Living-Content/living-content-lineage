@@ -3,9 +3,9 @@
  * Consolidates reactive store subscriptions into a single module.
  */
 import { Container } from 'pixi.js';
-import { selection, type SelectionTarget } from '../../../stores/lineageState.js';
+import { selection, type SelectionTarget } from '../../../stores/traceState.js';
 import { isDetailOpen, phaseFilter } from '../../../stores/uiState.js';
-import type { LineageEdgeData, Phase, StepUI } from '../../../config/types.js';
+import type { TraceEdgeData, Phase, StepUI } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import { renderEdges } from '../rendering/edgeRenderer.js';
 import {
@@ -20,7 +20,7 @@ export interface SubscriptionContext {
   stepNodeMap: Map<string, GraphNode>;
   edgeLayer: Container;
   stepEdgeLayer: Container;
-  edges: LineageEdgeData[];
+  edges: TraceEdgeData[];
   steps: StepUI[];
   setNodeAlpha: (nodeId: string, alpha: number) => void;
   centerSelectedNode: (nodeId: string) => void;

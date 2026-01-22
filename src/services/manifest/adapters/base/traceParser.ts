@@ -1,21 +1,21 @@
 import type {
   AssetManifest,
   AssetType,
-  LineageEdgeData,
-  LineageGraph,
-  LineageManifestSummary,
-  LineageNodeData,
+  TraceEdgeData,
+  Trace,
+  TraceManifestSummary,
+  TraceNodeData,
   Phase,
 } from '../../../../config/types.js';
 import { validatePhase } from '../../../../config/utils.js';
 import { assetTypeToNodeType } from '../../../../config/types.js';
-import type { Manifest, SignedManifest } from './lineageTypes.js';
-import { computeLayout } from './lineageLayout.js';
+import type { Manifest, SignedManifest } from './traceTypes.js';
+import { computeLayout } from './traceLayout.js';
 import { getCssVar } from '../../../../themes/index.js';
 
 const buildManifestSummary = (
   record?: SignedManifest
-): LineageManifestSummary | undefined => {
+): TraceManifestSummary | undefined => {
   if (!record) return undefined;
   const claimGeneratorInfo = Array.isArray(record.claimGeneratorInfo)
     ? record.claimGeneratorInfo.map((info) => ({
@@ -49,21 +49,21 @@ const buildManifestSummary = (
 };
 
 /**
- * Builds the renderable graph using adapter-provided asset type mapping.
+ * Builds a renderable trace using adapter-provided asset type mapping.
  * Actions are first-class assets with inputs/outputs in their manifests.
  */
-export const buildLineageGraph = (
+export const buildTrace = (
   manifest: Manifest,
   assetManifests: Map<string, AssetManifest>,
   claimManifests: Map<string, unknown>,
   mapAssetType: (assetType: string) => AssetType
-): LineageGraph => {
+): Trace => {
   const activeManifestId = manifest.activeManifest;
   const activeManifest = manifest.manifests[activeManifestId];
   const manifestSummary = buildManifestSummary(activeManifest);
 
   const { positions, steps } = computeLayout(manifest);
-  const nodes: LineageNodeData[] = [];
+  const nodes: TraceNodeData[] = [];
 
   // Build step-to-phase mapping
   const stepPhaseMap = new Map<string, Phase>();
@@ -207,7 +207,7 @@ export const buildLineageGraph = (
   });
 
   const edgeColor = getCssVar('--color-edge');
-  const edges: LineageEdgeData[] = edgeList.map((edge, idx) => ({
+  const edges: TraceEdgeData[] = edgeList.map((edge, idx) => ({
     id: `e-${idx}`,
     source: edge.source,
     target: edge.target,

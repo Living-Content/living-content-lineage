@@ -3,10 +3,10 @@
    * Displays environmental impact metrics.
    * Uses impact data from asset manifest when available.
    */
-  import type { AssetType, LineageNodeData } from '../../config/types.js';
+  import type { AssetType, TraceNodeData } from '../../config/types.js';
   import { extractAssertionData } from '../../services/dataviewer/parsing/assertionParsers.js';
 
-  export let node: LineageNodeData;
+  export let node: TraceNodeData;
   export let assetType: AssetType | undefined = undefined;
 
   interface ImpactData {

@@ -3,7 +3,7 @@
  * Handles creating graph nodes and repositioning with edge gaps.
  */
 import type { Ticker, Container } from 'pixi.js';
-import type { LineageNodeData } from '../../../config/types.js';
+import type { TraceNodeData } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import { getCssVarInt } from '../../../themes/index.js';
 import {
@@ -56,10 +56,10 @@ const buildElementConfig = (
 };
 
 /**
- * Creates all nodes from lineage data and adds them to the node layer.
+ * Creates all nodes from trace data and adds them to the node layer.
  */
 export const createNodes = async (
-  nodes: LineageNodeData[],
+  nodes: TraceNodeData[],
   nodeMap: Map<string, GraphNode>,
   deps: NodeCreatorDeps
 ): Promise<void> => {

@@ -1,6 +1,6 @@
 # Manifest Adapters
 
-The lineage system uses a format-agnostic adapter pattern to support multiple manifest standards.
+The trace system uses a format-agnostic adapter pattern to support multiple manifest standards.
 
 ## Adapter Interface
 
@@ -9,7 +9,7 @@ interface ManifestAdapter<TRaw> {
   readonly type: ManifestType;
   isCompatible(raw: unknown): raw is TRaw;
   getAssetManifestRequests(raw: TRaw, baseUrl: URL): AssetManifestRequest[];
-  parse(raw: TRaw, assetManifests: Map<string, unknown>): LineageGraph;
+  parse(raw: TRaw, assetManifests: Map<string, unknown>): Trace;
 }
 ```
 
@@ -18,7 +18,7 @@ interface ManifestAdapter<TRaw> {
 | `type` | Manifest type identifier: `'c2pa'`, `'eqty'`, or `'custom'` |
 | `isCompatible` | Type guard to check if raw data matches this adapter |
 | `getAssetManifestRequests` | Extract asset manifest URLs for fetching |
-| `parse` | Transform raw manifest + asset data into `LineageGraph` |
+| `parse` | Transform raw manifest + asset data into `Trace` |
 
 ## Available Adapters
 
@@ -45,8 +45,8 @@ export function isMyFormatManifest(raw: unknown): boolean {
 
 ```typescript
 import type { ManifestAdapter } from '../manifestAdapter.js';
-import { getAssetManifestRequests, parseManifest } from '../base/lineageAdapter.js';
-import { isManifest, type Manifest } from '../base/lineageTypes.js';
+import { getAssetManifestRequests, parseManifest } from '../base/traceAdapter.js';
+import { isManifest, type Manifest } from '../base/traceTypes.js';
 import { isMyFormatManifest } from './myformatTypes.js';
 
 export const myformatAdapter: ManifestAdapter<Manifest> = {
@@ -74,7 +74,7 @@ Runtime validation functions for manifest types.
 
 ### Core Type Guards
 
-Located in `src/services/manifest/adapters/base/lineageTypes.ts`:
+Located in `src/services/manifest/adapters/base/traceTypes.ts`:
 
 ```typescript
 isStep(raw: unknown): raw is Step
@@ -94,7 +94,7 @@ isAttestation(raw: unknown): raw is Attestation
 ### Usage
 
 ```typescript
-import { isManifest, isAsset, isClaim } from './lineageTypes.js';
+import { isManifest, isAsset, isClaim } from './traceTypes.js';
 import { isAttestation } from '../../../../config/utils.js';
 
 function processData(raw: unknown) {

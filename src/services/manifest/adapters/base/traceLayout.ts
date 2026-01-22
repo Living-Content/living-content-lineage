@@ -1,6 +1,6 @@
 import type { StepUI } from '../../../../config/types.js';
 import { validatePhase } from '../../../../config/utils.js';
-import type { Asset, Manifest } from './lineageTypes.js';
+import type { Asset, Manifest } from './traceTypes.js';
 
 export interface LayoutResult {
   positions: Map<string, { x: number; y: number; step: string }>;

@@ -56,7 +56,7 @@ export type AssetType =
   | "Claim";
 
 /**
- * Visual node category for rendering in the lineage graph.
+ * Visual node category for rendering in the trace graph.
  */
 export type NodeType =
   | "data"
@@ -131,7 +131,7 @@ export interface AssetManifest {
   outputs?: string[];
 }
 
-export interface LineageManifestSummary {
+export interface TraceManifestSummary {
   claimGeneratorInfo?: ManifestGeneratorInfo[];
   title?: string;
   format?: string;
@@ -140,7 +140,7 @@ export interface LineageManifestSummary {
   attestation?: Attestation;
 }
 
-export interface LineageNodeData {
+export interface TraceNodeData {
   id: string;
   label: string;
   title?: string;
@@ -149,7 +149,7 @@ export interface LineageNodeData {
   shape: NodeShape;
   step?: string;
   phase: Phase;
-  manifest?: LineageManifestSummary;
+  manifest?: TraceManifestSummary;
   assetManifest?: AssetManifest;
   claimManifest?: unknown;
   description?: string;
@@ -164,7 +164,7 @@ export interface LineageNodeData {
   badgeCount?: number;
 }
 
-export interface LineageEdgeData {
+export interface TraceEdgeData {
   id: string;
   source: string;
   target: string;
@@ -181,12 +181,12 @@ export interface StepUI {
   xEnd: number;
 }
 
-export interface LineageGraph {
+export interface Trace {
   title?: string;
   workflowId?: string;
   contentSessionId?: string;
-  nodes: LineageNodeData[];
-  edges: LineageEdgeData[];
+  nodes: TraceNodeData[];
+  edges: TraceEdgeData[];
   steps: StepUI[];
 }
 
