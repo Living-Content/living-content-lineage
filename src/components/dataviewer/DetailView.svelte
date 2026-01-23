@@ -31,7 +31,7 @@
   $: phase = node.phase;
   $: displayConfig = getDisplayConfig(assetType);
   $: assertions = extractAssertionData(assetManifest?.assertions);
-  $: content = assetManifest?.content ?? {};
+  $: data = assetManifest?.data ?? {};
 
   // Computed values that require transformation
   $: durationMs = assertions.action?.durationMs ?? assertions.execution?.executionDurationMs;
@@ -43,21 +43,21 @@
     return undefined;
   }
 
-  // Type-safe content access
-  type ContentWithNested = Record<string, unknown> & {
+  // Type-safe data access
+  type DataWithNested = Record<string, unknown> & {
     executionResult?: Record<string, unknown>;
     executionPlan?: Record<string, unknown>;
   };
-  $: typedContent = content as ContentWithNested;
+  $: typedData = data as DataWithNested;
 
   // Build merged dataSource for consistent field access
-  // This allows getValueByPath to find both configured AND content fields
+  // This allows getValueByPath to find both configured AND data fields
   $: dataSource = {
-    // Spread content first so explicit fields can override
-    ...content,
+    // Spread data first so explicit fields can override
+    ...data,
     // Flatten nested objects from result data
-    ...(typedContent.executionResult ?? {}),
-    ...(typedContent.executionPlan ?? {}),
+    ...(typedData.executionResult ?? {}),
+    ...(typedData.executionPlan ?? {}),
     // Node-level fields
     ...node,
     // Model-specific fields (tokens from lco.usage assertion)
@@ -83,8 +83,8 @@
     issuer: assetManifest?.attestation?.issuer,
     // Media fields
     format: assetManifest?.format,
-    dimensions: formatDimensions(content as Record<string, unknown>),
-    fileSize: (content as Record<string, unknown>).size,
+    dimensions: formatDimensions(data as Record<string, unknown>),
+    fileSize: (data as Record<string, unknown>).size,
     // Source code
     sourceCode: assetManifest?.sourceCode,
   };
@@ -132,10 +132,10 @@
   $: configuredKeys = new Set(Object.keys(displayConfig.fields));
 
   // Fallback: unconfigured simple fields from content (shown as PropertyRows)
-  $: unconfiguredSimpleFields = Object.entries(content as Record<string, unknown>)
+  $: unconfiguredSimpleFields = Object.entries(data as Record<string, unknown>)
     .filter(([key, value]) => {
       if (value === undefined || value === null) return false;
-      if (['id', 'type', 'nodeType', 'shape', 'x', 'y'].includes(key)) return false;
+      if (['id', 'type', 'nodeType', 'shape', 'x', 'y', 'functionName'].includes(key)) return false;
       if (configuredKeys.has(key)) return false;
       if (typeof value === 'object') return false;
       return true;
@@ -144,10 +144,10 @@
     .sort((a, b) => a.key.localeCompare(b.key));
 
   // Additional data: only complex objects (arrays, nested objects) from content
-  $: additionalData = Object.entries(content as Record<string, unknown>)
+  $: additionalData = Object.entries(data as Record<string, unknown>)
     .filter(([key, value]) => {
       if (value === undefined || value === null) return false;
-      if (['id', 'type', 'nodeType', 'shape', 'x', 'y'].includes(key)) return false;
+      if (['id', 'type', 'nodeType', 'shape', 'x', 'y', 'functionName'].includes(key)) return false;
       if (configuredKeys.has(key)) return false;
       if (typeof value !== 'object') return false;
       return true;
@@ -157,6 +157,21 @@
   $: hasCardData = metricsWithValues.length > 0 || propertiesWithValues.length > 0;
   $: hasDetailData = regularDetailFields.length > 0;
   $: hasUnconfiguredFields = unconfiguredSimpleFields.length > 0;
+
+  /**
+   * Format a key-value item for display.
+   * Handles nested objects by converting to JSON with truncation.
+   */
+  const formatKeyValueItem = (v: unknown): string => {
+    if (v === null || v === undefined) return '-';
+    if (typeof v !== 'object') return String(v);
+    const str = JSON.stringify(v);
+    // Truncate long JSON to prevent UI overflow
+    if (str.length > 100) {
+      return str.slice(0, 100) + '...';
+    }
+    return str;
+  };
 </script>
 
 <div class="detail-view">
@@ -193,7 +208,7 @@
     {#if value && typeof value === 'object'}
       <PropertyGroup title={config.label ?? key} collapsible={false}>
         {#each Object.entries(value) as [k, v] (k)}
-          <PropertyRow label={k} value={typeof v === 'object' ? JSON.stringify(v) : String(v ?? '-')} />
+          <PropertyRow label={k} value={formatKeyValueItem(v)} />
         {/each}
       </PropertyGroup>
     {/if}

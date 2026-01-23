@@ -34,11 +34,11 @@ function normalizeIngredients(raw: unknown): AssetManifest['ingredients'] {
  * Handles the `data` field on assets in manifest-bundle.json.
  * Data is expected to already be camelCase from the backend.
  */
-export function normalizeInlineData(data: Record<string, unknown>): AssetManifest | undefined {
-  if (!data || Object.keys(data).length === 0) return undefined;
+export function normalizeInlineData(assetData: Record<string, unknown>): AssetManifest | undefined {
+  if (!assetData || Object.keys(assetData).length === 0) return undefined;
   return {
-    sourceCode: data.sourceCode ? String(data.sourceCode) : undefined,
-    content: isRecord(data.content) ? data.content : data,
+    sourceCode: assetData.sourceCode ? String(assetData.sourceCode) : undefined,
+    data: assetData,
   };
 }
 
@@ -69,7 +69,7 @@ export function normalizeAssetManifest(raw: unknown): AssetManifest | undefined 
     assertions,
     attestation: normalizeAttestation(raw),
     sourceCode: raw.sourceCode ? String(raw.sourceCode) : undefined,
-    content: isRecord(raw.content) ? raw.content : undefined,
+    data: isRecord(raw.data) ? raw.data : undefined,
     ingredients: normalizeIngredients(raw.ingredients),
     environmentalImpact: isRecord(raw.environmentalImpact)
       ? {

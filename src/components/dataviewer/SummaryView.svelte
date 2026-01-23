@@ -16,26 +16,26 @@
   $: assetType = node.assetType;
   $: phase = node.phase;
   $: displayConfig = getDisplayConfig(assetType);
-  $: content = node.assetManifest?.content ?? {};
+  $: data = node.assetManifest?.data ?? {};
   $: assertions = extractAssertionData(node.assetManifest?.assertions);
 
-  // Build data source combining node, content, and assertions
+  // Build data source combining node, data, and assertions
   // Duration: prefer lco.action (Actions), fall back to lco.execution (Code)
   $: durationMs = assertions.action?.durationMs ?? assertions.execution?.executionDurationMs;
 
-  // Type-safe content access
-  type ContentWithNested = Record<string, unknown> & {
+  // Type-safe data access
+  type DataWithNested = Record<string, unknown> & {
     executionResult?: Record<string, unknown>;
     executionPlan?: Record<string, unknown>;
   };
-  $: typedContent = content as ContentWithNested;
+  $: typedData = data as DataWithNested;
 
   $: dataSource = {
-    // Spread content first
-    ...content,
+    // Spread data first
+    ...data,
     // Flatten nested objects from result data
-    ...(typedContent.executionResult ?? {}),
-    ...(typedContent.executionPlan ?? {}),
+    ...(typedData.executionResult ?? {}),
+    ...(typedData.executionPlan ?? {}),
     // Node-level fields
     ...node,
     // Model-specific fields (tokens from lco.usage assertion)
@@ -57,8 +57,8 @@
     issuer: node.assetManifest?.attestation?.issuer,
     // Media fields
     format: node.assetManifest?.format,
-    dimensions: formatDimensions(content as Record<string, unknown>),
-    fileSize: (content as Record<string, unknown>).size,
+    dimensions: formatDimensions(data as Record<string, unknown>),
+    fileSize: (data as Record<string, unknown>).size,
   };
 
   function formatDimensions(c: Record<string, unknown>): string | undefined {
@@ -101,8 +101,8 @@
     if (actionDuration && actionDuration !== '-') {
       entries.push({ key: 'duration', value: actionDuration });
     }
-    if (content && typeof content === 'object') {
-      for (const [key, value] of Object.entries(content)) {
+    if (data && typeof data === 'object') {
+      for (const [key, value] of Object.entries(data)) {
         if (value !== undefined && value !== null && typeof value !== 'object') {
           const strValue = String(value);
           if (strValue.length <= 100) {

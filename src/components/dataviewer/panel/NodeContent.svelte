@@ -9,7 +9,7 @@
   export let onOpenDetails: () => void = () => {};
 
   $: titleDisplay = node.title ?? node.label ?? '';
-  $: descriptionDisplay = node.description ?? node.assetManifest?.content?.description ?? '';
+  $: descriptionDisplay = node.description ?? node.assetManifest?.data?.description ?? '';
 </script>
 
 <div class="node-header">

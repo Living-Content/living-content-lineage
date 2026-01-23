@@ -17,7 +17,7 @@
 
   $: assetType = node.assetType;
   $: phase = node.phase;
-  $: content = node.assetManifest?.content ?? {};
+  $: data = node.assetManifest?.data ?? {};
   $: displayConfig = getDisplayConfig(assetType);
 
   // Classify card fields into metrics and properties
@@ -27,7 +27,7 @@
   $: metricsWithValues = cardClassification.metrics
     .map(([key, config]) => ({
       key,
-      value: getValueByPath(content as Record<string, unknown>, key) ?? getValueByPath(node as unknown as Record<string, unknown>, key),
+      value: getValueByPath(data as Record<string, unknown>, key) ?? getValueByPath(node as unknown as Record<string, unknown>, key),
       config,
     }))
     .filter(({ value }) => value !== undefined && value !== null);
@@ -36,7 +36,7 @@
   $: propertiesWithValues = cardClassification.properties
     .map(([key, config]) => ({
       key,
-      value: getValueByPath(content as Record<string, unknown>, key) ?? getValueByPath(node as unknown as Record<string, unknown>, key),
+      value: getValueByPath(data as Record<string, unknown>, key) ?? getValueByPath(node as unknown as Record<string, unknown>, key),
       config,
     }))
     .filter(({ value }) => value !== undefined && value !== null);
@@ -46,13 +46,13 @@
   $: detailOnlyWithValues = detailOnlyFields
     .map(([key, config]) => ({
       key,
-      value: getValueByPath(content as Record<string, unknown>, key) ?? getValueByPath(node as unknown as Record<string, unknown>, key),
+      value: getValueByPath(data as Record<string, unknown>, key) ?? getValueByPath(node as unknown as Record<string, unknown>, key),
       config,
     }))
     .filter(({ value }) => value !== undefined && value !== null);
 
   // Additional data: fields in content that aren't in the display config
-  $: additionalData = Object.entries(content as Record<string, unknown>)
+  $: additionalData = Object.entries(data as Record<string, unknown>)
     .filter(([key, value]) => {
       if (value === undefined || value === null) return false;
       if (isConfiguredField(displayConfig, key)) return false;

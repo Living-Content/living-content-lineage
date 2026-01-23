@@ -111,7 +111,7 @@ export interface EnvironmentalImpact {
   updatedAt?: string;
 }
 
-export interface AssetContent {
+export interface AssetData {
   [key: string]: unknown;
 }
 
@@ -124,7 +124,7 @@ export interface AssetManifest {
   assertions?: ManifestAssertion[];
   attestation?: Attestation;
   sourceCode?: string;
-  content?: AssetContent;
+  data?: AssetData;
   ingredients?: ManifestIngredient[];
   environmentalImpact?: EnvironmentalImpact;
   inputs?: string[];

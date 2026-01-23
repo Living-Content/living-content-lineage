@@ -27,9 +27,9 @@ export interface FieldDisplayConfig {
   /**
    * Data source path (dot notation). Examples:
    * - 'assertions.model.modelId' -> assertions.model.modelId
-   * - 'content.query' -> content.query
+   * - 'data.query' -> data.query
    * - 'node.phase' -> node.phase
-   * If not specified, uses the field key itself against content.
+   * If not specified, uses the field key itself against data.
    */
   source?: string;
 }
@@ -56,20 +56,21 @@ export const DISPLAY_CONFIGS: Record<AssetType, AssetDisplayConfig> = {
     cardColumns: 4,
     fields: {
       // Note: model name is already shown as title, don't duplicate
-      'inputTokens': { type: 'metric', isCard: true, label: 'Input Tokens', source: 'content.inputTokens', span: 2 },
-      'outputTokens': { type: 'metric', isCard: true, label: 'Output Tokens', source: 'content.outputTokens', span: 2 },
-      'totalDurationMs': { type: 'duration', isCard: true, label: 'Duration', source: 'content.totalDurationMs', span: 2 },
-      'temperature': { type: 'number', isCard: true, label: 'Temperature', source: 'content.temperature', span: 2 },
-      'maxTokens': { type: 'metric', isCard: false, label: 'Max Tokens', source: 'content.maxTokens' },
+      'inputTokens': { type: 'metric', isCard: true, label: 'Input Tokens', source: 'data.inputTokens', span: 2 },
+      'outputTokens': { type: 'metric', isCard: true, label: 'Output Tokens', source: 'data.outputTokens', span: 2 },
+      'totalDurationMs': { type: 'duration', isCard: true, label: 'Duration', source: 'data.totalDurationMs', span: 2 },
+      'temperature': { type: 'number', isCard: true, label: 'Temperature', source: 'data.temperature', span: 2 },
+      'maxTokens': { type: 'metric', isCard: false, label: 'Max Tokens', source: 'data.maxTokens' },
     }
   },
 
   Code: {
     cardColumns: 4,
     fields: {
-      'durationMs': { type: 'duration', isCard: true, label: 'Duration', source: 'content.durationMs', span: 2 },
-      'arguments': { type: 'key-value', isCard: false, label: 'Arguments', source: 'content.arguments' },
-      'sourceCode': { type: 'code', isCard: false, label: 'Source Code', source: 'content.sourceCode' },
+      'durationMs': { type: 'duration', isCard: true, label: 'Duration', source: 'data.durationMs', span: 2 },
+      'module': { type: 'text', isCard: true, label: 'Module', source: 'data.module', span: 2 },
+      'arguments': { type: 'key-value', isCard: false, label: 'Arguments', source: 'data.arguments' },
+      'sourceCode': { type: 'code', isCard: false, label: 'Source Code', source: 'data.sourceCode' },
     }
   },
 
@@ -84,50 +85,54 @@ export const DISPLAY_CONFIGS: Record<AssetType, AssetDisplayConfig> = {
   Document: {
     cardColumns: 4,
     fields: {
-      // === INGEST (user query arriving) ===
-      'query': { type: 'text-preview', isCard: true, label: 'Query', source: 'content.query', span: 4, truncateAt: 150 },
-      'toolId': { type: 'badge', isCard: true, label: 'Requested Tool', source: 'content.toolId', span: 2 },
-      'messageCount': { type: 'metric', isCard: true, label: 'Messages', source: 'content.messageCount', span: 2 },
-      'value': { type: 'text-preview', isCard: true, label: 'Content', source: 'content.value', span: 4, truncateAt: 100 },
+      // === INGEST (user query arriving) - query moved to detail-only (can be long) ===
+      'query': { type: 'text-preview', isCard: false, label: 'Query', source: 'data.query', truncateAt: 500 },
+      'messageCount': { type: 'metric', isCard: true, label: 'Messages', source: 'data.messageCount', span: 2 },
+      'value': { type: 'text-preview', isCard: true, label: 'Content', source: 'data.value', span: 4, truncateAt: 100 },
+
+      // === SELECT (tool selection - model metrics shown on MODEL node, not here) ===
+      'toolId': { type: 'badge', isCard: true, label: 'Tool', source: 'data.toolId', span: 2 },
+      'candidates': { type: 'list', isCard: false, label: 'Candidates', source: 'data.candidates' },
+      'llmResponse': { type: 'text-preview', isCard: false, label: 'Selection', source: 'data.llmResponse', truncateAt: 100 },
 
       // === REFLECT (gap analysis) ===
-      'gaps': { type: 'list', isCard: true, label: 'Knowledge Gaps', source: 'content.gaps', span: 4 },
-      'requirements': { type: 'list', isCard: false, label: 'Requirements', source: 'content.requirements' },
-      'reasoningTrace': { type: 'text-preview', isCard: false, label: 'Reasoning', source: 'content.reasoningTrace', truncateAt: 500 },
-      'dataQualityAssessment': { type: 'text-preview', isCard: true, label: 'Data Quality', source: 'content.dataQualityAssessment', span: 4, truncateAt: 200 },
+      'gaps': { type: 'list', isCard: true, label: 'Knowledge Gaps', source: 'data.gaps', span: 4 },
+      'requirements': { type: 'list', isCard: false, label: 'Requirements', source: 'data.requirements' },
+      'reasoningTrace': { type: 'text-preview', isCard: false, label: 'Reasoning', source: 'data.reasoningTrace', truncateAt: 500 },
+      'dataQualityAssessment': { type: 'text-preview', isCard: true, label: 'Data Quality', source: 'data.dataQualityAssessment', span: 4, truncateAt: 200 },
 
       // === PLAN (query planning) ===
-      'queries': { type: 'list', isCard: true, label: 'Planned Queries', source: 'content.queries', span: 4 },
-      'executionPlan': { type: 'key-value', isCard: false, label: 'Execution Plan', source: 'content.executionPlan' },
+      'queries': { type: 'list', isCard: true, label: 'Planned Queries', source: 'data.queries', span: 4 },
+      'executionPlan': { type: 'key-value', isCard: false, label: 'Execution Plan', source: 'data.executionPlan' },
 
       // === EVALUATE (sufficiency check) ===
-      'isSufficient': { type: 'status', isCard: true, label: 'Data Sufficient', source: 'content.isSufficient', span: 2 },
-      'iteration': { type: 'metric', isCard: true, label: 'Iteration', source: 'content.iteration', span: 2 },
-      'shouldContinue': { type: 'status', isCard: true, label: 'Continue?', source: 'content.shouldContinue', span: 2 },
+      'isSufficient': { type: 'status', isCard: true, label: 'Data Sufficient', source: 'data.isSufficient', span: 2 },
+      'iteration': { type: 'metric', isCard: true, label: 'Iteration', source: 'data.iteration', span: 2 },
+      'shouldContinue': { type: 'status', isCard: true, label: 'Continue?', source: 'data.shouldContinue', span: 2 },
 
-      // === SELECT (tool selection) ===
-      'candidates': { type: 'list', isCard: false, label: 'Candidates', source: 'content.candidates' },
-      'llmResponse': { type: 'text-preview', isCard: false, label: 'Selection Reasoning', source: 'content.llmResponse', truncateAt: 300 },
+      // === GENERATE (response generation - model metrics shown on MODEL node) ===
+      'responseLength': { type: 'metric', isCard: true, label: 'Response Length', source: 'data.responseLength', span: 2 },
+      'response': { type: 'markdown', isCard: false, label: 'Response', source: 'data.response' },
 
       // === STORE (persistence) ===
-      'responseLength': { type: 'metric', isCard: true, label: 'Response Length', source: 'content.responseLength', span: 2 },
-      'requestMessageId': { type: 'text', isCard: false, label: 'Request ID', source: 'content.requestMessageId' },
-      'responseMessageId': { type: 'text', isCard: false, label: 'Response ID', source: 'content.responseMessageId' },
+      'requestMessageId': { type: 'text', isCard: false, label: 'Request ID', source: 'data.requestMessageId' },
+      'responseMessageId': { type: 'text', isCard: false, label: 'Response ID', source: 'data.responseMessageId' },
     }
   },
 
   Data: {
     cardColumns: 4,
     fields: {
-      // === RETRIEVE (search results) ===
-      'count': { type: 'metric', isCard: true, label: 'Results Found', source: 'content.count', span: 2 },
-      'totalChunks': { type: 'metric', isCard: true, label: 'Chunks', source: 'content.totalChunks', span: 2 },
-      'success': { type: 'status', isCard: true, label: 'Status', source: 'content.success', span: 2 },
-      'evaluationSummary': { type: 'text-preview', isCard: true, label: 'Summary', source: 'content.evaluationSummary', span: 4, truncateAt: 200 },
-      'chunks': { type: 'list', isCard: false, label: 'Retrieved Chunks', source: 'content.chunks' },
-
       // === HISTORY (conversation) ===
-      'messageCount': { type: 'metric', isCard: true, label: 'Messages', source: 'content.messageCount', span: 2 },
+      'messageCount': { type: 'metric', isCard: true, label: 'Messages', source: 'data.messageCount', span: 2 },
+      'conversationHistory': { type: 'list', isCard: false, label: 'Conversation History', source: 'data.conversationHistory' },
+
+      // === RETRIEVE (search results) ===
+      'count': { type: 'metric', isCard: true, label: 'Results Found', source: 'data.count', span: 2 },
+      'totalChunks': { type: 'metric', isCard: true, label: 'Chunks', source: 'data.totalChunks', span: 2 },
+      'success': { type: 'status', isCard: true, label: 'Status', source: 'data.success', span: 2 },
+      'evaluationSummary': { type: 'text-preview', isCard: true, label: 'Summary', source: 'data.evaluationSummary', span: 4, truncateAt: 200 },
+      'chunks': { type: 'list', isCard: false, label: 'Retrieved Chunks', source: 'data.chunks' },
     }
   },
 
@@ -136,9 +141,9 @@ export const DISPLAY_CONFIGS: Record<AssetType, AssetDisplayConfig> = {
     fields: {
       'format': { type: 'badge', isCard: true, label: 'Format', source: 'manifest.format', span: 2 },
       'dimensions': { type: 'dimensions', isCard: true, label: 'Dimensions', source: 'computed.dimensions', span: 2 },
-      'fileSize': { type: 'filesize', isCard: true, label: 'File Size', source: 'content.size', span: 4 },
+      'fileSize': { type: 'filesize', isCard: true, label: 'File Size', source: 'data.size', span: 4 },
       'mimeType': { type: 'text', isCard: false, label: 'MIME Type', source: 'manifest.format' },
-      'duration': { type: 'duration', isCard: false, label: 'Duration', source: 'content.duration' },
+      'duration': { type: 'duration', isCard: false, label: 'Duration', source: 'data.duration' },
     }
   },
 
@@ -227,7 +232,7 @@ export const getValueByPath = (obj: Record<string, unknown>, path: string): unkn
 export interface DataContext {
   node: Record<string, unknown>;
   manifest: Record<string, unknown>;
-  content: Record<string, unknown>;
+  data: Record<string, unknown>;
   assertions: Record<string, unknown>;
   computed: Record<string, unknown>;
 }
@@ -241,8 +246,8 @@ export const resolveFieldValue = (
   context: DataContext
 ): unknown => {
   if (!source) {
-    // Default: look in content using the field key
-    return getValueByPath(context.content, fieldKey);
+    // Default: look in data using the field key
+    return getValueByPath(context.data, fieldKey);
   }
 
   const [root, ...rest] = source.split('.');
@@ -253,8 +258,8 @@ export const resolveFieldValue = (
       return getValueByPath(context.node, path);
     case 'manifest':
       return getValueByPath(context.manifest, path);
-    case 'content':
-      return getValueByPath(context.content, path);
+    case 'data':
+      return getValueByPath(context.data, path);
     case 'assertions':
       return getValueByPath(context.assertions, path);
     case 'computed':

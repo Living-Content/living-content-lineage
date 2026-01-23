@@ -27,26 +27,11 @@ export const graphTokens = {
   'node-data-border': 'rgb(77, 150, 255)',
   'node-data-icon': 'rgb(77, 150, 255)',
 
-  // Node type: Compute
-  'node-compute-color': 'rgb(255, 107, 107)',
-  'node-compute-border': 'rgb(255, 107, 107)',
-  'node-compute-icon': 'rgb(255, 107, 107)',
-
   // Node type: Claim
   'node-claim-color': 'rgb(107, 203, 119)',
   'node-claim-border': 'rgb(107, 203, 119)',
   'node-claim-icon': 'rgb(107, 203, 119)',
   'claim-icon-color': 'rgb(255, 255, 255)',
-
-  // Node type: Filter
-  'node-filter-color': 'rgb(77, 150, 255)',
-  'node-filter-border': 'rgb(77, 150, 255)',
-  'node-filter-icon': 'rgb(77, 150, 255)',
-
-  // Node type: Join
-  'node-join-color': 'rgb(255, 217, 61)',
-  'node-join-border': 'rgb(255, 217, 61)',
-  'node-join-icon': 'rgb(255, 217, 61)',
 
   // Node type: Store
   'node-store-color': 'rgb(255, 217, 61)',

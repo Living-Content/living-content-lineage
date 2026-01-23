@@ -75,6 +75,7 @@ export const createNodes = async (
 
 /**
  * Repositions nodes horizontally to maintain fixed edge gaps between columns.
+ * Used for expanded view nodes.
  */
 export const repositionNodesWithGaps = (nodeMap: Map<string, GraphNode>): void => {
   const nodesByX = new Map<number, GraphNode[]>();
@@ -95,7 +96,7 @@ export const repositionNodesWithGaps = (nodeMap: Map<string, GraphNode>): void =
       maxHalfWidth = Math.max(maxHalfWidth, node.nodeWidth / 2);
     }
 
-    const newX = rightEdge === -Infinity ? group[0].position.x : rightEdge + getCssVarInt('--edge-gap') + maxHalfWidth;
+    const newX = rightEdge === -Infinity ? group[0].position.x : rightEdge + getCssVarInt('--expanded-edge-gap') + maxHalfWidth;
 
     for (const node of group) {
       node.position.x = newX;
@@ -103,5 +104,24 @@ export const repositionNodesWithGaps = (nodeMap: Map<string, GraphNode>): void =
     }
 
     rightEdge = newX + maxHalfWidth;
+  }
+};
+
+/**
+ * Repositions step nodes horizontally to maintain fixed edge gaps.
+ * Used for collapsed view nodes.
+ */
+export const repositionStepNodesWithGaps = (stepNodeMap: Map<string, GraphNode>): void => {
+  const nodes = Array.from(stepNodeMap.values()).sort((a, b) => a.position.x - b.position.x);
+
+  let rightEdge = -Infinity;
+  for (const node of nodes) {
+    const halfWidth = node.nodeWidth / 2;
+    const newX = rightEdge === -Infinity ? node.position.x : rightEdge + getCssVarInt('--collapsed-edge-gap') + halfWidth;
+
+    node.position.x = newX;
+    if (node.selectionRing) node.selectionRing.position.x = newX;
+
+    rightEdge = newX + halfWidth;
   }
 };

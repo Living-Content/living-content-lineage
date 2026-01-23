@@ -2,13 +2,16 @@ import type { StepUI } from '../../../../config/types.js';
 import { validatePhase } from '../../../../config/utils.js';
 import type { Asset, Manifest } from './traceTypes.js';
 
+// Initial layout spacing - actual spacing is controlled by --edge-gap CSS variable
+// via repositionNodesWithGaps() which overrides these positions
+const HORIZONTAL_GAP = 0.15;
+const VERTICAL_GAP = 0.05;
+const STEP_PADDING = 0.04;
+
 export interface LayoutResult {
   positions: Map<string, { x: number; y: number; step: string }>;
   steps: StepUI[];
 }
-
-const HORIZONTAL_GAP = 0.15;
-const VERTICAL_GAP = 0.05;
 
 /**
  * Extract node group ID from asset ID.
@@ -181,7 +184,6 @@ export const computeLayout = (manifest: Manifest): LayoutResult => {
     }
   });
 
-  const padding = 0.04;
   const steps: StepUI[] = manifest.steps
     .filter((step) => stepMinX.has(step.id))
     .map((step) => {
@@ -192,8 +194,8 @@ export const computeLayout = (manifest: Manifest): LayoutResult => {
         id: step.id,
         label: step.label,
         phase,
-        xStart: minX - padding,
-        xEnd: maxX + padding,
+        xStart: minX - STEP_PADDING,
+        xEnd: maxX + STEP_PADDING,
       };
     })
     .sort((a, b) => a.xStart - b.xStart);

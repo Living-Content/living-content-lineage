@@ -7,7 +7,7 @@ import type { TraceNodeData, StepUI, TraceEdgeData } from '../../../config/types
 import { createGraphNode, type GraphNode, DEFAULT_NODE_ALPHA, type NodeRenderOptions } from '../rendering/nodeRenderer.js';
 import { createIconNode } from '../rendering/iconNodeRenderer.js';
 import { getIconNodeConfig, getPhaseIconPath } from '../../../config/icons.js';
-import { WORKFLOW_NODE_SCALE } from '../../../config/constants.js';
+import { COLLAPSED_NODE_SCALE } from '../../../config/constants.js';
 import { selectNode, selectStep } from '../../../stores/traceState.js';
 
 export type ElementType = 'step' | 'node';
@@ -189,7 +189,7 @@ export const createStepElement = (
   };
 
   const stepGraphNode = createGraphNode(stepNodeData, graphScale, ticker, nodeCallbacks, {
-    scale: WORKFLOW_NODE_SCALE,
+    scale: COLLAPSED_NODE_SCALE,
     renderOptions: stepRenderOptions,
     selectionLayer,
   });

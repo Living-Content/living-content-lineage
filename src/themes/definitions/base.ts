@@ -35,11 +35,12 @@ export const baseTokens = {
   // Graph edges
   'edge-width': '2px',
   'edge-dot-radius': '4px',
-  'edge-gap': '90px',
+  'expanded-edge-gap': '100px',
+  'collapsed-edge-gap': '200px',
   'workflow-edge-width': '8px',
   'workflow-dot-radius': '12px',
   'faded-node-alpha': '0.25',
-  'faded-node-blur': '3',
+  'faded-node-blur': '4',
 
   // Step labels (for step view)
   'step-label-font-size': '20px',

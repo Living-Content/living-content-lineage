@@ -16,7 +16,7 @@ import { LOD_THRESHOLD, TEXT_SIMPLIFY_THRESHOLD, VIEWPORT_TOP_MARGIN, VIEWPORT_B
 import { clearSelection } from '../../../stores/traceState.js';
 import { clearPhaseFilter } from '../../../stores/uiState.js';
 import { createNodeAnimationController } from '../interaction/nodeAnimationController.js';
-import { createNodes, repositionNodesWithGaps } from './nodeCreator.js';
+import { createNodes, repositionNodesWithGaps, repositionStepNodesWithGaps } from './nodeCreator.js';
 import { recalculateStepBounds, createStepNodes, calculateTopNodeInfo, calculateBottomNodeInfo } from './workflowCreator.js';
 import { initializePixi } from './pixiSetup.js';
 import { createStoreSubscriptions } from './graphSubscriptions.js';
@@ -119,12 +119,13 @@ export async function createGraphController({
     callbacks: { onHover: callbacks.onHover, onHoverEnd: callbacks.onHoverEnd },
   });
 
+  repositionStepNodesWithGaps(stepNodeMap);
   renderStepEdges(layers.stepEdgeLayer, traceData.steps, stepNodeMap, null);
 
   // Step labels
   const topNodeInfo = calculateTopNodeInfo(nodeMap);
   const bottomNodeInfo = calculateBottomNodeInfo(nodeMap);
-  const stepLabels = createStepLabels(traceData.steps, stepNodeMap, topNodeInfo);
+  const stepLabels = createStepLabels(traceData.steps, nodeMap, stepNodeMap, topNodeInfo);
   app.stage.addChild(stepLabels.container);
   stepLabels.update(viewportState);
 

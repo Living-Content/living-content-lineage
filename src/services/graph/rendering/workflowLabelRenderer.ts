@@ -58,12 +58,12 @@ export interface StepLabels {
 
 /**
  * Pure creation of a single step label entry (no container attachment).
+ * Uses actionWorldX (action node position) for alignment.
  */
 export const createStepLabelEntry = (
   step: StepUI,
-  stepNode: GraphNode | undefined
+  actionWorldX: number
 ): StepLabelEntry => {
-  const worldX = stepNode ? stepNode.position.x : 0;
   const color = getStepColor(step.phase);
 
   const label = new Text({ text: step.label, style: createLabelStyle(color) });
@@ -79,19 +79,43 @@ export const createStepLabelEntry = (
 
   const line = new Graphics();
 
-  return { labelContainer, label, line, worldX, color, phase: step.phase };
+  return { labelContainer, label, line, worldX: actionWorldX, color, phase: step.phase };
+};
+
+/**
+ * Finds the action node x position for a step, or falls back to step node position.
+ */
+const findActionPositionForStep = (
+  stepId: string,
+  nodeMap: Map<string, GraphNode>,
+  stepNodeMap: Map<string, GraphNode>
+): number => {
+  // Find action node for this step (nodeType === 'process' && assetType === 'Action')
+  for (const node of nodeMap.values()) {
+    if (node.nodeData.step === stepId &&
+        node.nodeData.nodeType === 'process' &&
+        node.nodeData.assetType === 'Action') {
+      return node.position.x;
+    }
+  }
+  // Fallback to step node position (for steps without actions, like source steps)
+  const stepNode = stepNodeMap.get(stepId);
+  return stepNode ? stepNode.position.x : 0;
 };
 
 /**
  * Batch creation of label entries from steps (no container attachment).
+ * Labels are positioned at action nodes, falling back to step nodes for source steps.
  */
 export const createLabelEntries = (
   steps: StepUI[],
+  nodeMap: Map<string, GraphNode>,
   stepNodeMap: Map<string, GraphNode>
 ): StepLabelEntry[] => {
-  return steps.map((step) =>
-    createStepLabelEntry(step, stepNodeMap.get(step.id))
-  );
+  return steps.map((step) => {
+    const actionX = findActionPositionForStep(step.id, nodeMap, stepNodeMap);
+    return createStepLabelEntry(step, actionX);
+  });
 };
 
 /**
@@ -148,10 +172,11 @@ const updateLabelEntryPosition = (
 
 /**
  * Creates step labels once. Call update() on viewport changes.
- * Uses stepNodeMap positions so labels align with collapsed step nodes.
+ * Labels align with action nodes, falling back to step nodes for source steps.
  */
 export function createStepLabels(
   steps: StepUI[],
+  nodeMap: Map<string, GraphNode>,
   stepNodeMap: Map<string, GraphNode>,
   topNodeInfo: TopNodeInfo | null
 ): StepLabels {
@@ -159,7 +184,7 @@ export function createStepLabels(
   const topPadding = getCssVarInt('--step-label-top-padding');
 
   // Create and attach entries
-  const entries = createLabelEntries(steps, stepNodeMap);
+  const entries = createLabelEntries(steps, nodeMap, stepNodeMap);
   attachLabelEntriesToContainer(container, entries);
 
   const update = (viewportState: ViewportState): void => {

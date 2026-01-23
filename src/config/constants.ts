@@ -16,8 +16,8 @@ export const LOD_ANIMATION_MS = 300;
 // Text simplification threshold (switches from detailed to simple node labels)
 export const TEXT_SIMPLIFY_THRESHOLD = 0.5;
 
-// Workflow nodes (collapsed view)
-export const WORKFLOW_NODE_SCALE = 4.0;
+// Step nodes in collapsed view
+export const COLLAPSED_NODE_SCALE = 3.0;
 
 // Panel layout (behavioral thresholds)
 export const PANEL_MIN_EXPANDED_WIDTH = 500;
