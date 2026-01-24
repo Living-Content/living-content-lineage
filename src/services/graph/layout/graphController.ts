@@ -13,13 +13,13 @@ import { createViewportState, createViewportHandlers } from '../interaction/view
 import { createLODController, type LODLayers } from './lodController.js';
 import { createTitleOverlay } from '../rendering/titleOverlay.js';
 import { LOD_THRESHOLD, TEXT_SIMPLIFY_THRESHOLD, VIEWPORT_TOP_MARGIN, VIEWPORT_BOTTOM_MARGIN } from '../../../config/constants.js';
-import { clearSelection } from '../../../stores/traceState.js';
-import { clearPhaseFilter } from '../../../stores/uiState.js';
+import { traceState } from '../../../stores/traceState.svelte.js';
+import { uiState } from '../../../stores/uiState.svelte.js';
 import { createNodeAnimationController } from '../interaction/nodeAnimationController.js';
 import { createNodes, repositionNodesWithGaps, repositionStepNodesWithGaps } from './nodeCreator.js';
 import { recalculateStepBounds, createStepNodes, calculateTopNodeInfo, calculateBottomNodeInfo } from './workflowCreator.js';
 import { initializePixi } from './pixiSetup.js';
-import { createStoreSubscriptions } from './graphSubscriptions.js';
+import { createStoreSubscriptions } from './graphSubscriptions.svelte.js';
 import { createViewportManager, createResizeHandler } from './viewportManager.js';
 
 interface HoverPayload {
@@ -94,6 +94,13 @@ export async function createGraphController({
   // Animation controller
   const animationController = createNodeAnimationController(nodeMap);
 
+  // State tracking for subscriptions
+  const state = {
+    currentSelection: traceState.selection,
+    detailPanelOpen: uiState.isDetailOpen,
+    currentPhaseFilter: uiState.phaseFilter,
+  };
+
   // Create nodes
   await createNodes(traceData.nodes, nodeMap, {
     container,
@@ -102,7 +109,7 @@ export async function createGraphController({
     graphScale,
     ticker: app.ticker,
     callbacks: { onHover: callbacks.onHover, onHoverEnd: callbacks.onHoverEnd },
-    getSelectedNodeId: () => subscriptions.state.currentSelection?.type === 'node' ? subscriptions.state.currentSelection.nodeId : null,
+    getSelectedNodeId: () => state.currentSelection?.type === 'node' ? state.currentSelection.nodeId : null,
     setNodeAlpha: animationController.setNodeAlpha,
   });
 
@@ -159,7 +166,7 @@ export async function createGraphController({
   const cullAndRender = (): void => {
     if (lodController.state.isCollapsed) return;
     Culler.shared.cull(layers.nodeLayer, app.screen);
-    const selection = subscriptions.state.currentSelection;
+    const selection = state.currentSelection;
     const nodeId = selection?.type === 'node' ? selection.nodeId : null;
     renderEdges(layers.edgeLayer, traceData.edges, nodeMap, {
       view: 'workflow',
@@ -177,9 +184,9 @@ export async function createGraphController({
   };
 
   const lodController = createLODController(lodLayers, {
-    onCollapseStart: () => { clearSelection(); titleOverlay.setMode('relative'); },
+    onCollapseStart: () => { traceState.clearSelection(); titleOverlay.setMode('relative'); },
     onCollapseEnd: updateTitlePosition,
-    onExpandStart: () => { clearSelection(); clearPhaseFilter(); titleOverlay.setMode('fixed'); },
+    onExpandStart: () => { traceState.clearSelection(); uiState.clearPhaseFilter(); titleOverlay.setMode('fixed'); },
     onExpandEnd: () => { stepLabels.update(viewportState); cullAndRender(); },
   });
 
@@ -207,6 +214,11 @@ export async function createGraphController({
     setStepLabelsPhaseFilter: stepLabels.setPhaseFilter,
     setStepLabelsVisible: stepLabels.setVisible,
     zoomToBounds: viewportManager.zoomToBounds,
+    onStateChange: (newState) => {
+      state.currentSelection = newState.currentSelection;
+      state.detailPanelOpen = newState.detailPanelOpen;
+      state.currentPhaseFilter = newState.currentPhaseFilter;
+    },
   });
 
   // Viewport handlers
@@ -227,7 +239,7 @@ export async function createGraphController({
     onPanStart: () => {},
     onPanEnd: () => {},
     isZoomBlocked: () => lodController.state.isAnimating,
-    isInteractionBlocked: () => subscriptions.state.detailPanelOpen,
+    isInteractionBlocked: () => state.detailPanelOpen,
     getBounds: () => {
       if (!topNodeInfo || !bottomNodeInfo) return null;
       return {
@@ -249,15 +261,15 @@ export async function createGraphController({
     updateTitlePosition,
     centerSelectedNode: viewportManager.centerOnNode,
     isCollapsed: () => lodController.state.isCollapsed,
-    getDetailPanelOpen: () => subscriptions.state.detailPanelOpen,
-    getSelectedNodeId: () => subscriptions.state.currentSelection?.type === 'node' ? subscriptions.state.currentSelection.nodeId : null,
+    getDetailPanelOpen: () => state.detailPanelOpen,
+    getSelectedNodeId: () => state.currentSelection?.type === 'node' ? state.currentSelection.nodeId : null,
   });
 
   cullAndRender();
 
   return {
     destroy: () => {
-      subscriptions.unsubscribe();
+      subscriptions.destroy();
       viewportHandlers.destroy();
       resizeHandler.destroy();
       viewportManager.destroy();

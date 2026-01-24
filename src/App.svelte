@@ -1,6 +1,5 @@
 <script lang="ts">
-  // Root shell that wires global layout and loading state.
-  import { isLoading } from './stores/uiState.js';
+  import { uiState } from './stores/uiState.svelte.js';
   import Header from './components/Header.svelte';
   import GraphView from './components/graph/GraphView.svelte';
   import DataViewPanel from './components/dataviewer/DataViewPanel.svelte';
@@ -9,7 +8,7 @@
 
 <LiquidFilter />
 
-<div class="app-shell" class:loading={$isLoading}>
+<div class="app-shell" class:loading={uiState.isLoading}>
   <Header />
   <DataViewPanel />
   <GraphView />

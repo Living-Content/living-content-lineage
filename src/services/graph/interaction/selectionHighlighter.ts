@@ -6,7 +6,7 @@
 import { BlurFilter, type Container } from 'pixi.js';
 import type { TraceEdgeData, StepUI, Phase } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
-import type { SelectionTarget } from '../../../stores/traceState.js';
+import type { SelectionTarget } from '../../../stores/traceState.svelte.js';
 import { renderEdges, renderStepEdges } from '../rendering/edgeRenderer.js';
 import { DEFAULT_NODE_ALPHA } from '../rendering/nodeRenderer.js';
 import { getCssVarFloat, getCssVarInt } from '../../../themes/index.js';

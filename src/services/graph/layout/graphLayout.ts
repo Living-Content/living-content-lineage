@@ -8,7 +8,7 @@ import { createGraphNode, type GraphNode, DEFAULT_NODE_ALPHA, type NodeRenderOpt
 import { createIconNode } from '../rendering/iconNodeRenderer.js';
 import { getIconNodeConfig, getPhaseIconPath } from '../../../config/icons.js';
 import { COLLAPSED_NODE_SCALE } from '../../../config/constants.js';
-import { selectNode, selectStep } from '../../../stores/traceState.js';
+import { traceState } from '../../../stores/traceState.svelte.js';
 
 export type ElementType = 'step' | 'node';
 
@@ -109,7 +109,7 @@ export const createNodeElement = async (
   );
 
   const nodeCallbacks = {
-    onClick: () => selectNode(node),
+    onClick: () => traceState.selectNode(node),
     ...hoverCallbacks,
   };
 
@@ -166,7 +166,7 @@ export const createStepElement = (
       const stepEdges = edges.filter(
         (e) => stepNodes.some((n) => n.id === e.source) || stepNodes.some((n) => n.id === e.target)
       );
-      selectStep({ stepId: step.id, label: step.label, phase: step.phase, nodes: stepNodes, edges: stepEdges });
+      traceState.selectStep({ stepId: step.id, label: step.label, phase: step.phase, nodes: stepNodes, edges: stepEdges });
     },
     onHover: () => {
       hoverConfig.container.style.cursor = 'pointer';

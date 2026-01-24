@@ -8,7 +8,7 @@ import type { StepUI, Phase } from '../../../config/types.js';
 import type { ViewportState } from '../interaction/viewport.js';
 import type { GraphNode } from './nodeRenderer.js';
 import { getCssVarColorHex, getCssVar, getCssVarInt, getCssVarFloat, type CssVar } from '../../../themes/index.js';
-import { setPhaseFilter } from '../../../stores/uiState.js';
+import { uiState } from '../../../stores/uiState.svelte.js';
 
 
 /**
@@ -75,7 +75,7 @@ export const createStepLabelEntry = (
   labelContainer.eventMode = 'static';
   labelContainer.cursor = 'pointer';
   labelContainer.addChild(label);
-  labelContainer.on('pointertap', () => setPhaseFilter(step.phase));
+  labelContainer.on('pointertap', () => uiState.setPhaseFilter(step.phase));
 
   const line = new Graphics();
 

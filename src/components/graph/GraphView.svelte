@@ -2,8 +2,8 @@
   import { onMount } from 'svelte';
   import type { GraphController } from '../../services/graph/layout/graphController.js';
   import { createGraphController } from '../../services/graph/layout/graphController.js';
-  import { clearSelection, setTrace } from '../../stores/traceState.js';
-  import { setLoadError, setLoading, setSimpleView } from '../../stores/uiState.js';
+  import { traceState } from '../../stores/traceState.svelte.js';
+  import { uiState } from '../../stores/uiState.svelte.js';
   import { resolveManifestUrl } from '../../services/manifest/urlResolver.js';
   import PhaseFilterBadge from '../PhaseFilterBadge.svelte';
 
@@ -15,25 +15,25 @@
 
     const start = async () => {
       if (!container || isCancelled) return;
-      setLoading(true);
+      uiState.setLoading(true);
       controller = await createGraphController({
         container,
         manifestUrl: resolveManifestUrl(),
         callbacks: {
-          onSimpleViewChange: (simple) => setSimpleView(simple),
+          onSimpleViewChange: (simple) => uiState.setSimpleView(simple),
           onHover: () => {},
           onHoverEnd: () => {},
           onLoaded: (data) => {
-            setLoadError(null);
-            setTrace(data);
+            uiState.setLoadError(null);
+            traceState.setTrace(data);
           },
           onError: (error) => {
-            setLoadError(error.message + (error.details ? `: ${error.details}` : ''));
-            clearSelection();
+            uiState.setLoadError(error.message + (error.details ? `: ${error.details}` : ''));
+            traceState.clearSelection();
           },
         },
       });
-      setLoading(false);
+      uiState.setLoading(false);
     };
 
     start();

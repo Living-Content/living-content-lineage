@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
-  import { clearSelection, selectedNode, selectedStep } from '../../stores/traceState.js';
-  import { isDetailOpen, loadError, setDetailOpen, closeDetailPanel } from '../../stores/uiState.js';
+  import { traceState } from '../../stores/traceState.svelte.js';
+  import { uiState } from '../../stores/uiState.svelte.js';
   import { hasDetailContent } from '../../services/dataviewer/parsing/detailContent.js';
   import { createDragHandler } from '../../services/dataviewer/interaction/dragHandler.js';
   import { createAnimationOrchestrator } from '../../services/dataviewer/animation/animationOrchestrator.js';
@@ -14,13 +14,13 @@
   let contentLayer: HTMLElement;
   let scrollArea: HTMLElement;
   let blobContainer: HTMLElement;
-  let showDetailContent = false;
-  let wasHidden = true;
-  let signatureExpanded = false;
+  let showDetailContent = $state(false);
+  let wasHidden = $state(true);
+  let signatureExpanded = $state(false);
 
-  let isDragging = false;
-  let panelX: number | null = null;
-  let panelY: number | null = null;
+  let isDragging = $state(false);
+  let panelX = $state<number | null>(null);
+  let panelY = $state<number | null>(null);
 
   const dragHandler = createDragHandler({
     onPositionChange: (x, y) => {
@@ -36,17 +36,21 @@
     return { wrapper: wrapperElement, contentLayer, scrollArea, blobContainer };
   });
 
-  $: detailAvailable = $selectedNode ? hasDetailContent($selectedNode) : false;
-  $: panelHidden = !$selectedNode && !$selectedStep && !$loadError;
-  $: showCloseButton = !!$selectedNode || !!$selectedStep;
+  let detailAvailable = $derived(traceState.selectedNode ? hasDetailContent(traceState.selectedNode) : false);
+  let panelHidden = $derived(!traceState.selectedNode && !traceState.selectedStep && !uiState.loadError);
+  let showCloseButton = $derived(!!traceState.selectedNode || !!traceState.selectedStep);
 
-  $: if (!panelHidden && wasHidden && wrapperElement) {
-    handleEntrance();
-  }
+  $effect(() => {
+    if (!panelHidden && wasHidden && wrapperElement) {
+      handleEntrance();
+    }
+  });
 
-  $: if (panelHidden) {
-    wasHidden = true;
-  }
+  $effect(() => {
+    if (panelHidden) {
+      wasHidden = true;
+    }
+  });
 
   async function handleEntrance(): Promise<void> {
     wasHidden = false;
@@ -68,7 +72,7 @@
 
     await animationOrchestrator.openDetails(() => {
       showDetailContent = true;
-      setDetailOpen(true);
+      uiState.setDetailOpen(true);
     }, resetPosition);
   }
 
@@ -77,20 +81,20 @@
 
     await animationOrchestrator.closeDetails(() => {
       showDetailContent = false;
-      closeDetailPanel();
+      uiState.closeDetailPanel();
     }, resetPosition);
   }
 
   function handleClose(): void {
-    if ($isDetailOpen) {
+    if (uiState.isDetailOpen) {
       closeDetails();
     } else {
-      clearSelection();
+      traceState.clearSelection();
     }
   }
 
   function handleStartDrag(e: MouseEvent): void {
-    if (animationOrchestrator.isAnimating() || $isDetailOpen || dragHandler.isMobile()) return;
+    if (animationOrchestrator.isAnimating() || uiState.isDetailOpen || dragHandler.isMobile()) return;
     dragHandler.startDrag(e, wrapperElement);
   }
 
@@ -108,7 +112,7 @@
   class:hidden={panelHidden}
   class:dragging={isDragging}
   class:dragged={panelX !== null || panelY !== null}
-  class:detail-open={$isDetailOpen}
+  class:detail-open={uiState.isDetailOpen}
 >
   <div class="shape-layer">
     <div class="blob-container" bind:this={blobContainer}></div>
@@ -116,40 +120,40 @@
 
   <aside class="panel-content-layer" bind:this={contentLayer}>
     <PanelHeader
-      phase={$selectedNode?.phase ?? $selectedStep?.phase}
-      step={$selectedNode?.step ?? $selectedStep?.stepId}
-      assetType={$selectedNode?.assetType}
+      phase={traceState.selectedNode?.phase ?? traceState.selectedStep?.phase}
+      step={traceState.selectedNode?.step ?? traceState.selectedStep?.stepId}
+      assetType={traceState.selectedNode?.assetType}
       {showCloseButton}
-      isNodeSelected={!!$selectedNode}
-      isStepSelected={!!$selectedStep}
+      isNodeSelected={!!traceState.selectedNode}
+      isStepSelected={!!traceState.selectedStep}
       {isDragging}
       onClose={handleClose}
       onStartDrag={handleStartDrag}
     />
 
-    <div class="panel-scroll-area" class:has-footer={$selectedNode?.assetManifest?.attestation} bind:this={scrollArea}>
+    <div class="panel-scroll-area" class:has-footer={traceState.selectedNode?.assetManifest?.attestation} bind:this={scrollArea}>
       <div class="panel-content">
-        {#if $loadError}
-          <p class="panel-placeholder">{$loadError}</p>
-        {:else if $selectedNode}
+        {#if uiState.loadError}
+          <p class="panel-placeholder">{uiState.loadError}</p>
+        {:else if traceState.selectedNode}
           <NodeContent
-            node={$selectedNode}
+            node={traceState.selectedNode}
             {showDetailContent}
             {detailAvailable}
             onOpenDetails={openDetails}
           />
-        {:else if $selectedStep}
-          <StepOverview nodes={$selectedStep.nodes} edges={$selectedStep.edges} />
+        {:else if traceState.selectedStep}
+          <StepOverview nodes={traceState.selectedStep.nodes} edges={traceState.selectedStep.edges} />
         {:else}
           <p class="panel-placeholder">Select a node to view details</p>
         {/if}
       </div>
     </div>
 
-    {#if $selectedNode?.assetManifest?.attestation}
+    {#if traceState.selectedNode?.assetManifest?.attestation}
       <div class="panel-footer" class:expanded={signatureExpanded}>
         <AttestationPanel
-          attestation={$selectedNode.assetManifest.attestation}
+          attestation={traceState.selectedNode.assetManifest.attestation}
           bind:expanded={signatureExpanded}
         />
       </div>

@@ -3,16 +3,16 @@
    * Displays a badge overlay when a phase filter is active.
    * Shows the phase name with a close button to clear the filter.
    */
-  import { phaseFilter, clearPhaseFilter } from '../stores/uiState.js';
+  import { uiState } from '../stores/uiState.svelte.js';
 
-  $: phase = $phaseFilter;
-  $: phaseClass = phase ? `phase-${phase.toLowerCase()}` : '';
+  let phase = $derived(uiState.phaseFilter);
+  let phaseClass = $derived(phase ? `phase-${phase.toLowerCase()}` : '');
 </script>
 
 {#if phase}
   <div class="phase-filter-badge {phaseClass}">
     <span class="phase-name">{phase} STEPS</span>
-    <button class="close-button" on:click={clearPhaseFilter} aria-label="Clear phase filter">
+    <button class="close-button" onclick={() => uiState.clearPhaseFilter()} aria-label="Clear phase filter">
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M2 2L10 10M10 2L2 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
       </svg>

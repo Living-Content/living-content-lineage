@@ -2,7 +2,7 @@
   /**
    * Header with logo and detail level indicator.
    */
-  import { isSimpleView } from '../stores/uiState.js';
+  import { uiState } from '../stores/uiState.svelte.js';
 </script>
 
 <header class="header">
@@ -16,8 +16,8 @@
   </div>
   <div class="header-right">
     <img
-      src={$isSimpleView ? '/icons/simple.svg' : '/icons/detail.svg'}
-      alt={$isSimpleView ? 'Simple view' : 'Detailed view'}
+      src={uiState.isSimpleView ? '/icons/simple.svg' : '/icons/detail.svg'}
+      alt={uiState.isSimpleView ? 'Simple view' : 'Detailed view'}
       id="lod-icon"
       class="lod-indicator"
     />
