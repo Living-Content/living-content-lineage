@@ -4,6 +4,7 @@
    * Positioned relative to selected node using world coordinates + viewport state.
    * Position derived reactively - no cached screen coordinates.
    */
+  import { fade } from 'svelte/transition';
   import { traceState } from '../../stores/traceState.svelte.js';
   import { uiState } from '../../stores/uiState.svelte.js';
   import { hasDetailContent } from '../../services/dataviewer/parsing/detailContent.js';
@@ -22,9 +23,6 @@
   let customPosition = $state<{ x: number; y: number } | null>(null);
   let isDragging = $state(false);
   let dragOffset = $state<{ x: number; y: number }>({ x: 0, y: 0 });
-
-  // First render tracking to prevent animation on initial appearance
-  let isFirstRender = $state(true);
 
   // Mode transition state for smooth fade between compact/detail views
   let isTransitioning = $state(false);
@@ -61,7 +59,7 @@
     ((!!currentNode || !!currentStep) && displayPosition !== null) || !!uiState.loadError
   );
 
-  // Reset custom position when selection clears
+  // Reset state when selection clears
   $effect(() => {
     if (!traceState.selection) {
       customPosition = null;
@@ -70,15 +68,6 @@
         visualMode = 'compact';
         uiState.closeDetailPanel();
       }
-      // Reset first render flag so next appearance fades in
-      isFirstRender = true;
-    } else if (isFirstRender) {
-      // First appearance: disable animation, then enable after paint
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          isFirstRender = false;
-        });
-      });
     }
   });
 
@@ -162,12 +151,11 @@
 </script>
 
 {#if isVisible}
-  <div class="panel-container">
+  <div class="panel-container" transition:fade={{ duration: 150 }}>
     <aside
       class="panel"
       class:detail-open={visualMode === 'detail'}
       class:dragging={isDragging}
-      class:no-transition={isFirstRender}
       class:fading={isTransitioning}
       style={`--panel-x: ${displayPosition?.x ?? 100}px; --panel-y: ${displayPosition?.y ?? 100}px;`}
     >
@@ -238,7 +226,6 @@
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(8px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-    animation: panel-fade-in 0.2s ease-out;
     transition: opacity 0.15s ease-out;
   }
 
@@ -250,11 +237,6 @@
     cursor: grabbing;
     user-select: none;
     transition: none;
-  }
-
-  .panel.no-transition {
-    transition: none !important;
-    animation: none !important;
   }
 
   .panel.detail-open {
@@ -304,15 +286,6 @@
   .panel-placeholder {
     color: var(--color-text-faint);
     font-style: italic;
-  }
-
-  @keyframes panel-fade-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
   }
 
   @media (max-width: 900px) {

@@ -3,6 +3,7 @@
    * Displays a badge overlay when a phase filter is active.
    * Shows the phase name with a close button to clear the filter.
    */
+  import { scale } from 'svelte/transition';
   import { uiState } from '../stores/uiState.svelte.js';
 
   let phase = $derived(uiState.phaseFilter);
@@ -10,7 +11,7 @@
 </script>
 
 {#if phase}
-  <div class="phase-filter-badge {phaseClass}">
+  <div class="phase-filter-badge {phaseClass}" transition:scale={{ duration: 200, start: 0.9 }}>
     <span class="phase-name">{phase} STEPS</span>
     <button class="close-button" onclick={() => uiState.clearPhaseFilter()} aria-label="Clear phase filter">
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -38,18 +39,6 @@
     letter-spacing: 0.05em;
     z-index: var(--z-overlay, 300);
     pointer-events: auto;
-    animation: fadeIn 0.2s ease-out;
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateX(-50%) scale(0.9);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(-50%) scale(1);
-    }
   }
 
   .phase-name {
