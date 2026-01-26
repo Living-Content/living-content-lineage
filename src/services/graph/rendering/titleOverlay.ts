@@ -6,6 +6,7 @@ import { Container, Text, TextStyle } from 'pixi.js';
 import type { GraphNode } from './nodeRenderer.js';
 import type { ViewportState } from '../interaction/viewport.js';
 import { getCssVarColorHex, getCssVar, getCssVarInt, getCssVarFloat } from '../../../themes/index.js';
+import { ANIMATION_TIMINGS, GEOMETRY } from '../../../config/animationConstants.js';
 
 export interface TitleOverlay {
   container: Container;
@@ -112,19 +113,19 @@ export const setupTitleAnimation = (
   container: Container,
   elements: TitleOverlayElements
 ): TitleAnimationController => {
-  let targetAlpha = 0.5;
+  let targetAlpha = GEOMETRY.TITLE_IDLE_ALPHA;
   let fadeAnimationId: number | null = null;
 
   const animateAlpha = (): void => {
     const diff = targetAlpha - elements.uuidText.alpha;
-    if (Math.abs(diff) < 0.01) {
+    if (Math.abs(diff) < GEOMETRY.TITLE_ANIMATION_THRESHOLD) {
       elements.uuidText.alpha = targetAlpha;
       elements.dateText.alpha = targetAlpha;
       fadeAnimationId = null;
       return;
     }
-    elements.uuidText.alpha += diff * 0.15;
-    elements.dateText.alpha += diff * 0.15;
+    elements.uuidText.alpha += diff * ANIMATION_TIMINGS.TITLE_EASE_FACTOR;
+    elements.dateText.alpha += diff * ANIMATION_TIMINGS.TITLE_EASE_FACTOR;
     fadeAnimationId = requestAnimationFrame(animateAlpha);
   };
 
@@ -137,7 +138,7 @@ export const setupTitleAnimation = (
   };
 
   const onPointerLeave = (): void => {
-    targetAlpha = 0.5;
+    targetAlpha = GEOMETRY.TITLE_IDLE_ALPHA;
     if (!fadeAnimationId) fadeAnimationId = requestAnimationFrame(animateAlpha);
   };
 

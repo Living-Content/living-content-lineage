@@ -5,16 +5,19 @@
    * Position derived reactively - no cached screen coordinates.
    */
   import { fade } from 'svelte/transition';
+  import gsap from 'gsap';
   import { traceState } from '../../stores/traceState.svelte.js';
   import { uiState } from '../../stores/uiState.svelte.js';
   import { hasDetailContent } from '../../services/dataviewer/parsing/detailContent.js';
-  import { GEOMETRY } from '../../config/animationConstants.js';
+  import { ANIMATION_TIMINGS, GEOMETRY } from '../../config/animationConstants.js';
+  import { DETAIL_PANEL_WIDTH } from '../../config/constants.js';
   import PanelHeader from './panel/PanelHeader.svelte';
   import NodeContent from './panel/NodeContent.svelte';
   import StepOverview from './StepOverview.svelte';
   import AttestationPanel from './AttestationPanel.svelte';
 
-  const PANEL_WIDTH = 360; // Must match CSS width
+  let panelElement = $state<HTMLElement | null>(null);
+  let activeTween: gsap.core.Tween | null = null;
 
   let showDetailContent = $state(false);
   let signatureExpanded = $state(false);
@@ -47,7 +50,7 @@
 
     // Position panel to the LEFT of the node
     const panelRightEdge = screenX - scaledNodeWidth / 2 - GEOMETRY.OVERLAY_GAP;
-    const panelLeftEdge = panelRightEdge - PANEL_WIDTH;
+    const panelLeftEdge = panelRightEdge - DETAIL_PANEL_WIDTH;
 
     return { x: panelLeftEdge, y: screenY };
   });
@@ -71,45 +74,73 @@
     }
   });
 
-  const FADE_DURATION = 150; // ms
-
   function openDetails(): void {
-    if (isTransitioning) return;
-
-    // Start fade-out transition
+    if (isTransitioning || !panelElement) return;
     isTransitioning = true;
 
-    // After fade-out, switch to detail mode
-    setTimeout(() => {
-      showDetailContent = true;
-      visualMode = 'detail';
-      uiState.setDetailOpen(true);
+    if (activeTween) activeTween.kill();
 
-      // After mode switch, fade back in
-      requestAnimationFrame(() => {
-        isTransitioning = false;
-      });
-    }, FADE_DURATION);
+    // Fade out → swap content → fade in
+    activeTween = gsap.to(panelElement, {
+      opacity: 0,
+      duration: ANIMATION_TIMINGS.DETAIL_PANEL_FADE_DURATION,
+      ease: 'power2.out',
+      onComplete: () => {
+        showDetailContent = true;
+        visualMode = 'detail';
+        uiState.setDetailOpen(true);
+
+        activeTween = gsap.to(panelElement, {
+          opacity: 1,
+          duration: ANIMATION_TIMINGS.DETAIL_PANEL_FADE_DURATION,
+          ease: 'power2.out',
+          onComplete: () => {
+            isTransitioning = false;
+            activeTween = null;
+          },
+        });
+      },
+    });
   }
 
   function closeDetails(): void {
-    if (isTransitioning) return;
-
-    // Start fade-out transition
+    if (isTransitioning || !panelElement) return;
     isTransitioning = true;
 
-    // After fade-out, switch to compact mode
-    setTimeout(() => {
-      showDetailContent = false;
-      visualMode = 'compact';
-      uiState.closeDetailPanel();
+    if (activeTween) activeTween.kill();
 
-      // After mode switch, fade back in
-      requestAnimationFrame(() => {
-        isTransitioning = false;
-      });
-    }, FADE_DURATION);
+    // Fade out → swap content → fade in
+    activeTween = gsap.to(panelElement, {
+      opacity: 0,
+      duration: ANIMATION_TIMINGS.DETAIL_PANEL_FADE_DURATION,
+      ease: 'power2.out',
+      onComplete: () => {
+        showDetailContent = false;
+        visualMode = 'compact';
+        uiState.closeDetailPanel();
+
+        activeTween = gsap.to(panelElement, {
+          opacity: 1,
+          duration: ANIMATION_TIMINGS.DETAIL_PANEL_FADE_DURATION,
+          ease: 'power2.out',
+          onComplete: () => {
+            isTransitioning = false;
+            activeTween = null;
+          },
+        });
+      },
+    });
   }
+
+  // Cleanup GSAP tween on unmount
+  $effect(() => {
+    return () => {
+      if (activeTween) {
+        activeTween.kill();
+        activeTween = null;
+      }
+    };
+  });
 
   function handleClose(): void {
     if (showDetailContent) {
@@ -153,19 +184,20 @@
 {#if isVisible}
   <div class="panel-container" transition:fade={{ duration: 150 }}>
     <aside
+      bind:this={panelElement}
       class="panel"
       class:detail-open={visualMode === 'detail'}
       class:dragging={isDragging}
-      class:fading={isTransitioning}
       style={`--panel-x: ${displayPosition?.x ?? 100}px; --panel-y: ${displayPosition?.y ?? 100}px;`}
     >
       <PanelHeader
-        phase={currentNode?.phase ?? currentStep?.phase}
-        step={currentNode?.step ?? currentStep?.stepId}
-        assetType={currentNode?.assetType}
+        context={{
+          phase: currentNode?.phase ?? currentStep?.phase,
+          step: currentNode?.step ?? currentStep?.stepId,
+          assetType: currentNode?.assetType,
+          selectionType: currentNode ? 'node' : currentStep ? 'step' : null,
+        }}
         showCloseButton={!!currentNode || !!currentStep}
-        isNodeSelected={!!currentNode}
-        isStepSelected={!!currentStep}
         {isDragging}
         onClose={handleClose}
         onStartDrag={handleDragStart}
@@ -217,7 +249,7 @@
     transform: translateY(-50%);
     pointer-events: auto;
     width: 360px;
-    max-height: calc(100vh - 100px);
+    max-height: calc(100vh - 100px); /* Matches DETAIL_PANEL_MAX_HEIGHT_OFFSET */
     min-height: 100px;
     display: flex;
     flex-direction: column;
@@ -226,17 +258,12 @@
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(8px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-    transition: opacity 0.15s ease-out;
-  }
-
-  .panel.fading {
-    opacity: 0;
+    /* Opacity transitions handled by GSAP */
   }
 
   .panel.dragging {
     cursor: grabbing;
     user-select: none;
-    transition: none;
   }
 
   .panel.detail-open {

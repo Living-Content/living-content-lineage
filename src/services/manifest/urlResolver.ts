@@ -4,6 +4,7 @@
  * The lco_manifest param format is: {gaim_id}_{workflow_id}
  * This builds the API URL: https://{gaimId}.api.livingcontent.co/trace/{workflowId}/manifest
  */
+import { logger } from '../../lib/logger.js';
 
 interface ManifestParams {
   gaimId: string;
@@ -51,7 +52,7 @@ export function resolveManifestUrl(): string {
     if (parsed) {
       return buildApiUrl(parsed.gaimId, parsed.workflowId);
     }
-    console.warn('Invalid lco_manifest format. Expected: {gaim_id}_{workflow_id}');
+    logger.warn('Invalid lco_manifest format. Expected: {gaim_id}_{workflow_id}');
   }
 
   return '/data/manifest.json';

@@ -201,8 +201,12 @@ export const isConfiguredField = (config: AssetDisplayConfig, fieldPath: string)
 };
 
 /**
- * Get value from an object using dot-notation path.
+ * Retrieves a nested value from an object using dot-notation path.
  * Supports array indices (e.g., 'actions.0.name').
+ *
+ * @param obj - The object to traverse
+ * @param path - Dot-notation path (e.g., 'data.user.name')
+ * @returns The value at the path, or undefined if not found
  */
 export const getValueByPath = (obj: Record<string, unknown>, path: string): unknown => {
   const parts = path.split('.');
@@ -238,7 +242,18 @@ export interface DataContext {
 }
 
 /**
- * Resolve a field's value from its source path.
+ * Resolves a field's value from a data context using its source path.
+ * The source path format is: `{root}.{path}` where root is one of:
+ * - 'node': Node metadata
+ * - 'manifest': Raw manifest data
+ * - 'data': Node payload data
+ * - 'assertions': Parsed assertions
+ * - 'computed': Computed/derived values
+ *
+ * @param source - Source path (e.g., 'data.inputTokens') or undefined
+ * @param fieldKey - Fallback key to use if source is undefined
+ * @param context - Data context containing all data sources
+ * @returns The resolved value, or undefined if not found
  */
 export const resolveFieldValue = (
   source: string | undefined,

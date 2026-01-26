@@ -9,19 +9,26 @@ import { traceState, type StepData } from '../../../stores/traceState.svelte.js'
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import type { TraceNodeData } from '../../../config/types.js';
 import type { NodeAccessor } from '../layout/nodeAccessor.js';
+import { logger } from '../../../lib/logger.js';
 
 export interface SelectionControllerDeps {
   nodeAccessor: NodeAccessor;
-  centerOnNode: (nodeId: string, options?: { zoom?: boolean; onComplete?: () => void }) => void;
 }
+
+type CenterOnNodeFn = (nodeId: string, options?: { zoom?: boolean; onComplete?: () => void }) => void;
 
 export interface SelectionController {
   expand: (node: TraceNodeData) => void;
-  selectStep: (stepId: string, graphNode: GraphNode, stepData: StepData) => void;
+  selectStep: (graphNode: GraphNode, stepData: StepData) => void;
   collapse: () => void;
   updateOverlayNode: () => void;
   isExpanding: () => boolean;
   getSelectedElementId: () => string | null;
+  /**
+   * Binds the centerOnNode function. Must be called after viewportManager is created.
+   * Required before expand() will work correctly.
+   */
+  bindCenterOnNode: (fn: CenterOnNodeFn) => void;
   destroy: () => void;
 }
 
@@ -30,7 +37,12 @@ export interface SelectionController {
  * Derives all state from traceState - no local tracking.
  */
 export const createSelectionController = (deps: SelectionControllerDeps): SelectionController => {
-  const { nodeAccessor, centerOnNode } = deps;
+  const { nodeAccessor } = deps;
+
+  // Late binding for centerOnNode - set via bindCenterOnNode after viewportManager exists
+  let centerOnNodeFn: CenterOnNodeFn = (nodeId) => {
+    logger.warn(`selectionController.expand() called before bindCenterOnNode() - node ${nodeId} won't be centered`);
+  };
 
   traceState.onCollapseRequest(() => collapse());
 
@@ -75,10 +87,10 @@ export const createSelectionController = (deps: SelectionControllerDeps): Select
     updateOverlayNode();
 
     // Center on node
-    centerOnNode(node.id, {});
+    centerOnNodeFn(node.id, {});
   };
 
-  const selectStep = (stepId: string, graphNode: GraphNode, stepData: StepData): void => {
+  const selectStep = (graphNode: GraphNode, stepData: StepData): void => {
     traceState.setOverlayNode({
       worldX: graphNode.position.x,
       worldY: graphNode.position.y,
@@ -122,6 +134,10 @@ export const createSelectionController = (deps: SelectionControllerDeps): Select
     traceState.onCollapseRequest(null);
   };
 
+  const bindCenterOnNode = (fn: CenterOnNodeFn): void => {
+    centerOnNodeFn = fn;
+  };
+
   return {
     expand,
     selectStep,
@@ -129,6 +145,7 @@ export const createSelectionController = (deps: SelectionControllerDeps): Select
     updateOverlayNode,
     isExpanding,
     getSelectedElementId,
+    bindCenterOnNode,
     destroy,
   };
 };

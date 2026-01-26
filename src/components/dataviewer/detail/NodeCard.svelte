@@ -38,7 +38,7 @@
     padding: var(--space-sm, 8px) var(--space-md, 12px);
     background: var(--metric-card-bg, rgba(0, 0, 0, 0.03));
     border: 1px solid var(--metric-card-border, rgba(0, 0, 0, 0.06));
-    border-radius: 999px;
+    border-radius: var(--radius-full, 9999px);
     min-height: 40px;
   }
 

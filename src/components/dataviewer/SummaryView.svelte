@@ -94,8 +94,8 @@
   // Fallback for unspecified asset types - show duration and basic content
   $: fallbackEntries = !hasData ? getFallbackEntries() : [];
 
-  function getFallbackEntries(): Array<{ key: string; value: string }> {
-    const entries: Array<{ key: string; value: string }> = [];
+  function getFallbackEntries(): Array<{ key: string; value: unknown }> {
+    const entries: Array<{ key: string; value: unknown }> = [];
     // Show action duration if available
     const actionDuration = formatDuration(assertions.action?.durationMs);
     if (actionDuration && actionDuration !== '-') {
@@ -104,9 +104,10 @@
     if (data && typeof data === 'object') {
       for (const [key, value] of Object.entries(data)) {
         if (value !== undefined && value !== null && typeof value !== 'object') {
+          // Keep simple values as-is (PropertyRow handles formatting)
           const strValue = String(value);
           if (strValue.length <= 100) {
-            entries.push({ key, value: strValue });
+            entries.push({ key, value });
           }
         }
       }

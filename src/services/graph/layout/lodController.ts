@@ -9,11 +9,13 @@ import { Container } from 'pixi.js';
 import gsap from 'gsap';
 import { ANIMATION_TIMINGS } from '../../../config/animationConstants.js';
 import { LOD_THRESHOLD } from '../../../config/constants.js';
-import type { ViewportState } from '../../../stores/traceState.svelte.js';
+import { traceState, type ViewportState } from '../../../stores/traceState.svelte.js';
 
 export interface LODState {
-  isCollapsed: boolean;
+  /** Whether currently animating between LOD states. Blocks zoom input. */
   isAnimating: boolean;
+  /** Collapsed state - reads from traceState store (source of truth). */
+  readonly isCollapsed: boolean;
 }
 
 export interface LODLayers {
@@ -83,43 +85,41 @@ export function createLODController(
   callbacks: LODCallbacks,
   renderCallbacks: LODRenderCallbacks
 ): LODController {
-  const state: LODState = {
-    isCollapsed: false,
-    isAnimating: false,
-  };
+  // Only animation state is local - isCollapsed reads from traceState
+  let isAnimating = false;
 
   const workflowViewLayers = [layers.nodeLayer, layers.edgeLayer, layers.stepLayer];
   const stepViewLayers = [layers.stepNodeLayer, layers.stepEdgeLayer];
 
   function collapse(): void {
-    if (state.isAnimating) return;
-    state.isAnimating = true;
-    state.isCollapsed = true;
+    if (isAnimating) return;
+    isAnimating = true;
+    traceState.setIsCollapsed(true);
     callbacks.onCollapseStart?.();
 
     animateCrossfade(workflowViewLayers, stepViewLayers, () => {
-      state.isAnimating = false;
+      isAnimating = false;
       callbacks.onCollapseEnd?.();
     });
   }
 
   function expand(): void {
-    if (state.isAnimating) return;
-    state.isAnimating = true;
-    state.isCollapsed = false;
+    if (isAnimating) return;
+    isAnimating = true;
+    traceState.setIsCollapsed(false);
     callbacks.onExpandStart?.();
 
     animateCrossfade(stepViewLayers, workflowViewLayers, () => {
-      state.isAnimating = false;
+      isAnimating = false;
       callbacks.onExpandEnd?.();
     });
   }
 
   function checkThreshold(scale: number): void {
-    if (state.isAnimating) return;
+    if (isAnimating) return;
 
     const shouldCollapse = scale < LOD_THRESHOLD;
-    if (shouldCollapse === state.isCollapsed) return;
+    if (shouldCollapse === traceState.isCollapsed) return;
 
     if (shouldCollapse) {
       collapse();
@@ -130,8 +130,8 @@ export function createLODController(
 
   function updateViewport(viewportState: ViewportState): void {
     renderCallbacks.onViewportUpdate.always(viewportState);
-    if (state.isAnimating) return;
-    if (state.isCollapsed) {
+    if (isAnimating) return;
+    if (traceState.isCollapsed) {
       renderCallbacks.onViewportUpdate.step(viewportState);
     } else {
       renderCallbacks.onViewportUpdate.workflow();
@@ -141,8 +141,11 @@ export function createLODController(
   return {
     checkThreshold,
     updateViewport,
-    get state() {
-      return state;
+    get state(): LODState {
+      return {
+        isAnimating,
+        get isCollapsed() { return traceState.isCollapsed; },
+      };
     },
   };
 }

@@ -32,6 +32,12 @@ export const ANIMATION_TIMINGS = {
   OVERLAY_FADE_DURATION: 0.2,
   /** Hover pulse animation duration (seconds) */
   HOVER_PULSE_DURATION: 0.15,
+  /** Node crossfade in duration for mode transitions (seconds) */
+  NODE_CROSSFADE_IN_DURATION: 0.25,
+  /** Node crossfade out duration for mode transitions (seconds) */
+  NODE_CROSSFADE_OUT_DURATION: 0.2,
+  /** Title overlay animation ease factor */
+  TITLE_EASE_FACTOR: 0.15,
 };
 
 export const GEOMETRY = {
@@ -55,4 +61,10 @@ export const GEOMETRY = {
   HIGHLIGHT_BAR_HOVER_DURATION: 0.15,
   /** Gap between node and overlay (pixels) */
   OVERLAY_GAP: 20,
+  /** Title overlay idle alpha */
+  TITLE_IDLE_ALPHA: 0.5,
+  /** Title animation completion threshold */
+  TITLE_ANIMATION_THRESHOLD: 0.01,
+  /** Detail panel fade duration for mode transitions (seconds) */
+  DETAIL_PANEL_FADE_DURATION: 0.15,
 };

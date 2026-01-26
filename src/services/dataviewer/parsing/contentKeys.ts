@@ -1,6 +1,7 @@
 /**
  * Utilities for formatting content field values in the info panel.
  */
+import { SUMMARY_VALUE_MAX_LENGTH } from '../../../config/constants.js';
 
 /**
  * Keys to exclude from dynamic content display (internal/structural keys).
@@ -54,7 +55,7 @@ export const isSummaryValue = (value: unknown): boolean => {
     return false;
   }
   if (typeof value === 'string') {
-    return value.length <= 100;
+    return value.length <= SUMMARY_VALUE_MAX_LENGTH;
   }
   if (typeof value === 'number' || typeof value === 'boolean') {
     return true;

@@ -9,6 +9,8 @@
   } from '../../../services/dataviewer/parsing/valueParsing.js';
   import { isRecord } from '../../../config/utils.js';
   import MarkdownValue from './MarkdownValue.svelte';
+  import ConversationHistory from './ConversationHistory.svelte';
+  import HighlightedCode from './HighlightedCode.svelte';
 
   export let value: unknown;
 
@@ -22,29 +24,42 @@
     typeof value === 'string' && parsedJson === null && parsedLoose === null
       ? tryParseJsonFragment(value)
       : null;
+
+  // Detect if array looks like conversation messages (has role/content structure)
+  function isConversationArray(arr: unknown[]): boolean {
+    if (arr.length === 0) return false;
+    return arr.every(item =>
+      typeof item === 'object' && item !== null &&
+      ('role' in item || 'content' in item)
+    );
+  }
 </script>
 
 {#if Array.isArray(value)}
-  <ul class="detail-field-value detail-value-list">
-    {#each value as item, index (index)}
-      <li>
-        <svelte:self value={item} />
-      </li>
-    {/each}
-  </ul>
+  {#if isConversationArray(value)}
+    <ConversationHistory messages={value} />
+  {:else}
+    <ul class="detail-field-value detail-value-list">
+      {#each value as item, index (index)}
+        <li>
+          <svelte:self value={item} />
+        </li>
+      {/each}
+    </ul>
+  {/if}
 {:else if isRecord(value)}
-  <pre class="detail-field-value detail-value-pre">{JSON.stringify(value, null, 2)}</pre>
+  <HighlightedCode code={JSON.stringify(value, null, 2)} language="json" />
 {:else if typeof value === 'string'}
   {#if parsedJson !== null}
-    <pre class="detail-field-value detail-value-pre">{JSON.stringify(parsedJson, null, 2)}</pre>
+    <HighlightedCode code={JSON.stringify(parsedJson, null, 2)} language="json" />
   {:else if parsedLoose !== null}
-    <pre class="detail-field-value detail-value-pre">{JSON.stringify(parsedLoose, null, 2)}</pre>
+    <HighlightedCode code={JSON.stringify(parsedLoose, null, 2)} language="json" />
   {:else if fragment}
-    <div class="detail-field-value detail-value-fragment">
+    <div class="detail-value-fragment">
       {#if fragment?.prefix?.trim().length}
         <div class="detail-fragment-context">{fragment.prefix.trim()}</div>
       {/if}
-      <pre class="detail-value-pre detail-fragment-json">{JSON.stringify(fragment?.parsed, null, 2)}</pre>
+      <HighlightedCode code={JSON.stringify(fragment?.parsed, null, 2)} language="json" />
       {#if fragment?.suffix?.trim().length}
         <div class="detail-fragment-context">{fragment.suffix.trim()}</div>
       {/if}
@@ -108,9 +123,5 @@
     font-size: 12px;
     color: var(--color-text-subtle);
     white-space: pre-wrap;
-  }
-
-  .detail-fragment-json {
-    margin: 0;
   }
 </style>

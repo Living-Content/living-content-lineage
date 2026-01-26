@@ -67,23 +67,11 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
     workflowId: traceData.workflowId ?? '',
   });
 
-  // Declare controllers with definite assignment for ordered construction.
-  // Closures capture by reference, so assignments below will be visible when invoked.
-  let lodController!: ReturnType<typeof createLODController>;
-  let viewportManager!: ReturnType<typeof createViewportManager>;
+  // Create nodeAccessor - reads isCollapsed from traceState store
+  const nodeAccessor = createNodeAccessor({ nodeMap, stepNodeMap });
 
-  // Create nodeAccessor - reads isCollapsed directly from lodController
-  const nodeAccessor = createNodeAccessor({
-    nodeMap,
-    stepNodeMap,
-    isCollapsed: () => lodController.state.isCollapsed,
-  });
-
-  // Create selection controller - centerOnNode reads from viewportManager
-  const selectionController = createSelectionController({
-    nodeAccessor,
-    centerOnNode: (nodeId, options) => viewportManager.centerOnNode(nodeId, options),
-  });
+  // Create selection controller - centerOnNode bound later via bindCenterOnNode
+  const selectionController = createSelectionController({ nodeAccessor });
 
   // Create nodes with callbacks
   await createNodes(traceData.nodes, nodeMap, {
@@ -113,7 +101,7 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
       onHover: callbacks.onHover,
       onHoverEnd: callbacks.onHoverEnd,
       onStepSelect: (stepId, graphNode, payload) => {
-        selectionController.selectStep(stepId, graphNode, {
+        selectionController.selectStep(graphNode, {
           stepId: payload.stepId,
           label: payload.label,
           phase: payload.phase,
@@ -167,7 +155,7 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
   };
 
   // Create LOD controller
-  lodController = createLODController(lodLayers, {
+  const lodController = createLODController(lodLayers, {
     onCollapseStart: () => { callbacks.onLODCollapse(); titleOverlay.setMode('relative'); },
     onCollapseEnd: () => lodController.updateViewport(viewportState),
     onExpandStart: () => { callbacks.onLODExpand(); titleOverlay.setMode('fixed'); },
@@ -175,7 +163,7 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
   }, renderCallbacks);
 
   // Create viewportManager with dynamic bounds getters
-  viewportManager = createViewportManager({
+  const viewportManager = createViewportManager({
     nodeAccessor,
     viewport,
     viewportState,
@@ -183,6 +171,9 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
     getTopNodeInfo,
     getBottomNodeInfo,
   });
+
+  // Wire up late binding for centerOnNode
+  selectionController.bindCenterOnNode((nodeId, opts) => viewportManager.centerOnNode(nodeId, opts));
 
   // Create keyboard navigation
   const keyboardNavigation = createKeyboardNavigation({
@@ -194,7 +185,7 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
     onStepSelect: (step: StepUI) => {
       const graphNode = stepNodeMap.get(step.id);
       if (graphNode) {
-        selectionController.selectStep(step.id, graphNode, {
+        selectionController.selectStep(graphNode, {
           stepId: step.id,
           label: step.label,
           phase: step.phase,

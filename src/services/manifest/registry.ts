@@ -4,6 +4,7 @@ import { isManifest } from './adapters/base/traceTypes.js';
 import { mapAssetType } from './adapters/assetTypeMapper.js';
 import type { AssetManifestRequest } from './adapters/assetManifestRequest.js';
 import type { AssetLoadResult } from './errors.js';
+import { logger } from '../../lib/logger.js';
 
 /**
  * Fetches external manifests in parallel and returns a map of id -> manifest data.
@@ -57,12 +58,12 @@ export const loadManifest = async (url: string): Promise<Trace> => {
 
   const failedAssets = assetResults.results.filter(r => !r.success);
   if (failedAssets.length > 0) {
-    console.warn(`Failed to load ${failedAssets.length} asset manifest(s):`, failedAssets);
+    logger.warn(`Failed to load ${failedAssets.length} asset manifest(s):`, failedAssets);
   }
 
   const failedClaims = claimResults.results.filter(r => !r.success);
   if (failedClaims.length > 0) {
-    console.warn(`Failed to load ${failedClaims.length} claim manifest(s):`, failedClaims);
+    logger.warn(`Failed to load ${failedClaims.length} claim manifest(s):`, failedClaims);
   }
 
   return parseManifest(raw, assetResults.manifests, claimResults.manifests, mapAssetType);

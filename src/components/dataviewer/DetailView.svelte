@@ -140,7 +140,7 @@
       if (typeof value === 'object') return false;
       return true;
     })
-    .map(([key, value]) => ({ key, value: String(value) }))
+    .map(([key, value]) => ({ key, value }))
     .sort((a, b) => a.key.localeCompare(b.key));
 
   // Additional data: only complex objects (arrays, nested objects) from content
@@ -190,7 +190,7 @@
       {#each regularDetailFields as { key, value, config } (key)}
         <PropertyRow
           label={config.label ?? key}
-          value={String(value ?? '-')}
+          {value}
         />
       {/each}
     </PropertyGroup>

@@ -8,7 +8,8 @@ import { getCssVar, getCssVarFloat, type CssVar } from '../../../themes/index.js
 import { getAssetIconPath } from '../../../config/icons.js';
 import type { AssetType, TraceNodeData } from '../../../config/types.js';
 import { ASSET_TYPE_LABELS } from '../../../config/labels.js';
-import { GEOMETRY } from '../../../config/animationConstants.js';
+import { ANIMATION_TIMINGS, GEOMETRY } from '../../../config/animationConstants.js';
+import { GROUP_KEY_PRECISION } from '../../../config/constants.js';
 import { attachNodeInteraction, type NodeCallbacks } from '../interaction/nodeInteraction.js';
 import { loadIcon } from '../interaction/iconLoader.js';
 import {
@@ -160,7 +161,7 @@ export function createGraphNode(
     const renderOptions = createRenderOptions(currentMode);
     const nodeHeight = (currentMode === 'detailed' ? BASE_NODE_HEIGHT_DETAILED : BASE_NODE_HEIGHT_SIMPLE) * nodeScale;
     // Use shared width from store so all nodes in same group have same width
-    const groupKey = Math.round((node.x ?? 0.5) * 1000);
+    const groupKey = Math.round((node.x ?? 0.5) * GROUP_KEY_PRECISION);
     const groupWidth = traceState.getNodeWidth(groupKey);
     const nodeWidth = (groupWidth ?? calculateNodeWidth(renderOptions, dims, nodeScale)) * nodeScale;
 
@@ -249,13 +250,13 @@ export function createGraphNode(
 
       gsap.to(newSprite, {
         alpha: 1,
-        duration: 0.25,
+        duration: ANIMATION_TIMINGS.NODE_CROSSFADE_IN_DURATION,
         ease: 'power2.out',
       });
 
       gsap.to(oldSprite, {
         alpha: 0,
-        duration: 0.2,
+        duration: ANIMATION_TIMINGS.NODE_CROSSFADE_OUT_DURATION,
         ease: 'power2.in',
         onComplete: () => {
           if (oldSprite) {

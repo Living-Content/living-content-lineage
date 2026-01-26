@@ -7,6 +7,8 @@
 import { loadManifest } from '../../manifest/registry.js';
 import { ManifestLoadError } from '../../manifest/errors.js';
 import type { Trace } from '../../../config/types.js';
+import { GRAPH_SCALE_FACTOR, GROUP_KEY_PRECISION } from '../../../config/constants.js';
+import { logger } from '../../../lib/logger.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import { createViewportState, type ViewportState } from '../interaction/viewport.js';
 import { preCalculateNodeWidth } from '../rendering/nodeTextMeasurement.js';
@@ -52,7 +54,7 @@ export async function initGraphAssets(
   try {
     traceData = await loadManifest(manifestUrl);
   } catch (error) {
-    console.error('Failed to load trace manifest', error);
+    logger.error('Failed to load trace manifest', error);
     return {
       ok: false,
       error: {
@@ -72,7 +74,7 @@ export async function initGraphAssets(
   // Viewport dimensions and scale
   const width = container.clientWidth;
   const height = container.clientHeight;
-  const graphScale = Math.min(width, height) * 1.5;
+  const graphScale = Math.min(width, height) * GRAPH_SCALE_FACTOR;
 
   // Initialize viewport state
   const viewportState = createViewportState(width, height);
@@ -89,7 +91,7 @@ export async function initGraphAssets(
   // Calculate max node width per group (grouped by node.x position)
   const nodeWidths = new Map<number, number>();
   traceData.nodes.forEach((node) => {
-    const groupKey = Math.round((node.x ?? 0.5) * 1000);
+    const groupKey = Math.round((node.x ?? 0.5) * GROUP_KEY_PRECISION);
     const w = preCalculateNodeWidth(node, 1);
     const current = nodeWidths.get(groupKey) ?? 0;
     if (w > current) nodeWidths.set(groupKey, w);

@@ -26,3 +26,14 @@ export const PANEL_MIN_EXPANDED_HEIGHT = 300;
 // Viewport bounds (pixels)
 export const VIEWPORT_TOP_MARGIN = 180;
 export const VIEWPORT_BOTTOM_MARGIN = 100;
+
+// Graph scaling
+export const GRAPH_SCALE_FACTOR = 1.5;
+export const GROUP_KEY_PRECISION = 1000;
+
+// Content parsing
+export const SUMMARY_VALUE_MAX_LENGTH = 100;
+
+// Detail Panel Layout
+export const DETAIL_PANEL_WIDTH = 360;
+export const DETAIL_PANEL_MAX_HEIGHT_OFFSET = 100;

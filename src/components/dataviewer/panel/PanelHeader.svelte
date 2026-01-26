@@ -2,22 +2,30 @@
   import type { Phase, AssetType, Step } from '../../../config/types.ts';
   import ContextBadges from '../detail/ContextBadges.svelte';
 
-  export let phase: Phase | undefined = undefined;
-  export let step: Step | string | undefined = undefined;
-  export let assetType: AssetType | undefined = undefined;
-  export let showCloseButton = false;
-  export let isNodeSelected = false;
-  export let isStepSelected = false;
-  export let isDragging = false;
+  interface PanelHeaderContext {
+    phase?: Phase;
+    step?: Step | string;
+    assetType?: AssetType;
+    selectionType: 'node' | 'step' | null;
+  }
 
+  export let context: PanelHeaderContext | null = null;
+  export let showCloseButton = false;
+  export let isDragging = false;
   export let onClose: () => void = () => {};
   export let onStartDrag: (e: MouseEvent) => void = () => {};
+
+  // Derive values from context
+  $: phase = context?.phase;
+  $: step = context?.step;
+  $: assetType = context?.assetType;
+  $: hasSelection = context?.selectionType !== null;
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="panel-header" class:dragging={isDragging} on:mousedown={onStartDrag}>
   <div class="panel-header-content">
-    {#if isNodeSelected || isStepSelected}
+    {#if hasSelection}
       <ContextBadges {phase} {step} {assetType} />
     {:else}
       <span class="panel-title">CONTEXT</span>

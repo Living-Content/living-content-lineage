@@ -65,7 +65,7 @@
       {#each properties as { key, value, config } (key)}
         <PropertyRow
           label={config.label ?? key}
-          value={String(value ?? '-')}
+          {value}
         />
       {/each}
     </div>

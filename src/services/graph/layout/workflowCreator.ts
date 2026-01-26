@@ -14,7 +14,6 @@ import {
   type CreateElementConfig,
   type HoverCallbackConfig,
   type StepSelectionPayload,
-  type GraphElement,
 } from './utils.js';
 
 interface StepCreatorCallbacks {

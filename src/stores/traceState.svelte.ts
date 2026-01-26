@@ -59,6 +59,7 @@ let viewportState = $state<ViewportState>({ x: 0, y: 0, scale: 1, width: 0, heig
 let currentSelectionKey: string | null = null;
 let collapseCallback: (() => void) | null = null;
 let nodeWidths = $state<Map<number, number>>(new Map());
+let isCollapsed = $state(false);
 
 const selectedNode = $derived(selection?.type === 'node' ? selection.data : null);
 const selectedStep = $derived(selection?.type === 'step' ? selection.data : null);
@@ -72,10 +73,20 @@ export const traceState = {
   get expandedNode() { return expandedNode; },
   get expansionProgress() { return expansionProgress; },
   get isExpanded() { return isExpanded; },
+  get isCollapsed() { return isCollapsed; },
   get overlayNode() { return overlayNode; },
   get viewportState() { return viewportState; },
   getNodeWidth(groupX: number): number | undefined {
     return nodeWidths.get(groupX);
+  },
+
+  /**
+   * Sets the LOD collapsed state. Called by lodController during transitions.
+   * This is the source of truth for collapsed state - lodController keeps a
+   * local copy only for animation timing guards.
+   */
+  setIsCollapsed(collapsed: boolean): void {
+    isCollapsed = collapsed;
   },
 
   setTrace(data: Trace): void {
