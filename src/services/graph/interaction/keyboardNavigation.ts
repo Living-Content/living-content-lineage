@@ -3,16 +3,18 @@
  * Handles arrow key navigation between nodes and Enter/Escape for expand/collapse.
  */
 import { traceState } from '../../../stores/traceState.svelte.js';
-import type { GraphNode } from '../rendering/nodeRenderer.js';
-import type { TraceNodeData } from '../../../config/types.js';
+import type { TraceNodeData, StepUI } from '../../../config/types.js';
+import type { NodeAccessor } from '../layout/nodeAccessor.js';
 
 export interface KeyboardNavigationDeps {
-  nodeMap: Map<string, GraphNode>;
+  nodeAccessor: NodeAccessor;
   nodes: TraceNodeData[];
+  steps: StepUI[];
   onExpand: (node: TraceNodeData) => void;
   onCollapse: () => void;
+  onStepSelect: (step: StepUI) => void;
   centerOnNode: (nodeId: string, options?: { onComplete?: () => void }) => void;
-  updateOverlayPosition: () => void;
+  updateOverlayNode: () => void;
 }
 
 export interface KeyboardNavigationController {
@@ -83,10 +85,47 @@ const findNearestNode = (
  * Creates a keyboard navigation controller for graph nodes.
  */
 export const createKeyboardNavigation = (deps: KeyboardNavigationDeps): KeyboardNavigationController => {
-  const { nodeMap, nodes, onExpand, onCollapse, centerOnNode, updateOverlayPosition } = deps;
+  const { nodeAccessor, nodes, steps, onExpand, onCollapse, onStepSelect, centerOnNode, updateOverlayNode } = deps;
 
   const selectableNodes = nodes.filter(n => n.assetType !== 'Action');
   const sortedNodes = sortNodesByPosition(selectableNodes);
+
+  // Sort steps by x position for left/right navigation
+  const sortedSteps = [...steps].sort((a, b) => a.xStart - b.xStart);
+
+  /**
+   * Get current step index from selection.
+   */
+  const getCurrentStepIndex = (): number => {
+    const selection = traceState.selection;
+    if (selection?.type === 'step') {
+      return sortedSteps.findIndex(s => s.id === selection.stepId);
+    }
+    return -1;
+  };
+
+  /**
+   * Handle step navigation (left/right only).
+   */
+  const handleStepNavigation = (direction: 'left' | 'right'): boolean => {
+    const currentIndex = getCurrentStepIndex();
+    let nextIndex: number;
+
+    if (currentIndex === -1) {
+      // No step selected, select first or last based on direction
+      nextIndex = direction === 'right' ? 0 : sortedSteps.length - 1;
+    } else {
+      nextIndex = direction === 'right' ? currentIndex + 1 : currentIndex - 1;
+    }
+
+    if (nextIndex >= 0 && nextIndex < sortedSteps.length) {
+      const step = sortedSteps[nextIndex];
+      onStepSelect(step);
+      centerOnNode(step.id, { onComplete: updateOverlayNode });
+      return true;
+    }
+    return false;
+  };
 
   const handleKeyDown = (event: KeyboardEvent): void => {
     if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
@@ -95,6 +134,7 @@ export const createKeyboardNavigation = (deps: KeyboardNavigationDeps): Keyboard
 
     const selection = traceState.selection;
     const isExpanded = traceState.isExpanded;
+    const inStepView = nodeAccessor.isCollapsed();
 
     switch (event.key) {
       case 'Escape':
@@ -111,15 +151,33 @@ export const createKeyboardNavigation = (deps: KeyboardNavigationDeps): Keyboard
         if (selection?.type === 'node' && !isExpanded) {
           event.preventDefault();
           onExpand(selection.data);
+        } else if (selection?.type === 'step' && inStepView) {
+          // In step view, Enter on step opens the step detail
+          event.preventDefault();
+          const step = sortedSteps.find(s => s.id === selection.stepId);
+          if (step) {
+            onStepSelect(step);
+          }
         }
         break;
 
       case 'ArrowUp':
       case 'ArrowDown':
       case 'ArrowLeft':
-      case 'ArrowRight':
+      case 'ArrowRight': {
         event.preventDefault();
 
+        // In step view, only handle left/right for step navigation
+        if (inStepView) {
+          const direction = event.key.replace('Arrow', '').toLowerCase() as 'up' | 'down' | 'left' | 'right';
+          if (direction === 'left' || direction === 'right') {
+            handleStepNavigation(direction);
+          }
+          // Ignore up/down in step view
+          break;
+        }
+
+        // Workflow view: standard node navigation
         // Get current node - use expanded node if overlay open, otherwise selection
         const currentNode = isExpanded
           ? traceState.expandedNode
@@ -136,16 +194,17 @@ export const createKeyboardNavigation = (deps: KeyboardNavigationDeps): Keyboard
               onExpand(nextNode);
             } else {
               // Center on node and update overlay position after animation completes
-              centerOnNode(nextNode.id, { onComplete: updateOverlayPosition });
+              centerOnNode(nextNode.id, { onComplete: updateOverlayNode });
             }
           }
         } else if (sortedNodes.length > 0) {
           traceState.selectNode(sortedNodes[0]);
           if (!isExpanded) {
-            centerOnNode(sortedNodes[0].id, { onComplete: updateOverlayPosition });
+            centerOnNode(sortedNodes[0].id, { onComplete: updateOverlayNode });
           }
         }
         break;
+      }
     }
   };
 

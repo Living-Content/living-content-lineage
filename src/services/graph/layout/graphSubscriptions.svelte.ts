@@ -26,7 +26,7 @@ export interface SubscriptionContext {
   setStepLabelsPhaseFilter: (phase: Phase | null) => void;
   setStepLabelsVisible: (visible: boolean) => void;
   zoomToBounds: (nodeId?: string, options?: { onComplete?: () => void }) => void;
-  updateOverlayPosition: () => void;
+  updateOverlayNode: () => void;
   onStateChange: (state: SelectionState) => void;
 }
 
@@ -117,7 +117,7 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
       } else if (!detailOpen && wasOpen) {
         const nodeId = sel?.type === 'node' ? sel.nodeId : undefined;
         ctx.zoomToBounds(nodeId, {
-          onComplete: () => ctx.updateOverlayPosition(),
+          onComplete: () => ctx.updateOverlayNode(),
         });
       }
     }

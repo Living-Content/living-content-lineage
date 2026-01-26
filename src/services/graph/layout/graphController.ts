@@ -2,15 +2,14 @@
  * Graph controller using Pixi.js for WebGL rendering.
  * Orchestrates viewport, LOD, and rendering modules.
  */
-import { Culler } from 'pixi.js';
 import { loadManifest } from '../../manifest/registry.js';
 import { ManifestLoadError, type ManifestErrorInfo } from '../../manifest/errors.js';
 import type { Trace } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
-import { renderEdges, renderStepEdges } from '../rendering/edgeRenderer.js';
+import { renderStepEdges } from '../rendering/edgeRenderer.js';
 import { createStepLabels } from '../rendering/workflowLabelRenderer.js';
 import { createViewportState, createViewportHandlers } from '../interaction/viewport.js';
-import { createLODController, type LODLayers } from './lodController.js';
+import { createLODController, type LODLayers, type LODRenderCallbacks } from './lodController.js';
 import { createTitleOverlay } from '../rendering/titleOverlay.js';
 import { LOD_THRESHOLD, TEXT_SIMPLIFY_THRESHOLD, VIEWPORT_TOP_MARGIN, VIEWPORT_BOTTOM_MARGIN } from '../../../config/constants.js';
 import { traceState } from '../../../stores/traceState.svelte.js';
@@ -24,6 +23,9 @@ import { createStoreSubscriptions } from './graphSubscriptions.svelte.js';
 import { createViewportManager, createResizeHandler } from './viewportManager.js';
 import { createSelectionController } from '../interaction/selectionController.js';
 import { createKeyboardNavigation } from '../interaction/keyboardNavigation.js';
+import { createNodeAccessor } from './nodeAccessor.js';
+import { Culler } from 'pixi.js';
+import { renderEdges } from '../rendering/edgeRenderer.js';
 
 interface HoverPayload {
   title: string;
@@ -107,12 +109,19 @@ export async function createGraphController({
   // Late-bound reference for centerOnNode (set after viewportManager is created)
   let centerOnNodeRef: ((nodeId: string, options?: { zoom?: boolean; onComplete?: () => void }) => void) | null = null;
 
-  // Selection controller for unified node and step selection
-  const selectionController = createSelectionController({
+  // Late-bound reference for isCollapsed (set after lodController is created)
+  let isCollapsedRef: (() => boolean) | null = null;
+
+  // Node accessor for unified access to nodes in either view
+  const nodeAccessor = createNodeAccessor({
     nodeMap,
     stepNodeMap,
-    viewport,
-    viewportState,
+    isCollapsed: () => isCollapsedRef ? isCollapsedRef() : false,
+  });
+
+  // Selection controller for unified node and step selection
+  const selectionController = createSelectionController({
+    nodeAccessor,
     centerOnNode: (nodeId, options) => {
       if (centerOnNodeRef) {
         centerOnNodeRef(nodeId, options);
@@ -199,24 +208,6 @@ export async function createGraphController({
     }
   };
 
-  // Helper functions
-  const updateTitlePosition = (): void => {
-    const firstStep = traceData.steps[0];
-    const leftmostNode = firstStep ? stepNodeMap.get(firstStep.id) : null;
-    if (leftmostNode) titleOverlay.updatePosition(leftmostNode, viewportState);
-  };
-
-  const cullAndRender = (): void => {
-    if (lodController.state.isCollapsed) return;
-    Culler.shared.cull(layers.nodeLayer, app.screen);
-    const selection = state.currentSelection;
-    const nodeId = selection?.type === 'node' ? selection.nodeId : null;
-    renderEdges(layers.edgeLayer, traceData.edges, nodeMap, {
-      view: 'workflow',
-      selectedId: nodeId,
-    });
-  };
-
   // LOD controller
   const lodLayers: LODLayers = {
     nodeLayer: layers.nodeLayer,
@@ -226,20 +217,41 @@ export async function createGraphController({
     stepLayer: stepLabels.container,
   };
 
+  // Render callbacks - logic defined once, owned by LODController
+  const renderCallbacks: LODRenderCallbacks = {
+    onViewportUpdate: {
+      always: (vs) => {
+        stepLabels.update(vs);
+        traceState.updateViewport(vs);
+      },
+      workflow: () => {
+        Culler.shared.cull(layers.nodeLayer, app.screen);
+        const nodeId = state.currentSelection?.type === 'node' ? state.currentSelection.nodeId : null;
+        renderEdges(layers.edgeLayer, traceData.edges, nodeMap, { view: 'workflow', selectedId: nodeId });
+      },
+      step: (vs) => {
+        const firstStep = stepNodeMap.get(traceData.steps[0]?.id);
+        if (firstStep) titleOverlay.updatePosition(firstStep, vs);
+      },
+    },
+  };
+
   const lodController = createLODController(lodLayers, {
     onCollapseStart: () => { traceState.clearSelection(); titleOverlay.setMode('relative'); },
-    onCollapseEnd: updateTitlePosition,
+    onCollapseEnd: () => lodController.updateViewport(viewportState),
     onExpandStart: () => { traceState.clearSelection(); uiState.clearPhaseFilter(); titleOverlay.setMode('fixed'); },
-    onExpandEnd: () => { stepLabels.update(viewportState); cullAndRender(); },
-  });
+    onExpandEnd: () => lodController.updateViewport(viewportState),
+  }, renderCallbacks);
+
+  // Wire up late-bound reference now that lodController exists
+  isCollapsedRef = () => lodController.state.isCollapsed;
 
   // Viewport manager
   const viewportManager = createViewportManager({
-    nodeMap,
+    nodeAccessor,
     viewport,
     viewportState,
-    stepLabelsUpdate: stepLabels.update,
-    cullAndRender,
+    onUpdate: () => lodController.updateViewport(viewportState),
     topNodeInfo,
     bottomNodeInfo,
   });
@@ -249,12 +261,29 @@ export async function createGraphController({
 
   // Keyboard navigation
   const keyboardNavigation = createKeyboardNavigation({
-    nodeMap,
+    nodeAccessor,
     nodes: traceData.nodes,
+    steps: traceData.steps,
     onExpand: (node) => selectionController.expand(node),
     onCollapse: () => selectionController.collapse(),
+    onStepSelect: (step) => {
+      const graphNode = stepNodeMap.get(step.id);
+      if (graphNode) {
+        selectionController.selectStep(step.id, graphNode, {
+          stepId: step.id,
+          label: step.label,
+          phase: step.phase,
+          nodes: traceData.nodes.filter(n => n.step === step.id),
+          edges: traceData.edges.filter(e => {
+            const source = traceData.nodes.find(n => n.id === e.source);
+            const target = traceData.nodes.find(n => n.id === e.target);
+            return source?.step === step.id || target?.step === step.id;
+          }),
+        });
+      }
+    },
     centerOnNode: (nodeId, options) => viewportManager.centerOnNode(nodeId, options),
-    updateOverlayPosition: () => selectionController.updateOverlayPosition(),
+    updateOverlayNode: () => selectionController.updateOverlayNode(),
   });
   keyboardNavigation.attach();
 
@@ -271,7 +300,7 @@ export async function createGraphController({
     setStepLabelsPhaseFilter: stepLabels.setPhaseFilter,
     setStepLabelsVisible: stepLabels.setVisible,
     zoomToBounds: (nodeId, options) => viewportManager.zoomToBounds(nodeId, options),
-    updateOverlayPosition: () => selectionController.updateOverlayPosition(),
+    updateOverlayNode: () => selectionController.updateOverlayNode(),
     onStateChange: (newState) => {
       state.currentSelection = newState.currentSelection;
       state.detailPanelOpen = newState.detailPanelOpen;
@@ -284,15 +313,11 @@ export async function createGraphController({
     onZoom: (scale) => {
       lodController.checkThreshold(scale);
       checkTextSimplifyThreshold(scale);
-      stepLabels.update(viewportState);
-      if (!lodController.state.isCollapsed && !lodController.state.isAnimating) cullAndRender();
-      else if (lodController.state.isCollapsed) updateTitlePosition();
+      lodController.updateViewport(viewportState);
       callbacks.onSimpleViewChange(scale < LOD_THRESHOLD);
     },
     onPan: () => {
-      stepLabels.update(viewportState);
-      if (!lodController.state.isCollapsed && !lodController.state.isAnimating) cullAndRender();
-      else if (lodController.state.isCollapsed) updateTitlePosition();
+      lodController.updateViewport(viewportState);
     },
     onPanStart: () => {},
     onPanEnd: () => {},
@@ -314,16 +339,13 @@ export async function createGraphController({
     container,
     viewportState,
     app,
-    stepLabelsUpdate: stepLabels.update,
-    cullAndRender,
-    updateTitlePosition,
+    onUpdate: () => lodController.updateViewport(viewportState),
     centerSelectedNode: (nodeId) => viewportManager.centerOnNode(nodeId, { zoom: true }),
-    isCollapsed: () => lodController.state.isCollapsed,
     getDetailPanelOpen: () => state.detailPanelOpen,
     getSelectedNodeId: () => state.currentSelection?.type === 'node' ? state.currentSelection.nodeId : null,
   });
 
-  cullAndRender();
+  lodController.updateViewport(viewportState);
 
   return {
     destroy: () => {

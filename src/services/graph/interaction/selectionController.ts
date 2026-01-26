@@ -1,18 +1,15 @@
 /**
  * Selection controller.
  * Unified selection system for both node and step elements.
- * Manages expand/collapse animations for nodes with scale and opacity transitions.
+ * Manages selection state without handling overlay positioning (handled by UI).
  */
-import { GEOMETRY } from '../../../config/animationConstants.js';
-import { traceState, type OverlayPosition, type StepData } from '../../../stores/traceState.svelte.js';
+import { traceState, type StepData } from '../../../stores/traceState.svelte.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import type { TraceNodeData } from '../../../config/types.js';
+import type { NodeAccessor } from '../layout/nodeAccessor.js';
 
 export interface SelectionControllerDeps {
-  nodeMap: Map<string, GraphNode>;
-  stepNodeMap: Map<string, GraphNode>;
-  viewport: { position: { x: number; y: number }; scale: { x: number; y: number } };
-  viewportState: { width: number; height: number; x: number; y: number; scale: number };
+  nodeAccessor: NodeAccessor;
   centerOnNode: (nodeId: string, options?: { zoom?: boolean; onComplete?: () => void }) => void;
 }
 
@@ -20,62 +17,35 @@ export interface SelectionController {
   expand: (node: TraceNodeData) => void;
   selectStep: (stepId: string, graphNode: GraphNode, stepData: StepData) => void;
   collapse: () => void;
-  updateOverlayPosition: () => void;
+  updateOverlayNode: () => void;
   isExpanding: () => boolean;
   getSelectedElementId: () => string | null;
   destroy: () => void;
 }
 
 /**
- * Converts world coordinates to screen position for overlay placement.
- */
-const worldToScreen = (
-  worldX: number,
-  worldY: number,
-  viewportState: SelectionControllerDeps['viewportState']
-): { x: number; y: number } => {
-  const screenX = worldX * viewportState.scale + viewportState.x;
-  const screenY = worldY * viewportState.scale + viewportState.y;
-  return { x: screenX, y: screenY };
-};
-
-/**
- * Calculates overlay position from a graph node.
- * Positions panel to the LEFT of the node.
- */
-const PANEL_WIDTH = 360; // Must match DetailPanel.svelte width
-
-const calculateOverlayPosition = (
-  graphNode: GraphNode,
-  viewportState: SelectionControllerDeps['viewportState']
-): OverlayPosition => {
-  const screenPos = worldToScreen(graphNode.position.x, graphNode.position.y, viewportState);
-  const nodeWidth = graphNode.nodeWidth * viewportState.scale;
-  const nodeHeight = graphNode.nodeHeight * viewportState.scale;
-
-  // Position panel to the LEFT of the node
-  const panelRightEdge = screenPos.x - nodeWidth / 2 - GEOMETRY.OVERLAY_GAP;
-  const panelLeftEdge = panelRightEdge - PANEL_WIDTH;
-
-  return {
-    x: panelLeftEdge,
-    y: screenPos.y,
-    width: nodeWidth,
-    height: nodeHeight,
-    scale: 1,
-  };
-};
-
-/**
  * Creates a unified selection controller for nodes and steps.
  */
 export const createSelectionController = (deps: SelectionControllerDeps): SelectionController => {
-  const { nodeMap, stepNodeMap, viewportState, centerOnNode } = deps;
+  const { nodeAccessor, centerOnNode } = deps;
 
   let expandedNodeId: string | null = null;
   let selectedStepId: string | null = null;
 
   traceState.onCollapseRequest(() => collapse());
+
+  const updateOverlayNode = (): void => {
+    const id = expandedNodeId ?? selectedStepId ??
+      (traceState.selection?.type === 'node' ? traceState.selection.nodeId : null) ??
+      (traceState.selection?.type === 'step' ? traceState.selection.stepId : null);
+    const node = id ? nodeAccessor.getAny(id) : null;
+    traceState.setOverlayNode(node ? {
+      worldX: node.position.x,
+      worldY: node.position.y,
+      nodeWidth: node.nodeWidth,
+      nodeHeight: node.nodeHeight,
+    } : null);
+  };
 
   const expand = (node: TraceNodeData): void => {
     if (expandedNodeId === node.id) return;
@@ -87,9 +57,9 @@ export const createSelectionController = (deps: SelectionControllerDeps): Select
     traceState.expandNode(node);
     traceState.setExpansionProgress(1);
 
-    // Center on node, then set overlay position AFTER viewport settles
+    // Center on node, then set overlay node AFTER viewport settles
     centerOnNode(node.id, {
-      onComplete: () => updateOverlayPosition(),
+      onComplete: () => updateOverlayNode(),
     });
   };
 
@@ -97,8 +67,12 @@ export const createSelectionController = (deps: SelectionControllerDeps): Select
     expandedNodeId = null;
     selectedStepId = stepId;
 
-    const overlayPos = calculateOverlayPosition(graphNode, viewportState);
-    traceState.setOverlayPosition(overlayPos);
+    traceState.setOverlayNode({
+      worldX: graphNode.position.x,
+      worldY: graphNode.position.y,
+      nodeWidth: graphNode.nodeWidth,
+      nodeHeight: graphNode.nodeHeight,
+    });
     traceState.selectStep(stepData);
   };
 
@@ -114,27 +88,6 @@ export const createSelectionController = (deps: SelectionControllerDeps): Select
       traceState.collapseNode();
     } else {
       traceState.clearSelection();
-      traceState.setOverlayPosition(null);
-    }
-  };
-
-  const updateOverlayPosition = (): void => {
-    if (expandedNodeId) {
-      const node = nodeMap.get(expandedNodeId);
-      if (node) {
-        traceState.setOverlayPosition(calculateOverlayPosition(node, viewportState));
-      } else {
-        traceState.setOverlayPosition(null);
-      }
-    } else if (selectedStepId) {
-      const stepNode = stepNodeMap.get(selectedStepId);
-      if (stepNode) {
-        traceState.setOverlayPosition(calculateOverlayPosition(stepNode, viewportState));
-      } else {
-        traceState.setOverlayPosition(null);
-      }
-    } else {
-      traceState.setOverlayPosition(null);
     }
   };
 
@@ -151,7 +104,7 @@ export const createSelectionController = (deps: SelectionControllerDeps): Select
   const destroy = (): void => {
     expandedNodeId = null;
     selectedStepId = null;
-    traceState.setOverlayPosition(null);
+    traceState.setOverlayNode(null);
     traceState.onCollapseRequest(null);
   };
 
@@ -159,7 +112,7 @@ export const createSelectionController = (deps: SelectionControllerDeps): Select
     expand,
     selectStep,
     collapse,
-    updateOverlayPosition,
+    updateOverlayNode,
     isExpanding,
     getSelectedElementId,
     destroy,

@@ -8,15 +8,14 @@ import { getCssVarInt } from '../../../themes/index.js';
 import { uiState } from '../../../stores/uiState.svelte.js';
 import { ZOOM_MAX, ZOOM_DEFAULT, VIEWPORT_TOP_MARGIN, VIEWPORT_BOTTOM_MARGIN } from '../../../config/constants.js';
 import type { ViewportState } from '../interaction/viewport.js';
-import type { GraphNode } from '../rendering/nodeRenderer.js';
 import type { TopNodeInfo } from '../rendering/workflowLabelRenderer.js';
+import type { NodeAccessor } from './nodeAccessor.js';
 
 export interface ViewportManagerDeps {
-  nodeMap: Map<string, GraphNode>;
+  nodeAccessor: NodeAccessor;
   viewport: Container;
   viewportState: ViewportState;
-  stepLabelsUpdate: (state: ViewportState) => void;
-  cullAndRender: () => void;
+  onUpdate: () => void;  // Single callback - coordinator handles view-specific logic
   topNodeInfo: TopNodeInfo | null;
   bottomNodeInfo: TopNodeInfo | null;
 }
@@ -40,10 +39,10 @@ export interface ViewportManager {
  * Creates a viewport manager with node centering capabilities.
  */
 export function createViewportManager(deps: ViewportManagerDeps): ViewportManager {
-  const { nodeMap, viewport, viewportState, stepLabelsUpdate, cullAndRender, topNodeInfo, bottomNodeInfo } = deps;
+  const { nodeAccessor, viewport, viewportState, onUpdate, topNodeInfo, bottomNodeInfo } = deps;
 
   function centerOnNode(nodeId: string, options: CenterOptions = {}): void {
-    const node = nodeMap.get(nodeId);
+    const node = nodeAccessor.getAny(nodeId);
     if (!node) {
       options.onComplete?.();
       return;
@@ -79,8 +78,7 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
       onUpdate: () => {
         viewport.position.set(viewportState.x, viewportState.y);
         viewport.scale.set(viewportState.scale);
-        stepLabelsUpdate(viewportState);
-        cullAndRender();
+        onUpdate();
       },
       onComplete,
     });
@@ -109,7 +107,7 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
     const targetScale = Math.min(ZOOM_DEFAULT, fitScale);
 
     // Center on the selected node if provided, otherwise center content
-    const node = nodeId ? nodeMap.get(nodeId) : null;
+    const node = nodeId ? nodeAccessor.getAny(nodeId) : null;
     let targetX: number;
     let targetY: number;
 
@@ -141,8 +139,7 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
       onUpdate: () => {
         viewport.position.set(viewportState.x, viewportState.y);
         viewport.scale.set(viewportState.scale);
-        stepLabelsUpdate(viewportState);
-        cullAndRender();
+        onUpdate();
       },
       onComplete: options.onComplete,
     });
@@ -163,11 +160,8 @@ export interface ResizeHandlerDeps {
   container: HTMLElement;
   viewportState: ViewportState;
   app: { resize: () => void };
-  stepLabelsUpdate: (state: ViewportState) => void;
-  cullAndRender: () => void;
-  updateTitlePosition: () => void;
+  onUpdate: () => void;  // Single callback - coordinator handles view-specific logic
   centerSelectedNode: (nodeId: string) => void;
-  isCollapsed: () => boolean;
   getDetailPanelOpen: () => boolean;
   getSelectedNodeId: () => string | null;
 }
@@ -187,18 +181,14 @@ export function createResizeHandler(deps: ResizeHandlerDeps): {
       deps.viewportState.width = deps.container.clientWidth;
       deps.viewportState.height = deps.container.clientHeight;
       deps.app.resize();
-      deps.stepLabelsUpdate(deps.viewportState);
 
       const selectedNodeId = deps.getSelectedNodeId();
       if (deps.getDetailPanelOpen() && selectedNodeId) {
         deps.centerSelectedNode(selectedNodeId);
       }
 
-      if (!deps.isCollapsed()) {
-        deps.cullAndRender();
-      } else {
-        deps.updateTitlePosition();
-      }
+      // Coordinator handles view-specific rendering
+      deps.onUpdate();
     }, 100);
   });
 

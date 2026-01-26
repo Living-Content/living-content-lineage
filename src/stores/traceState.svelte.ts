@@ -35,19 +35,27 @@ export type SelectionTarget =
   | { type: 'node'; nodeId: string; data: TraceNodeData }
   | null;
 
-export interface OverlayPosition {
+export interface ViewportState {
   x: number;
   y: number;
+  scale: number;
   width: number;
   height: number;
-  scale: number;
+}
+
+export interface OverlayNodeInfo {
+  worldX: number;
+  worldY: number;
+  nodeWidth: number;
+  nodeHeight: number;
 }
 
 let trace = $state<Trace | null>(null);
 let selection = $state<SelectionTarget>(null);
 let expandedNode = $state<TraceNodeData | null>(null);
 let expansionProgress = $state(0);
-let overlayPosition = $state<OverlayPosition | null>(null);
+let overlayNode = $state<OverlayNodeInfo | null>(null);
+let viewportState = $state<ViewportState>({ x: 0, y: 0, scale: 1, width: 0, height: 0 });
 let currentSelectionKey: string | null = null;
 let collapseCallback: (() => void) | null = null;
 let nodeWidth = $state<number | null>(null);
@@ -64,7 +72,8 @@ export const traceState = {
   get expandedNode() { return expandedNode; },
   get expansionProgress() { return expansionProgress; },
   get isExpanded() { return isExpanded; },
-  get overlayPosition() { return overlayPosition; },
+  get overlayNode() { return overlayNode; },
+  get viewportState() { return viewportState; },
   get nodeWidth() { return nodeWidth; },
 
   setTrace(data: Trace): void {
@@ -87,7 +96,7 @@ export const traceState = {
   clearSelection(): void {
     currentSelectionKey = null;
     selection = null;
-    overlayPosition = null;
+    overlayNode = null;
   },
 
   selectNode(node: TraceNodeData): void {
@@ -107,7 +116,7 @@ export const traceState = {
   collapseNode(): void {
     expandedNode = null;
     expansionProgress = 0;
-    overlayPosition = null;
+    overlayNode = null;
     // Collapse clears selection to prevent lingering DataViewPanel
     this.clearSelection();
   },
@@ -116,8 +125,12 @@ export const traceState = {
     expansionProgress = Math.max(0, Math.min(1, progress));
   },
 
-  setOverlayPosition(position: OverlayPosition | null): void {
-    overlayPosition = position;
+  setOverlayNode(info: OverlayNodeInfo | null): void {
+    overlayNode = info;
+  },
+
+  updateViewport(state: Partial<ViewportState>): void {
+    viewportState = { ...viewportState, ...state };
   },
 
   /**

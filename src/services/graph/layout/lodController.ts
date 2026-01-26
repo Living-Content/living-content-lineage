@@ -1,6 +1,7 @@
 /**
- * Level-of-detail controller with container crossfade.
+ * Level-of-detail controller with container crossfade and view-aware rendering.
  * Manages collapse to workflow nodes and expand to detail view.
+ * Owns render behavior based on current view state.
  *
  * Animation locks zoom input via state.isAnimating - viewport should check this.
  */
@@ -8,6 +9,7 @@ import { Container } from 'pixi.js';
 import gsap from 'gsap';
 import { ANIMATION_TIMINGS } from '../../../config/animationConstants.js';
 import { LOD_THRESHOLD } from '../../../config/constants.js';
+import type { ViewportState } from '../../../stores/traceState.svelte.js';
 
 export interface LODState {
   isCollapsed: boolean;
@@ -29,8 +31,17 @@ export interface LODCallbacks {
   onExpandEnd?: () => void;
 }
 
+export interface LODRenderCallbacks {
+  onViewportUpdate: {
+    always: (state: ViewportState) => void;
+    workflow: () => void;
+    step: (state: ViewportState) => void;
+  };
+}
+
 export interface LODController {
   checkThreshold: (scale: number) => void;
+  updateViewport: (viewportState: ViewportState) => void;
   readonly state: LODState;
 }
 
@@ -69,7 +80,8 @@ function animateCrossfade(
 
 export function createLODController(
   layers: LODLayers,
-  callbacks: LODCallbacks
+  callbacks: LODCallbacks,
+  renderCallbacks: LODRenderCallbacks
 ): LODController {
   const state: LODState = {
     isCollapsed: false,
@@ -116,8 +128,19 @@ export function createLODController(
     }
   }
 
+  function updateViewport(viewportState: ViewportState): void {
+    renderCallbacks.onViewportUpdate.always(viewportState);
+    if (state.isAnimating) return;
+    if (state.isCollapsed) {
+      renderCallbacks.onViewportUpdate.step(viewportState);
+    } else {
+      renderCallbacks.onViewportUpdate.workflow();
+    }
+  }
+
   return {
     checkThreshold,
+    updateViewport,
     get state() {
       return state;
     },

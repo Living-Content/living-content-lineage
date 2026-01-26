@@ -1,15 +1,19 @@
 <script lang="ts">
   /**
    * Detail panel for displaying node and step information.
-   * Positioned relative to selected node, draggable to override.
+   * Positioned relative to selected node using world coordinates + viewport state.
+   * Position derived reactively - no cached screen coordinates.
    */
   import { traceState } from '../../stores/traceState.svelte.js';
   import { uiState } from '../../stores/uiState.svelte.js';
   import { hasDetailContent } from '../../services/dataviewer/parsing/detailContent.js';
+  import { GEOMETRY } from '../../config/animationConstants.js';
   import PanelHeader from './panel/PanelHeader.svelte';
   import NodeContent from './panel/NodeContent.svelte';
   import StepOverview from './StepOverview.svelte';
   import AttestationPanel from './AttestationPanel.svelte';
+
+  const PANEL_WIDTH = 360; // Must match CSS width
 
   let showDetailContent = $state(false);
   let signatureExpanded = $state(false);
@@ -31,12 +35,27 @@
   let currentNode = $derived(traceState.isExpanded ? traceState.expandedNode : traceState.selectedNode);
   let currentStep = $derived(traceState.selectedStep);
   let detailAvailable = $derived(currentNode ? hasDetailContent(currentNode) : false);
-  let basePosition = $derived(traceState.overlayPosition);
 
-  // Use custom position if dragged, otherwise use position from store
-  let displayPosition = $derived(
-    customPosition ?? (basePosition ? { x: basePosition.x, y: basePosition.y } : null)
-  );
+  // Derive position from world coordinates + viewport - no caching
+  let derivedPosition = $derived.by(() => {
+    const node = traceState.overlayNode;
+    const vs = traceState.viewportState;
+    if (!node || !vs) return null;
+
+    // Convert world to screen
+    const screenX = node.worldX * vs.scale + vs.x;
+    const screenY = node.worldY * vs.scale + vs.y;
+    const scaledNodeWidth = node.nodeWidth * vs.scale;
+
+    // Position panel to the LEFT of the node
+    const panelRightEdge = screenX - scaledNodeWidth / 2 - GEOMETRY.OVERLAY_GAP;
+    const panelLeftEdge = panelRightEdge - PANEL_WIDTH;
+
+    return { x: panelLeftEdge, y: screenY };
+  });
+
+  // Use custom position if dragged, otherwise use derived position
+  let displayPosition = $derived(customPosition ?? derivedPosition);
 
   let isVisible = $derived(
     ((!!currentNode || !!currentStep) && displayPosition !== null) || !!uiState.loadError
