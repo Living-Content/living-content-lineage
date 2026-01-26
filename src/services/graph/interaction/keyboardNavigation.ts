@@ -187,13 +187,13 @@ export const createKeyboardNavigation = (deps: KeyboardNavigationDeps): Keyboard
           const direction = event.key.replace('Arrow', '').toLowerCase() as 'up' | 'down' | 'left' | 'right';
           const nextNode = findNearestNode(currentNode, selectableNodes, direction);
           if (nextNode) {
-            traceState.selectNode(nextNode);
-            // If overlay is open, expand the new node (keeps overlay open, updates content)
-            // onExpand already handles centering with onComplete callback
+            // If overlay is open, expand handles both selection and centering
+            // Don't call selectNode first - expand derives state from store
             if (isExpanded) {
               onExpand(nextNode);
             } else {
-              // Center on node and update overlay position after animation completes
+              // Not expanded: set selection then center
+              traceState.selectNode(nextNode);
               centerOnNode(nextNode.id, { onComplete: updateOverlayNode });
             }
           }

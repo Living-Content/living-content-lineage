@@ -1,7 +1,9 @@
 /**
  * Selection controller.
  * Unified selection system for both node and step elements.
- * Manages selection state without handling overlay positioning (handled by UI).
+ *
+ * No local state - derives everything from traceState store.
+ * This ensures single source of truth and prevents state drift.
  */
 import { traceState, type StepData } from '../../../stores/traceState.svelte.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
@@ -25,17 +27,31 @@ export interface SelectionController {
 
 /**
  * Creates a unified selection controller for nodes and steps.
+ * Derives all state from traceState - no local tracking.
  */
 export const createSelectionController = (deps: SelectionControllerDeps): SelectionController => {
   const { nodeAccessor, centerOnNode } = deps;
 
-  let expandedNodeId: string | null = null;
-  let selectedStepId: string | null = null;
-
   traceState.onCollapseRequest(() => collapse());
 
+  /**
+   * Gets the currently expanded node ID from store.
+   */
+  const getExpandedNodeId = (): string | null =>
+    traceState.isExpanded && traceState.selection?.type === 'node'
+      ? traceState.selection.nodeId
+      : null;
+
+  /**
+   * Gets the currently selected step ID from store.
+   */
+  const getSelectedStepId = (): string | null =>
+    traceState.selection?.type === 'step'
+      ? traceState.selection.stepId
+      : null;
+
   const updateOverlayNode = (): void => {
-    const id = expandedNodeId ?? selectedStepId ??
+    const id = getExpandedNodeId() ?? getSelectedStepId() ??
       (traceState.selection?.type === 'node' ? traceState.selection.nodeId : null) ??
       (traceState.selection?.type === 'step' ? traceState.selection.stepId : null);
     const node = id ? nodeAccessor.getAny(id) : null;
@@ -48,12 +64,10 @@ export const createSelectionController = (deps: SelectionControllerDeps): Select
   };
 
   const expand = (node: TraceNodeData): void => {
-    if (expandedNodeId === node.id) return;
+    const currentId = getExpandedNodeId();
+    if (currentId === node.id) return;
 
-    expandedNodeId = node.id;
-    selectedStepId = null;
-
-    // Update store (triggers graphSubscriptions → selectionHighlighter)
+    // Only write to store - no local tracking
     traceState.expandNode(node);
     traceState.setExpansionProgress(1);
 
@@ -65,26 +79,23 @@ export const createSelectionController = (deps: SelectionControllerDeps): Select
   };
 
   const selectStep = (stepId: string, graphNode: GraphNode, stepData: StepData): void => {
-    expandedNodeId = null;
-    selectedStepId = stepId;
-
     traceState.setOverlayNode({
       worldX: graphNode.position.x,
       worldY: graphNode.position.y,
       nodeWidth: graphNode.nodeWidth,
       nodeHeight: graphNode.nodeHeight,
     });
+    // Only write to store - no local tracking
     traceState.selectStep(stepData);
   };
 
   const collapse = (): void => {
-    if (!expandedNodeId && !selectedStepId) return;
+    const isExpanded = traceState.isExpanded;
+    const hasStepSelection = getSelectedStepId() !== null;
 
-    const wasNodeExpanded = expandedNodeId !== null;
-    expandedNodeId = null;
-    selectedStepId = null;
+    if (!isExpanded && !hasStepSelection) return;
 
-    if (wasNodeExpanded) {
+    if (isExpanded) {
       traceState.setExpansionProgress(0);
       traceState.collapseNode();
     } else {
@@ -95,16 +106,18 @@ export const createSelectionController = (deps: SelectionControllerDeps): Select
   const isExpanding = (): boolean => false;
 
   const getSelectedElementId = (): string | null => {
-    if (expandedNodeId) return expandedNodeId;
-    if (selectedStepId) return selectedStepId;
+    const expandedId = getExpandedNodeId();
+    if (expandedId) return expandedId;
+
+    const stepId = getSelectedStepId();
+    if (stepId) return stepId;
+
     const sel = traceState.selection;
     if (!sel) return null;
     return sel.type === 'node' ? sel.nodeId : sel.stepId;
   };
 
   const destroy = (): void => {
-    expandedNodeId = null;
-    selectedStepId = null;
     traceState.setOverlayNode(null);
     traceState.onCollapseRequest(null);
   };

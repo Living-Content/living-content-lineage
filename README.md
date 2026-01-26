@@ -73,14 +73,18 @@ src/
 │           ├── eqty/          # EQTY variant adapter
 │           └── custom/        # Custom manifest adapter
 │   └── graph/
+│       ├── engine/
+│       │   ├── graphEngine.ts     # Engine interface
+│       │   └── graphBootstrap.ts  # Ordered initialization
 │       ├── layout/
-│       │   └── graphController.ts # Main orchestrator
+│       │   ├── lodController.ts   # Level-of-detail transitions
+│       │   └── viewportManager.ts # Pan/zoom orchestration
 │       └── rendering/
 │           ├── nodeRenderer.ts    # Pill-shaped node rendering
 │           ├── edgeRenderer.ts    # Edge and arrow rendering
 │           └── stepLabelRenderer.ts # Step header labels
 ├── components/
-│   ├── GraphView.svelte       # Canvas container
+│   ├── GraphCanvas.svelte     # Canvas container (owner)
 │   ├── Header.svelte          # Top navigation
 │   └── dataviewer/
 │       ├── DataViewPanel.svelte
