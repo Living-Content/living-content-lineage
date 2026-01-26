@@ -11,7 +11,8 @@ export interface KeyboardNavigationDeps {
   nodes: TraceNodeData[];
   onExpand: (node: TraceNodeData) => void;
   onCollapse: () => void;
-  centerOnNode: (nodeId: string) => void;
+  centerOnNode: (nodeId: string, options?: { onComplete?: () => void }) => void;
+  updateOverlayPosition: () => void;
 }
 
 export interface KeyboardNavigationController {
@@ -82,7 +83,7 @@ const findNearestNode = (
  * Creates a keyboard navigation controller for graph nodes.
  */
 export const createKeyboardNavigation = (deps: KeyboardNavigationDeps): KeyboardNavigationController => {
-  const { nodeMap, nodes, onExpand, onCollapse, centerOnNode } = deps;
+  const { nodeMap, nodes, onExpand, onCollapse, centerOnNode, updateOverlayPosition } = deps;
 
   const selectableNodes = nodes.filter(n => n.assetType !== 'Action');
   const sortedNodes = sortNodesByPosition(selectableNodes);
@@ -130,14 +131,19 @@ export const createKeyboardNavigation = (deps: KeyboardNavigationDeps): Keyboard
           if (nextNode) {
             traceState.selectNode(nextNode);
             // If overlay is open, expand the new node (keeps overlay open, updates content)
+            // onExpand already handles centering with onComplete callback
             if (isExpanded) {
               onExpand(nextNode);
+            } else {
+              // Center on node and update overlay position after animation completes
+              centerOnNode(nextNode.id, { onComplete: updateOverlayPosition });
             }
-            centerOnNode(nextNode.id);
           }
         } else if (sortedNodes.length > 0) {
           traceState.selectNode(sortedNodes[0]);
-          centerOnNode(sortedNodes[0].id);
+          if (!isExpanded) {
+            centerOnNode(sortedNodes[0].id, { onComplete: updateOverlayPosition });
+          }
         }
         break;
     }

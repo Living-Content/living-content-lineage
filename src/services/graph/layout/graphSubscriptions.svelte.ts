@@ -25,7 +25,8 @@ export interface SubscriptionContext {
   centerSelectedNode: (nodeId: string) => void;
   setStepLabelsPhaseFilter: (phase: Phase | null) => void;
   setStepLabelsVisible: (visible: boolean) => void;
-  zoomToBounds: (nodeId?: string) => void;
+  zoomToBounds: (nodeId?: string, options?: { onComplete?: () => void }) => void;
+  updateOverlayPosition: () => void;
   onStateChange: (state: SelectionState) => void;
 }
 
@@ -115,7 +116,9 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
         ctx.centerSelectedNode(sel.nodeId);
       } else if (!detailOpen && wasOpen) {
         const nodeId = sel?.type === 'node' ? sel.nodeId : undefined;
-        ctx.zoomToBounds(nodeId);
+        ctx.zoomToBounds(nodeId, {
+          onComplete: () => ctx.updateOverlayPosition(),
+        });
       }
     }
 

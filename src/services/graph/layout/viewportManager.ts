@@ -26,9 +26,13 @@ export interface CenterOptions {
   onComplete?: () => void;
 }
 
+export interface ZoomToBoundsOptions {
+  onComplete?: () => void;
+}
+
 export interface ViewportManager {
   centerOnNode: (nodeId: string, options?: CenterOptions) => void;
-  zoomToBounds: (nodeId?: string) => void;
+  zoomToBounds: (nodeId?: string, options?: ZoomToBoundsOptions) => void;
   destroy: () => void;
 }
 
@@ -44,6 +48,9 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
       options.onComplete?.();
       return;
     }
+
+    // Cancel any in-flight animation
+    gsap.killTweensOf(viewportState);
 
     const { zoom = false, onComplete } = options;
     const targetScale = zoom ? ZOOM_MAX : viewportState.scale;
@@ -83,8 +90,14 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
    * Zooms out to fit content within viewport bounds, centered on a node.
    * Used when exiting detail view.
    */
-  function zoomToBounds(nodeId?: string): void {
-    if (!topNodeInfo || !bottomNodeInfo) return;
+  function zoomToBounds(nodeId?: string, options: ZoomToBoundsOptions = {}): void {
+    if (!topNodeInfo || !bottomNodeInfo) {
+      options.onComplete?.();
+      return;
+    }
+
+    // Cancel any in-flight animation
+    gsap.killTweensOf(viewportState);
 
     // Calculate the scale needed to fit content within bounds
     const contentWorldHeight = (bottomNodeInfo.worldY + bottomNodeInfo.halfHeight) -
@@ -131,6 +144,7 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
         stepLabelsUpdate(viewportState);
         cullAndRender();
       },
+      onComplete: options.onComplete,
     });
   }
 

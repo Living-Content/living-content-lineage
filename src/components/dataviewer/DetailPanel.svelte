@@ -22,6 +22,10 @@
   // First render tracking to prevent animation on initial appearance
   let isFirstRender = $state(true);
 
+  // Mode transition state for smooth fade between compact/detail views
+  let isTransitioning = $state(false);
+  let visualMode = $state<'compact' | 'detail'>('compact');
+
   // Derived state
   let isExpanded = $derived(traceState.isExpanded);
   let currentNode = $derived(traceState.isExpanded ? traceState.expandedNode : traceState.selectedNode);
@@ -38,22 +42,19 @@
     ((!!currentNode || !!currentStep) && displayPosition !== null) || !!uiState.loadError
   );
 
-  // Reset custom position and first render flag when selection changes
+  // Reset custom position when selection clears
   $effect(() => {
-    const selectionKey = traceState.selection
-      ? `${traceState.selection.type}:${traceState.selection.type === 'step' ? traceState.selection.stepId : traceState.selection.nodeId}`
-      : null;
-
-    if (!selectionKey) {
+    if (!traceState.selection) {
       customPosition = null;
       if (showDetailContent) {
         showDetailContent = false;
+        visualMode = 'compact';
         uiState.closeDetailPanel();
       }
-    } else {
-      // New selection: disable transitions until DOM has painted
+      // Reset first render flag so next appearance fades in
       isFirstRender = true;
-      // Double RAF to ensure DOM has painted before enabling transitions
+    } else if (isFirstRender) {
+      // First appearance: disable animation, then enable after paint
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           isFirstRender = false;
@@ -62,14 +63,44 @@
     }
   });
 
+  const FADE_DURATION = 150; // ms
+
   function openDetails(): void {
-    showDetailContent = true;
-    uiState.setDetailOpen(true);
+    if (isTransitioning) return;
+
+    // Start fade-out transition
+    isTransitioning = true;
+
+    // After fade-out, switch to detail mode
+    setTimeout(() => {
+      showDetailContent = true;
+      visualMode = 'detail';
+      uiState.setDetailOpen(true);
+
+      // After mode switch, fade back in
+      requestAnimationFrame(() => {
+        isTransitioning = false;
+      });
+    }, FADE_DURATION);
   }
 
   function closeDetails(): void {
-    showDetailContent = false;
-    uiState.closeDetailPanel();
+    if (isTransitioning) return;
+
+    // Start fade-out transition
+    isTransitioning = true;
+
+    // After fade-out, switch to compact mode
+    setTimeout(() => {
+      showDetailContent = false;
+      visualMode = 'compact';
+      uiState.closeDetailPanel();
+
+      // After mode switch, fade back in
+      requestAnimationFrame(() => {
+        isTransitioning = false;
+      });
+    }, FADE_DURATION);
   }
 
   function handleClose(): void {
@@ -115,9 +146,10 @@
   <div class="panel-container">
     <aside
       class="panel"
-      class:detail-open={showDetailContent}
+      class:detail-open={visualMode === 'detail'}
       class:dragging={isDragging}
       class:no-transition={isFirstRender}
+      class:fading={isTransitioning}
       style={`--panel-x: ${displayPosition?.x ?? 100}px; --panel-y: ${displayPosition?.y ?? 100}px;`}
     >
       <PanelHeader
@@ -188,7 +220,11 @@
     backdrop-filter: blur(8px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
     animation: panel-fade-in 0.2s ease-out;
-    transition: width 0.3s ease, max-height 0.3s ease, left 0.3s ease, top 0.3s ease;
+    transition: opacity 0.15s ease-out;
+  }
+
+  .panel.fading {
+    opacity: 0;
   }
 
   .panel.dragging {
@@ -199,6 +235,7 @@
 
   .panel.no-transition {
     transition: none !important;
+    animation: none !important;
   }
 
   .panel.detail-open {
@@ -253,11 +290,9 @@
   @keyframes panel-fade-in {
     from {
       opacity: 0;
-      transform: translateY(-50%) scale(0.95);
     }
     to {
       opacity: 1;
-      transform: translateY(-50%) scale(1);
     }
   }
 

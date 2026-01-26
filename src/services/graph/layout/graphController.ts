@@ -253,7 +253,8 @@ export async function createGraphController({
     nodes: traceData.nodes,
     onExpand: (node) => selectionController.expand(node),
     onCollapse: () => selectionController.collapse(),
-    centerOnNode: viewportManager.centerOnNode,
+    centerOnNode: (nodeId, options) => viewportManager.centerOnNode(nodeId, options),
+    updateOverlayPosition: () => selectionController.updateOverlayPosition(),
   });
   keyboardNavigation.attach();
 
@@ -269,7 +270,8 @@ export async function createGraphController({
     centerSelectedNode: (nodeId) => viewportManager.centerOnNode(nodeId, { zoom: true }),
     setStepLabelsPhaseFilter: stepLabels.setPhaseFilter,
     setStepLabelsVisible: stepLabels.setVisible,
-    zoomToBounds: viewportManager.zoomToBounds,
+    zoomToBounds: (nodeId, options) => viewportManager.zoomToBounds(nodeId, options),
+    updateOverlayPosition: () => selectionController.updateOverlayPosition(),
     onStateChange: (newState) => {
       state.currentSelection = newState.currentSelection;
       state.detailPanelOpen = newState.detailPanelOpen;
