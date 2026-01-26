@@ -62,7 +62,7 @@ export interface EngineDeps {
   viewportState: ViewportState;
   animationController: { setNodeAlpha: (nodeId: string, alpha: number) => void; cleanup: () => void };
   stepLabels: { setPhaseFilter: (phase: Phase | null) => void; setVisible: (visible: boolean) => void };
-  titleOverlay: { destroy: () => void };
+  titleOverlay: { destroy: () => void; setSecondaryVisible: (visible: boolean) => void };
   resizeHandler: { destroy: () => void };
   viewportHandlers: { destroy: () => void };
   state: EngineState;
@@ -250,6 +250,10 @@ export const createGraphEngine = (deps: EngineDeps): GraphEngine => {
 
     zoomToBounds: (nodeId?: string, options = {}): void => {
       deps.viewportManager.zoomToBounds(nodeId, options);
+    },
+
+    setTitleSecondaryVisible: (visible: boolean): void => {
+      deps.titleOverlay.setSecondaryVisible(visible);
     },
   };
 };

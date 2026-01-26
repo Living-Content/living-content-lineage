@@ -69,6 +69,11 @@ export interface GraphEngine {
    * Zoom out to fit content within viewport bounds.
    */
   zoomToBounds(nodeId?: string, options?: ZoomToBoundsOptions): void;
+
+  /**
+   * Show/hide title overlay secondary elements (UUID, date, divider).
+   */
+  setTitleSecondaryVisible(visible: boolean): void;
 }
 
 /**

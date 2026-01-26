@@ -18,6 +18,7 @@ Technical documentation for the Living Content Tracer visualization system.
 ### Component Documentation
 
 - [Detail Views](./components/detail-views.md) - Asset-specific detail view components
+- [Comments](./comments.md) - Real-time commenting system for trace nodes
 
 ### Theming Documentation
 

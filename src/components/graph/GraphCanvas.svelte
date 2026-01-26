@@ -16,6 +16,9 @@
   import type { GraphEngine, HoverPayload, SelectionTarget } from '../../services/graph/engine/interface.js';
   import { traceState } from '../../stores/traceState.svelte.js';
   import { uiState } from '../../stores/uiState.svelte.js';
+  import { commentState } from '../../stores/commentState.svelte.js';
+  import { configStore } from '../../stores/configStore.svelte.js';
+  import { menuStore } from '../../stores/menuStore.svelte.js';
   import type { Trace, Phase } from '../../config/types.js';
   import { resolveManifestUrl } from '../../services/manifest/urlResolver.js';
   import PhaseFilterBadge from '../PhaseFilterBadge.svelte';
@@ -44,6 +47,7 @@
   let prevDetailOpen = $state(false);
   let prevPhaseFilter: Phase | null = $state(null);
   let prevIsExpanded = $state(false);
+  let prevMenuOpen = $state(false);
 
   onMount(() => {
     let isCancelled = false;
@@ -76,7 +80,16 @@
           },
           onLoaded: (data: unknown) => {
             uiState.setLoadError(null);
-            traceState.setTrace(data as Trace);
+            const trace = data as Trace;
+            traceState.setTrace(trace);
+
+            // Load comment counts and connect real-time updates if config is available
+            if (configStore.hasValidConfig() && trace.nodes) {
+              const nodeIds = trace.nodes.map((n) => n.id);
+              commentState.loadCounts(nodeIds);
+              // Connect WebSocket for real-time comment updates
+              commentState.connectRealtime(configStore.workflowId);
+            }
           },
           onError: (error) => {
             uiState.setLoadError(error.message + (error.details ? `: ${error.details}` : ''));
@@ -150,6 +163,13 @@
     if (nextIsExpanded !== prevIsExpanded) {
       engine.setExpanded(nextIsExpanded);
       prevIsExpanded = nextIsExpanded;
+    }
+
+    // Menu open state changed? Hide secondary title elements when menu opens
+    const nextMenuOpen = menuStore.isOpen;
+    if (nextMenuOpen !== prevMenuOpen) {
+      engine.setTitleSecondaryVisible(!nextMenuOpen);
+      prevMenuOpen = nextMenuOpen;
     }
   });
 </script>

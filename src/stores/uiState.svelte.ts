@@ -8,6 +8,7 @@ let isDetailOpen = $state(false);
 let isSimpleView = $state(false);
 let loadError = $state<string | null>(null);
 let phaseFilter = $state<Phase | null>(null);
+let activeMobilePanel = $state<'data' | 'comments'>('data');
 
 export const uiState = {
   get isLoading() { return isLoading; },
@@ -15,6 +16,7 @@ export const uiState = {
   get isSimpleView() { return isSimpleView; },
   get loadError() { return loadError; },
   get phaseFilter() { return phaseFilter; },
+  get activeMobilePanel() { return activeMobilePanel; },
 
   setLoading(loading: boolean): void {
     isLoading = loading;
@@ -42,5 +44,9 @@ export const uiState = {
 
   clearPhaseFilter(): void {
     phaseFilter = null;
+  },
+
+  setActiveMobilePanel(panel: 'data' | 'comments'): void {
+    activeMobilePanel = panel;
   },
 };

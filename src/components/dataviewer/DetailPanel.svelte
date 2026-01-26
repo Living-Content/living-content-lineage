@@ -15,12 +15,14 @@
   import NodeContent from './panel/NodeContent.svelte';
   import StepOverview from './StepOverview.svelte';
   import AttestationPanel from './AttestationPanel.svelte';
+  import CommentDrawer from '../comments/CommentDrawer.svelte';
 
   let panelElement = $state<HTMLElement | null>(null);
   let activeTween: gsap.core.Tween | null = null;
 
   let showDetailContent = $state(false);
   let signatureExpanded = $state(false);
+  let commentsOpen = $state(false);
 
   // Drag state
   let customPosition = $state<{ x: number; y: number } | null>(null);
@@ -66,6 +68,7 @@
   $effect(() => {
     if (!traceState.selection) {
       customPosition = null;
+      commentsOpen = false;
       if (showDetailContent) {
         showDetailContent = false;
         visualMode = 'compact';
@@ -73,6 +76,10 @@
       }
     }
   });
+
+  function toggleComments(): void {
+    commentsOpen = !commentsOpen;
+  }
 
   function openDetails(): void {
     if (isTransitioning || !panelElement) return;
@@ -212,7 +219,9 @@
               node={currentNode}
               {showDetailContent}
               {detailAvailable}
+              {commentsOpen}
               onOpenDetails={openDetails}
+              onOpenComments={toggleComments}
             />
           {:else if currentStep}
             <StepOverview nodes={currentStep.nodes} edges={currentStep.edges} />
@@ -229,6 +238,10 @@
             bind:expanded={signatureExpanded}
           />
         </div>
+      {/if}
+
+      {#if currentNode}
+        <CommentDrawer nodeId={currentNode.id} bind:isOpen={commentsOpen} />
       {/if}
     </aside>
   </div>
@@ -254,7 +267,7 @@
     display: flex;
     flex-direction: column;
     border-radius: var(--radius-sm);
-    overflow: hidden;
+    overflow: visible;
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(8px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);

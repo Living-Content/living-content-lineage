@@ -2,7 +2,7 @@
  * Workflow title overlay with title and workflow ID.
  * Only visible in collapsed (workflow) view.
  */
-import { Container, Text, TextStyle } from 'pixi.js';
+import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import type { GraphNode } from './nodeRenderer.js';
 import type { ViewportState } from '../interaction/viewport.js';
 import { getCssVarColorHex, getCssVar, getCssVarInt, getCssVarFloat } from '../../../themes/index.js';
@@ -12,6 +12,7 @@ export interface TitleOverlay {
   container: Container;
   setVisible: (visible: boolean) => void;
   setMode: (mode: 'fixed' | 'relative') => void;
+  setSecondaryVisible: (visible: boolean) => void;
   updatePosition: (leftmostNode: GraphNode, viewportState: ViewportState) => void;
   destroy: () => void;
 }
@@ -25,6 +26,7 @@ export interface TitleOverlayData {
  * Title overlay text elements.
  */
 export interface TitleOverlayElements {
+  divider: Graphics;
   uuidText: Text;
   titleText: Text;
   dateText: Text;
@@ -77,12 +79,27 @@ const formatDateString = (): string =>
     .toUpperCase();
 
 /**
+ * Creates the vertical divider line.
+ */
+const createDivider = (): Graphics => {
+  const divider = new Graphics();
+  const color = getCssVarColorHex('--color-node-text');
+  const alpha = getCssVarFloat('--title-secondary-alpha');
+
+  divider.rect(0, 0, 1, 50);
+  divider.fill({ color, alpha });
+
+  return divider;
+};
+
+/**
  * Pure creation of title overlay text elements (no side effects).
  */
 export const createTitleOverlayElements = (data: TitleOverlayData): TitleOverlayElements => {
   const styles = createTextStyles();
   const dateStr = formatDateString();
 
+  const divider = createDivider();
   const uuidText = new Text({ text: data.workflowId, style: styles.uuid });
   const titleText = new Text({ text: data.title, style: styles.title });
   const dateText = new Text({ text: dateStr, style: styles.date });
@@ -91,7 +108,7 @@ export const createTitleOverlayElements = (data: TitleOverlayData): TitleOverlay
   uuidText.alpha = secondaryAlpha;
   dateText.alpha = secondaryAlpha;
 
-  return { uuidText, titleText, dateText };
+  return { divider, uuidText, titleText, dateText };
 };
 
 /**
@@ -101,6 +118,7 @@ export const attachTitleOverlayElements = (
   container: Container,
   elements: TitleOverlayElements
 ): void => {
+  container.addChild(elements.divider);
   container.addChild(elements.uuidText);
   container.addChild(elements.titleText);
   container.addChild(elements.dateText);
@@ -158,18 +176,42 @@ export const setupTitleAnimation = (
 
 /**
  * Positions elements in fixed mode (top-left of screen).
+ * Layout: Title on top, UUID below, Date below that.
+ * Text aligns with menu panel content (52px from left edge).
  */
 const positionElementsFixed = (elements: TitleOverlayElements): void => {
   const panelMargin = getCssVarInt('--panel-margin');
-  const logoWidth = getCssVarInt('--logo-width');
-  const uuidToTitle = getCssVarInt('--title-uuid-to-title');
-  const titleToDate = getCssVarInt('--title-title-to-date');
-  const titleLeftGap = getCssVarInt('--title-left-gap');
-  const leftEdge = panelMargin + logoWidth + titleLeftGap;
+  const leftEdge = getCssVarInt('--title-content-left');
+  const dividerGap = getCssVarInt('--title-divider-gap');
+  const lineGap = getCssVarInt('--title-line-gap');
 
-  elements.uuidText.position.set(leftEdge, panelMargin);
-  elements.titleText.position.set(leftEdge, panelMargin + uuidToTitle);
-  elements.dateText.position.set(leftEdge, panelMargin + uuidToTitle + titleToDate);
+  // Get actual text heights
+  const titleHeight = elements.titleText.height;
+  const uuidHeight = elements.uuidText.height;
+  const dateHeight = elements.dateText.height;
+
+  // Calculate total height for divider
+  const totalTextHeight = titleHeight + lineGap + uuidHeight + lineGap + dateHeight;
+
+  // Calculate Y positions based on actual heights
+  const titleY = panelMargin;
+  const uuidY = titleY + titleHeight + lineGap;
+  const dateY = uuidY + uuidHeight + lineGap;
+
+  // Update divider height dynamically based on text heights
+  elements.divider.clear();
+  const color = getCssVarColorHex('--color-node-text');
+  const alpha = getCssVarFloat('--title-secondary-alpha');
+  elements.divider.rect(0, 0, 1, totalTextHeight);
+  elements.divider.fill({ color, alpha });
+
+  // Divider to the left of text
+  elements.divider.position.set(leftEdge - dividerGap - 1, panelMargin);
+
+  // Text: Title -> UUID -> Date (top to bottom)
+  elements.titleText.position.set(leftEdge, titleY);
+  elements.uuidText.position.set(leftEdge, uuidY);
+  elements.dateText.position.set(leftEdge, dateY);
 };
 
 /**
@@ -180,20 +222,30 @@ const positionElementsRelative = (
   leftmostNode: GraphNode,
   viewportState: ViewportState
 ): void => {
-  const uuidToTitle = getCssVarInt('--title-uuid-to-title');
-  const titleToDate = getCssVarInt('--title-title-to-date');
-  const totalHeight = uuidToTitle + titleToDate;
+  const textGap = getCssVarInt('--title-divider-gap');
+  const lineGap = getCssVarInt('--title-line-gap');
+
+  // Get actual text heights
+  const titleHeight = elements.titleText.height;
+  const uuidHeight = elements.uuidText.height;
+  const dateHeight = elements.dateText.height;
+  const totalHeight = titleHeight + lineGap + uuidHeight + lineGap + dateHeight;
 
   const screenX = viewportState.x + leftmostNode.position.x * viewportState.scale;
   const screenY = viewportState.y + leftmostNode.position.y * viewportState.scale;
   const nodeTop = screenY - (leftmostNode.nodeHeight / 2) * viewportState.scale;
-  const leftEdge = screenX - (leftmostNode.nodeWidth / 2) * viewportState.scale;
+  const nodeLeftEdge = screenX - (leftmostNode.nodeWidth / 2) * viewportState.scale;
   const nodeGap = getCssVarInt('--title-node-gap');
-  const uuidY = nodeTop - totalHeight - nodeGap;
+  const titleY = nodeTop - totalHeight - nodeGap;
 
-  elements.uuidText.position.set(leftEdge, uuidY);
-  elements.titleText.position.set(leftEdge, uuidY + uuidToTitle);
-  elements.dateText.position.set(leftEdge, uuidY + uuidToTitle + titleToDate);
+  // Divider to the left of text
+  const dividerX = nodeLeftEdge - textGap - 1;
+  elements.divider.position.set(dividerX, titleY);
+
+  // Text aligned with node edge: Title -> UUID -> Date
+  elements.titleText.position.set(nodeLeftEdge, titleY);
+  elements.uuidText.position.set(nodeLeftEdge, titleY + titleHeight + lineGap);
+  elements.dateText.position.set(nodeLeftEdge, titleY + titleHeight + lineGap + uuidHeight + lineGap);
 };
 
 /**
@@ -217,16 +269,33 @@ export function createTitleOverlay(stage: Container, data: TitleOverlayData): Ti
     container.visible = visible;
   };
 
+  const setSecondaryVisible = (visible: boolean): void => {
+    elements.divider.visible = visible;
+    elements.uuidText.visible = visible;
+    elements.dateText.visible = visible;
+  };
+
   const setMode = (mode: 'fixed' | 'relative'): void => {
     currentMode = mode;
     if (mode === 'fixed') {
-      positionElementsFixed(elements);
+      // Hide Pixi overlay when zoomed in - Svelte handles it
+      container.visible = false;
+      elements.titleText.scale.set(1);
+    } else {
+      // Show Pixi overlay when zoomed out (step view) - smaller title, no divider
+      // Don't show yet - wait for updatePosition to set correct position first
+      elements.titleText.scale.set(0.6);
+      elements.divider.visible = false;
     }
   };
 
   const updatePosition = (leftmostNode: GraphNode, viewportState: ViewportState): void => {
     if (currentMode === 'fixed') return;
     positionElementsRelative(elements, leftmostNode, viewportState);
+    // Show after positioning to avoid flash at wrong position
+    if (!container.visible) {
+      container.visible = true;
+    }
   };
 
   const destroy = (): void => {
@@ -234,14 +303,14 @@ export function createTitleOverlay(stage: Container, data: TitleOverlayData): Ti
     container.destroy({ children: true });
   };
 
-  // Initialize in fixed mode
+  // Initialize in fixed mode (hidden - Svelte handles zoomed-in view)
   setMode('fixed');
-  container.visible = true;
 
   return {
     container,
     setVisible,
     setMode,
+    setSecondaryVisible,
     updatePosition,
     destroy,
   };

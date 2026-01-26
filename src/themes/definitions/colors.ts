@@ -2,6 +2,10 @@
  * Semantic color palette tokens
  */
 export const colorTokens = {
+  // Core colors (RGB triplets for rgba() usage)
+  'color-foreground': '255, 255, 255',
+  'color-background': '5, 5, 5',
+
   // Base colors
   'color-white': 'rgb(255, 255, 255)',
   'color-black': 'rgb(0, 0, 0)',

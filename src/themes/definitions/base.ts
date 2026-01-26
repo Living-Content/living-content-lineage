@@ -13,18 +13,21 @@ export const baseTokens = {
   'panel-margin-mobile': '25px',
   'header-height': '48px',
   'panel-max-width': '800px',
-  'logo-width': '126px',
+  'header-controls-width': '80px', // Width of header controls (menu + LOD icons + gaps)
 
-  // Title overlay spacing
-  'title-uuid-to-title': '14px',
-  'title-title-to-date': '23px',
+  // Title overlay spacing (must clear header: 25px margin + 28px hamburger + 12px gap + 28px LOD + 12px gap = 105px)
+  'title-content-left': '105px',
+  'title-divider-gap': '12px',
+  'title-line-gap': '4px',
+  'title-uuid-to-title': '18px',
+  'title-title-to-date': '22px',
   'title-node-gap': '25px',
 
   // Title overlay typography
   'title-uuid-font-size': '11px',
   'title-uuid-letter-spacing': '0.5px',
-  'title-main-font-size': '18px',
-  'title-main-letter-spacing': '-0.3px',
+  'title-main-font-size': '32px',
+  'title-main-letter-spacing': '-0.5px',
   'title-date-font-size': '11px',
   'title-date-letter-spacing': '0.5px',
   'title-secondary-alpha': '0.5',
