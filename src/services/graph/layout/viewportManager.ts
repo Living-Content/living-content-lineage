@@ -16,8 +16,8 @@ export interface ViewportManagerDeps {
   viewport: Container;
   viewportState: ViewportState;
   onUpdate: () => void;  // Single callback - coordinator handles view-specific logic
-  topNodeInfo: TopNodeInfo | null;
-  bottomNodeInfo: TopNodeInfo | null;
+  getTopNodeInfo: () => TopNodeInfo | null;
+  getBottomNodeInfo: () => TopNodeInfo | null;
 }
 
 export interface CenterOptions {
@@ -39,7 +39,7 @@ export interface ViewportManager {
  * Creates a viewport manager with node centering capabilities.
  */
 export function createViewportManager(deps: ViewportManagerDeps): ViewportManager {
-  const { nodeAccessor, viewport, viewportState, onUpdate, topNodeInfo, bottomNodeInfo } = deps;
+  const { nodeAccessor, viewport, viewportState, onUpdate, getTopNodeInfo, getBottomNodeInfo } = deps;
 
   function centerOnNode(nodeId: string, options: CenterOptions = {}): void {
     const node = nodeAccessor.getAny(nodeId);
@@ -89,6 +89,9 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
    * Used when exiting detail view.
    */
   function zoomToBounds(nodeId?: string, options: ZoomToBoundsOptions = {}): void {
+    const topNodeInfo = getTopNodeInfo();
+    const bottomNodeInfo = getBottomNodeInfo();
+
     if (!topNodeInfo || !bottomNodeInfo) {
       options.onComplete?.();
       return;

@@ -97,9 +97,6 @@
       if (result && !isCancelled) {
         engine = result.engine;
 
-        // Set nodeWidth from returned result (single delivery mechanism)
-        traceState.setNodeWidth(result.nodeWidth);
-
         // Initialize prev values from current state
         prevSelectionKey = selectionKey(traceState.selection as SelectionTarget);
         prevDetailOpen = uiState.isDetailOpen;

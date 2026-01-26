@@ -24,7 +24,7 @@ export interface AssetInitResult {
   nodeMap: Map<string, GraphNode>;
   stepNodeMap: Map<string, GraphNode>;
   animationController: ReturnType<typeof createNodeAnimationController>;
-  nodeWidth: number;
+  nodeWidths: Map<number, number>;
   state: EngineState;
   graphScale: number;
 }
@@ -86,11 +86,14 @@ export async function initGraphAssets(
   // Create animation controller
   const animationController = createNodeAnimationController(nodeMap);
 
-  // Calculate max node width
-  const nodeWidth = traceData.nodes.reduce((max, node) => {
+  // Calculate max node width per group (grouped by node.x position)
+  const nodeWidths = new Map<number, number>();
+  traceData.nodes.forEach((node) => {
+    const groupKey = Math.round((node.x ?? 0.5) * 1000);
     const w = preCalculateNodeWidth(node, 1);
-    return w > max ? w : max;
-  }, 0);
+    const current = nodeWidths.get(groupKey) ?? 0;
+    if (w > current) nodeWidths.set(groupKey, w);
+  });
 
   // Create engine state from initial inputs
   const state: EngineState = {
@@ -110,7 +113,7 @@ export async function initGraphAssets(
       nodeMap,
       stepNodeMap,
       animationController,
-      nodeWidth,
+      nodeWidths,
       state,
       graphScale,
     },

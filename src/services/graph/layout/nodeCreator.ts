@@ -115,7 +115,7 @@ export const repositionNodesWithGaps = (nodeMap: Map<string, GraphNode>): void =
     const allNodes = [...group.stackable, ...group.fixed];
     if (allNodes.length === 0) continue;
 
-    // All nodes have same width from traceState.nodeWidth
+    // All nodes in the same group have the same width (per-group max from traceState)
     const maxWidth = group.stackable[0]?.nodeWidth ?? group.fixed[0]?.nodeWidth ?? 0;
 
     // Calculate new X position (left edge of column)

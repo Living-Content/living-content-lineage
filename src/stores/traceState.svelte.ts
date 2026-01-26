@@ -58,7 +58,7 @@ let overlayNode = $state<OverlayNodeInfo | null>(null);
 let viewportState = $state<ViewportState>({ x: 0, y: 0, scale: 1, width: 0, height: 0 });
 let currentSelectionKey: string | null = null;
 let collapseCallback: (() => void) | null = null;
-let nodeWidth = $state<number | null>(null);
+let nodeWidths = $state<Map<number, number>>(new Map());
 
 const selectedNode = $derived(selection?.type === 'node' ? selection.data : null);
 const selectedStep = $derived(selection?.type === 'step' ? selection.data : null);
@@ -74,14 +74,16 @@ export const traceState = {
   get isExpanded() { return isExpanded; },
   get overlayNode() { return overlayNode; },
   get viewportState() { return viewportState; },
-  get nodeWidth() { return nodeWidth; },
+  getNodeWidth(groupX: number): number | undefined {
+    return nodeWidths.get(groupX);
+  },
 
   setTrace(data: Trace): void {
     trace = data;
   },
 
-  setNodeWidth(width: number): void {
-    nodeWidth = width;
+  setNodeWidths(widths: Map<number, number>): void {
+    nodeWidths = widths;
   },
 
   select(target: SelectionTarget): void {

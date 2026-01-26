@@ -20,7 +20,7 @@ import {
 import { createNodeTexture, createIconOnlyTexture } from './nodeTextureRenderer.js';
 import { traceState } from '../../../stores/traceState.svelte.js';
 
-export const DEFAULT_NODE_ALPHA = 1;
+export const DEFAULT_NODE_ALPHA = 0.8;
 
 export interface GraphNode extends Container {
   nodeData: TraceNodeData;
@@ -157,8 +157,10 @@ export function createGraphNode(
 
     const renderOptions = createRenderOptions(currentMode);
     const nodeHeight = (currentMode === 'detailed' ? BASE_NODE_HEIGHT_DETAILED : BASE_NODE_HEIGHT_SIMPLE) * nodeScale;
-    // Use shared width from store so all nodes have same width
-    const nodeWidth = (traceState.nodeWidth ?? calculateNodeWidth(renderOptions, dims, nodeScale)) * nodeScale;
+    // Use shared width from store so all nodes in same group have same width
+    const groupKey = Math.round((node.x ?? 0.5) * 1000);
+    const groupWidth = traceState.getNodeWidth(groupKey);
+    const nodeWidth = (groupWidth ?? calculateNodeWidth(renderOptions, dims, nodeScale)) * nodeScale;
 
     // Create placeholder first, then update with icon
     const placeholderTexture = createNodeTexture(

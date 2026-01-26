@@ -15,7 +15,6 @@ import type { KeyboardNavigationController } from '../interaction/keyboardNaviga
 import type { LODController } from '../layout/lodController.js';
 import type { NodeAccessor } from '../layout/nodeAccessor.js';
 import type { PixiContext } from '../layout/pixiSetup.js';
-import type { TopNodeInfo } from '../rendering/workflowLabelRenderer.js';
 import type { GraphEngine, SelectionTarget } from './interface.js';
 import {
   applySelectionHighlight,
@@ -67,8 +66,6 @@ export interface EngineDeps {
   resizeHandler: { destroy: () => void };
   viewportHandlers: { destroy: () => void };
   state: EngineState;
-  topNodeInfo: TopNodeInfo | null;
-  bottomNodeInfo: TopNodeInfo | null;
 }
 
 /**

@@ -128,10 +128,12 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
   repositionStepNodesWithGaps(stepNodeMap);
   renderStepEdges(layers.stepEdgeLayer, traceData.steps, stepNodeMap, null);
 
-  // Calculate bounds and create step labels
-  const topNodeInfo = calculateTopNodeInfo(nodeMap);
-  const bottomNodeInfo = calculateBottomNodeInfo(nodeMap);
-  const stepLabels = createStepLabels(traceData.steps, nodeMap, stepNodeMap, topNodeInfo);
+  // Create dynamic getters for bounds (always fresh)
+  const getTopNodeInfo = () => calculateTopNodeInfo(nodeMap);
+  const getBottomNodeInfo = () => calculateBottomNodeInfo(nodeMap);
+
+  // Create step labels with initial bounds
+  const stepLabels = createStepLabels(traceData.steps, nodeMap, stepNodeMap, getTopNodeInfo());
   app.stage.addChild(stepLabels.container);
   stepLabels.update(viewportState);
 
@@ -171,14 +173,14 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
     onExpandEnd: () => lodController.updateViewport(viewportState),
   }, renderCallbacks);
 
-  // Create viewportManager
+  // Create viewportManager with dynamic bounds getters
   viewportManager = createViewportManager({
     nodeAccessor,
     viewport,
     viewportState,
     onUpdate: () => lodController.updateViewport(viewportState),
-    topNodeInfo,
-    bottomNodeInfo,
+    getTopNodeInfo,
+    getBottomNodeInfo,
   });
 
   // Create keyboard navigation
@@ -241,10 +243,12 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
     isZoomBlocked: () => lodController.state.isAnimating,
     isInteractionBlocked: () => state.detailPanelOpen,
     getBounds: () => {
-      if (!topNodeInfo || !bottomNodeInfo) return null;
+      const topInfo = getTopNodeInfo();
+      const bottomInfo = getBottomNodeInfo();
+      if (!topInfo || !bottomInfo) return null;
       return {
-        topWorldY: topNodeInfo.worldY - topNodeInfo.halfHeight,
-        bottomWorldY: bottomNodeInfo.worldY + bottomNodeInfo.halfHeight,
+        topWorldY: topInfo.worldY - topInfo.halfHeight,
+        bottomWorldY: bottomInfo.worldY + bottomInfo.halfHeight,
         topMargin: VIEWPORT_TOP_MARGIN,
         bottomMargin: VIEWPORT_BOTTOM_MARGIN,
       };
@@ -284,7 +288,5 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
     resizeHandler,
     viewportHandlers,
     state,
-    topNodeInfo,
-    bottomNodeInfo,
   });
 }

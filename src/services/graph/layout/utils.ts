@@ -99,7 +99,9 @@ export const createHoverCallbacks = (
       // If a node is selected and this isn't it, restore fade
       // Otherwise restore to default alpha
       if (config.setNodeAlpha) {
-        if (selectedId && selectedId !== nodeId) {
+        if (selectedId === nodeId) {
+          config.setNodeAlpha(nodeId, 1);
+        } else if (selectedId) {
           config.setNodeAlpha(nodeId, GEOMETRY.FADED_NODE_OPACITY);
         } else {
           config.setNodeAlpha(nodeId, DEFAULT_NODE_ALPHA);
