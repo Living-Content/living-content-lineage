@@ -4,7 +4,7 @@
  */
 import { Container, Graphics, Sprite, Ticker } from 'pixi.js';
 import gsap from 'gsap';
-import { getCssVar, type CssVar } from '../../../themes/index.js';
+import { getCssVar, getCssVarFloat, type CssVar } from '../../../themes/index.js';
 import { getAssetIconPath } from '../../../config/icons.js';
 import type { AssetType, TraceNodeData } from '../../../config/types.js';
 import { ASSET_TYPE_LABELS } from '../../../config/labels.js';
@@ -20,7 +20,6 @@ import {
 import { createNodeTexture, createIconOnlyTexture } from './nodeTextureRenderer.js';
 import { traceState } from '../../../stores/traceState.svelte.js';
 
-export const DEFAULT_NODE_ALPHA = 0.8;
 
 export interface GraphNode extends Container {
   nodeData: TraceNodeData;
@@ -275,7 +274,7 @@ export function createGraphNode(
 
   group.nodeData = node;
   group.baseScale = 1;
-  group.alpha = DEFAULT_NODE_ALPHA;
+  group.alpha = getCssVarFloat('--node-alpha');
   group.setSelected = () => {}; // No-op, selection ring removed
 
   // Action nodes are pure connectors - not selectable, no hover cursor

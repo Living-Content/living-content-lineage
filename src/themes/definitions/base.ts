@@ -39,8 +39,10 @@ export const baseTokens = {
   'collapsed-edge-gap': '200px',
   'workflow-edge-width': '8px',
   'workflow-dot-radius': '12px',
-  'faded-node-alpha': '0.6',
-  'faded-node-blur': '4',
+  'node-alpha': '0.8',
+  'node-hover-alpha': '1',
+  'node-faded-alpha': '0.6',
+  'node-faded-blur': '4',
 
   // Step labels (for step view)
   'step-label-font-size': '20px',

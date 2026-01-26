@@ -48,9 +48,7 @@ export const attachNodeInteraction = (node: Container, callbacks: NodeCallbacks)
   node.cursor = 'pointer';
   node.cullable = true;
 
-  // Cast to GraphNode to access phase bar properties
   const graphNode = node as GraphNode;
-  const { phaseBarGraphics, phaseColor, nodeWidth, nodeHeight, baseScale } = graphNode;
 
   node.on('pointerdown', (e) => {
     pointerStart = { x: e.globalX, y: e.globalY };
@@ -74,7 +72,8 @@ export const attachNodeInteraction = (node: Container, callbacks: NodeCallbacks)
     callbacks.onHover();
     if (hoverTween) hoverTween.kill();
 
-    // Animate phase bar width expansion
+    // Read properties at event time (may be set async after node creation)
+    const { phaseBarGraphics, phaseColor, nodeWidth, nodeHeight, baseScale } = graphNode;
     if (phaseBarGraphics && phaseColor) {
       const animState = { width: GEOMETRY.PHASE_BAR_WIDTH * baseScale };
       hoverTween = gsap.to(animState, {
@@ -92,7 +91,7 @@ export const attachNodeInteraction = (node: Container, callbacks: NodeCallbacks)
     callbacks.onHoverEnd();
     if (hoverTween) hoverTween.kill();
 
-    // Animate phase bar width back to normal
+    const { phaseBarGraphics, phaseColor, nodeWidth, nodeHeight, baseScale } = graphNode;
     if (phaseBarGraphics && phaseColor) {
       const animState = { width: GEOMETRY.PHASE_BAR_WIDTH_HOVER * baseScale };
       hoverTween = gsap.to(animState, {

@@ -83,8 +83,8 @@ export async function initGraphAssets(
   const nodeMap = new Map<string, GraphNode>();
   const stepNodeMap = new Map<string, GraphNode>();
 
-  // Create animation controller
-  const animationController = createNodeAnimationController(nodeMap);
+  // Create animation controller for all nodes (workflow and step)
+  const animationController = createNodeAnimationController(nodeMap, stepNodeMap);
 
   // Calculate max node width per group (grouped by node.x position)
   const nodeWidths = new Map<number, number>();

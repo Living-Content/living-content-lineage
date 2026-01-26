@@ -19,7 +19,7 @@ import type { GraphEngine, SelectionTarget } from './interface.js';
 import {
   applySelectionHighlight,
   applyPhaseFilter,
-  clearSelectionVisuals,
+  clearSelection,
   type SelectionHighlighterDeps,
 } from '../interaction/selectionHighlighter.js';
 import { renderEdges } from '../rendering/edgeRenderer.js';
@@ -127,7 +127,7 @@ export const createGraphEngine = (deps: EngineDeps): GraphEngine => {
         });
       }
     } else {
-      clearSelectionVisuals(createHighlighterDeps(deps, false));
+      clearSelection(createHighlighterDeps(deps, false));
     }
   };
 

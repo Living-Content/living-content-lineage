@@ -11,18 +11,27 @@ export interface NodeAnimationController {
 
 /**
  * Creates a controller for animating node alpha values with smooth lerping.
+ * Accepts multiple node maps to look up nodes from.
  */
 export const createNodeAnimationController = (
-  nodeMap: Map<string, GraphNode>
+  ...nodeMaps: Map<string, GraphNode>[]
 ): NodeAnimationController => {
   const animatingNodes = new Map<string, number>();
   let animationFrameId: number | null = null;
+
+  const findNode = (id: string): GraphNode | undefined => {
+    for (const map of nodeMaps) {
+      const node = map.get(id);
+      if (node) return node;
+    }
+    return undefined;
+  };
 
   const animateNodeAlpha = (): void => {
     const toRemove: string[] = [];
 
     animatingNodes.forEach((target, id) => {
-      const node = nodeMap.get(id);
+      const node = findNode(id);
       if (!node) {
         toRemove.push(id);
         return;

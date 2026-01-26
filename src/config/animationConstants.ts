@@ -51,8 +51,6 @@ export const GEOMETRY = {
   NODE_BORDER_RADIUS: 4,
   /** Scale factor for expanded node */
   EXPANDED_NODE_SCALE: 2.5,
-  /** Opacity for non-expanded nodes during expansion */
-  FADED_NODE_OPACITY: 0.6,
   /** Duration for phase bar hover animation (seconds) */
   PHASE_BAR_HOVER_DURATION: 0.15,
   /** Gap between node and overlay (pixels) */

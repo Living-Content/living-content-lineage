@@ -198,7 +198,7 @@ export function createStepLabels(
   };
 
   const setPhaseFilterVisibility = (activePhase: Phase | null): void => {
-    const fadedAlpha = getCssVarFloat('--faded-node-alpha');
+    const fadedAlpha = getCssVarFloat('--node-faded-alpha');
     for (const entry of entries) {
       const isVisible = activePhase === null || entry.phase === activePhase;
       const alpha = isVisible ? 1 : fadedAlpha;

@@ -82,7 +82,7 @@ export const renderEdges = (
     }
   }
 
-  const fadedAlpha = getCssVarFloat('--faded-node-alpha');
+  const fadedAlpha = getCssVarFloat('--node-faded-alpha');
   fadedLineGraphics.alpha = fadedAlpha;
 
   edgeLayer.addChild(fadedLineGraphics);
@@ -104,7 +104,7 @@ export const renderStepEdges = (
   const stepOrder = steps.map((s) => s.id);
   const color = getCssVarColorHex('--color-edge');
   const workflowEdgeWidth = getCssVarInt('--workflow-edge-width');
-  const fadedAlpha = getCssVarFloat('--faded-node-alpha');
+  const fadedAlpha = getCssVarFloat('--node-faded-alpha');
 
   for (let i = 0; i < stepOrder.length - 1; i++) {
     const nextStepId = stepOrder[i + 1];

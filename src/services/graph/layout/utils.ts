@@ -4,7 +4,8 @@
  */
 import type { Container, Ticker } from 'pixi.js';
 import type { TraceNodeData, StepUI, TraceEdgeData, Phase } from '../../../config/types.js';
-import { createGraphNode, type GraphNode, DEFAULT_NODE_ALPHA, type NodeRenderOptions } from '../rendering/nodeRenderer.js';
+import { createGraphNode, type GraphNode, type NodeRenderOptions } from '../rendering/nodeRenderer.js';
+import { getCssVarFloat } from '../../../themes/index.js';
 import { createIconNode } from '../rendering/iconNodeRenderer.js';
 import { getIconNodeConfig, getPhaseIconPath } from '../../../config/icons.js';
 import { COLLAPSED_NODE_SCALE } from '../../../config/constants.js';
@@ -96,15 +97,14 @@ export const createHoverCallbacks = (
     onHoverEnd: () => {
       config.container.style.cursor = 'grab';
       const selectedId = config.getSelectedNodeId();
-      // If a node is selected and this isn't it, restore fade
-      // Otherwise restore to default alpha
       if (config.setNodeAlpha) {
         if (selectedId === nodeId) {
-          config.setNodeAlpha(nodeId, 1);
-        } else if (selectedId) {
-          config.setNodeAlpha(nodeId, GEOMETRY.FADED_NODE_OPACITY);
+          // Selected node stays at hover alpha
+          config.setNodeAlpha(nodeId, getCssVarFloat('--node-hover-alpha'));
         } else {
-          config.setNodeAlpha(nodeId, DEFAULT_NODE_ALPHA);
+          // Non-selected nodes return to default alpha
+          // (blur/fade is handled by selectionHighlighter if active)
+          config.setNodeAlpha(nodeId, getCssVarFloat('--node-alpha'));
         }
       }
       config.onHoverEnd();
@@ -210,6 +210,7 @@ export const createStepElement = (
       hoverConfig.container.style.cursor = 'pointer';
       const stepNode = nodeRef.current;
       if (stepNode) {
+        stepNode.alpha = getCssVarFloat('--node-hover-alpha');
         const bounds = stepNode.getBounds();
         hoverConfig.onHover({
           title: step.label,
@@ -222,6 +223,13 @@ export const createStepElement = (
     },
     onHoverEnd: () => {
       hoverConfig.container.style.cursor = 'grab';
+      const stepNode = nodeRef.current;
+      if (stepNode) {
+        const selectedId = hoverConfig.getSelectedNodeId();
+        stepNode.alpha = selectedId === step.id
+          ? getCssVarFloat('--node-hover-alpha')
+          : getCssVarFloat('--node-alpha');
+      }
       hoverConfig.onHoverEnd();
     },
   };

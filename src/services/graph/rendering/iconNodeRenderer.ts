@@ -4,9 +4,9 @@
  * Uses texture caching for performance.
  */
 import { Container, Sprite, Texture, Ticker } from 'pixi.js';
-import { getCssVar, getCssVarInt } from '../../../themes/index.js';
+import { getCssVar, getCssVarInt, getCssVarFloat } from '../../../themes/index.js';
 import type { TraceNodeData } from '../../../config/types.js';
-import { DEFAULT_NODE_ALPHA, type GraphNode } from './nodeRenderer.js';
+import type { GraphNode } from './nodeRenderer.js';
 import { attachNodeInteraction, type NodeCallbacks } from '../interaction/nodeInteraction.js';
 import { createRetinaCanvas } from './rendererUtils.js';
 
@@ -99,7 +99,7 @@ export const createIconNode = async (
   group.nodeWidth = size;
   group.nodeHeight = size;
   group.baseScale = 1;
-  group.alpha = DEFAULT_NODE_ALPHA;
+  group.alpha = getCssVarFloat('--node-alpha');
   group.setSelected = () => {}; // No-op, selection ring removed
 
   attachNodeInteraction(group, callbacks);
