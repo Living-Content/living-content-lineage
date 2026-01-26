@@ -57,10 +57,11 @@ export const createSelectionController = (deps: SelectionControllerDeps): Select
     traceState.expandNode(node);
     traceState.setExpansionProgress(1);
 
-    // Center on node, then set overlay node AFTER viewport settles
-    centerOnNode(node.id, {
-      onComplete: () => updateOverlayNode(),
-    });
+    // Set overlay node immediately so panel tracks during animation
+    updateOverlayNode();
+
+    // Center on node
+    centerOnNode(node.id, {});
   };
 
   const selectStep = (stepId: string, graphNode: GraphNode, stepData: StepData): void => {

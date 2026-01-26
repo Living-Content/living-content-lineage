@@ -129,8 +129,14 @@ export const traceState = {
     overlayNode = info;
   },
 
-  updateViewport(state: Partial<ViewportState>): void {
-    viewportState = { ...viewportState, ...state };
+  updateViewport(state: ViewportState): void {
+    viewportState = {
+      x: state.x,
+      y: state.y,
+      scale: state.scale,
+      width: state.width,
+      height: state.height,
+    };
   },
 
   /**
