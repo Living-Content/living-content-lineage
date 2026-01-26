@@ -33,7 +33,7 @@
 
 <style>
   .action-item {
-    padding: var(--space-sm, 8px) 0;
+    padding: var(--space-sm) 0;
     border-top: 1px solid var(--color-border-light, rgba(0, 0, 0, 0.04));
   }
 

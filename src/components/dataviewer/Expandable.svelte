@@ -77,6 +77,6 @@
   }
 
   .expandable-content {
-    padding-top: var(--space-sm, 8px);
+    padding-top: var(--space-sm);
   }
 </style>

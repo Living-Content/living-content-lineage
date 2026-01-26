@@ -39,10 +39,10 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    padding: var(--space-xl, 20px);
+    padding: var(--space-xl);
     background: var(--metric-card-bg, rgba(0, 0, 0, 0.03));
     border: 1px solid var(--metric-card-border, rgba(0, 0, 0, 0.06));
-    border-radius: var(--radius-md, 8px);
+    border-radius: var(--radius-md);
     min-width: 0;
     min-height: 80px;
   }
@@ -55,12 +55,12 @@
 
   /* Compact size variant */
   .size-compact {
-    padding: var(--space-md, 12px);
+    padding: var(--space-md);
     min-height: 56px;
   }
 
   .size-compact .value {
-    font-size: var(--font-size-body, 14px);
+    font-size: var(--font-size-body);
   }
 
   .metric-value {
@@ -71,7 +71,7 @@
   }
 
   .value {
-    font-size: var(--font-size-heading, 24px);
+    font-size: var(--font-size-heading);
     font-weight: var(--font-weight-semibold, 600);
     letter-spacing: var(--letter-spacing-tight, -0.02em);
     line-height: var(--line-height-snug, 1.2);
@@ -79,20 +79,20 @@
   }
 
   .unit {
-    font-size: var(--font-size-small, 12px);
+    font-size: var(--font-size-small);
     color: var(--metric-unit-color, var(--color-text-muted));
     font-weight: var(--font-weight-normal, 400);
   }
 
   .metric-description {
-    margin-top: var(--space-xs, 4px);
-    font-size: var(--font-size-small, 12px);
+    margin-top: var(--space-xs);
+    font-size: var(--font-size-small);
     color: var(--color-text-secondary);
     line-height: 1.4;
   }
 
   .metric-label {
-    font-size: var(--font-size-small, 12px);
+    font-size: var(--font-size-small);
     font-weight: var(--font-weight-medium, 500);
     text-transform: uppercase;
     letter-spacing: var(--letter-spacing-wider, 0.05em);

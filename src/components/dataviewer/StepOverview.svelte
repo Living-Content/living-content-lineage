@@ -103,18 +103,18 @@
   .step-overview {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md, 12px);
+    gap: var(--space-md);
   }
 
   .metrics-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-md, 12px);
+    gap: var(--space-md);
   }
 
   .node-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm, 8px);
+    gap: var(--space-sm);
   }
 </style>

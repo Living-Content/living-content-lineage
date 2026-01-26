@@ -60,8 +60,8 @@
   .attestation-header {
     display: flex;
     align-items: center;
-    gap: var(--space-md, 12px);
-    font-size: var(--font-size-small, 12px);
+    gap: var(--space-md);
+    font-size: var(--font-size-small);
   }
 
   .attestation-label {
@@ -70,10 +70,10 @@
 
   .attestation-badge {
     padding: 2px 6px;
-    font-size: var(--font-size-tiny, 10px);
+    font-size: var(--font-size-tiny);
     font-weight: var(--font-weight-medium, 500);
     background: var(--color-surface-subtle, rgba(0, 0, 0, 0.05));
-    border-radius: var(--radius-sm, 4px);
+    border-radius: var(--radius-sm);
     color: var(--color-text-secondary);
   }
 
@@ -86,14 +86,14 @@
   .attestation-details {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs, 4px);
+    gap: var(--space-xs);
   }
 
   .attestation-row {
     display: flex;
     align-items: baseline;
-    gap: var(--space-md, 12px);
-    font-size: var(--font-size-small, 12px);
+    gap: var(--space-md);
+    font-size: var(--font-size-small);
   }
 
   .detail-label {

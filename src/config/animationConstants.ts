@@ -38,6 +38,14 @@ export const ANIMATION_TIMINGS = {
   NODE_CROSSFADE_OUT_DURATION: 0.2,
   /** Title overlay animation ease factor */
   TITLE_EASE_FACTOR: 0.15,
+  /** Detail panel fade duration for mode transitions (seconds) */
+  DETAIL_PANEL_FADE_DURATION: 0.15,
+  /** Viewport center animation duration (seconds) */
+  VIEWPORT_CENTER_DURATION: 0.3,
+  /** Viewport zoom animation duration (seconds) */
+  VIEWPORT_ZOOM_DURATION: 0.4,
+  /** Node alpha fade animation duration (seconds) */
+  NODE_ALPHA_DURATION: 0.3,
 };
 
 export const GEOMETRY = {
@@ -65,6 +73,4 @@ export const GEOMETRY = {
   TITLE_IDLE_ALPHA: 0.5,
   /** Title animation completion threshold */
   TITLE_ANIMATION_THRESHOLD: 0.01,
-  /** Detail panel fade duration for mode transitions (seconds) */
-  DETAIL_PANEL_FADE_DURATION: 0.15,
 };

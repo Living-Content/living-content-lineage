@@ -13,7 +13,7 @@
 <style>
   .card-grid {
     display: grid;
-    gap: var(--space-md, 12px);
+    gap: var(--space-md);
   }
 
   .columns-1 {

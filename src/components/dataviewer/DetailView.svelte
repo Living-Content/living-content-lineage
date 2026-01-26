@@ -10,11 +10,7 @@
     getDetailOnlyFields,
     getValueByPath,
   } from '../../config/displayConfig.js';
-  import {
-    extractAssertionData,
-    formatDuration,
-    type ParsedAssertionData,
-  } from '../../services/dataviewer/parsing/assertionParsers.js';
+  import { buildDataSource } from '../../services/dataviewer/parsing/dataSourceBuilder.js';
   import CardSection from './cards/CardSection.svelte';
   import PropertyGroup from './detail/PropertyGroup.svelte';
   import PropertyRow from './PropertyRow.svelte';
@@ -24,70 +20,13 @@
 
   export let node: TraceNodeData;
 
-  let assertions: ParsedAssertionData;
-
   $: assetType = node.assetType;
-  $: assetManifest = node.assetManifest;
   $: phase = node.phase;
   $: displayConfig = getDisplayConfig(assetType);
-  $: assertions = extractAssertionData(assetManifest?.assertions);
-  $: data = assetManifest?.data ?? {};
-
-  // Computed values that require transformation
-  $: durationMs = assertions.action?.durationMs ?? assertions.execution?.executionDurationMs;
-
-  function formatDimensions(c: Record<string, unknown>): string | undefined {
-    const width = c.width as number | undefined;
-    const height = c.height as number | undefined;
-    if (width && height) return `${width}×${height}`;
-    return undefined;
-  }
-
-  // Type-safe data access
-  type DataWithNested = Record<string, unknown> & {
-    executionResult?: Record<string, unknown>;
-    executionPlan?: Record<string, unknown>;
-  };
-  $: typedData = data as DataWithNested;
+  $: data = node.assetManifest?.data ?? {};
 
   // Build merged dataSource for consistent field access
-  // This allows getValueByPath to find both configured AND data fields
-  $: dataSource = {
-    // Spread data first so explicit fields can override
-    ...data,
-    // Flatten nested objects from result data
-    ...(typedData.executionResult ?? {}),
-    ...(typedData.executionPlan ?? {}),
-    // Node-level fields
-    ...node,
-    // Model-specific fields (tokens from lco.usage assertion)
-    modelId: assertions.model?.modelId,
-    provider: assertions.model?.provider,
-    'tokens.input': assertions.usage?.inputTokens,
-    'tokens.output': assertions.usage?.outputTokens,
-    // Code-specific fields
-    function: assertions.code?.function ?? assertions.action?.function,
-    module: assertions.code?.module,
-    hash: assertions.code?.hash,
-    // Duration: unified for both Action and Code
-    duration: formatDuration(durationMs),
-    // Action-specific fields
-    actionType: assertions.c2paActions?.actions?.[0]?.action?.replace('c2pa.', ''),
-    agent: assertions.c2paActions?.actions?.[0]?.softwareAgent?.name,
-    agentVersion: assertions.c2paActions?.actions?.[0]?.softwareAgent?.version,
-    startTime: assertions.action?.startTime ?? assertions.execution?.executionStartTime,
-    endTime: assertions.action?.endTime ?? assertions.execution?.executionEndTime,
-    // Attestation/Credential fields
-    status: assetManifest?.attestation ? 'Verified' : undefined,
-    algorithm: assetManifest?.attestation?.alg,
-    issuer: assetManifest?.attestation?.issuer,
-    // Media fields
-    format: assetManifest?.format,
-    dimensions: formatDimensions(data as Record<string, unknown>),
-    fileSize: (data as Record<string, unknown>).size,
-    // Source code
-    sourceCode: assetManifest?.sourceCode,
-  };
+  $: dataSource = buildDataSource(node);
 
   // Classify card fields into metrics and properties
   $: cardClassification = classifyCardFields(displayConfig);
@@ -233,6 +172,6 @@
   .detail-view {
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg, 16px);
+    gap: var(--space-lg);
   }
 </style>

@@ -35,8 +35,8 @@
 <style>
   .property-group {
     border-top: 1px solid var(--section-border-color, rgba(0, 0, 0, 0.06));
-    padding-top: var(--space-md, 12px);
-    margin-top: var(--space-md, 12px);
+    padding-top: var(--space-md);
+    margin-top: var(--space-md);
   }
 
   .property-group:first-child {
@@ -46,11 +46,11 @@
   }
 
   .group-header {
-    margin-bottom: var(--space-sm, 8px);
+    margin-bottom: var(--space-sm);
   }
 
   .group-title {
-    font-size: var(--font-size-body, 14px);
+    font-size: var(--font-size-body);
     font-weight: var(--font-weight-semibold, 600);
     text-transform: uppercase;
     letter-spacing: var(--letter-spacing-wider, 0.05em);
@@ -60,6 +60,6 @@
   .group-content {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm, 8px);
+    gap: var(--space-sm);
   }
 </style>

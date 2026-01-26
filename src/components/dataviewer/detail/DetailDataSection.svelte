@@ -99,6 +99,6 @@
   .detail-data-section {
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg, 16px);
+    gap: var(--space-lg);
   }
 </style>

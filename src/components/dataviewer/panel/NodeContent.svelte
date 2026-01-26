@@ -35,11 +35,11 @@
 
 <style>
   .node-header {
-    margin-bottom: var(--space-xs, 4px);
+    margin-bottom: var(--space-xs);
   }
 
   .node-title {
-    font-size: var(--font-size-heading, 18px);
+    font-size: var(--font-size-heading);
     font-weight: var(--font-weight-semibold, 600);
     letter-spacing: var(--letter-spacing-tight, -0.02em);
     color: var(--color-text-primary);
@@ -48,9 +48,9 @@
   }
 
   .node-description {
-    font-size: var(--font-size-small, 12px);
+    font-size: var(--font-size-small);
     color: var(--color-text-secondary);
-    margin: var(--space-xs, 4px) 0 0 0;
+    margin: var(--space-xs) 0 0 0;
     line-height: 1.4;
   }
 

@@ -3,6 +3,7 @@
  * Handles smooth transitions for node opacity changes using gsap.
  */
 import gsap from 'gsap';
+import { ANIMATION_TIMINGS } from '../../../config/animationConstants.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 
 export interface NodeAnimationController {
@@ -37,7 +38,7 @@ export const createNodeAnimationController = (
 
     const tween = gsap.to(node, {
       alpha,
-      duration: 0.3,
+      duration: ANIMATION_TIMINGS.NODE_ALPHA_DURATION,
       ease: 'power2.out',
       onComplete: () => { activeTweens.delete(nodeId); },
     });

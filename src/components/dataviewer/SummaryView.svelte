@@ -7,6 +7,7 @@
   import type { TraceNodeData } from '../../config/types.js';
   import { getDisplayConfig, classifyCardFields, getValueByPath } from '../../config/displayConfig.js';
   import { extractAssertionData, formatDuration } from '../../services/dataviewer/parsing/assertionParsers.js';
+  import { buildDataSource } from '../../services/dataviewer/parsing/dataSourceBuilder.js';
   import CardSection from './cards/CardSection.svelte';
   import ImpactSection from './ImpactSection.svelte';
   import PropertyRow from './PropertyRow.svelte';
@@ -19,54 +20,8 @@
   $: data = node.assetManifest?.data ?? {};
   $: assertions = extractAssertionData(node.assetManifest?.assertions);
 
-  // Build data source combining node, data, and assertions
-  // Duration: prefer lco.action (Actions), fall back to lco.execution (Code)
-  $: durationMs = assertions.action?.durationMs ?? assertions.execution?.executionDurationMs;
-
-  // Type-safe data access
-  type DataWithNested = Record<string, unknown> & {
-    executionResult?: Record<string, unknown>;
-    executionPlan?: Record<string, unknown>;
-  };
-  $: typedData = data as DataWithNested;
-
-  $: dataSource = {
-    // Spread data first
-    ...data,
-    // Flatten nested objects from result data
-    ...(typedData.executionResult ?? {}),
-    ...(typedData.executionPlan ?? {}),
-    // Node-level fields
-    ...node,
-    // Model-specific fields (tokens from lco.usage assertion)
-    modelId: assertions.model?.modelId,
-    provider: assertions.model?.provider,
-    'tokens.input': assertions.usage?.inputTokens,
-    'tokens.output': assertions.usage?.outputTokens,
-    // Code-specific fields
-    function: assertions.code?.function,
-    module: assertions.code?.module,
-    // Duration: unified for both Action and Code
-    duration: formatDuration(durationMs),
-    // Action-specific fields
-    actionType: assertions.c2paActions?.actions?.[0]?.action?.replace('c2pa.', ''),
-    agent: assertions.c2paActions?.actions?.[0]?.softwareAgent?.name,
-    // Attestation/Credential fields
-    status: node.assetManifest?.attestation ? 'Verified' : undefined,
-    algorithm: node.assetManifest?.attestation?.alg,
-    issuer: node.assetManifest?.attestation?.issuer,
-    // Media fields
-    format: node.assetManifest?.format,
-    dimensions: formatDimensions(data as Record<string, unknown>),
-    fileSize: (data as Record<string, unknown>).size,
-  };
-
-  function formatDimensions(c: Record<string, unknown>): string | undefined {
-    const width = c.width as number | undefined;
-    const height = c.height as number | undefined;
-    if (width && height) return `${width}×${height}`;
-    return undefined;
-  }
+  // Build merged dataSource for consistent field access
+  $: dataSource = buildDataSource(node);
 
   // Classify card fields into metrics and properties
   $: cardClassification = classifyCardFields(displayConfig);
@@ -140,12 +95,12 @@
   .summary-view {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md, 12px);
+    gap: var(--space-md);
   }
 
   .property-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm, 8px);
+    gap: var(--space-sm);
   }
 </style>

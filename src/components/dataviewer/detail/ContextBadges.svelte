@@ -37,18 +37,18 @@
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
-    gap: var(--space-xs, 4px);
+    gap: var(--space-xs);
     white-space: nowrap;
   }
 
   .separator {
-    font-size: var(--font-size-small, 12px);
+    font-size: var(--font-size-small);
     color: var(--color-text-faint);
     margin: 0 2px;
   }
 
   .breadcrumb {
-    font-size: var(--font-size-tiny, 10px);
+    font-size: var(--font-size-tiny);
     font-weight: var(--font-weight-medium, 500);
     text-transform: uppercase;
     letter-spacing: var(--letter-spacing-wide, 0.03em);

@@ -76,14 +76,14 @@
   .card-section {
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg, 16px);
+    gap: var(--space-lg);
   }
 
   .metrics-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     grid-auto-flow: dense;
-    gap: var(--space-md, 12px);
+    gap: var(--space-md);
   }
 
   .columns-2 {
@@ -107,6 +107,6 @@
   .properties-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm, 8px);
+    gap: var(--space-sm);
   }
 </style>

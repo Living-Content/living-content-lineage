@@ -10,7 +10,6 @@
   import DetailValue from './detail/DetailValue.svelte';
   import HighlightedCode from './detail/HighlightedCode.svelte';
   import ConversationHistory from './detail/ConversationHistory.svelte';
-  import PropertyGroup from './detail/PropertyGroup.svelte';
   import { isRecord } from '../../config/utils.js';
   import { parseJson } from '../../services/dataviewer/parsing/valueParsing.js';
 

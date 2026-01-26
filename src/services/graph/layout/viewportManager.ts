@@ -7,6 +7,7 @@ import gsap from 'gsap';
 import { getCssVarInt } from '../../../themes/index.js';
 import { uiState } from '../../../stores/uiState.svelte.js';
 import { ZOOM_MAX, ZOOM_DEFAULT, VIEWPORT_TOP_MARGIN, VIEWPORT_BOTTOM_MARGIN } from '../../../config/constants.js';
+import { ANIMATION_TIMINGS } from '../../../config/animationConstants.js';
 import type { ViewportState } from '../interaction/viewport.js';
 import type { TopNodeInfo } from '../rendering/workflowLabelRenderer.js';
 import type { NodeAccessor } from './nodeAccessor.js';
@@ -73,7 +74,7 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
       x: targetX,
       y: targetY,
       scale: targetScale,
-      duration: zoom ? 0.4 : 0.3,
+      duration: zoom ? ANIMATION_TIMINGS.VIEWPORT_ZOOM_DURATION : ANIMATION_TIMINGS.VIEWPORT_CENTER_DURATION,
       ease: 'power2.out',
       onUpdate: () => {
         viewport.position.set(viewportState.x, viewportState.y);
@@ -137,7 +138,7 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
       x: targetX,
       y: targetY,
       scale: targetScale,
-      duration: 0.4,
+      duration: ANIMATION_TIMINGS.VIEWPORT_ZOOM_DURATION,
       ease: 'power2.out',
       onUpdate: () => {
         viewport.position.set(viewportState.x, viewportState.y);

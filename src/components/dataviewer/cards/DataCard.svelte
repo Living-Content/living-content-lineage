@@ -50,13 +50,13 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    padding: var(--space-xl, 20px);
+    padding: var(--space-xl);
     background: var(--metric-card-bg, rgba(0, 0, 0, 0.03));
     border: 1px solid var(--metric-card-border, rgba(0, 0, 0, 0.06));
-    border-radius: var(--radius-md, 8px);
+    border-radius: var(--radius-md);
     min-width: 0;
     min-height: 80px;
-    gap: var(--space-sm, 8px);
+    gap: var(--space-sm);
   }
 
   /* Column spanning */
@@ -67,9 +67,9 @@
 
   /* Compact styling for 1-span cards */
   .span-1 {
-    padding: var(--space-md, 12px);
+    padding: var(--space-md);
     min-height: 60px;
-    gap: var(--space-xs, 4px);
+    gap: var(--space-xs);
   }
 
   .span-1 .card-label {
@@ -82,9 +82,9 @@
 
   /* Compact size variant - no min-heights */
   .size-compact {
-    padding: var(--space-sm, 8px) var(--space-md, 12px);
+    padding: var(--space-sm) var(--space-md);
     min-height: auto;
-    gap: var(--space-xs, 4px);
+    gap: var(--space-xs);
   }
 
   .size-compact .card-label {
@@ -110,7 +110,7 @@
   }
 
   .unit {
-    font-size: var(--font-size-body, 14px);
+    font-size: var(--font-size-body);
     color: var(--metric-unit-color, var(--color-text-muted));
     font-weight: var(--font-weight-normal, 400);
   }

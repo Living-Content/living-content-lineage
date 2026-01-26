@@ -79,7 +79,7 @@
     width: 24px;
     height: 24px;
     padding: 0;
-    border-radius: var(--radius-full, 9999px);
+    border-radius: var(--radius-full);
     flex-shrink: 0;
     display: flex;
     align-items: center;

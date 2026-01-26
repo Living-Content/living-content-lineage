@@ -40,8 +40,8 @@
 <style>
   .additional-data {
     border-top: 1px solid var(--section-border-color, rgba(0, 0, 0, 0.06));
-    padding-top: var(--space-md, 12px);
-    margin-top: var(--space-md, 12px);
+    padding-top: var(--space-md);
+    margin-top: var(--space-md);
   }
 
   .section-title {
@@ -55,14 +55,14 @@
   .data-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md, 12px);
-    margin-top: var(--space-sm, 8px);
+    gap: var(--space-md);
+    margin-top: var(--space-sm);
   }
 
   .data-item {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs, 4px);
+    gap: var(--space-xs);
   }
 
   .data-key {

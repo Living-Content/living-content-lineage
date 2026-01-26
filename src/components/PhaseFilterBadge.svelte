@@ -29,9 +29,9 @@
     transform: translateX(-50%);
     display: flex;
     align-items: center;
-    gap: var(--space-sm, 8px);
-    padding: var(--space-md, 12px) var(--space-lg, 16px);
-    border-radius: var(--radius-full, 9999px);
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--radius-full);
     font-family: var(--font-sans);
     font-size: 14px;
     font-weight: 600;

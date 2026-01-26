@@ -48,13 +48,13 @@
   .conversation-history {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm, 8px);
+    gap: var(--space-sm);
     padding: 0 var(--space-md);
   }
 
   .message {
-    padding: var(--space-sm, 8px) var(--space-md, 12px);
-    border-radius: var(--radius-md, 8px);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
     font-family: var(--font-mono);
     font-size: 12px;
     max-width: 85%;
@@ -101,6 +101,6 @@
 
   .pair-separator {
     border-top: 1px dashed var(--color-text-faint, #ccc);
-    margin: var(--space-sm, 8px) 0;
+    margin: var(--space-sm) 0;
   }
 </style>
