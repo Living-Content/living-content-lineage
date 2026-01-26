@@ -7,7 +7,6 @@ import { Container, Graphics } from 'pixi.js';
 import type { TraceEdgeData, StepUI } from '../../../config/types.js';
 import type { GraphNode } from './nodeRenderer.js';
 import { getCssVarColorHex, getCssVarInt, getCssVarFloat } from '../../../themes/index.js';
-import { drawChevron } from './rendererUtils.js';
 
 export type ViewMode = 'trace' | 'workflow';
 
@@ -31,13 +30,10 @@ export const renderEdges = (
 
   const { view, selectedId } = options;
   const edgeWidth = getCssVarInt(view === 'trace' ? '--workflow-edge-width' : '--edge-width');
-  const dotRadius = getCssVarInt(view === 'trace' ? '--workflow-dot-radius' : '--edge-dot-radius');
   const color = getCssVarColorHex('--color-edge');
 
   const lineGraphics = new Graphics();
   const fadedLineGraphics = new Graphics();
-  const dotGraphics = new Graphics();
-  const fadedDotGraphics = new Graphics();
 
   for (const edge of edges) {
     const sourceNode = nodeMap.get(edge.source);
@@ -52,7 +48,6 @@ export const renderEdges = (
       edge.target === selectedId;
 
     const targetLineGraphics = isHighlighted ? lineGraphics : fadedLineGraphics;
-    const targetDotGraphics = isHighlighted ? dotGraphics : fadedDotGraphics;
 
     const sx = sourceNode.position.x;
     const sy = sourceNode.position.y;
@@ -71,13 +66,10 @@ export const renderEdges = (
     if (isMainlyHorizontal) {
       renderHorizontalEdge(
         targetLineGraphics,
-        targetDotGraphics,
         sx, sy, tx, ty,
         sourceHalfW, targetHalfW,
         color,
-        edgeWidth,
-        dotRadius,
-        targetNode.isChevronShape
+        edgeWidth
       );
     } else {
       renderVerticalEdge(
@@ -92,12 +84,9 @@ export const renderEdges = (
 
   const fadedAlpha = getCssVarFloat('--faded-node-alpha');
   fadedLineGraphics.alpha = fadedAlpha;
-  fadedDotGraphics.alpha = fadedAlpha;
 
   edgeLayer.addChild(fadedLineGraphics);
   edgeLayer.addChild(lineGraphics);
-  edgeLayer.addChild(fadedDotGraphics);
-  edgeLayer.addChild(dotGraphics);
 };
 
 /**
@@ -154,24 +143,15 @@ const EDGE_ALPHA = 0.5;
 
 const renderHorizontalEdge = (
   lineGraphics: Graphics,
-  dotGraphics: Graphics,
   sx: number, sy: number,
   tx: number, ty: number,
   sourceHalfW: number, targetHalfW: number,
   color: number,
-  edgeWidth: number,
-  dotRadius: number,
-  targetIsChevron: boolean = false
+  edgeWidth: number
 ): void => {
   const goingRight = tx > sx;
   const startX = goingRight ? sx + sourceHalfW : sx - sourceHalfW;
-  const nodeEdgeX = goingRight ? tx - targetHalfW : tx + targetHalfW;
-
-  // Chevron arm size (must match drawChevron)
-  const chevronArm = dotRadius * 1.5;
-
-  // For chevron targets, line extends to the chevron tip
-  const endX = (targetIsChevron && goingRight) ? nodeEdgeX + chevronArm : nodeEdgeX;
+  const endX = goingRight ? tx - targetHalfW : tx + targetHalfW;
 
   // Calculate control points for cubic bezier curve
   const dx = endX - startX;
@@ -184,11 +164,6 @@ const renderHorizontalEdge = (
     endX, ty
   );
   lineGraphics.stroke({ width: edgeWidth, color, alpha: EDGE_ALPHA });
-
-  // Draw chevron at the node edge (tip points inward to where line ends)
-  if (targetIsChevron && goingRight) {
-    drawChevron(dotGraphics, nodeEdgeX, ty, dotRadius, color, EDGE_ALPHA);
-  }
 };
 
 const renderVerticalEdge = (

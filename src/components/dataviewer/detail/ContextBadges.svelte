@@ -1,7 +1,7 @@
 <script lang="ts">
   /**
-   * Displays hierarchical context badges: Phase > Step > Asset Type.
-   * Each badge is color-coded based on the phase.
+   * Displays hierarchical context breadcrumbs: Type › Step › Phase.
+   * Clean text style matching node visual language.
    */
   import type { Phase, AssetType, Step } from '../../../config/types.ts';
   import { formatAssetTypeLabel } from '../../../config/labels.js';
@@ -23,17 +23,17 @@
   ].filter(Boolean) as Array<{ label: string; type: string }>;
 </script>
 
-<div class="context-badges {phaseClass}">
+<div class="context-breadcrumbs {phaseClass}">
   {#each items as item, i (item.type)}
     {#if i > 0}
-      <span class="separator">‹</span>
+      <span class="separator">›</span>
     {/if}
-    <span class="badge badge-{item.type}">{item.label}</span>
+    <span class="breadcrumb breadcrumb-{item.type}">{item.label}</span>
   {/each}
 </div>
 
 <style>
-  .context-badges {
+  .context-breadcrumbs {
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
@@ -43,82 +43,29 @@
 
   .separator {
     font-size: var(--font-size-small, 12px);
-    color: var(--color-text-light, #999);
+    color: var(--color-text-faint);
     margin: 0 2px;
   }
 
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 8px;
+  .breadcrumb {
     font-size: var(--font-size-tiny, 10px);
     font-weight: var(--font-weight-medium, 500);
     text-transform: uppercase;
     letter-spacing: var(--letter-spacing-wide, 0.03em);
-    border-radius: var(--radius-full, 9999px);
-    background: var(--color-surface-subtle, rgba(0, 0, 0, 0.05));
     color: var(--color-text-secondary);
   }
 
-  /* Hierarchy opacity: Phase (0.5) > Step (0.7) > Type (1.0) - most specific is most prominent */
-  .badge-phase {
-    opacity: 0.5;
+  /* Type label uses monospace font */
+  .breadcrumb-type {
+    font-family: var(--font-mono);
+    color: var(--color-text-primary);
   }
 
-  .badge-step {
-    opacity: 0.7;
-  }
-
-  .badge-type {
-    opacity: 1;
-  }
-
-  /* Phase-based background colors */
-  .phase-acquisition .badge {
-    background: var(--phase-acquisition, rgb(239, 45, 45));
-    color: white;
-  }
-  .phase-acquisition .separator {
-    color: var(--phase-acquisition, rgb(239, 45, 45));
-  }
-
-  .phase-preparation .badge {
-    background: var(--phase-preparation, rgb(255, 89, 94));
-    color: white;
-  }
-  .phase-preparation .separator {
-    color: var(--phase-preparation, rgb(255, 89, 94));
-  }
-
-  .phase-retrieval .badge {
-    background: var(--phase-retrieval, rgb(255, 202, 58));
-    color: var(--color-text-primary, #1a1a1a);
-  }
-  .phase-retrieval .separator {
-    color: var(--phase-retrieval, rgb(255, 202, 58));
-  }
-
-  .phase-reasoning .badge {
-    background: var(--phase-reasoning, rgb(138, 201, 38));
-    color: var(--color-text-primary, #1a1a1a);
-  }
-  .phase-reasoning .separator {
-    color: var(--phase-reasoning, rgb(138, 201, 38));
-  }
-
-  .phase-generation .badge {
-    background: var(--phase-generation, rgb(25, 130, 196));
-    color: white;
-  }
-  .phase-generation .separator {
-    color: var(--phase-generation, rgb(25, 130, 196));
-  }
-
-  .phase-persistence .badge {
-    background: var(--phase-persistence, rgb(0, 84, 175));
-    color: white;
-  }
-  .phase-persistence .separator {
-    color: var(--phase-persistence, rgb(0, 84, 175));
-  }
+  /* Phase-colored separators for visual continuity */
+  .phase-acquisition .separator { color: var(--phase-acquisition); }
+  .phase-preparation .separator { color: var(--phase-preparation); }
+  .phase-retrieval .separator { color: var(--phase-retrieval); }
+  .phase-reasoning .separator { color: var(--phase-reasoning); }
+  .phase-generation .separator { color: var(--phase-generation); }
+  .phase-persistence .separator { color: var(--phase-persistence); }
 </style>

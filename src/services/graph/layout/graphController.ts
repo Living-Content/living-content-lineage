@@ -17,10 +17,13 @@ import { traceState } from '../../../stores/traceState.svelte.js';
 import { uiState } from '../../../stores/uiState.svelte.js';
 import { createNodeAnimationController } from '../interaction/nodeAnimationController.js';
 import { createNodes, repositionNodesWithGaps, repositionStepNodesWithGaps } from './nodeCreator.js';
+import { preCalculateNodeWidth } from '../rendering/nodeTextMeasurement.js';
 import { recalculateStepBounds, createStepNodes, calculateTopNodeInfo, calculateBottomNodeInfo } from './workflowCreator.js';
 import { initializePixi } from './pixiSetup.js';
 import { createStoreSubscriptions } from './graphSubscriptions.svelte.js';
 import { createViewportManager, createResizeHandler } from './viewportManager.js';
+import { createSelectionController } from '../interaction/selectionController.js';
+import { createKeyboardNavigation } from '../interaction/keyboardNavigation.js';
 
 interface HoverPayload {
   title: string;
@@ -101,15 +104,43 @@ export async function createGraphController({
     currentPhaseFilter: uiState.phaseFilter,
   };
 
+  // Late-bound reference for centerOnExpandedNode (set after viewportManager is created)
+  let centerOnExpandedNodeRef: ((nodeId: string, callback: () => void) => void) | null = null;
+
+  // Selection controller for unified node and step selection
+  const selectionController = createSelectionController({
+    nodeMap,
+    stepNodeMap,
+    viewport,
+    viewportState,
+    centerOnExpandedNode: (nodeId, callback) => {
+      if (centerOnExpandedNodeRef) {
+        centerOnExpandedNodeRef(nodeId, callback);
+      } else {
+        callback();
+      }
+    },
+  });
+
+  // Calculate max node width and store it
+  const maxNodeWidth = traceData.nodes.reduce((max, node) => {
+    const width = preCalculateNodeWidth(node, 1);
+    return width > max ? width : max;
+  }, 0);
+  traceState.setNodeWidth(maxNodeWidth);
+
   // Create nodes
   await createNodes(traceData.nodes, nodeMap, {
     container,
     nodeLayer: layers.nodeLayer,
-    selectionLayer: layers.selectionLayer,
     graphScale,
     ticker: app.ticker,
-    callbacks: { onHover: callbacks.onHover, onHoverEnd: callbacks.onHoverEnd },
-    getSelectedNodeId: () => state.currentSelection?.type === 'node' ? state.currentSelection.nodeId : null,
+    callbacks: {
+      onHover: callbacks.onHover,
+      onHoverEnd: callbacks.onHoverEnd,
+      onNodeClick: (node) => selectionController.expand(node),
+    },
+    getSelectedNodeId: () => selectionController.getSelectedElementId(),
     setNodeAlpha: animationController.setNodeAlpha,
   });
 
@@ -120,10 +151,22 @@ export async function createGraphController({
   createStepNodes(traceData.steps, traceData.nodes, traceData.edges, stepNodeMap, {
     container,
     stepNodeLayer: layers.stepNodeLayer,
-    selectionLayer: layers.selectionLayer,
     graphScale,
     ticker: app.ticker,
-    callbacks: { onHover: callbacks.onHover, onHoverEnd: callbacks.onHoverEnd },
+    callbacks: {
+      onHover: callbacks.onHover,
+      onHoverEnd: callbacks.onHoverEnd,
+      onStepSelect: (stepId, graphNode, payload) => {
+        selectionController.selectStep(stepId, graphNode, {
+          stepId: payload.stepId,
+          label: payload.label,
+          phase: payload.phase,
+          nodes: payload.nodes,
+          edges: payload.edges,
+        });
+      },
+      getSelectedElementId: () => selectionController.getSelectedElementId(),
+    },
   });
 
   repositionStepNodesWithGaps(stepNodeMap);
@@ -201,6 +244,19 @@ export async function createGraphController({
     bottomNodeInfo,
   });
 
+  // Wire up late-bound reference now that viewportManager exists
+  centerOnExpandedNodeRef = viewportManager.centerOnExpandedNode;
+
+  // Keyboard navigation
+  const keyboardNavigation = createKeyboardNavigation({
+    nodeMap,
+    nodes: traceData.nodes,
+    onExpand: (node) => selectionController.expand(node),
+    onCollapse: () => selectionController.collapse(),
+    centerOnNode: viewportManager.panToNode,
+  });
+  keyboardNavigation.attach();
+
   // Store subscriptions
   const subscriptions = createStoreSubscriptions({
     nodeMap,
@@ -269,6 +325,8 @@ export async function createGraphController({
 
   return {
     destroy: () => {
+      keyboardNavigation.detach();
+      selectionController.destroy();
       subscriptions.destroy();
       viewportHandlers.destroy();
       resizeHandler.destroy();

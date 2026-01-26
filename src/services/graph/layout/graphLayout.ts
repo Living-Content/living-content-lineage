@@ -3,11 +3,12 @@
  * Provides atomic functions for element creation, layer management, and map population.
  */
 import type { Container, Ticker } from 'pixi.js';
-import type { TraceNodeData, StepUI, TraceEdgeData } from '../../../config/types.js';
+import type { TraceNodeData, StepUI, TraceEdgeData, Phase } from '../../../config/types.js';
 import { createGraphNode, type GraphNode, DEFAULT_NODE_ALPHA, type NodeRenderOptions } from '../rendering/nodeRenderer.js';
 import { createIconNode } from '../rendering/iconNodeRenderer.js';
 import { getIconNodeConfig, getPhaseIconPath } from '../../../config/icons.js';
 import { COLLAPSED_NODE_SCALE } from '../../../config/constants.js';
+import { GEOMETRY } from '../../../config/animationConstants.js';
 import { traceState } from '../../../stores/traceState.svelte.js';
 
 export type ElementType = 'step' | 'node';
@@ -31,6 +32,17 @@ export interface HoverPayload {
 }
 
 /**
+ * Step selection data passed to onStepSelect callback.
+ */
+export interface StepSelectionPayload {
+  stepId: string;
+  label: string;
+  phase: Phase;
+  nodes: TraceNodeData[];
+  edges: TraceEdgeData[];
+}
+
+/**
  * Configuration for creating hover callbacks.
  */
 export interface HoverCallbackConfig {
@@ -39,6 +51,8 @@ export interface HoverCallbackConfig {
   setNodeAlpha?: (nodeId: string, alpha: number) => void;
   onHover: (payload: HoverPayload) => void;
   onHoverEnd: () => void;
+  onNodeClick?: (node: TraceNodeData) => void;
+  onStepSelect?: (stepId: string, graphNode: GraphNode, payload: StepSelectionPayload) => void;
 }
 
 /**
@@ -47,7 +61,6 @@ export interface HoverCallbackConfig {
 export interface CreateElementConfig {
   graphScale: number;
   ticker: Ticker;
-  selectionLayer: Container;
   hoverConfig: HoverCallbackConfig;
   nodeMap: Map<string, GraphNode>;
 }
@@ -64,7 +77,8 @@ export const createHoverCallbacks = (
   return {
     onHover: () => {
       config.container.style.cursor = 'pointer';
-      if (!config.getSelectedNodeId() && config.setNodeAlpha) {
+      // Always brighten on hover, even if another node is selected
+      if (config.setNodeAlpha) {
         config.setNodeAlpha(nodeId, 1);
       }
       const renderedNode = getGraphNode();
@@ -81,8 +95,15 @@ export const createHoverCallbacks = (
     },
     onHoverEnd: () => {
       config.container.style.cursor = 'grab';
-      if (!config.getSelectedNodeId() && config.setNodeAlpha) {
-        config.setNodeAlpha(nodeId, DEFAULT_NODE_ALPHA);
+      const selectedId = config.getSelectedNodeId();
+      // If a node is selected and this isn't it, restore fade
+      // Otherwise restore to default alpha
+      if (config.setNodeAlpha) {
+        if (selectedId && selectedId !== nodeId) {
+          config.setNodeAlpha(nodeId, GEOMETRY.FADED_NODE_OPACITY);
+        } else {
+          config.setNodeAlpha(nodeId, DEFAULT_NODE_ALPHA);
+        }
       }
       config.onHoverEnd();
     },
@@ -96,7 +117,7 @@ export const createNodeElement = async (
   node: TraceNodeData,
   config: CreateElementConfig
 ): Promise<GraphElement> => {
-  const { graphScale, ticker, selectionLayer, hoverConfig, nodeMap } = config;
+  const { graphScale, ticker, hoverConfig, nodeMap } = config;
 
   const iconConfig = getIconNodeConfig(node.nodeType);
   const getIconSize = () => iconConfig?.size ?? 28;
@@ -109,7 +130,13 @@ export const createNodeElement = async (
   );
 
   const nodeCallbacks = {
-    onClick: () => traceState.selectNode(node),
+    onClick: () => {
+      if (hoverConfig.onNodeClick) {
+        hoverConfig.onNodeClick(node);
+      } else {
+        traceState.selectNode(node);
+      }
+    },
     ...hoverCallbacks,
   };
 
@@ -119,10 +146,9 @@ export const createNodeElement = async (
     graphNode = await createIconNode(node, graphScale, ticker, nodeCallbacks, {
       iconPath: iconConfig.iconPath,
       size: iconConfig.size,
-      selectionLayer,
     });
   } else {
-    graphNode = createGraphNode(node, graphScale, ticker, nodeCallbacks, { selectionLayer });
+    graphNode = createGraphNode(node, graphScale, ticker, nodeCallbacks);
   }
 
   return createGraphElement(node.id, 'node', node, graphNode);
@@ -137,7 +163,7 @@ export const createStepElement = (
   edges: TraceEdgeData[],
   config: CreateElementConfig
 ): GraphElement => {
-  const { graphScale, ticker, selectionLayer, hoverConfig } = config;
+  const { graphScale, ticker, hoverConfig } = config;
 
   const stepNodes = nodes.filter((n) => n.step === step.id);
   const stepNodeData: TraceNodeData = {
@@ -161,12 +187,22 @@ export const createStepElement = (
   // Create a reference object so callbacks can access the node after creation
   const nodeRef: { current: GraphNode | null } = { current: null };
 
+  const stepSelectionPayload: StepSelectionPayload = {
+    stepId: step.id,
+    label: step.label,
+    phase: step.phase,
+    nodes: stepNodes,
+    edges: edges.filter(
+      (e) => stepNodes.some((n) => n.id === e.source) || stepNodes.some((n) => n.id === e.target)
+    ),
+  };
+
   const nodeCallbacks = {
     onClick: () => {
-      const stepEdges = edges.filter(
-        (e) => stepNodes.some((n) => n.id === e.source) || stepNodes.some((n) => n.id === e.target)
-      );
-      traceState.selectStep({ stepId: step.id, label: step.label, phase: step.phase, nodes: stepNodes, edges: stepEdges });
+      const graphNode = nodeRef.current;
+      if (graphNode && hoverConfig.onStepSelect) {
+        hoverConfig.onStepSelect(step.id, graphNode, stepSelectionPayload);
+      }
     },
     onHover: () => {
       hoverConfig.container.style.cursor = 'pointer';
@@ -191,7 +227,6 @@ export const createStepElement = (
   const stepGraphNode = createGraphNode(stepNodeData, graphScale, ticker, nodeCallbacks, {
     scale: COLLAPSED_NODE_SCALE,
     renderOptions: stepRenderOptions,
-    selectionLayer,
   });
   nodeRef.current = stepGraphNode;
 

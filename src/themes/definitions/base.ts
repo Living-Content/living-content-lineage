@@ -2,11 +2,11 @@
  * Base theme tokens: layout, spacing, z-index, transitions
  */
 export const baseTokens = {
-  // Font families
+  // Font families (IBM Plex primary, system fallbacks)
   'font-sans':
-    "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    "'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
   'font-mono':
-    "'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Menlo, Consolas, monospace",
+    "'IBM Plex Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Menlo, Consolas, monospace",
 
   // Layout dimensions
   'panel-margin': '25px',
@@ -39,7 +39,7 @@ export const baseTokens = {
   'collapsed-edge-gap': '200px',
   'workflow-edge-width': '8px',
   'workflow-dot-radius': '12px',
-  'faded-node-alpha': '0.25',
+  'faded-node-alpha': '0.6',
   'faded-node-blur': '4',
 
   // Step labels (for step view)
@@ -51,7 +51,8 @@ export const baseTokens = {
   'step-label-dot-gap': '4px',
   'phase-badge-top': '160px',
 
-  // Node sizing
+  // Node sizing and layout
+  'node-vertical-gap': '2px',
   'default-node-size': '14px',
   'claim-icon-size': '56px',
   'icon-node-size': '40px',
@@ -61,6 +62,11 @@ export const baseTokens = {
   'selection-ring-width': '3px',
   'title-left-gap': '9px',
 
+  // Watermark icon (large semi-transparent icon behind node)
+  'watermark-icon-scale': '2.5',
+  'watermark-icon-alpha': '0.15',
+  'watermark-icon-offset-x': '-0.3',
+
   // Border radius scale
   'radius-sm': '4px',
   'radius-md': '8px',
@@ -68,14 +74,16 @@ export const baseTokens = {
   'radius-xl': '16px',
   'radius-full': '9999px',
 
-  // Spacing scale
+  // Spacing scale (8px grid aligned)
   'space-xs': '4px',
   'space-sm': '8px',
   'space-md': '12px',
   'space-lg': '16px',
-  'space-xl': '20px',
-  'space-2xl': '24px',
-  'space-3xl': '32px',
+  'space-xl': '24px',
+  'space-2xl': '32px',
+  'space-3xl': '40px',
+  'space-4xl': '48px',
+  'space-5xl': '64px',
 
   // Transition durations
   'duration-fast': '0.1s',

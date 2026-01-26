@@ -31,6 +31,7 @@ export const typographyTokens = {
   'letter-spacing-wide': '0.02em',
   'letter-spacing-wider': '0.05em',
   'letter-spacing-caps': '0.1em',
+  'letter-spacing-section': '0.15em',
 } as const;
 
 export type TypographyTokenName = keyof typeof typographyTokens;

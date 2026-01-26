@@ -18,12 +18,12 @@ import {
 interface NodeCreatorCallbacks {
   onHover: (payload: HoverPayload) => void;
   onHoverEnd: () => void;
+  onNodeClick?: (node: TraceNodeData) => void;
 }
 
 interface NodeCreatorDeps {
   container: HTMLElement;
   nodeLayer: Container;
-  selectionLayer: Container;
   graphScale: number;
   ticker: Ticker;
   callbacks: NodeCreatorCallbacks;
@@ -44,12 +44,12 @@ const buildElementConfig = (
     setNodeAlpha: deps.setNodeAlpha,
     onHover: deps.callbacks.onHover,
     onHoverEnd: deps.callbacks.onHoverEnd,
+    onNodeClick: deps.callbacks.onNodeClick,
   };
 
   return {
     graphScale: deps.graphScale,
     ticker: deps.ticker,
-    selectionLayer: deps.selectionLayer,
     hoverConfig,
     nodeMap,
   };
@@ -74,36 +74,79 @@ export const createNodes = async (
 };
 
 /**
- * Repositions nodes horizontally to maintain fixed edge gaps between columns.
+ * Repositions nodes: left-aligned within each step column, stacked vertically.
+ * Claims and Actions keep their original Y positions - only regular asset nodes stack.
  * Used for expanded view nodes.
  */
 export const repositionNodesWithGaps = (nodeMap: Map<string, GraphNode>): void => {
-  const nodesByX = new Map<number, GraphNode[]>();
+  // Separate nodes into stackable (regular assets) and non-stackable (claims, actions)
+  const isStackable = (node: GraphNode): boolean => {
+    const data = node.nodeData;
+    return data.nodeType !== 'claim' && data.assetType !== 'Action';
+  };
+
+  // Group nodes by their original X position (step column)
+  const nodesByX = new Map<number, { stackable: GraphNode[]; fixed: GraphNode[] }>();
   nodeMap.forEach((node) => {
     const x = Math.round(node.position.x);
-    if (!nodesByX.has(x)) nodesByX.set(x, []);
-    nodesByX.get(x)!.push(node);
+    if (!nodesByX.has(x)) nodesByX.set(x, { stackable: [], fixed: [] });
+    const group = nodesByX.get(x)!;
+    if (isStackable(node)) {
+      group.stackable.push(node);
+    } else {
+      group.fixed.push(node);
+    }
   });
 
+  // Sort groups by X position (left to right)
   const sortedGroups = Array.from(nodesByX.entries())
     .sort((a, b) => a[0] - b[0])
     .map((entry) => entry[1]);
 
-  let rightEdge = -Infinity;
+  // Sort stackable nodes within each group by Y position (top to bottom)
   for (const group of sortedGroups) {
-    let maxHalfWidth = 0;
-    for (const node of group) {
-      maxHalfWidth = Math.max(maxHalfWidth, node.nodeWidth / 2);
+    group.stackable.sort((a, b) => a.position.y - b.position.y);
+  }
+
+  const nodeGap = getCssVarInt('--node-vertical-gap');
+  let rightEdge = -Infinity;
+
+  for (const group of sortedGroups) {
+    const allNodes = [...group.stackable, ...group.fixed];
+    if (allNodes.length === 0) continue;
+
+    // All nodes have same width from traceState.nodeWidth
+    const maxWidth = group.stackable[0]?.nodeWidth ?? group.fixed[0]?.nodeWidth ?? 0;
+
+    // Calculate new X position (left edge of column)
+    const firstNode = group.stackable[0] ?? group.fixed[0];
+    const columnLeftX = rightEdge === -Infinity
+      ? firstNode.position.x - maxWidth / 2
+      : rightEdge + getCssVarInt('--expanded-edge-gap');
+
+    // Stack only stackable nodes vertically, left-aligned
+    if (group.stackable.length > 0) {
+      let currentY = group.stackable[0].position.y - group.stackable[0].nodeHeight / 2;
+
+      for (const node of group.stackable) {
+        const newX = columnLeftX + node.nodeWidth / 2;
+        const newY = currentY + node.nodeHeight / 2;
+
+        node.position.x = newX;
+        node.position.y = newY;
+
+        currentY += node.nodeHeight + nodeGap;
+      }
     }
 
-    const newX = rightEdge === -Infinity ? group[0].position.x : rightEdge + getCssVarInt('--expanded-edge-gap') + maxHalfWidth;
-
-    for (const node of group) {
+    // Fixed nodes (claims, actions) only get X repositioned, keep original Y
+    for (const node of group.fixed) {
+      const newX = columnLeftX + maxWidth / 2; // Center in column
       node.position.x = newX;
-      if (node.selectionRing) node.selectionRing.position.x = newX;
     }
 
-    rightEdge = newX + maxHalfWidth;
+    // Update right edge for next column
+    rightEdge = columnLeftX + maxWidth;
   }
 };
 
@@ -120,7 +163,6 @@ export const repositionStepNodesWithGaps = (stepNodeMap: Map<string, GraphNode>)
     const newX = rightEdge === -Infinity ? node.position.x : rightEdge + getCssVarInt('--collapsed-edge-gap') + halfWidth;
 
     node.position.x = newX;
-    if (node.selectionRing) node.selectionRing.position.x = newX;
 
     rightEdge = newX + halfWidth;
   }

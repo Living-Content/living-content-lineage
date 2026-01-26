@@ -11,17 +11,19 @@ import {
   type HoverPayload,
   type CreateElementConfig,
   type HoverCallbackConfig,
+  type StepSelectionPayload,
 } from './graphLayout.js';
 
 interface StepCreatorCallbacks {
   onHover: (payload: HoverPayload) => void;
   onHoverEnd: () => void;
+  onStepSelect: (stepId: string, graphNode: GraphNode, payload: StepSelectionPayload) => void;
+  getSelectedElementId: () => string | null;
 }
 
 interface StepCreatorDeps {
   container: HTMLElement;
   stepNodeLayer: Container;
-  selectionLayer: Container;
   graphScale: number;
   ticker: Ticker;
   callbacks: StepCreatorCallbacks;
@@ -36,15 +38,15 @@ const buildElementConfig = (
 ): CreateElementConfig => {
   const hoverConfig: HoverCallbackConfig = {
     container: deps.container,
-    getSelectedNodeId: () => null, // Step nodes don't have alpha changes on hover
+    getSelectedNodeId: deps.callbacks.getSelectedElementId,
     onHover: deps.callbacks.onHover,
     onHoverEnd: deps.callbacks.onHoverEnd,
+    onStepSelect: deps.callbacks.onStepSelect,
   };
 
   return {
     graphScale: deps.graphScale,
     ticker: deps.ticker,
-    selectionLayer: deps.selectionLayer,
     hoverConfig,
     nodeMap: stepNodeMap,
   };

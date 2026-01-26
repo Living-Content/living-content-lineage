@@ -1,9 +1,8 @@
 /**
  * Text measurement utilities for node layout.
- * Handles dimension calculations for pill and chevron shapes.
  */
 import { getCssVar } from '../../../themes/index.js';
-import { getShape, type NodeShapeType } from './nodeShapes.js';
+import { GEOMETRY } from '../../../config/animationConstants.js';
 import type { NodeRenderOptions } from './nodeRenderer.js';
 
 // Base dimensions (will be scaled)
@@ -13,15 +12,16 @@ export const BASE_SIMPLE_TYPE_FONT_SIZE = 16;
 export const BASE_ICON_DIAMETER = 36;
 export const BASE_NODE_HEIGHT_DETAILED = 56;
 export const BASE_NODE_HEIGHT_SIMPLE = 48;
-export const BASE_LEFT_PADDING = 10;
+export const BASE_LEFT_PADDING = 16;
 export const BASE_ICON_TEXT_GAP = 12;
-export const BASE_RIGHT_PADDING = 12;
+export const BASE_RIGHT_PADDING = 16;
+export const BASE_SIMPLE_HORIZONTAL_PADDING = 24;
 
 const measureCanvas = document.createElement('canvas');
 const measureCtx = measureCanvas.getContext('2d')!;
 
-export const getNodeFontFamily = (): string => {
-  return getCssVar('--font-sans');
+export const getNodeFontFamily = (type: 'sans' | 'mono' = 'sans'): string => {
+  return type === 'mono' ? getCssVar('--font-mono') : getCssVar('--font-sans');
 };
 
 export const measureText = (text: string, fontSize: number, fontWeight = '600'): number => {
@@ -49,38 +49,115 @@ export const getScaledDimensions = (scale: number): ScaledDimensions => {
   };
 };
 
+// Minimum node width to prevent tiny nodes
+export const MIN_NODE_WIDTH = 120;
+// Maximum node width before truncation
+export const MAX_NODE_WIDTH = 300;
+
+/**
+ * Measures text with the correct font.
+ */
+export const measureTextWithFont = (
+  text: string,
+  fontSize: number,
+  fontFamily: string,
+  fontWeight = '400'
+): number => {
+  measureCtx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+  return measureCtx.measureText(text).width;
+};
+
 /**
  * Calculate the total width of a node based on its render options.
- * For chevron shapes, adds extra width for the arrow point.
- * Width is based on the longest text line across both display modes.
+ * Dynamically sizes based on text, with min/max constraints.
  */
 export const calculateNodeWidth = (
   options: NodeRenderOptions,
   dims: ScaledDimensions,
-  scale: number,
-  shapeType: NodeShapeType = 'pill'
+  scale: number
 ): number => {
-  const nodeHeight = options.mode === 'detailed'
-    ? BASE_NODE_HEIGHT_DETAILED * scale
-    : BASE_NODE_HEIGHT_SIMPLE * scale;
+  const contentOffset = GEOMETRY.PHASE_BAR_WIDTH * scale;
+  const rightPadding = 12 * scale;
 
-  const shape = getShape(shapeType);
-  const contentOffset = shape.getContentOffset(nodeHeight);
+  if (options.mode === 'simple') {
+    const horizontalPadding = BASE_SIMPLE_HORIZONTAL_PADDING * scale;
+    const textWidth = measureTextWithFont(
+      options.typeLabel,
+      dims.simpleTypeFontSize,
+      getNodeFontFamily(),
+      '600'
+    );
+    const width = contentOffset + horizontalPadding + textWidth + horizontalPadding;
+    return Math.max(MIN_NODE_WIDTH * scale, Math.min(MAX_NODE_WIDTH * scale, width));
+  }
 
-  // Content starts after left padding (+ content offset for chevron)
-  const textStartX = contentOffset + dims.leftPadding + dims.iconDiameter + dims.iconTextGap;
-  const rightPadding = BASE_RIGHT_PADDING * scale;
+  // Detailed mode: measure both labels with their respective fonts
+  const textStartX = contentOffset + dims.leftPadding;
 
-  // Calculate width for all text variants and use the longest
-  const typeWidthDetailed = measureText(options.typeLabel, dims.typeLabelFontSize);
-  const typeWidthSimple = measureText(options.typeLabel, dims.simpleTypeFontSize);
-  const mainWidth = options.mainLabel ? measureText(options.mainLabel, dims.typeLabelFontSize) : 0;
-  const maxTextWidth = Math.max(typeWidthDetailed, typeWidthSimple, mainWidth);
+  // Type label uses sans-serif
+  const typeWidth = measureTextWithFont(
+    options.typeLabel,
+    dims.typeLabelFontSize,
+    getNodeFontFamily(),
+    '600'
+  );
 
-  const baseWidth = textStartX + maxTextWidth + rightPadding;
+  // Main label uses monospace at larger size
+  const mainWidth = options.mainLabel
+    ? measureTextWithFont(
+        options.mainLabel,
+        dims.mainLabelFontSize,
+        getNodeFontFamily('mono'),
+        '400'
+      )
+    : 0;
 
-  // Add extra width for shape (e.g., chevron arrow point)
-  return baseWidth + shape.getExtraWidth(nodeHeight);
+  const maxTextWidth = Math.max(typeWidth, mainWidth);
+  const width = textStartX + maxTextWidth + rightPadding;
+
+  return Math.max(MIN_NODE_WIDTH * scale, Math.min(MAX_NODE_WIDTH * scale, width));
+};
+
+/**
+ * Pre-calculates the width a node would have without creating it.
+ */
+export const preCalculateNodeWidth = (
+  node: { nodeType: string; assetType?: string; title?: string; label: string },
+  scale: number
+): number => {
+  // Icon nodes (claims) have fixed size
+  if (node.nodeType === 'claim') return 0; // Claims don't participate in width calculation
+  if (node.assetType === 'Action') return 0; // Actions don't participate
+
+  const dims = getScaledDimensions(scale);
+  const typeLabel = node.assetType
+    ? (node.assetType === 'Data' ? 'DATA' : node.assetType.toUpperCase())
+    : 'DATA';
+  const mainLabel = node.title ?? node.label;
+
+  const options: NodeRenderOptions = {
+    mode: 'detailed',
+    iconPath: '',
+    typeLabel,
+    mainLabel,
+  };
+
+  return calculateNodeWidth(options, dims, scale);
+};
+
+export const truncateText = (
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number
+): string => {
+  const measured = ctx.measureText(text);
+  if (measured.width <= maxWidth) return text;
+
+  let truncated = text;
+  while (truncated.length > 0 && ctx.measureText(truncated + '…').width > maxWidth) {
+    truncated = truncated.slice(0, -1);
+  }
+  return truncated + '…';
 };
 
 export { measureCtx };

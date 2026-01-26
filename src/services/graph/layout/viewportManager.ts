@@ -22,6 +22,8 @@ export interface ViewportManagerDeps {
 
 export interface ViewportManager {
   centerOnNode: (nodeId: string) => void;
+  panToNode: (nodeId: string) => void;
+  centerOnExpandedNode: (nodeId: string, callback: () => void) => void;
   zoomToBounds: (nodeId?: string) => void;
   destroy: () => void;
 }
@@ -57,6 +59,63 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
         stepLabelsUpdate(viewportState);
         cullAndRender();
       },
+    });
+  }
+
+  /**
+   * Pans viewport to center on a node at current zoom level.
+   * Used for keyboard navigation.
+   */
+  function panToNode(nodeId: string): void {
+    const node = nodeMap.get(nodeId);
+    if (!node) return;
+
+    // Center the node in the viewport at current scale
+    const targetScale = viewportState.scale;
+    const targetX = viewportState.width / 2 - node.position.x * targetScale;
+    const targetY = viewportState.height / 2 - node.position.y * targetScale;
+
+    gsap.to(viewportState, {
+      x: targetX,
+      y: targetY,
+      duration: 0.3,
+      ease: 'power2.out',
+      onUpdate: () => {
+        viewport.position.set(viewportState.x, viewportState.y);
+        stepLabelsUpdate(viewportState);
+        cullAndRender();
+      },
+    });
+  }
+
+  /**
+   * Centers viewport on a node for expansion, then calls the callback.
+   * Used during node expansion animation sequence.
+   */
+  function centerOnExpandedNode(nodeId: string, callback: () => void): void {
+    const node = nodeMap.get(nodeId);
+    if (!node) {
+      callback();
+      return;
+    }
+
+    // Center the node in the available viewport area
+    const targetScale = viewportState.scale;
+    const targetX = viewportState.width / 2 - node.position.x * targetScale;
+    const targetY = viewportState.height / 2 - node.position.y * targetScale;
+
+    gsap.to(viewportState, {
+      x: targetX,
+      y: targetY,
+      duration: 0.3,
+      ease: 'power2.out',
+      onUpdate: () => {
+        viewport.position.set(viewportState.x, viewportState.y);
+        viewport.scale.set(viewportState.scale);
+        stepLabelsUpdate(viewportState);
+        cullAndRender();
+      },
+      onComplete: callback,
     });
   }
 
@@ -121,6 +180,8 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
 
   return {
     centerOnNode,
+    panToNode,
+    centerOnExpandedNode,
     zoomToBounds,
     destroy,
   };

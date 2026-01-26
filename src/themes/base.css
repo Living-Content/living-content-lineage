@@ -1,3 +1,6 @@
+/* IBM Plex font imports */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -34,6 +37,33 @@ body {
   transition: opacity 0.25s ease;
 }
 
-.liquid {
-  filter: url(#liquid);
+/* Animation keyframes for node expansion */
+@keyframes node-scale-up {
+  0% { transform: scale(1); }
+  70% { transform: scale(2.6); }
+  100% { transform: scale(2.5); }
+}
+
+@keyframes node-scale-down {
+  0% { transform: scale(2.5); }
+  100% { transform: scale(1); }
+}
+
+@keyframes overlay-fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes hover-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+/* Section header utility class */
+.section-header {
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-section);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-small);
 }

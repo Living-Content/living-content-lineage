@@ -15,7 +15,7 @@ export const graphTokens = {
 
   // Node base colors
   'color-node-default': 'rgb(255, 255, 255)',
-  'color-node-bg': 'rgba(255, 255, 255, 0.7)',
+  'color-node-bg': 'rgba(255, 255, 255, 1)',
   'color-node-border-default': 'rgb(77, 150, 255)',
   'color-node-icon-default': 'rgb(77, 150, 255)',
   'color-hover-ring': 'rgb(77, 150, 255)',

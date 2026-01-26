@@ -1,15 +1,26 @@
 /**
  * Canvas texture rendering for graph nodes.
- * Supports pill shapes (rounded rectangles) and chevron shapes (arrow-like).
  */
 import { Texture } from 'pixi.js';
-import { getCssVar, getCssVarInt } from '../../../themes/index.js';
+import { getCssVar } from '../../../themes/index.js';
+import { GEOMETRY } from '../../../config/animationConstants.js';
 import { createRetinaCanvas } from './rendererUtils.js';
-import { getNodeFontFamily, BASE_ICON_DIAMETER, type ScaledDimensions } from './nodeTextMeasurement.js';
-import { getShape, type NodeShapeType } from './nodeShapes.js';
+import { getNodeFontFamily, truncateText, type ScaledDimensions } from './nodeTextMeasurement.js';
 import type { NodeRenderOptions } from './nodeRenderer.js';
 
-export type { NodeShapeType } from './nodeShapes.js';
+/**
+ * Draws the left phase color bar.
+ * Width scales with node scale for consistent visual weight.
+ */
+const drawPhaseBar = (
+  ctx: CanvasRenderingContext2D,
+  height: number,
+  color: string,
+  scale: number = 1
+): void => {
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, GEOMETRY.PHASE_BAR_WIDTH * scale, height);
+};
 
 export const createNodeTexture = (
   options: NodeRenderOptions,
@@ -18,86 +29,78 @@ export const createNodeTexture = (
   height: number,
   iconImage: HTMLImageElement | null,
   dims: ScaledDimensions,
-  shapeType: NodeShapeType = 'pill'
+  scale: number = 1
 ): Texture => {
   const { canvas, ctx } = createRetinaCanvas(width, height);
-  const shape = getShape(shapeType);
+  const borderRadius = GEOMETRY.NODE_BORDER_RADIUS * scale;
 
-  // Draw node background
-  shape.drawPath(ctx, width, height);
-  ctx.fillStyle = color;
-  ctx.fill();
-
-  // Get content offset (e.g., to avoid chevron notch)
-  const contentOffset = shape.getContentOffset(height);
-
-  // Draw icon circle
-  const iconCenterX = contentOffset + dims.leftPadding + dims.iconDiameter / 2;
-  const iconCenterY = height / 2;
-  const iconRadius = dims.iconDiameter / 2;
-
-  // Calculate ring width
-  const nodeScale = dims.iconDiameter / BASE_ICON_DIAMETER;
-  const ringWidth = getCssVarInt('--icon-node-ring-width') * nodeScale;
-
-  // Draw black ring border around icon
-  ctx.globalCompositeOperation = 'source-over';
+  // Draw node background with rounded corners
   ctx.beginPath();
-  ctx.arc(iconCenterX, iconCenterY, iconRadius, 0, Math.PI * 2);
-  ctx.fillStyle = '#000000';
+  ctx.roundRect(0, 0, width, height, borderRadius);
+  ctx.fillStyle = getCssVar('--color-node-bg');
   ctx.fill();
 
-  // Draw the icon inside the circle
-  if (iconImage && iconImage.complete && iconImage.naturalWidth > 0) {
-    const iconSize = dims.iconDiameter * 0.55;
-    const iconX = iconCenterX - iconSize / 2;
-    const iconY = iconCenterY - iconSize / 2;
+  // Clip to rounded rect so phase bar respects corners
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(0, 0, width, height, borderRadius);
+  ctx.clip();
 
-    // Draw inner circle with node color (creates the ring effect)
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(iconCenterX, iconCenterY, iconRadius - ringWidth, 0, Math.PI * 2);
-    ctx.clip();
-    ctx.fillStyle = color;
-    ctx.fill();
-    ctx.drawImage(iconImage, iconX, iconY, iconSize, iconSize);
-    ctx.restore();
-  } else {
-    // No icon yet - just draw the inner colored circle
-    ctx.beginPath();
-    ctx.arc(iconCenterX, iconCenterY, iconRadius - ringWidth, 0, Math.PI * 2);
-    ctx.fillStyle = color;
-    ctx.fill();
-  }
+  // Draw phase bar (colored stripe on left)
+  drawPhaseBar(ctx, height, color, scale);
 
-  // Text positioning (includes content offset for chevron)
-  const textStartX = contentOffset + dims.leftPadding + dims.iconDiameter + dims.iconTextGap;
+  ctx.restore();
+
+  // Content offset (accounts for phase bar)
+  const contentOffset = GEOMETRY.PHASE_BAR_WIDTH * scale;
+
+  // TEMPORARILY DISABLED: Draw large semi-transparent watermark icon
+  // if (iconImage && iconImage.complete && iconImage.naturalWidth > 0) {
+  //   const watermarkScale = 2.5;
+  //   const watermarkAlpha = 0.15;
+  //   const watermarkOffsetX = -0.2;
+  //   const watermarkSize = dims.iconDiameter * watermarkScale;
+  //
+  //   ctx.save();
+  //   ctx.globalAlpha = watermarkAlpha;
+  //   const iconX = contentOffset + watermarkSize * watermarkOffsetX;
+  //   const iconY = (height - watermarkSize) / 2;
+  //   ctx.drawImage(iconImage, iconX, iconY, watermarkSize, watermarkSize);
+  //   ctx.restore();
+  // }
+  void iconImage; // Suppress unused warning
 
   ctx.textBaseline = 'middle';
-  ctx.textAlign = 'left';
+  ctx.fillStyle = getCssVar('--color-text-primary');
+
+  const rightPadding = 12 * scale;
 
   if (options.mode === 'detailed' && options.mainLabel) {
-    // Two-line layout: type label (small, black) + main label (normal, white)
+    // Two-line layout: type label (sans) + main label (mono), left-aligned
+    const textStartX = contentOffset + dims.leftPadding;
+    const maxTextWidth = width - textStartX - rightPadding;
     const lineSpacing = height * 0.18;
     const typeY = height / 2 - lineSpacing;
     const mainY = height / 2 + lineSpacing;
 
-    // Type label - dark text
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = getCssVar('--color-text-primary');
+    ctx.textAlign = 'left';
     ctx.font = `600 ${dims.typeLabelFontSize}px ${getNodeFontFamily()}`;
-    ctx.fillText(options.typeLabel, textStartX, typeY);
+    const truncatedType = truncateText(ctx, options.typeLabel, maxTextWidth);
+    ctx.fillText(truncatedType, textStartX, typeY);
 
-    // Main label - white text
-    ctx.fillStyle = getCssVar('--color-node-text');
-    ctx.font = `400 ${dims.typeLabelFontSize}px ${getNodeFontFamily()}`;
-    ctx.fillText(options.mainLabel, textStartX, mainY);
+    ctx.font = `400 ${dims.mainLabelFontSize}px ${getNodeFontFamily('mono')}`;
+    const truncatedMain = truncateText(ctx, options.mainLabel, maxTextWidth);
+    ctx.fillText(truncatedMain, textStartX, mainY);
   } else {
-    // Single-line layout: just type label (dark)
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = getCssVar('--color-text-primary');
+    // Single-line layout: centered in content area (after phase bar)
+    const contentWidth = width - contentOffset - rightPadding * 2;
+    const textCenterX = contentOffset + rightPadding + contentWidth / 2;
+    const maxTextWidth = contentWidth;
+
+    ctx.textAlign = 'center';
     ctx.font = `600 ${dims.simpleTypeFontSize}px ${getNodeFontFamily()}`;
-    ctx.fillText(options.typeLabel, textStartX, height / 2);
+    const truncatedType = truncateText(ctx, options.typeLabel, maxTextWidth);
+    ctx.fillText(truncatedType, textCenterX, height / 2);
   }
 
   return Texture.from(canvas);
@@ -115,10 +118,7 @@ export const createIconOnlyTexture = (
   const { canvas, ctx } = createRetinaCanvas(size, size);
 
   if (iconImage && iconImage.complete && iconImage.naturalWidth > 0) {
-    // Draw the icon
     ctx.drawImage(iconImage, 0, 0, size, size);
-
-    // Apply color by using source-in composite mode
     ctx.globalCompositeOperation = 'source-in';
     ctx.fillStyle = color;
     ctx.fillRect(0, 0, size, size);
