@@ -12,8 +12,8 @@
    * - Calls engine commands when state changes
    */
   import { onMount } from 'svelte';
-  import { bootstrapGraph, type BootstrapResult } from '../../services/graph/engine/graphBootstrap.js';
-  import type { GraphEngine, HoverPayload, SelectionTarget } from '../../services/graph/engine/graphInterface.js';
+  import { activateGraph, type GraphActivationResult } from '../../services/graph/instantiate/activate.js';
+  import type { GraphEngine, HoverPayload, SelectionTarget } from '../../services/graph/engine/interface.js';
   import { traceState } from '../../stores/traceState.svelte.js';
   import { uiState } from '../../stores/uiState.svelte.js';
   import type { Trace, Phase } from '../../config/types.js';
@@ -47,20 +47,20 @@
 
   onMount(() => {
     let isCancelled = false;
-    let result: BootstrapResult | null = null;
+    let result: GraphActivationResult | null = null;
 
     const start = async (): Promise<void> => {
       if (!container || isCancelled) return;
 
       uiState.setLoading(true);
 
-      // Read initial state from stores and pass to bootstrap
+      // Read initial state from stores and pass to activation
       const initialSelection = traceState.selection as SelectionTarget;
       const initialPhaseFilter = uiState.phaseFilter;
       const initialDetailOpen = uiState.isDetailOpen;
       const initialIsExpanded = traceState.isExpanded;
 
-      result = await bootstrapGraph(
+      result = await activateGraph(
         container,
         resolveManifestUrl(),
         {

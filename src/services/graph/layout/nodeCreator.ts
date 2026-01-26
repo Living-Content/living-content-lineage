@@ -13,7 +13,7 @@ import {
   type HoverPayload,
   type CreateElementConfig,
   type HoverCallbackConfig,
-} from './graphLayout.js';
+} from './utils.js';
 
 interface NodeCreatorCallbacks {
   onHover: (payload: HoverPayload) => void;

@@ -16,7 +16,7 @@ import type { LODController } from '../layout/lodController.js';
 import type { NodeAccessor } from '../layout/nodeAccessor.js';
 import type { PixiContext } from '../layout/pixiSetup.js';
 import type { TopNodeInfo } from '../rendering/workflowLabelRenderer.js';
-import type { GraphEngine, SelectionTarget } from './graphInterface.js';
+import type { GraphEngine, SelectionTarget } from './interface.js';
 import {
   applySelectionHighlight,
   applyPhaseFilter,

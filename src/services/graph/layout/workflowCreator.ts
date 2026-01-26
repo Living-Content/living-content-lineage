@@ -12,7 +12,7 @@ import {
   type CreateElementConfig,
   type HoverCallbackConfig,
   type StepSelectionPayload,
-} from './graphLayout.js';
+} from './utils.js';
 
 interface StepCreatorCallbacks {
   onHover: (payload: HoverPayload) => void;
