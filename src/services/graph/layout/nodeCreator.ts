@@ -6,8 +6,9 @@ import type { Ticker, Container } from 'pixi.js';
 import type { TraceNodeData } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import { getCssVarInt } from '../../../themes/index.js';
+import { traceState } from '../../../stores/traceState.svelte.js';
 import {
-  createNodeElement,
+  createNode,
   addElementsToLayer,
   populateElementMap,
   type HoverPayload,
@@ -64,9 +65,21 @@ export const createNodes = async (
   deps: NodeCreatorDeps
 ): Promise<void> => {
   const config = buildElementConfig(deps, nodeMap);
+  const { hoverConfig } = config;
 
   const elements = await Promise.all(
-    nodes.map((node) => createNodeElement(node, config))
+    nodes.map((node) => createNode({
+      id: node.id,
+      data: node,
+      type: 'node',
+      onClick: () => {
+        if (hoverConfig.onNodeClick) {
+          hoverConfig.onNodeClick(node);
+        } else {
+          traceState.selectNode(node);
+        }
+      },
+    }, config))
   );
 
   addElementsToLayer(elements, deps.nodeLayer);

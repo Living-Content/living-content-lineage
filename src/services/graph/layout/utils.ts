@@ -3,14 +3,11 @@
  * Provides atomic functions for element creation, layer management, and map population.
  */
 import type { Container, Ticker } from 'pixi.js';
-import type { TraceNodeData, StepUI, TraceEdgeData, Phase } from '../../../config/types.js';
+import type { TraceNodeData, TraceEdgeData, Phase } from '../../../config/types.js';
 import { createGraphNode, type GraphNode, type NodeRenderOptions } from '../rendering/nodeRenderer.js';
-import { getCssVarFloat } from '../../../themes/index.js';
 import { createIconNode } from '../rendering/iconNodeRenderer.js';
-import { getIconNodeConfig, getPhaseIconPath } from '../../../config/icons.js';
-import { COLLAPSED_NODE_SCALE } from '../../../config/constants.js';
-import { GEOMETRY } from '../../../config/animationConstants.js';
-import { traceState } from '../../../stores/traceState.svelte.js';
+import { getIconNodeConfig } from '../../../config/icons.js';
+import { getCssVarFloat } from '../../../themes/index.js';
 
 export type ElementType = 'step' | 'node';
 
@@ -67,6 +64,18 @@ export interface CreateElementConfig {
 }
 
 /**
+ * Configuration for creating a unified node.
+ */
+export interface CreateNodeConfig {
+  id: string;
+  data: TraceNodeData;
+  type: ElementType;
+  onClick: () => void;
+  scale?: number;
+  renderOptions?: NodeRenderOptions;
+}
+
+/**
  * Creates hover callbacks for a node or workflow element.
  */
 export const createHoverCallbacks = (
@@ -78,7 +87,7 @@ export const createHoverCallbacks = (
   return {
     onHover: () => {
       config.container.style.cursor = 'pointer';
-      // Always brighten on hover, even if another node is selected
+      // Always brighten on hover - animation controller looks up node by ID
       if (config.setNodeAlpha) {
         config.setNodeAlpha(nodeId, 1);
       }
@@ -96,14 +105,11 @@ export const createHoverCallbacks = (
     },
     onHoverEnd: () => {
       config.container.style.cursor = 'grab';
-      const selectedId = config.getSelectedNodeId();
       if (config.setNodeAlpha) {
+        const selectedId = config.getSelectedNodeId();
         if (selectedId === nodeId) {
-          // Selected node stays at hover alpha
           config.setNodeAlpha(nodeId, getCssVarFloat('--node-hover-alpha'));
         } else {
-          // Non-selected nodes return to default alpha
-          // (blur/fade is handled by selectionHighlighter if active)
           config.setNodeAlpha(nodeId, getCssVarFloat('--node-alpha'));
         }
       }
@@ -113,134 +119,37 @@ export const createHoverCallbacks = (
 };
 
 /**
- * Creates a node element with appropriate rendering (icon or standard).
+ * Unified node creation function.
+ * ALL nodes go through this function. The only differences are the config values.
+ * Hover behavior, click handling, everything else is identical.
  */
-export const createNodeElement = async (
-  node: TraceNodeData,
-  config: CreateElementConfig
+export const createNode = async (
+  config: CreateNodeConfig,
+  deps: CreateElementConfig
 ): Promise<GraphElement> => {
-  const { graphScale, ticker, hoverConfig, nodeMap } = config;
+  const { id, data, type, onClick, scale, renderOptions } = config;
+  const { graphScale, ticker, hoverConfig, nodeMap } = deps;
 
-  const iconConfig = getIconNodeConfig(node.nodeType);
+  const iconConfig = getIconNodeConfig(data.nodeType);
   const getIconSize = () => iconConfig?.size ?? 28;
 
   const hoverCallbacks = createHoverCallbacks(
-    node.id,
-    () => nodeMap.get(node.id),
+    id,
+    () => nodeMap.get(id),
     getIconSize,
     hoverConfig
   );
 
-  const nodeCallbacks = {
-    onClick: () => {
-      if (hoverConfig.onNodeClick) {
-        hoverConfig.onNodeClick(node);
-      } else {
-        traceState.selectNode(node);
-      }
-    },
-    ...hoverCallbacks,
-  };
+  const callbacks = { onClick, ...hoverCallbacks };
 
-  let graphNode: GraphNode;
+  const graphNode = iconConfig
+    ? await createIconNode(data, graphScale, ticker, callbacks, {
+        iconPath: iconConfig.iconPath,
+        size: iconConfig.size,
+      })
+    : createGraphNode(data, graphScale, ticker, callbacks, { scale, renderOptions });
 
-  if (iconConfig) {
-    graphNode = await createIconNode(node, graphScale, ticker, nodeCallbacks, {
-      iconPath: iconConfig.iconPath,
-      size: iconConfig.size,
-    });
-  } else {
-    graphNode = createGraphNode(node, graphScale, ticker, nodeCallbacks);
-  }
-
-  return createGraphElement(node.id, 'node', node, graphNode);
-};
-
-/**
- * Creates a step element for the collapsed view.
- */
-export const createStepElement = (
-  step: StepUI,
-  nodes: TraceNodeData[],
-  edges: TraceEdgeData[],
-  config: CreateElementConfig
-): GraphElement => {
-  const { graphScale, ticker, hoverConfig } = config;
-
-  const stepNodes = nodes.filter((n) => n.step === step.id);
-  const stepNodeData: TraceNodeData = {
-    id: `step-${step.id}`,
-    label: step.label,
-    nodeType: 'workflow',
-    shape: 'circle',
-    step: step.id,
-    phase: step.phase,
-    x: (step.xStart + step.xEnd) / 2,
-    y: 0.5,
-  };
-
-  const phaseIconPath = getPhaseIconPath(step.phase);
-  const stepRenderOptions: NodeRenderOptions = {
-    mode: 'simple',
-    iconPath: phaseIconPath,
-    typeLabel: step.label,
-  };
-
-  // Create a reference object so callbacks can access the node after creation
-  const nodeRef: { current: GraphNode | null } = { current: null };
-
-  const stepSelectionPayload: StepSelectionPayload = {
-    stepId: step.id,
-    label: step.label,
-    phase: step.phase,
-    nodes: stepNodes,
-    edges: edges.filter(
-      (e) => stepNodes.some((n) => n.id === e.source) || stepNodes.some((n) => n.id === e.target)
-    ),
-  };
-
-  const nodeCallbacks = {
-    onClick: () => {
-      const graphNode = nodeRef.current;
-      if (graphNode && hoverConfig.onStepSelect) {
-        hoverConfig.onStepSelect(step.id, graphNode, stepSelectionPayload);
-      }
-    },
-    onHover: () => {
-      hoverConfig.container.style.cursor = 'pointer';
-      const stepNode = nodeRef.current;
-      if (stepNode) {
-        stepNode.alpha = getCssVarFloat('--node-hover-alpha');
-        const bounds = stepNode.getBounds();
-        hoverConfig.onHover({
-          title: step.label,
-          nodeType: 'workflow',
-          screenX: bounds.x + bounds.width / 2,
-          screenY: bounds.y,
-          size: 40,
-        });
-      }
-    },
-    onHoverEnd: () => {
-      hoverConfig.container.style.cursor = 'grab';
-      const stepNode = nodeRef.current;
-      if (stepNode) {
-        const selectedId = hoverConfig.getSelectedNodeId();
-        stepNode.alpha = selectedId === step.id
-          ? getCssVarFloat('--node-hover-alpha')
-          : getCssVarFloat('--node-alpha');
-      }
-      hoverConfig.onHoverEnd();
-    },
-  };
-
-  const stepGraphNode = createGraphNode(stepNodeData, graphScale, ticker, nodeCallbacks, {
-    scale: COLLAPSED_NODE_SCALE,
-    renderOptions: stepRenderOptions,
-  });
-  nodeRef.current = stepGraphNode;
-
-  return createGraphElement(step.id, 'step', stepNodeData, stepGraphNode);
+  return createGraphElement(id, type, data, graphNode);
 };
 
 /**

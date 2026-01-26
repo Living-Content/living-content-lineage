@@ -43,16 +43,16 @@ export const GEOMETRY = {
   SELECTION_RING_PADDING: 6,
   /** Stroke width for selection ring */
   SELECTION_RING_STROKE_WIDTH: 3,
-  /** Width of phase color bar on nodes */
-  PHASE_BAR_WIDTH: 6,
-  /** Width of phase color bar on hover */
-  PHASE_BAR_WIDTH_HOVER: 10,
+  /** Width of highlight bar on nodes */
+  HIGHLIGHT_BAR_WIDTH: 6,
+  /** Width of highlight bar on hover */
+  HIGHLIGHT_BAR_WIDTH_HOVER: 10,
   /** Border radius for nodes */
   NODE_BORDER_RADIUS: 4,
   /** Scale factor for expanded node */
   EXPANDED_NODE_SCALE: 2.5,
-  /** Duration for phase bar hover animation (seconds) */
-  PHASE_BAR_HOVER_DURATION: 0.15,
+  /** Duration for highlight bar hover animation (seconds) */
+  HIGHLIGHT_BAR_HOVER_DURATION: 0.15,
   /** Gap between node and overlay (pixels) */
   OVERLAY_GAP: 20,
 };

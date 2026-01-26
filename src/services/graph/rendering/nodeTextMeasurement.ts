@@ -76,7 +76,7 @@ export const calculateNodeWidth = (
   dims: ScaledDimensions,
   scale: number
 ): number => {
-  const contentOffset = GEOMETRY.PHASE_BAR_WIDTH * scale;
+  const contentOffset = GEOMETRY.HIGHLIGHT_BAR_WIDTH * scale;
   const rightPadding = 12 * scale;
 
   if (options.mode === 'simple') {

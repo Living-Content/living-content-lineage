@@ -1,6 +1,6 @@
 /**
  * Shared node interaction utilities for click vs drag detection.
- * Includes hover phase bar animation and click handling.
+ * Includes hover highlight bar animation and click handling.
  */
 import { Container, Graphics } from 'pixi.js';
 import gsap from 'gsap';
@@ -16,9 +16,9 @@ export interface NodeCallbacks {
 }
 
 /**
- * Draws the phase bar at a given width with rounded left corners.
+ * Draws the highlight bar at a given width with rounded left corners.
  */
-const drawPhaseBar = (
+const drawHighlightBar = (
   graphics: Graphics,
   nodeWidth: number,
   nodeHeight: number,
@@ -30,7 +30,7 @@ const drawPhaseBar = (
   const x = -nodeWidth / 2;
   const y = -nodeHeight / 2;
   const radius = GEOMETRY.NODE_BORDER_RADIUS * nodeScale;
-  // Use full radius - the phase bar is clipped by the node texture anyway
+  // Use full radius - the highlight bar is clipped by the node texture anyway
   graphics.roundRect(x, y, barWidth, nodeHeight, radius);
   graphics.fill(color);
 };
@@ -38,7 +38,7 @@ const drawPhaseBar = (
 /**
  * Attaches click/hover handlers to a node container with drag detection.
  * Click only fires if pointer didn't move beyond threshold (not a drag).
- * Includes hover phase bar expansion for visual feedback.
+ * Includes hover highlight bar expansion for visual feedback.
  */
 export const attachNodeInteraction = (node: Container, callbacks: NodeCallbacks): void => {
   let pointerStart: { x: number; y: number } | null = null;
@@ -73,15 +73,15 @@ export const attachNodeInteraction = (node: Container, callbacks: NodeCallbacks)
     if (hoverTween) hoverTween.kill();
 
     // Read properties at event time (may be set async after node creation)
-    const { phaseBarGraphics, phaseColor, nodeWidth, nodeHeight, baseScale } = graphNode;
-    if (phaseBarGraphics && phaseColor) {
-      const animState = { width: GEOMETRY.PHASE_BAR_WIDTH * baseScale };
+    const { highlightBar, highlightColor, nodeWidth, nodeHeight, baseScale } = graphNode;
+    if (highlightBar && highlightColor) {
+      const animState = { width: GEOMETRY.HIGHLIGHT_BAR_WIDTH * baseScale };
       hoverTween = gsap.to(animState, {
-        width: GEOMETRY.PHASE_BAR_WIDTH_HOVER * baseScale,
-        duration: GEOMETRY.PHASE_BAR_HOVER_DURATION,
+        width: GEOMETRY.HIGHLIGHT_BAR_WIDTH_HOVER * baseScale,
+        duration: GEOMETRY.HIGHLIGHT_BAR_HOVER_DURATION,
         ease: 'power2.out',
         onUpdate: () => {
-          drawPhaseBar(phaseBarGraphics, nodeWidth, nodeHeight, animState.width, phaseColor, baseScale);
+          drawHighlightBar(highlightBar, nodeWidth, nodeHeight, animState.width, highlightColor, baseScale);
         },
       });
     }
@@ -91,15 +91,15 @@ export const attachNodeInteraction = (node: Container, callbacks: NodeCallbacks)
     callbacks.onHoverEnd();
     if (hoverTween) hoverTween.kill();
 
-    const { phaseBarGraphics, phaseColor, nodeWidth, nodeHeight, baseScale } = graphNode;
-    if (phaseBarGraphics && phaseColor) {
-      const animState = { width: GEOMETRY.PHASE_BAR_WIDTH_HOVER * baseScale };
+    const { highlightBar, highlightColor, nodeWidth, nodeHeight, baseScale } = graphNode;
+    if (highlightBar && highlightColor) {
+      const animState = { width: GEOMETRY.HIGHLIGHT_BAR_WIDTH_HOVER * baseScale };
       hoverTween = gsap.to(animState, {
-        width: GEOMETRY.PHASE_BAR_WIDTH * baseScale,
-        duration: GEOMETRY.PHASE_BAR_HOVER_DURATION,
+        width: GEOMETRY.HIGHLIGHT_BAR_WIDTH * baseScale,
+        duration: GEOMETRY.HIGHLIGHT_BAR_HOVER_DURATION,
         ease: 'power2.out',
         onUpdate: () => {
-          drawPhaseBar(phaseBarGraphics, nodeWidth, nodeHeight, animState.width, phaseColor, baseScale);
+          drawHighlightBar(highlightBar, nodeWidth, nodeHeight, animState.width, highlightColor, baseScale);
         },
       });
     }

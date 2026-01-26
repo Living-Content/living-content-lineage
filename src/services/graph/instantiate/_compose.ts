@@ -34,7 +34,7 @@ export interface CompositionInputs {
   viewportState: ViewportState;
   nodeMap: Map<string, GraphNode>;
   stepNodeMap: Map<string, GraphNode>;
-  animationController: { setNodeAlpha: (id: string, alpha: number) => void; cleanup: () => void };
+  animationController: { setNodeAlpha: (nodeId: string, alpha: number) => void; cleanup: () => void };
   state: EngineState;
   graphScale: number;
   callbacks: BootstrapCallbacks;
@@ -104,7 +104,7 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
   recalculateStepBounds(traceData.steps, nodeMap, graphScale);
 
   // Create step nodes
-  createStepNodes(traceData.steps, traceData.nodes, traceData.edges, stepNodeMap, {
+  await createStepNodes(traceData.steps, traceData.nodes, traceData.edges, stepNodeMap, {
     container,
     stepNodeLayer: layers.stepNodeLayer,
     graphScale,
@@ -123,6 +123,7 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
       },
       getSelectedElementId: () => selectionController.getSelectedElementId(),
     },
+    setNodeAlpha: animationController.setNodeAlpha,
   });
 
   repositionStepNodesWithGaps(stepNodeMap);

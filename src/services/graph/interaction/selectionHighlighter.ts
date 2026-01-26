@@ -53,26 +53,15 @@ const setNodeBlur = (node: GraphNode, blur: number): void => {
 };
 
 /**
- * Applies fading effect (blur and/or alpha) to a single node.
- * Faded alpha (0.6) is ONLY used when blur is also active.
- * Without blur, non-highlighted nodes stay at default alpha (0.8).
+ * Applies blur effect to a node.
+ * Alpha is handled separately via setNodeAlpha for smooth animation.
  */
-const applyNodeFade = (
+const applyNodeBlur = (
   node: GraphNode,
   highlighted: boolean,
   useBlur: boolean,
-  styles: { blurStrength: number; fadedAlpha: number }
+  styles: { blurStrength: number }
 ): void => {
-  // Only use faded alpha when blur is also active
-  if (highlighted) {
-    node.alpha = 1;
-  } else if (useBlur) {
-    node.alpha = styles.fadedAlpha;
-  } else {
-    node.alpha = getCssVarFloat('--node-alpha');
-  }
-
-  // Apply blur when enabled for non-highlighted nodes
   setNodeBlur(node, useBlur && !highlighted ? styles.blurStrength : 0);
 };
 
@@ -93,18 +82,17 @@ export interface SelectionHighlighterDeps {
  */
 function setNodeMapVisibility(
   nodeMap: Map<string, GraphNode>,
-  setNodeAlpha: (id: string, alpha: number) => void,
+  setNodeAlpha: (nodeId: string, alpha: number) => void,
   isHighlighted: (id: string) => boolean,
   isSelected: (id: string) => boolean,
   useBlur: boolean = false
 ): void {
   const styles = getFadeStyles();
+  const defaultAlpha = getCssVarFloat('--node-alpha');
 
   nodeMap.forEach((node, nodeId) => {
     const highlighted = isHighlighted(nodeId);
-    applyNodeFade(node, highlighted, useBlur, styles);
-    // Only use faded alpha when blur is active
-    const defaultAlpha = getCssVarFloat('--node-alpha');
+    applyNodeBlur(node, highlighted, useBlur, styles);
     const alpha = highlighted ? 1 : (useBlur ? styles.fadedAlpha : defaultAlpha);
     setNodeAlpha(nodeId, alpha);
     node.setSelected(isSelected(nodeId));
@@ -153,11 +141,10 @@ const highlightNode = (
   );
 
   // Dim all step nodes (for collapsed view consistency)
-  stepNodeMap.forEach((node, stepId) => {
-    applyNodeFade(node, false, useBlur, styles);
-    // Animate step node alpha
+  stepNodeMap.forEach((node, nodeId) => {
+    applyNodeBlur(node, false, useBlur, styles);
     const alpha = useBlur ? styles.fadedAlpha : defaultAlpha;
-    setNodeAlpha(stepId, alpha);
+    setNodeAlpha(nodeId, alpha);
     node.setSelected(false);
   });
 
@@ -182,8 +169,7 @@ const highlightStep = (
   // Highlight only selected step node
   stepNodeMap.forEach((node, nodeId) => {
     const highlighted = nodeId === stepId;
-    applyNodeFade(node, highlighted, useBlur, styles);
-    // Animate step node alpha
+    applyNodeBlur(node, highlighted, useBlur, styles);
     const alpha = highlighted ? 1 : (useBlur ? styles.fadedAlpha : defaultAlpha);
     setNodeAlpha(nodeId, alpha);
     node.setSelected(highlighted);
@@ -214,8 +200,8 @@ export const clearSelection = (deps: SelectionHighlighterDeps): void => {
     node.setSelected(false);
   });
 
-  stepNodeMap.forEach((node, stepId) => {
-    setNodeAlpha(stepId, nodeAlpha);
+  stepNodeMap.forEach((node, nodeId) => {
+    setNodeAlpha(nodeId, nodeAlpha);
     setNodeBlur(node, 0);
     node.setSelected(false);
   });

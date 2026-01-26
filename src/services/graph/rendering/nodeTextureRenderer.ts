@@ -9,17 +9,17 @@ import { getNodeFontFamily, truncateText, type ScaledDimensions } from './nodeTe
 import type { NodeRenderOptions } from './nodeRenderer.js';
 
 /**
- * Draws the left phase color bar.
+ * Draws the left highlight bar.
  * Width scales with node scale for consistent visual weight.
  */
-const drawPhaseBar = (
+const drawHighlightBar = (
   ctx: CanvasRenderingContext2D,
   height: number,
   color: string,
   scale: number = 1
 ): void => {
   ctx.fillStyle = color;
-  ctx.fillRect(0, 0, GEOMETRY.PHASE_BAR_WIDTH * scale, height);
+  ctx.fillRect(0, 0, GEOMETRY.HIGHLIGHT_BAR_WIDTH * scale, height);
 };
 
 export const createNodeTexture = (
@@ -40,19 +40,19 @@ export const createNodeTexture = (
   ctx.fillStyle = getCssVar('--color-node-bg');
   ctx.fill();
 
-  // Clip to rounded rect so phase bar respects corners
+  // Clip to rounded rect so highlight bar respects corners
   ctx.save();
   ctx.beginPath();
   ctx.roundRect(0, 0, width, height, borderRadius);
   ctx.clip();
 
-  // Draw phase bar (colored stripe on left)
-  drawPhaseBar(ctx, height, color, scale);
+  // Draw highlight bar (colored stripe on left)
+  drawHighlightBar(ctx, height, color, scale);
 
   ctx.restore();
 
-  // Content offset (accounts for phase bar)
-  const contentOffset = GEOMETRY.PHASE_BAR_WIDTH * scale;
+  // Content offset (accounts for highlight bar)
+  const contentOffset = GEOMETRY.HIGHLIGHT_BAR_WIDTH * scale;
 
   // TEMPORARILY DISABLED: Draw large semi-transparent watermark icon
   // if (iconImage && iconImage.complete && iconImage.naturalWidth > 0) {
@@ -92,7 +92,7 @@ export const createNodeTexture = (
     const truncatedMain = truncateText(ctx, options.mainLabel, maxTextWidth);
     ctx.fillText(truncatedMain, textStartX, mainY);
   } else {
-    // Single-line layout: centered in content area (after phase bar)
+    // Single-line layout: centered in content area (after highlight bar)
     const contentWidth = width - contentOffset - rightPadding * 2;
     const textCenterX = contentOffset + rightPadding + contentWidth / 2;
     const maxTextWidth = contentWidth;

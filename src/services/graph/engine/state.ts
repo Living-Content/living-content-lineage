@@ -60,7 +60,7 @@ export interface EngineDeps {
   keyboardNavigation: KeyboardNavigationController;
   lodController: LODController;
   viewportState: ViewportState;
-  animationController: { setNodeAlpha: (id: string, alpha: number) => void; cleanup: () => void };
+  animationController: { setNodeAlpha: (nodeId: string, alpha: number) => void; cleanup: () => void };
   stepLabels: { setPhaseFilter: (phase: Phase | null) => void; setVisible: (visible: boolean) => void };
   titleOverlay: { destroy: () => void };
   resizeHandler: { destroy: () => void };

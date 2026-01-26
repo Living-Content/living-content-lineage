@@ -27,8 +27,8 @@ export interface GraphNode extends Container {
   nodeHeight: number;
   baseScale: number;
   setSelected: (selected: boolean) => void;
-  phaseBarGraphics?: Graphics;
-  phaseColor?: string;
+  highlightBar?: Graphics;
+  highlightColor?: string;
   updateMode?: (mode: NodeViewMode) => void;
   currentMode?: NodeViewMode;
 }
@@ -88,6 +88,16 @@ export function createGraphNode(
     const nodeHeight = BASE_NODE_HEIGHT_SIMPLE * nodeScale;
     const nodeWidth = calculateNodeWidth(renderOptions, dims, nodeScale);
 
+    // Add highlight bar (must be sync for hover animation)
+    const highlightBar = new Graphics();
+    const barX = -nodeWidth / 2;
+    const barY = -nodeHeight / 2;
+    highlightBar.roundRect(barX, barY, GEOMETRY.HIGHLIGHT_BAR_WIDTH * nodeScale, nodeHeight, GEOMETRY.NODE_BORDER_RADIUS * nodeScale);
+    highlightBar.fill(color);
+    group.addChild(highlightBar);
+    group.highlightBar = highlightBar;
+    group.highlightColor = color;
+
     // Load icon and create texture
     loadIcon(renderOptions.iconPath).then((iconImage) => {
       const texture = createNodeTexture(
@@ -105,15 +115,8 @@ export function createGraphNode(
       sprite.height = nodeHeight;
       group.addChild(sprite);
 
-      // Add phase bar graphics layer for hover animation (after sprite so it's on top)
-      const phaseBarGraphics = new Graphics();
-      const phaseBarX = -nodeWidth / 2;
-      const phaseBarY = -nodeHeight / 2;
-      phaseBarGraphics.roundRect(phaseBarX, phaseBarY, GEOMETRY.PHASE_BAR_WIDTH * nodeScale, nodeHeight, GEOMETRY.NODE_BORDER_RADIUS * nodeScale);
-      phaseBarGraphics.fill(color);
-      group.addChild(phaseBarGraphics);
-      group.phaseBarGraphics = phaseBarGraphics;
-      group.phaseColor = color;
+      // Move highlight bar to top after adding sprite
+      group.setChildIndex(highlightBar, group.children.length - 1);
     });
 
     group.nodeWidth = nodeWidth;
@@ -198,15 +201,15 @@ export function createGraphNode(
     group.nodeHeight = nodeHeight;
     group.currentMode = currentMode;
 
-    // Add phase bar graphics layer for hover animation
-    const phaseBarGraphics = new Graphics();
-    const phaseBarX = -nodeWidth / 2;
-    const phaseBarY = -nodeHeight / 2;
-    phaseBarGraphics.rect(phaseBarX, phaseBarY, GEOMETRY.PHASE_BAR_WIDTH * nodeScale, nodeHeight);
-    phaseBarGraphics.fill(color);
-    group.addChild(phaseBarGraphics);
-    group.phaseBarGraphics = phaseBarGraphics;
-    group.phaseColor = color;
+    // Add highlight bar graphics layer for hover animation
+    const highlightBar = new Graphics();
+    const barX = -nodeWidth / 2;
+    const barY = -nodeHeight / 2;
+    highlightBar.rect(barX, barY, GEOMETRY.HIGHLIGHT_BAR_WIDTH * nodeScale, nodeHeight);
+    highlightBar.fill(color);
+    group.addChild(highlightBar);
+    group.highlightBar = highlightBar;
+    group.highlightColor = color;
 
     // Store original dimensions (keep width constant across mode changes)
     const originalWidth = nodeWidth;
@@ -237,9 +240,9 @@ export function createGraphNode(
       newSprite.alpha = 0;
       group.addChild(newSprite);
 
-      // Ensure phase bar stays on top after adding new sprite
-      if (group.phaseBarGraphics) {
-        group.setChildIndex(group.phaseBarGraphics, group.children.length - 1);
+      // Ensure highlight bar stays on top after adding new sprite
+      if (group.highlightBar) {
+        group.setChildIndex(group.highlightBar, group.children.length - 1);
       }
 
       const oldSprite = currentSprite;
@@ -273,7 +276,7 @@ export function createGraphNode(
   group.position.set(x, y);
 
   group.nodeData = node;
-  group.baseScale = 1;
+  group.baseScale = nodeScale;
   group.alpha = getCssVarFloat('--node-alpha');
   group.setSelected = () => {}; // No-op, selection ring removed
 

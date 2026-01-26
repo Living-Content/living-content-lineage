@@ -5,8 +5,8 @@
 import { GEOMETRY } from '../../../config/animationConstants.js';
 
 /**
- * Content offset for text/icon placement (accounts for phase bar).
+ * Content offset for text/icon placement (accounts for highlight bar).
  */
 export const getContentOffset = (): number => {
-  return GEOMETRY.PHASE_BAR_WIDTH;
+  return GEOMETRY.HIGHLIGHT_BAR_WIDTH;
 };
