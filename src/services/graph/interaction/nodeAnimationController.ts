@@ -1,7 +1,8 @@
 /**
  * Node alpha animation controller.
- * Handles smooth transitions for node opacity changes.
+ * Handles smooth transitions for node opacity changes using gsap.
  */
+import gsap from 'gsap';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 
 export interface NodeAnimationController {
@@ -10,14 +11,13 @@ export interface NodeAnimationController {
 }
 
 /**
- * Creates a controller for animating node alpha values with smooth lerping.
+ * Creates a controller for animating node alpha values with gsap.
  * Accepts multiple node maps to look up nodes from.
  */
 export const createNodeAnimationController = (
   ...nodeMaps: Map<string, GraphNode>[]
 ): NodeAnimationController => {
-  const animatingNodes = new Map<string, number>();
-  let animationFrameId: number | null = null;
+  const activeTweens = new Map<string, gsap.core.Tween>();
 
   const findNode = (id: string): GraphNode | undefined => {
     for (const map of nodeMaps) {
@@ -27,45 +27,27 @@ export const createNodeAnimationController = (
     return undefined;
   };
 
-  const animateNodeAlpha = (): void => {
-    const toRemove: string[] = [];
+  const setNodeAlpha = (nodeId: string, alpha: number): void => {
+    const node = findNode(nodeId);
+    if (!node) return;
 
-    animatingNodes.forEach((target, id) => {
-      const node = findNode(id);
-      if (!node) {
-        toRemove.push(id);
-        return;
-      }
+    // Kill existing tween for this node
+    const existing = activeTweens.get(nodeId);
+    if (existing) existing.kill();
 
-      const diff = target - node.alpha;
-      if (Math.abs(diff) > 0.01) {
-        node.alpha += diff * 0.2;
-      } else {
-        node.alpha = target;
-        toRemove.push(id);
-      }
+    const tween = gsap.to(node, {
+      alpha,
+      duration: 0.3,
+      ease: 'power2.out',
+      onComplete: () => { activeTweens.delete(nodeId); },
     });
 
-    toRemove.forEach((id) => animatingNodes.delete(id));
-
-    animationFrameId = animatingNodes.size > 0
-      ? requestAnimationFrame(animateNodeAlpha)
-      : null;
-  };
-
-  const setNodeAlpha = (nodeId: string, alpha: number): void => {
-    animatingNodes.set(nodeId, alpha);
-    if (animationFrameId === null) {
-      animationFrameId = requestAnimationFrame(animateNodeAlpha);
-    }
+    activeTweens.set(nodeId, tween);
   };
 
   const cleanup = (): void => {
-    if (animationFrameId !== null) {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-    }
-    animatingNodes.clear();
+    activeTweens.forEach((tween) => tween.kill());
+    activeTweens.clear();
   };
 
   return { setNodeAlpha, cleanup };
