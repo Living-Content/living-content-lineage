@@ -19,6 +19,9 @@
   let isDragging = $state(false);
   let dragOffset = $state<{ x: number; y: number }>({ x: 0, y: 0 });
 
+  // First render tracking to prevent animation on initial appearance
+  let isFirstRender = $state(true);
+
   // Derived state
   let isExpanded = $derived(traceState.isExpanded);
   let currentNode = $derived(traceState.isExpanded ? traceState.expandedNode : traceState.selectedNode);
@@ -35,7 +38,7 @@
     ((!!currentNode || !!currentStep) && displayPosition !== null) || !!uiState.loadError
   );
 
-  // Reset custom position when selection changes
+  // Reset custom position and first render flag when selection changes
   $effect(() => {
     const selectionKey = traceState.selection
       ? `${traceState.selection.type}:${traceState.selection.type === 'step' ? traceState.selection.stepId : traceState.selection.nodeId}`
@@ -47,6 +50,15 @@
         showDetailContent = false;
         uiState.closeDetailPanel();
       }
+    } else {
+      // New selection: disable transitions until DOM has painted
+      isFirstRender = true;
+      // Double RAF to ensure DOM has painted before enabling transitions
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          isFirstRender = false;
+        });
+      });
     }
   });
 
@@ -105,6 +117,7 @@
       class="panel"
       class:detail-open={showDetailContent}
       class:dragging={isDragging}
+      class:no-transition={isFirstRender}
       style={`--panel-x: ${displayPosition?.x ?? 100}px; --panel-y: ${displayPosition?.y ?? 100}px;`}
     >
       <PanelHeader
@@ -182,6 +195,10 @@
     cursor: grabbing;
     user-select: none;
     transition: none;
+  }
+
+  .panel.no-transition {
+    transition: none !important;
   }
 
   .panel.detail-open {

@@ -87,6 +87,7 @@ export const traceState = {
   clearSelection(): void {
     currentSelectionKey = null;
     selection = null;
+    overlayPosition = null;
   },
 
   selectNode(node: TraceNodeData): void {

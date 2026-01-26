@@ -104,8 +104,8 @@ export async function createGraphController({
     currentPhaseFilter: uiState.phaseFilter,
   };
 
-  // Late-bound reference for centerOnExpandedNode (set after viewportManager is created)
-  let centerOnExpandedNodeRef: ((nodeId: string, callback: () => void) => void) | null = null;
+  // Late-bound reference for centerOnNode (set after viewportManager is created)
+  let centerOnNodeRef: ((nodeId: string, options?: { zoom?: boolean; onComplete?: () => void }) => void) | null = null;
 
   // Selection controller for unified node and step selection
   const selectionController = createSelectionController({
@@ -113,11 +113,11 @@ export async function createGraphController({
     stepNodeMap,
     viewport,
     viewportState,
-    centerOnExpandedNode: (nodeId, callback) => {
-      if (centerOnExpandedNodeRef) {
-        centerOnExpandedNodeRef(nodeId, callback);
+    centerOnNode: (nodeId, options) => {
+      if (centerOnNodeRef) {
+        centerOnNodeRef(nodeId, options);
       } else {
-        callback();
+        options?.onComplete?.();
       }
     },
   });
@@ -245,7 +245,7 @@ export async function createGraphController({
   });
 
   // Wire up late-bound reference now that viewportManager exists
-  centerOnExpandedNodeRef = viewportManager.centerOnExpandedNode;
+  centerOnNodeRef = viewportManager.centerOnNode;
 
   // Keyboard navigation
   const keyboardNavigation = createKeyboardNavigation({
@@ -253,7 +253,7 @@ export async function createGraphController({
     nodes: traceData.nodes,
     onExpand: (node) => selectionController.expand(node),
     onCollapse: () => selectionController.collapse(),
-    centerOnNode: viewportManager.panToNode,
+    centerOnNode: viewportManager.centerOnNode,
   });
   keyboardNavigation.attach();
 
@@ -266,7 +266,7 @@ export async function createGraphController({
     edges: traceData.edges,
     steps: traceData.steps,
     setNodeAlpha: animationController.setNodeAlpha,
-    centerSelectedNode: viewportManager.centerOnNode,
+    centerSelectedNode: (nodeId) => viewportManager.centerOnNode(nodeId, { zoom: true }),
     setStepLabelsPhaseFilter: stepLabels.setPhaseFilter,
     setStepLabelsVisible: stepLabels.setVisible,
     zoomToBounds: viewportManager.zoomToBounds,
@@ -315,7 +315,7 @@ export async function createGraphController({
     stepLabelsUpdate: stepLabels.update,
     cullAndRender,
     updateTitlePosition,
-    centerSelectedNode: viewportManager.centerOnNode,
+    centerSelectedNode: (nodeId) => viewportManager.centerOnNode(nodeId, { zoom: true }),
     isCollapsed: () => lodController.state.isCollapsed,
     getDetailPanelOpen: () => state.detailPanelOpen,
     getSelectedNodeId: () => state.currentSelection?.type === 'node' ? state.currentSelection.nodeId : null,

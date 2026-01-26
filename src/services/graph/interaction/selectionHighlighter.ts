@@ -54,7 +54,8 @@ const setNodeBlur = (node: GraphNode, blur: number): void => {
 };
 
 /**
- * Applies fading effect (blur or alpha) to a single node.
+ * Applies fading effect (blur and/or alpha) to a single node.
+ * When blur is enabled, both blur AND alpha are applied to non-highlighted nodes.
  */
 const applyNodeFade = (
   node: GraphNode,
@@ -62,13 +63,11 @@ const applyNodeFade = (
   useBlur: boolean,
   styles: { blurStrength: number; fadedAlpha: number }
 ): void => {
-  if (useBlur) {
-    setNodeBlur(node, highlighted ? 0 : styles.blurStrength);
-    node.alpha = 1;
-  } else {
-    setNodeBlur(node, 0);
-    node.alpha = highlighted ? 1 : styles.fadedAlpha;
-  }
+  // Always apply alpha based on highlight state
+  node.alpha = highlighted ? 1 : styles.fadedAlpha;
+
+  // Apply blur when enabled for non-highlighted nodes
+  setNodeBlur(node, useBlur && !highlighted ? styles.blurStrength : 0);
 };
 
 export interface SelectionHighlighterDeps {
@@ -98,11 +97,8 @@ function setNodeMapVisibility(
   nodeMap.forEach((node, nodeId) => {
     const highlighted = isHighlighted(nodeId);
     applyNodeFade(node, highlighted, useBlur, styles);
-    if (!useBlur) {
-      setNodeAlpha(nodeId, highlighted ? 1 : styles.fadedAlpha);
-    } else {
-      setNodeAlpha(nodeId, 1);
-    }
+    // Always set alpha for animation controller
+    setNodeAlpha(nodeId, highlighted ? 1 : styles.fadedAlpha);
     node.setSelected(isSelected(nodeId));
   });
 }

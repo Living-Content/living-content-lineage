@@ -85,7 +85,7 @@ export function createStoreSubscriptions(ctx: SubscriptionContext): {
       if (sel) {
         applySelectionHighlight(sel, getHighlighterDeps(shouldUseBlur()));
 
-        if (sel.type === 'node' && detailOpen) {
+        if (sel.type === 'node' && detailOpen && !traceState.isExpanded) {
           ctx.centerSelectedNode(sel.nodeId);
         }
 

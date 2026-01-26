@@ -105,6 +105,16 @@ export function createGraphNode(
       sprite.width = nodeWidth;
       sprite.height = nodeHeight;
       group.addChild(sprite);
+
+      // Add phase bar graphics layer for hover animation (after sprite so it's on top)
+      const phaseBarGraphics = new Graphics();
+      const phaseBarX = -nodeWidth / 2;
+      const phaseBarY = -nodeHeight / 2;
+      phaseBarGraphics.roundRect(phaseBarX, phaseBarY, GEOMETRY.PHASE_BAR_WIDTH * nodeScale, nodeHeight, GEOMETRY.NODE_BORDER_RADIUS * nodeScale);
+      phaseBarGraphics.fill(color);
+      group.addChild(phaseBarGraphics);
+      group.phaseBarGraphics = phaseBarGraphics;
+      group.phaseColor = color;
     });
 
     group.nodeWidth = nodeWidth;
@@ -140,7 +150,8 @@ export function createGraphNode(
     const createRenderOptions = (mode: NodeViewMode): NodeRenderOptions => ({
       mode,
       iconPath,
-      typeLabel,
+      // In simple mode (zoomed out), show the asset label instead of asset type
+      typeLabel: mode === 'simple' ? mainLabel : typeLabel,
       mainLabel: mode === 'detailed' ? mainLabel : undefined,
     });
 
@@ -224,6 +235,11 @@ export function createGraphNode(
       newSprite.height = originalHeight;
       newSprite.alpha = 0;
       group.addChild(newSprite);
+
+      // Ensure phase bar stays on top after adding new sprite
+      if (group.phaseBarGraphics) {
+        group.setChildIndex(group.phaseBarGraphics, group.children.length - 1);
+      }
 
       const oldSprite = currentSprite;
 

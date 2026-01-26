@@ -8,7 +8,7 @@ import type { NodeRenderOptions } from './nodeRenderer.js';
 // Base dimensions (will be scaled)
 export const BASE_TYPE_LABEL_FONT_SIZE = 13;
 export const BASE_MAIN_LABEL_FONT_SIZE = 18;
-export const BASE_SIMPLE_TYPE_FONT_SIZE = 16;
+export const BASE_SIMPLE_TYPE_FONT_SIZE = 20;
 export const BASE_ICON_DIAMETER = 36;
 export const BASE_NODE_HEIGHT_DETAILED = 56;
 export const BASE_NODE_HEIGHT_SIMPLE = 48;

@@ -13,7 +13,7 @@ export interface SelectionControllerDeps {
   stepNodeMap: Map<string, GraphNode>;
   viewport: { position: { x: number; y: number }; scale: { x: number; y: number } };
   viewportState: { width: number; height: number; x: number; y: number; scale: number };
-  centerOnExpandedNode: (nodeId: string, callback: () => void) => void;
+  centerOnNode: (nodeId: string, options?: { zoom?: boolean; onComplete?: () => void }) => void;
 }
 
 export interface SelectionController {
@@ -70,7 +70,7 @@ const calculateOverlayPosition = (
  * Creates a unified selection controller for nodes and steps.
  */
 export const createSelectionController = (deps: SelectionControllerDeps): SelectionController => {
-  const { nodeMap, stepNodeMap, viewportState, centerOnExpandedNode } = deps;
+  const { nodeMap, stepNodeMap, viewportState, centerOnNode } = deps;
 
   let expandedNodeId: string | null = null;
   let selectedStepId: string | null = null;
@@ -88,8 +88,8 @@ export const createSelectionController = (deps: SelectionControllerDeps): Select
     traceState.setExpansionProgress(1);
 
     // Center on node, then set overlay position AFTER viewport settles
-    centerOnExpandedNode(node.id, () => {
-      updateOverlayPosition();
+    centerOnNode(node.id, {
+      onComplete: () => updateOverlayPosition(),
     });
   };
 

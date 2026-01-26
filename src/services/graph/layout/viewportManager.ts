@@ -5,6 +5,7 @@
 import { Container } from 'pixi.js';
 import gsap from 'gsap';
 import { getCssVarInt } from '../../../themes/index.js';
+import { uiState } from '../../../stores/uiState.svelte.js';
 import { ZOOM_MAX, ZOOM_DEFAULT, VIEWPORT_TOP_MARGIN, VIEWPORT_BOTTOM_MARGIN } from '../../../config/constants.js';
 import type { ViewportState } from '../interaction/viewport.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
@@ -20,10 +21,13 @@ export interface ViewportManagerDeps {
   bottomNodeInfo: TopNodeInfo | null;
 }
 
+export interface CenterOptions {
+  zoom?: boolean;
+  onComplete?: () => void;
+}
+
 export interface ViewportManager {
-  centerOnNode: (nodeId: string) => void;
-  panToNode: (nodeId: string) => void;
-  centerOnExpandedNode: (nodeId: string, callback: () => void) => void;
+  centerOnNode: (nodeId: string, options?: CenterOptions) => void;
   zoomToBounds: (nodeId?: string) => void;
   destroy: () => void;
 }
@@ -34,24 +38,36 @@ export interface ViewportManager {
 export function createViewportManager(deps: ViewportManagerDeps): ViewportManager {
   const { nodeMap, viewport, viewportState, stepLabelsUpdate, cullAndRender, topNodeInfo, bottomNodeInfo } = deps;
 
-  function centerOnNode(nodeId: string): void {
+  function centerOnNode(nodeId: string, options: CenterOptions = {}): void {
     const node = nodeMap.get(nodeId);
-    if (!node || viewportState.width <= getCssVarInt('--mobile-breakpoint')) return;
+    if (!node) {
+      options.onComplete?.();
+      return;
+    }
 
-    const panelMargin = getCssVarInt('--panel-margin');
-    const panelMaxWidth = getCssVarInt('--panel-max-width');
-    const panelWidth = Math.min(viewportState.width * 0.5 - panelMargin * 2, panelMaxWidth) + panelMargin * 2;
+    const { zoom = false, onComplete } = options;
+    const targetScale = zoom ? ZOOM_MAX : viewportState.scale;
 
-    // Zoom to max and calculate position for that scale
-    const targetScale = ZOOM_MAX;
-    const targetX = panelWidth + (viewportState.width - panelWidth) / 2 - node.position.x * targetScale;
+    // Always apply panel offset when detail panel is open
+    const applyPanelOffset = uiState.isDetailOpen &&
+      viewportState.width > getCssVarInt('--mobile-breakpoint');
+
+    let targetX: number;
+    if (applyPanelOffset) {
+      const panelMargin = getCssVarInt('--panel-margin');
+      const panelMaxWidth = getCssVarInt('--panel-max-width');
+      const panelWidth = Math.min(viewportState.width * 0.5 - panelMargin * 2, panelMaxWidth) + panelMargin * 2;
+      targetX = panelWidth + (viewportState.width - panelWidth) / 2 - node.position.x * targetScale;
+    } else {
+      targetX = viewportState.width / 2 - node.position.x * targetScale;
+    }
     const targetY = viewportState.height / 2 - node.position.y * targetScale;
 
     gsap.to(viewportState, {
       x: targetX,
       y: targetY,
       scale: targetScale,
-      duration: 0.4,
+      duration: zoom ? 0.4 : 0.3,
       ease: 'power2.out',
       onUpdate: () => {
         viewport.position.set(viewportState.x, viewportState.y);
@@ -59,63 +75,7 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
         stepLabelsUpdate(viewportState);
         cullAndRender();
       },
-    });
-  }
-
-  /**
-   * Pans viewport to center on a node at current zoom level.
-   * Used for keyboard navigation.
-   */
-  function panToNode(nodeId: string): void {
-    const node = nodeMap.get(nodeId);
-    if (!node) return;
-
-    // Center the node in the viewport at current scale
-    const targetScale = viewportState.scale;
-    const targetX = viewportState.width / 2 - node.position.x * targetScale;
-    const targetY = viewportState.height / 2 - node.position.y * targetScale;
-
-    gsap.to(viewportState, {
-      x: targetX,
-      y: targetY,
-      duration: 0.3,
-      ease: 'power2.out',
-      onUpdate: () => {
-        viewport.position.set(viewportState.x, viewportState.y);
-        stepLabelsUpdate(viewportState);
-        cullAndRender();
-      },
-    });
-  }
-
-  /**
-   * Centers viewport on a node for expansion, then calls the callback.
-   * Used during node expansion animation sequence.
-   */
-  function centerOnExpandedNode(nodeId: string, callback: () => void): void {
-    const node = nodeMap.get(nodeId);
-    if (!node) {
-      callback();
-      return;
-    }
-
-    // Center the node in the available viewport area
-    const targetScale = viewportState.scale;
-    const targetX = viewportState.width / 2 - node.position.x * targetScale;
-    const targetY = viewportState.height / 2 - node.position.y * targetScale;
-
-    gsap.to(viewportState, {
-      x: targetX,
-      y: targetY,
-      duration: 0.3,
-      ease: 'power2.out',
-      onUpdate: () => {
-        viewport.position.set(viewportState.x, viewportState.y);
-        viewport.scale.set(viewportState.scale);
-        stepLabelsUpdate(viewportState);
-        cullAndRender();
-      },
-      onComplete: callback,
+      onComplete,
     });
   }
 
@@ -180,8 +140,6 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
 
   return {
     centerOnNode,
-    panToNode,
-    centerOnExpandedNode,
     zoomToBounds,
     destroy,
   };
