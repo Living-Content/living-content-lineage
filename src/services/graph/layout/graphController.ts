@@ -237,9 +237,9 @@ export async function createGraphController({
   };
 
   const lodController = createLODController(lodLayers, {
-    onCollapseStart: () => { traceState.clearSelection(); titleOverlay.setMode('relative'); },
+    onCollapseStart: () => { traceState.collapseNode(); titleOverlay.setMode('relative'); },
     onCollapseEnd: () => lodController.updateViewport(viewportState),
-    onExpandStart: () => { traceState.clearSelection(); uiState.clearPhaseFilter(); titleOverlay.setMode('fixed'); },
+    onExpandStart: () => { traceState.collapseNode(); uiState.clearPhaseFilter(); titleOverlay.setMode('fixed'); },
     onExpandEnd: () => lodController.updateViewport(viewportState),
   }, renderCallbacks);
 
