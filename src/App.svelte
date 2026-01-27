@@ -8,6 +8,7 @@
   import GraphCanvas from './components/graph/GraphCanvas.svelte';
   import DetailPanel from './components/dataviewer/DetailPanel.svelte';
   import Menu from './components/menu/Menu.svelte';
+  import ReplayActionBar from './components/replay/ReplayActionBar.svelte';
 
   let authReady = $state(false);
 
@@ -22,6 +23,16 @@
 
     authReady = true;
   });
+
+  function handleReplayComplete(workflowId: string): void {
+    // Navigate to the new branch workflow
+    const { apiUrl } = configStore.current;
+    if (apiUrl) {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('workflowId', workflowId);
+      window.location.href = newUrl.toString();
+    }
+  }
 </script>
 
 <div class="app-shell" class:loading={uiState.isLoading}>
@@ -34,4 +45,6 @@
   {#if menuStore.isOpen}
     <Menu />
   {/if}
+
+  <ReplayActionBar onReplayComplete={handleReplayComplete} />
 </div>

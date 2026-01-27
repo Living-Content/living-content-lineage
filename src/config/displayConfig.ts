@@ -6,6 +6,11 @@ import type { DataCardType } from './cardTypes.js';
 import type { AssetType } from './types.js';
 
 /**
+ * Edit type for editable fields.
+ */
+export type EditType = 'text' | 'json' | 'select' | 'number' | 'textarea';
+
+/**
  * Configuration for how a single field should be displayed.
  */
 export interface FieldDisplayConfig {
@@ -32,6 +37,10 @@ export interface FieldDisplayConfig {
    * If not specified, uses the field key itself against data.
    */
   source?: string;
+  /** Whether this field can be edited for replay */
+  isEditable?: boolean;
+  /** Type of editor to show for editable fields */
+  editType?: EditType;
 }
 
 /**
@@ -59,8 +68,8 @@ export const DISPLAY_CONFIGS: Record<AssetType, AssetDisplayConfig> = {
       'inputTokens': { type: 'metric', isCard: true, label: 'Input Tokens', source: 'data.inputTokens', span: 2 },
       'outputTokens': { type: 'metric', isCard: true, label: 'Output Tokens', source: 'data.outputTokens', span: 2 },
       'totalDurationMs': { type: 'duration', isCard: true, label: 'Duration', source: 'data.totalDurationMs', span: 2 },
-      'temperature': { type: 'number', isCard: true, label: 'Temperature', source: 'data.temperature', span: 2 },
-      'maxTokens': { type: 'metric', isCard: false, label: 'Max Tokens', source: 'data.maxTokens' },
+      'temperature': { type: 'number', isCard: true, label: 'Temperature', source: 'data.temperature', span: 2, isEditable: true, editType: 'number' },
+      'maxTokens': { type: 'metric', isCard: false, label: 'Max Tokens', source: 'data.maxTokens', isEditable: true, editType: 'number' },
     }
   },
 
@@ -69,7 +78,7 @@ export const DISPLAY_CONFIGS: Record<AssetType, AssetDisplayConfig> = {
     fields: {
       'durationMs': { type: 'duration', isCard: true, label: 'Duration', source: 'data.durationMs', span: 2 },
       'module': { type: 'text', isCard: true, label: 'Module', source: 'data.module', span: 2 },
-      'arguments': { type: 'key-value', isCard: false, label: 'Arguments', source: 'data.arguments' },
+      'arguments': { type: 'key-value', isCard: false, label: 'Arguments', source: 'data.arguments', isEditable: true, editType: 'json' },
       'sourceCode': { type: 'code', isCard: false, label: 'Source Code', source: 'data.sourceCode' },
     }
   },
@@ -86,9 +95,9 @@ export const DISPLAY_CONFIGS: Record<AssetType, AssetDisplayConfig> = {
     cardColumns: 4,
     fields: {
       // === INGEST (user query arriving) - query moved to detail-only (can be long) ===
-      'query': { type: 'text-preview', isCard: false, label: 'Query', source: 'data.query', truncateAt: 500 },
+      'query': { type: 'text-preview', isCard: false, label: 'Query', source: 'data.query', truncateAt: 500, isEditable: true, editType: 'textarea' },
       'messageCount': { type: 'metric', isCard: true, label: 'Messages', source: 'data.messageCount', span: 2 },
-      'value': { type: 'text-preview', isCard: true, label: 'Content', source: 'data.value', span: 4, truncateAt: 100 },
+      'value': { type: 'text-preview', isCard: true, label: 'Content', source: 'data.value', span: 4, truncateAt: 100, isEditable: true, editType: 'textarea' },
 
       // === SELECT (tool selection - model metrics shown on MODEL node, not here) ===
       'toolId': { type: 'badge', isCard: true, label: 'Tool', source: 'data.toolId', span: 2 },
@@ -297,4 +306,19 @@ export const classifyCardFields = (
     metrics: cardFields.filter(([, field]) => metricTypes.includes(field.type)),
     properties: cardFields.filter(([, field]) => !metricTypes.includes(field.type)),
   };
+};
+
+/**
+ * Get editable fields from a config.
+ */
+export const getEditableFields = (config: AssetDisplayConfig): [string, FieldDisplayConfig][] => {
+  return Object.entries(config.fields).filter(([, field]) => field.isEditable);
+};
+
+/**
+ * Check if a field is editable.
+ */
+export const isFieldEditable = (config: AssetDisplayConfig, fieldPath: string): boolean => {
+  const field = config.fields[fieldPath];
+  return field?.isEditable ?? false;
 };

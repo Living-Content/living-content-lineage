@@ -65,6 +65,17 @@ const selectedNode = $derived(selection?.type === 'node' ? selection.data : null
 const selectedStep = $derived(selection?.type === 'step' ? selection.data : null);
 const isExpanded = $derived(expandedNode !== null);
 
+/**
+ * Node IDs sorted by execution order (left to right based on x coordinate).
+ * Used for determining the earliest branch point in replay.
+ */
+const nodeExecutionOrder = $derived(() => {
+  if (!trace) return [];
+  return [...trace.nodes]
+    .sort((a, b) => (a.x ?? 0) - (b.x ?? 0))
+    .map(node => node.id);
+});
+
 export const traceState = {
   get trace() { return trace; },
   get selection() { return selection; },
@@ -76,6 +87,7 @@ export const traceState = {
   get isCollapsed() { return isCollapsed; },
   get overlayNode() { return overlayNode; },
   get viewportState() { return viewportState; },
+  get nodeExecutionOrder() { return nodeExecutionOrder(); },
   getNodeWidth(groupX: number): number | undefined {
     return nodeWidths.get(groupX);
   },

@@ -3,10 +3,12 @@
    * Hybrid layout container for card data display.
    * Renders metric cards in a grid and text properties in key-value rows.
    * Used for both summary views and the top section of detail views.
+   * Supports editing for replay when fields are marked as editable.
    */
   import type { Phase } from '../../../config/types.js';
   import type { FieldDisplayConfig } from '../../../config/displayConfig.js';
   import DataCard from './DataCard.svelte';
+  import EditableDataCard from './EditableDataCard.svelte';
   import PropertyRow from '../PropertyRow.svelte';
 
   let {
@@ -14,7 +16,8 @@
     properties = [],
     phase = undefined,
     columns = 4,
-    viewMode = 'detail'
+    viewMode = 'detail',
+    nodeId = ''
   }: {
     /** Metric fields to render as cards */
     metrics?: Array<{
@@ -34,6 +37,8 @@
     columns?: 2 | 3 | 4;
     /** View mode - affects which span to use */
     viewMode?: 'summary' | 'detail';
+    /** Node ID for editable fields */
+    nodeId?: string;
   } = $props();
 
   /** Get effective span based on view mode */
@@ -52,14 +57,29 @@
   {#if hasMetrics}
     <div class="metrics-grid columns-{columns}">
       {#each metrics as { key, value, config } (key)}
-        <DataCard
-          {value}
-          label={config.label ?? key}
-          type={config.type}
-          span={getSpan(config)}
-          unit={config.unit}
-          {phase}
-        />
+        {#if config.isEditable && nodeId}
+          <EditableDataCard
+            {value}
+            label={config.label ?? key}
+            type={config.type}
+            span={getSpan(config)}
+            unit={config.unit}
+            {phase}
+            {nodeId}
+            fieldPath={config.source ?? `data.${key}`}
+            isEditable={true}
+            editType={config.editType ?? 'number'}
+          />
+        {:else}
+          <DataCard
+            {value}
+            label={config.label ?? key}
+            type={config.type}
+            span={getSpan(config)}
+            unit={config.unit}
+            {phase}
+          />
+        {/if}
       {/each}
     </div>
   {/if}

@@ -1,13 +1,15 @@
 /**
- * WebSocket service for real-time comment updates.
+ * WebSocket service for real-time comment and replay updates.
  *
- * Connects to the GAIM API WebSocket endpoint to receive live comment events.
+ * Connects to the GAIM API WebSocket endpoint to receive live events.
  * Handles authentication, reconnection, and subscription management.
  */
 
 import { logger } from '../../lib/logger.js';
 import { configStore } from '../../stores/configStore.svelte.js';
 import { tokenStore } from '../../stores/tokenStore.svelte.js';
+import { replayState } from '../../stores/replayState.svelte.js';
+import { toastStore } from '../../lib/toast.svelte.js';
 import type { Comment } from '../../config/commentTypes.js';
 
 type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
@@ -40,7 +42,15 @@ interface CommentCountUpdateEvent {
   count: number;
 }
 
-type CommentEvent = CommentCreatedEvent | CommentDeletedEvent | CommentCountUpdateEvent;
+interface ReplayCompleteEvent {
+  type: 'replay_complete';
+  workflowId: string;
+  sourceWorkflowId: string;
+  status: 'success' | 'error';
+  message?: string;
+}
+
+type CommentEvent = CommentCreatedEvent | CommentDeletedEvent | CommentCountUpdateEvent | ReplayCompleteEvent;
 
 interface CommentEventHandlers {
   onCommentCreated?: (comment: Comment) => void;
@@ -234,6 +244,10 @@ class CommentWebSocket {
         this.handleCountUpdate(data as unknown as CommentCountUpdateEvent);
         break;
 
+      case 'replay_complete':
+        this.handleReplayComplete(data as unknown as ReplayCompleteEvent);
+        break;
+
       default:
         // Ignore other message types (ping, etc.)
         break;
@@ -267,6 +281,18 @@ class CommentWebSocket {
   private handleCountUpdate(event: CommentCountUpdateEvent): void {
     logger.debug('CommentWebSocket: Count updated', event.nodeId, event.count);
     this.handlers.onCountUpdated?.(event.nodeId, event.count);
+  }
+
+  private handleReplayComplete(event: ReplayCompleteEvent): void {
+    logger.info('CommentWebSocket: Replay complete', event.workflowId, event.status);
+
+    if (event.status === 'success') {
+      toastStore.success('Replay complete - click to view', true);
+      replayState.setCompletedWorkflowId(event.workflowId);
+    } else {
+      toastStore.error(event.message || 'Replay failed');
+      replayState.setCompletedWorkflowId(null);
+    }
   }
 
   private setState(state: ConnectionState): void {

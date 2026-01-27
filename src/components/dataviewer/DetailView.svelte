@@ -2,6 +2,7 @@
   /**
    * Detail view - renders asset details with special handling for known field types.
    * Uses merged dataSource pattern for consistent field access.
+   * Supports editing for replay when fields are marked as editable.
    */
   import type { TraceNodeData } from '../../config/types.js';
   import {
@@ -14,11 +15,15 @@
   import CardSection from './cards/CardSection.svelte';
   import PropertyGroup from './detail/PropertyGroup.svelte';
   import PropertyRow from './PropertyRow.svelte';
+  import EditablePropertyRow from './detail/EditablePropertyRow.svelte';
+  import EditableValue from './detail/EditableValue.svelte';
   import CodeBlock from './detail/CodeBlock.svelte';
   import MarkdownValue from './detail/MarkdownValue.svelte';
   import AdditionalData from './detail/AdditionalData.svelte';
 
   let { node }: { node: TraceNodeData } = $props();
+
+  let nodeId = $derived(node.id);
 
   let assetType = $derived(node.assetType);
   let phase = $derived(node.phase);
@@ -121,15 +126,20 @@
       {phase}
       columns={displayConfig.cardColumns ?? 4}
       viewMode="detail"
+      {nodeId}
     />
   {/if}
 
   {#if hasDetailData}
     <PropertyGroup title="Details" collapsible={false}>
       {#each regularDetailFields as { key, value, config } (key)}
-        <PropertyRow
+        <EditablePropertyRow
+          {nodeId}
+          fieldPath={config.source ?? `data.${key}`}
           label={config.label ?? key}
           {value}
+          isEditable={config.isEditable}
+          editType={config.editType}
         />
       {/each}
     </PropertyGroup>
@@ -145,11 +155,22 @@
 
   {#each keyValueFields as { key, value, config } (key)}
     {#if value && typeof value === 'object'}
-      <PropertyGroup title={config.label ?? key} collapsible={false}>
-        {#each Object.entries(value) as [k, v] (k)}
-          <PropertyRow label={k} value={formatKeyValueItem(v)} />
-        {/each}
-      </PropertyGroup>
+      {#if config.isEditable}
+        <EditableValue
+          {nodeId}
+          fieldPath={config.source ?? `data.${key}`}
+          currentValue={value}
+          editType={config.editType ?? 'json'}
+          showLabel={true}
+          label={config.label ?? key}
+        />
+      {:else}
+        <PropertyGroup title={config.label ?? key} collapsible={false}>
+          {#each Object.entries(value) as [k, v] (k)}
+            <PropertyRow label={k} value={formatKeyValueItem(v)} />
+          {/each}
+        </PropertyGroup>
+      {/if}
     {/if}
   {/each}
 
