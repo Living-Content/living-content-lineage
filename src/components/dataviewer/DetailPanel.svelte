@@ -39,6 +39,7 @@
   let currentNode = $derived(traceState.isExpanded ? traceState.expandedNode : traceState.selectedNode);
   let currentStep = $derived(traceState.selectedStep);
   let detailAvailable = $derived(currentNode ? hasDetailContent(currentNode) : false);
+  let commentCount = $derived(currentNode ? commentState.getCount(currentNode.id) : 0);
 
   // Derive position from world coordinates + viewport - no caching
   let derivedPosition = $derived.by(() => {
@@ -218,7 +219,7 @@
         onStartDrag={handleDragStart}
       />
 
-      <div class="panel-scroll-area" class:has-footer={currentNode?.assetManifest?.attestation}>
+      <div class="panel-scroll-area" class:has-footer={currentNode}>
         <div class="panel-content">
           {#if uiState.loadError}
             <p class="panel-placeholder">{uiState.loadError}</p>
@@ -227,9 +228,6 @@
               node={currentNode}
               {showDetailContent}
               {detailAvailable}
-              {commentsOpen}
-              onOpenDetails={openDetails}
-              onOpenComments={toggleComments}
             />
           {:else if currentStep}
             <StepOverview nodes={currentStep.nodes} edges={currentStep.edges} />
@@ -239,8 +237,24 @@
         </div>
       </div>
 
+      {#if currentNode}
+        <div class="action-footer">
+          {#if detailAvailable && !showDetailContent}
+            <button class="action-link" onclick={openDetails}>
+              DETAILS
+            </button>
+          {/if}
+          <button class="action-link comments-link" class:open={commentsOpen} onclick={toggleComments}>
+            {#if commentCount > 0}
+              <span class="count-badge" transition:fade={{ duration: 150 }}>{commentCount > 99 ? '99+' : commentCount}</span>
+            {/if}
+            COMMENTS
+          </button>
+        </div>
+      {/if}
+
       {#if currentNode?.assetManifest?.attestation}
-        <div class="panel-footer" class:expanded={signatureExpanded}>
+        <div class="panel-footer attestation-footer" class:expanded={signatureExpanded}>
           <AttestationPanel
             attestation={currentNode.assetManifest.attestation}
             bind:expanded={signatureExpanded}
@@ -305,7 +319,7 @@
   }
 
   .panel-scroll-area.has-footer {
-    padding-bottom: 60px;
+    padding-bottom: var(--space-md);
   }
 
   .panel-content {
@@ -314,6 +328,82 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
+  }
+
+  .action-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md) var(--space-xl);
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border-soft);
+    flex-shrink: 0;
+  }
+
+  .action-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: color 0.15s ease;
+  }
+
+  .action-link:hover {
+    color: var(--color-text-primary);
+  }
+
+  .action-link::after {
+    font-size: 14px;
+    transition: transform 0.15s ease;
+    display: inline-block;
+  }
+
+  .action-link:not(.comments-link)::after {
+    content: '\2194';
+    transform: rotate(-45deg);
+  }
+
+  .action-link:not(.comments-link):hover::after {
+    transform: rotate(-45deg) scale(1.05);
+  }
+
+  .comments-link {
+    margin-left: auto;
+  }
+
+  .comments-link::after {
+    content: '\2192';
+  }
+
+  .comments-link:hover:not(.open)::after {
+    transform: translateX(2px);
+  }
+
+  .comments-link.open::after {
+    content: '\2190';
+  }
+
+  .count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    margin-right: 4px;
+    background: var(--color-text-primary);
+    border-radius: 8px;
+    color: var(--color-surface);
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
   }
 
   .panel-footer {
@@ -329,6 +419,10 @@
 
   .panel-footer.expanded {
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  .attestation-footer {
+    bottom: 52px;
   }
 
   .panel-placeholder {
