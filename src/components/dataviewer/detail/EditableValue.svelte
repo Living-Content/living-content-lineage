@@ -11,6 +11,7 @@
 
   interface Props {
     nodeId: string;
+    step: string;
     fieldPath: string;
     currentValue: unknown;
     editType: EditType;
@@ -18,7 +19,7 @@
     label?: string;
   }
 
-  let { nodeId, fieldPath, currentValue, editType, showLabel = false, label = '' }: Props = $props();
+  let { nodeId, step, fieldPath, currentValue, editType, showLabel = false, label = '' }: Props = $props();
 
   let isEditing = $state(false);
   let editValue = $state('');
@@ -67,6 +68,7 @@
     }
 
     replayState.addModification({
+      step,
       nodeId,
       fieldPath,
       originalValue: currentValue,

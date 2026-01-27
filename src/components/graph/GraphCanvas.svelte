@@ -21,8 +21,7 @@
   import { menuStore } from '../../stores/menuStore.svelte.js';
   import type { Trace, Phase } from '../../config/types.js';
   import { resolveManifestUrl } from '../../services/manifest/urlResolver.js';
-  import PhaseFilterBadge from '../PhaseFilterBadge.svelte';
-
+  
   interface Props {
     onHover?: (payload: HoverPayload) => void;
     onHoverEnd?: () => void;
@@ -176,7 +175,6 @@
 
 <main class="graph-container">
   <div id="graph-container" bind:this={container}></div>
-  <PhaseFilterBadge />
 </main>
 
 <style>

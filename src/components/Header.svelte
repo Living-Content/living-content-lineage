@@ -6,6 +6,7 @@
   import { menuStore } from '../stores/menuStore.svelte.js';
   import { traceState } from '../stores/traceState.svelte.js';
   import BranchHistory from './branches/BranchHistory.svelte';
+  import HeaderFilter from './HeaderFilter.svelte';
 
   let isMenuOpen = $derived(menuStore.isOpen);
   let isSubPanel = $derived(menuStore.isSubPanel);
@@ -40,6 +41,8 @@
   <BranchHistory />
 
   <div class="spacer"></div>
+
+  <HeaderFilter />
 
   <img
     src={uiState.isSimpleView ? '/icons/simple.svg' : '/icons/detail.svg'}

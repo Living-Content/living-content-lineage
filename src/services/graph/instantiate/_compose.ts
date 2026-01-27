@@ -121,9 +121,9 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
   const getTopNodeInfo = () => calculateTopNodeInfo(nodeMap);
   const getBottomNodeInfo = () => calculateBottomNodeInfo(nodeMap);
 
-  // Create step labels with initial bounds
+  // Create step labels with initial bounds (world space - add to viewport)
   const stepLabels = createStepLabels(traceData.steps, nodeMap, stepNodeMap, getTopNodeInfo());
-  app.stage.addChild(stepLabels.container);
+  viewport.addChild(stepLabels.container);
   stepLabels.update(viewportState);
 
   // Create LOD layers

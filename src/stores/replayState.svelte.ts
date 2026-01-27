@@ -11,9 +11,14 @@ import { toastStore } from '../lib/toast.svelte.js';
 
 /**
  * A modification to a node field for replay.
+ *
+ * Note: `step` is required for backend processing - the backend uses step-based
+ * targeting to match modifications with workflow nodes. `nodeId` is kept for
+ * UI tracking and de-duplication.
  */
 export interface NodeModification {
-  nodeId: string;
+  step: string;           // Required for backend - the workflow step (e.g., "generate", "reflect")
+  nodeId: string;         // For UI tracking/de-duplication
   fieldPath: string;
   originalValue: unknown;
   newValue: unknown;
@@ -50,8 +55,15 @@ export const replayState = {
 
   /**
    * Add or update a modification for a node field.
+   * Validates that `step` is provided (required for backend).
    */
   addModification(mod: NodeModification): void {
+    // Validate step is provided (required for backend)
+    if (!mod.step) {
+      logger.error('Replay: Modification missing required step field', mod);
+      return;
+    }
+
     const existingIndex = modifications.findIndex(
       m => m.nodeId === mod.nodeId && m.fieldPath === mod.fieldPath
     );
@@ -133,7 +145,8 @@ export const replayState = {
    */
   computeBranchPoint(nodeOrder: string[]): string | null {
     if (modifications.length === 0) return null;
-    const modifiedNodeIds = new Set(modifications.map(m => m.nodeId));
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local lookup variable, not reactive state
+    const modifiedNodeIds: Set<string> = new Set(modifications.map(m => m.nodeId));
 
     for (const nodeId of nodeOrder) {
       if (modifiedNodeIds.has(nodeId)) {
@@ -183,9 +196,10 @@ export const replayState = {
         body: JSON.stringify({
           sourceWorkflowId: workflowId,
           branchPointNodeId,
+          // Send step (required for backend) and normalize fieldPath by stripping "data." prefix
           modifications: modifications.map(m => ({
-            nodeId: m.nodeId,
-            fieldPath: m.fieldPath,
+            step: m.step,
+            fieldPath: m.fieldPath.replace(/^data\./, ''),  // Normalize: strip "data." prefix
             originalValue: m.originalValue,
             newValue: m.newValue,
           })),

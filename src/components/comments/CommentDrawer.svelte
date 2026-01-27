@@ -7,10 +7,6 @@
   import CommentSection from './CommentSection.svelte';
 
   let { nodeId, isOpen = $bindable(false) }: { nodeId: string; isOpen?: boolean } = $props();
-
-  function close() {
-    isOpen = false;
-  }
 </script>
 
 {#if isOpen}

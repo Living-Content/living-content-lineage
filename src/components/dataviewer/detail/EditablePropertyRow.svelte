@@ -10,6 +10,7 @@
 
   interface Props {
     nodeId: string;
+    step: string;
     fieldPath: string;
     label: string;
     value: unknown;
@@ -17,7 +18,7 @@
     editType?: EditType;
   }
 
-  let { nodeId, fieldPath, label, value, isEditable = false, editType = 'text' }: Props = $props();
+  let { nodeId, step, fieldPath, label, value, isEditable = false, editType = 'text' }: Props = $props();
 </script>
 
 {#if isEditable && editType}
@@ -25,6 +26,7 @@
     <div class="row-label">{label}</div>
     <EditableValue
       {nodeId}
+      {step}
       {fieldPath}
       currentValue={value}
       {editType}

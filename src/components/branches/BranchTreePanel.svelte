@@ -3,8 +3,7 @@
    * Branch tree visualization panel.
    * Shows all branches from the root workflow as a tree structure.
    */
-  import { onMount } from 'svelte';
-  import { fade, slide } from 'svelte/transition';
+  import { slide } from 'svelte/transition';
   import { logger } from '../../lib/logger.js';
   import { api } from '../../lib/api.js';
   import { configStore } from '../../stores/configStore.svelte.js';

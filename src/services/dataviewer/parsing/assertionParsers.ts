@@ -12,7 +12,7 @@ export interface LcoModelData {
   modelId?: string;
   computation?: string;
   parameters?: {
-    maxTokens?: number;
+    tokenLimit?: number;
     temperature?: number;
     [key: string]: unknown;
   };
@@ -116,7 +116,7 @@ export const parseLcoModel = (data: unknown): LcoModelData | undefined => {
 
 const parseParameters = (params: Record<string, unknown>): LcoModelData['parameters'] => {
   return {
-    maxTokens: typeof params.max_tokens === 'number' ? params.max_tokens : undefined,
+    tokenLimit: typeof params.token_limit === 'number' ? params.token_limit : undefined,
     temperature: typeof params.temperature === 'number' ? params.temperature : undefined,
     ...params,
   };

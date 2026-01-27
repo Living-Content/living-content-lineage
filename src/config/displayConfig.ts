@@ -69,7 +69,7 @@ export const DISPLAY_CONFIGS: Record<AssetType, AssetDisplayConfig> = {
       'outputTokens': { type: 'metric', isCard: true, label: 'Output Tokens', source: 'data.outputTokens', span: 2 },
       'totalDurationMs': { type: 'duration', isCard: true, label: 'Duration', source: 'data.totalDurationMs', span: 2 },
       'temperature': { type: 'number', isCard: true, label: 'Temperature', source: 'data.temperature', span: 2, isEditable: true, editType: 'number' },
-      'maxTokens': { type: 'metric', isCard: false, label: 'Max Tokens', source: 'data.maxTokens', isEditable: true, editType: 'number' },
+      'tokenLimit': { type: 'metric', isCard: false, label: 'Token Limit', source: 'data.tokenLimit', isEditable: true, editType: 'number' },
     }
   },
 

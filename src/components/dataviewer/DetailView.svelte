@@ -24,6 +24,7 @@
   let { node }: { node: TraceNodeData } = $props();
 
   let nodeId = $derived(node.id);
+  let step = $derived(node.step ?? '');
 
   let assetType = $derived(node.assetType);
   let phase = $derived(node.phase);
@@ -127,6 +128,7 @@
       columns={displayConfig.cardColumns ?? 4}
       viewMode="detail"
       {nodeId}
+      {step}
     />
   {/if}
 
@@ -135,6 +137,7 @@
       {#each regularDetailFields as { key, value, config } (key)}
         <EditablePropertyRow
           {nodeId}
+          {step}
           fieldPath={config.source ?? `data.${key}`}
           label={config.label ?? key}
           {value}
@@ -158,6 +161,7 @@
       {#if config.isEditable}
         <EditableValue
           {nodeId}
+          {step}
           fieldPath={config.source ?? `data.${key}`}
           currentValue={value}
           editType={config.editType ?? 'json'}

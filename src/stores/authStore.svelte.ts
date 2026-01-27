@@ -10,6 +10,7 @@
  *   SESSION_ENDED - Refresh failed, requires user action
  */
 
+import { SvelteSet } from 'svelte/reactivity';
 import { logger } from '../lib/logger.js';
 import type { AuthState, UserClaims, AuthStoreState } from '../lib/types/auth.js';
 
@@ -27,8 +28,8 @@ let claims = $state<UserClaims | null>(null);
 let isReady = $state(false);
 
 type AuthEventHandler = (data: AuthStoreState) => void;
-const stateChangeHandlers: Set<AuthEventHandler> = new Set();
-const readyHandlers: Set<AuthEventHandler> = new Set();
+const stateChangeHandlers = new SvelteSet<AuthEventHandler>();
+const readyHandlers = new SvelteSet<AuthEventHandler>();
 
 function transition(
   newState: AuthState,

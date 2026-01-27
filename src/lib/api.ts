@@ -3,7 +3,6 @@
  * HTTP client with dual auth modes for cross-origin support.
  */
 
-import { logger } from './logger.js';
 import { tokenStore } from '../stores/tokenStore.svelte.js';
 import { configStore } from '../stores/configStore.svelte.js';
 

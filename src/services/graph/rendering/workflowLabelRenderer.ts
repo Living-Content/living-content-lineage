@@ -1,6 +1,6 @@
 /**
- * Renders step labels at the top of the graph view.
- * Labels are created once and positions updated on viewport changes.
+ * Renders step labels above workflow rows in world space.
+ * Labels are positioned relative to workflow nodes, moving with the viewport.
  * Each label has a dotted vertical line extending down toward the nodes.
  */
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
@@ -56,6 +56,11 @@ export interface StepLabels {
   container: Container;
 }
 
+// World-space offset above the topmost node
+const LABEL_WORLD_OFFSET_Y = 80;
+// Line start offset below label (in world space)
+const LINE_START_OFFSET = 30;
+
 /**
  * Pure creation of a single step label entry (no container attachment).
  * Uses actionWorldX (action node position) for alignment.
@@ -68,7 +73,6 @@ export const createStepLabelEntry = (
 
   const label = new Text({ text: step.label, style: createLabelStyle(color) });
   label.anchor.set(0.5, 0);
-  label.position.y = getCssVarInt('--step-label-top-padding');
 
   // Wrap label in clickable container
   const labelContainer = new Container();
@@ -76,6 +80,9 @@ export const createStepLabelEntry = (
   labelContainer.cursor = 'pointer';
   labelContainer.addChild(label);
   labelContainer.on('pointertap', () => uiState.setPhaseFilter(step.phase));
+
+  // Position will be set in world coordinates during update
+  labelContainer.position.x = actionWorldX;
 
   const line = new Graphics();
 
@@ -132,23 +139,25 @@ export const attachLabelEntriesToContainer = (
 };
 
 /**
- * Updates a single label entry position based on viewport state.
+ * Updates a single label entry position in world coordinates.
  */
 const updateLabelEntryPosition = (
   entry: StepLabelEntry,
   viewportState: ViewportState,
-  topPadding: number,
-  globalTopY: number
+  topWorldY: number,
+  topHalfHeight: number
 ): void => {
-  const screenX = viewportState.x + entry.worldX * viewportState.scale;
-  entry.labelContainer.position.x = screenX;
+  // Position label in world coordinates
+  const labelWorldY = topWorldY - topHalfHeight - LABEL_WORLD_OFFSET_Y;
+  entry.labelContainer.position.x = entry.worldX;
+  entry.labelContainer.position.y = labelWorldY;
 
-  // Redraw dotted line
+  // Redraw dotted line in world coordinates
   entry.line.clear();
-  if (globalTopY === Infinity) return;
+  if (topWorldY === Infinity) return;
 
-  const startY = topPadding + getCssVarInt('--step-label-line-start');
-  const endY = globalTopY;
+  const startY = labelWorldY + LINE_START_OFFSET;
+  const endY = topWorldY - topHalfHeight;
   if (endY <= startY) return;
 
   const fadeDistance = (endY - startY) * 0.6;
@@ -156,6 +165,9 @@ const updateLabelEntryPosition = (
 
   const dotSize = getCssVarInt('--step-label-dot-size');
   const dotGap = getCssVarInt('--step-label-dot-gap');
+  // Scale dot spacing based on viewport scale for consistent appearance
+  const scaledDotSize = dotSize / viewportState.scale;
+  const scaledDotGap = dotGap / viewportState.scale;
 
   let currentY = startY;
   while (currentY < endY) {
@@ -164,15 +176,16 @@ const updateLabelEntryPosition = (
       const fadeProgress = (currentY - fadeStartY) / (endY - fadeStartY);
       alpha = 1 - Math.pow(fadeProgress, 2);
     }
-    entry.line.circle(screenX, currentY, dotSize / 2);
+    entry.line.circle(entry.worldX, currentY, scaledDotSize / 2);
     entry.line.fill({ color: entry.color, alpha });
-    currentY += dotSize + dotGap;
+    currentY += scaledDotSize + scaledDotGap;
   }
 };
 
 /**
- * Creates step labels once. Call update() on viewport changes.
+ * Creates step labels in world space. Call update() on viewport changes.
  * Labels align with action nodes, falling back to step nodes for source steps.
+ * Container should be added to the viewport (world space), not stage (screen space).
  */
 export function createStepLabels(
   steps: StepUI[],
@@ -181,19 +194,24 @@ export function createStepLabels(
   topNodeInfo: TopNodeInfo | null
 ): StepLabels {
   const container = new Container();
-  const topPadding = getCssVarInt('--step-label-top-padding');
 
   // Create and attach entries
   const entries = createLabelEntries(steps, nodeMap, stepNodeMap);
   attachLabelEntriesToContainer(container, entries);
 
+  // Store top node info for updates
+  const currentTopInfo = topNodeInfo;
+
   const update = (viewportState: ViewportState): void => {
-    const globalTopY = topNodeInfo !== null
-      ? viewportState.y + topNodeInfo.worldY * viewportState.scale - topNodeInfo.halfHeight * viewportState.scale
-      : Infinity;
+    if (!currentTopInfo) return;
 
     for (const entry of entries) {
-      updateLabelEntryPosition(entry, viewportState, topPadding, globalTopY);
+      updateLabelEntryPosition(
+        entry,
+        viewportState,
+        currentTopInfo.worldY,
+        currentTopInfo.halfHeight
+      );
     }
   };
 

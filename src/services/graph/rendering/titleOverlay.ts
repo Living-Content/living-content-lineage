@@ -175,46 +175,6 @@ export const setupTitleAnimation = (
 };
 
 /**
- * Positions elements in fixed mode (top-left of screen).
- * Layout: Title on top, UUID below, Date below that.
- * Text aligns with menu panel content (52px from left edge).
- */
-const positionElementsFixed = (elements: TitleOverlayElements): void => {
-  const panelMargin = getCssVarInt('--panel-margin');
-  const leftEdge = getCssVarInt('--title-content-left');
-  const dividerGap = getCssVarInt('--title-divider-gap');
-  const lineGap = getCssVarInt('--title-line-gap');
-
-  // Get actual text heights
-  const titleHeight = elements.titleText.height;
-  const uuidHeight = elements.uuidText.height;
-  const dateHeight = elements.dateText.height;
-
-  // Calculate total height for divider
-  const totalTextHeight = titleHeight + lineGap + uuidHeight + lineGap + dateHeight;
-
-  // Calculate Y positions based on actual heights
-  const titleY = panelMargin;
-  const uuidY = titleY + titleHeight + lineGap;
-  const dateY = uuidY + uuidHeight + lineGap;
-
-  // Update divider height dynamically based on text heights
-  elements.divider.clear();
-  const color = getCssVarColorHex('--color-node-text');
-  const alpha = getCssVarFloat('--title-secondary-alpha');
-  elements.divider.rect(0, 0, 1, totalTextHeight);
-  elements.divider.fill({ color, alpha });
-
-  // Divider to the left of text
-  elements.divider.position.set(leftEdge - dividerGap - 1, panelMargin);
-
-  // Text: Title -> UUID -> Date (top to bottom)
-  elements.titleText.position.set(leftEdge, titleY);
-  elements.uuidText.position.set(leftEdge, uuidY);
-  elements.dateText.position.set(leftEdge, dateY);
-};
-
-/**
  * Positions elements relative to a node and viewport.
  */
 const positionElementsRelative = (

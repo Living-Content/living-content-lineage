@@ -50,8 +50,6 @@ interface ReplayCompleteEvent {
   message?: string;
 }
 
-type CommentEvent = CommentCreatedEvent | CommentDeletedEvent | CommentCountUpdateEvent | ReplayCompleteEvent;
-
 interface CommentEventHandlers {
   onCommentCreated?: (comment: Comment) => void;
   onCommentDeleted?: (nodeId: string, commentId: string) => void;

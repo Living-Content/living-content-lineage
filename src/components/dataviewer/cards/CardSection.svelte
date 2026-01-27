@@ -17,7 +17,8 @@
     phase = undefined,
     columns = 4,
     viewMode = 'detail',
-    nodeId = ''
+    nodeId = '',
+    step = ''
   }: {
     /** Metric fields to render as cards */
     metrics?: Array<{
@@ -37,8 +38,10 @@
     columns?: 2 | 3 | 4;
     /** View mode - affects which span to use */
     viewMode?: 'summary' | 'detail';
-    /** Node ID for editable fields */
+    /** Node ID for editable fields (UI tracking) */
     nodeId?: string;
+    /** Step for editable fields (required for backend targeting) */
+    step?: string;
   } = $props();
 
   /** Get effective span based on view mode */
@@ -57,7 +60,7 @@
   {#if hasMetrics}
     <div class="metrics-grid columns-{columns}">
       {#each metrics as { key, value, config } (key)}
-        {#if config.isEditable && nodeId}
+        {#if config.isEditable && nodeId && step}
           <EditableDataCard
             {value}
             label={config.label ?? key}
@@ -66,6 +69,7 @@
             unit={config.unit}
             {phase}
             {nodeId}
+            {step}
             fieldPath={config.source ?? `data.${key}`}
             isEditable={true}
             editType={config.editType ?? 'number'}

@@ -18,11 +18,8 @@
   }
 
   let history = $state<BranchHistoryItem[]>([]);
-  let isLoading = $state(false);
-  let error = $state<string | null>(null);
 
   let hasHistory = $derived(history.length > 1);
-  let currentWorkflowId = $derived(configStore.current.workflowId);
 
   onMount(() => {
     loadHistory();
@@ -32,16 +29,12 @@
     const { apiUrl, workflowId } = configStore.current;
     if (!apiUrl || !workflowId) return;
 
-    isLoading = true;
-    error = null;
-
     try {
       const response = await api.fetch(
         `${apiUrl}/replay/trace/${workflowId}/history`
       );
 
       if (!response.ok) {
-        error = `Failed to load history: ${response.status}`;
         return;
       }
 
@@ -49,9 +42,6 @@
       logger.debug('Branch: Loaded history', history.length);
     } catch (e) {
       logger.error('Branch: Error loading history', e);
-      error = e instanceof Error ? e.message : 'Unknown error';
-    } finally {
-      isLoading = false;
     }
   }
 
@@ -61,7 +51,7 @@
     window.location.href = newUrl.toString();
   }
 
-  function formatBreadcrumb(item: BranchHistoryItem, index: number): string {
+  function formatBreadcrumb(item: BranchHistoryItem): string {
     if (item.branchDepth === 0) {
       return 'Original';
     }
@@ -72,18 +62,18 @@
 {#if hasHistory}
   <nav class="branch-history" transition:fade={{ duration: 150 }}>
     <ol class="breadcrumbs">
-      {#each history.toReversed() as item, index (item.workflowId)}
-        {@const isLast = index === history.length - 1}
+      {#each history.toReversed() as item, idx (item.workflowId)}
+        {@const isLast = idx === history.length - 1}
         <li class="breadcrumb-item" class:current={isLast}>
           {#if isLast}
-            <span class="breadcrumb-label current">{formatBreadcrumb(item, index)}</span>
+            <span class="breadcrumb-label current">{formatBreadcrumb(item)}</span>
           {:else}
             <button
               class="breadcrumb-link"
               onclick={() => navigateToWorkflow(item.workflowId)}
               title="View workflow {item.workflowId.slice(0, 8)}"
             >
-              {formatBreadcrumb(item, index)}
+              {formatBreadcrumb(item)}
             </button>
             <span class="separator" aria-hidden="true">/</span>
           {/if}

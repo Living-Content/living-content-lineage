@@ -42,4 +42,18 @@ function themeWatcher(): Plugin {
 
 export default defineConfig({
   plugins: [svelte(), themeWatcher()],
+  build: {
+    // Pixi.js is ~520KB minified, slightly over default 500KB limit
+    chunkSizeWarningLimit: 550,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split Pixi.js into its own chunk (largest dependency)
+          pixi: ['pixi.js'],
+          // Split GSAP animation library
+          gsap: ['gsap'],
+        },
+      },
+    },
+  },
 });

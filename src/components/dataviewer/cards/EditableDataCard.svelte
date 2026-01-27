@@ -19,6 +19,7 @@
     unit = '',
     size = 'default',
     nodeId = '',
+    step = '',
     fieldPath = '',
     isEditable = false,
     editType = 'text'
@@ -31,6 +32,8 @@
     unit?: string;
     size?: 'default' | 'compact';
     nodeId?: string;
+    /** Step for backend targeting (required for replay modifications) */
+    step?: string;
     fieldPath?: string;
     isEditable?: boolean;
     editType?: EditType;
@@ -86,6 +89,7 @@
     }
 
     replayState.addModification({
+      step,
       nodeId,
       fieldPath,
       originalValue: value,

@@ -9,6 +9,7 @@ import { authStore } from '../../stores/authStore.svelte.js';
 import { tokenStore } from '../../stores/tokenStore.svelte.js';
 import { configStore } from '../../stores/configStore.svelte.js';
 import { type Result, ok, err } from '../types/result.js';
+import { refreshAccessToken, scheduleTokenRefresh } from './tokenRefresh.js';
 
 export interface AuthCheckResponse {
   authenticated: boolean;
@@ -84,7 +85,6 @@ export async function fetchAnonymousUserId(): Promise<Result<string | null>> {
 export async function restoreSession(): Promise<Result<void>> {
   try {
     logger.info('Auth: Attempting token refresh...');
-    const { refreshAccessToken } = await import('./tokenRefresh.js');
     const refreshResult = await refreshAccessToken();
 
     if (!refreshResult.ok) {
@@ -116,7 +116,6 @@ export async function restoreSession(): Promise<Result<void>> {
     });
 
     if (authCheck.data.expires_in) {
-      const { scheduleTokenRefresh } = await import('./tokenRefresh.js');
       scheduleTokenRefresh(authCheck.data.expires_in);
     }
 
@@ -155,7 +154,6 @@ export async function handleLoginSuccess(): Promise<Result<{ user_id: string }>>
   });
 
   if (authCheck.data.expires_in) {
-    const { scheduleTokenRefresh } = await import('./tokenRefresh.js');
     scheduleTokenRefresh(authCheck.data.expires_in);
   }
 
