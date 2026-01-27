@@ -3,10 +3,20 @@
    * Reusable expandable/collapsible section.
    * Provides toggle header with chevron and animated content reveal.
    */
+  import type { Snippet } from 'svelte';
   import { slide } from 'svelte/transition';
 
-  export let expanded: boolean = false;
-  export let disabled: boolean = false;
+  let {
+    expanded = $bindable(false),
+    disabled = false,
+    header,
+    children
+  }: {
+    expanded?: boolean;
+    disabled?: boolean;
+    header: Snippet;
+    children: Snippet;
+  } = $props();
 
   function toggle() {
     if (!disabled) {
@@ -20,11 +30,11 @@
     class="expandable-toggle"
     type="button"
     aria-expanded={expanded}
-    on:click={toggle}
+    onclick={toggle}
     {disabled}
   >
     <span class="expandable-header">
-      <slot name="header" />
+      {@render header()}
     </span>
     <span class="expandable-chevron" class:expanded>
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -34,7 +44,7 @@
   </button>
   {#if expanded}
     <div class="expandable-content" transition:slide={{ duration: 200 }}>
-      <slot />
+      {@render children()}
     </div>
   {/if}
 </div>

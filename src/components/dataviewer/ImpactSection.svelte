@@ -6,8 +6,7 @@
   import type { AssetType, TraceNodeData } from '../../config/types.js';
   import { extractAssertionData } from '../../services/dataviewer/parsing/assertionParsers.js';
 
-  export let node: TraceNodeData;
-  export let assetType: AssetType | undefined = undefined;
+  let { node, assetType = undefined }: { node: TraceNodeData; assetType?: AssetType } = $props();
 
   interface ImpactData {
     co2Grams?: number;
@@ -31,14 +30,14 @@
     return 'Impact data unavailable';
   }
 
-  $: effectiveAssetType = assetType ?? node.assetType;
-  $: impact = node.environmentalImpact ?? node.assetManifest?.environmentalImpact;
-  $: assertions = extractAssertionData(node.assetManifest?.assertions);
-  $: totalTokens = effectiveAssetType === 'Model' ? assertions.usage?.totalTokens : undefined;
-  $: hasImpactData = impact?.co2Grams !== undefined || impact?.energyKwh !== undefined;
-  $: impactClass = hasImpactData ? 'impact-available' : 'impact-unknown';
-  $: detailText = formatImpactDetail(impact, totalTokens);
-  $: showSection = impact || (effectiveAssetType === 'Model' && totalTokens !== undefined);
+  let effectiveAssetType = $derived(assetType ?? node.assetType);
+  let impact = $derived(node.environmentalImpact ?? node.assetManifest?.environmentalImpact);
+  let assertions = $derived(extractAssertionData(node.assetManifest?.assertions));
+  let totalTokens = $derived(effectiveAssetType === 'Model' ? assertions.usage?.totalTokens : undefined);
+  let hasImpactData = $derived(impact?.co2Grams !== undefined || impact?.energyKwh !== undefined);
+  let impactClass = $derived(hasImpactData ? 'impact-available' : 'impact-unknown');
+  let detailText = $derived(formatImpactDetail(impact, totalTokens));
+  let showSection = $derived(impact || (effectiveAssetType === 'Model' && totalTokens !== undefined));
 </script>
 
 {#if showSection}

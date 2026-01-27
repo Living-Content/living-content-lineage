@@ -7,9 +7,11 @@
   import PropertyGroup from './PropertyGroup.svelte';
   import PropertyRow from '../PropertyRow.svelte';
 
-  export let actions: C2paAction[];
-  export let title: string = 'Actions';
-  export let collapsed: boolean = true;
+  let { actions, title = 'Actions', collapsed = true }: {
+    actions: C2paAction[];
+    title?: string;
+    collapsed?: boolean;
+  } = $props();
 </script>
 
 {#if actions.length > 0}

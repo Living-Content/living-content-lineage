@@ -6,7 +6,9 @@
    */
   type Message = { role?: string; content?: string; [key: string]: unknown };
 
-  export let messages: Message[];
+  let { messages }: {
+    messages: Message[];
+  } = $props();
 
   function getRoleClass(role: string | undefined): string {
     switch (role?.toLowerCase()) {

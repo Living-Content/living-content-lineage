@@ -18,60 +18,60 @@
   import MarkdownValue from './detail/MarkdownValue.svelte';
   import AdditionalData from './detail/AdditionalData.svelte';
 
-  export let node: TraceNodeData;
+  let { node }: { node: TraceNodeData } = $props();
 
-  $: assetType = node.assetType;
-  $: phase = node.phase;
-  $: displayConfig = getDisplayConfig(assetType);
-  $: data = node.assetManifest?.data ?? {};
+  let assetType = $derived(node.assetType);
+  let phase = $derived(node.phase);
+  let displayConfig = $derived(getDisplayConfig(assetType));
+  let data = $derived(node.assetManifest?.data ?? {});
 
   // Build merged dataSource for consistent field access
-  $: dataSource = buildDataSource(node);
+  let dataSource = $derived(buildDataSource(node));
 
   // Classify card fields into metrics and properties
-  $: cardClassification = classifyCardFields(displayConfig);
+  let cardClassification = $derived(classifyCardFields(displayConfig));
 
   // Metrics with values using getValueByPath
-  $: metricsWithValues = cardClassification.metrics
+  let metricsWithValues = $derived(cardClassification.metrics
     .map(([key, config]) => ({
       key,
       value: getValueByPath(dataSource as Record<string, unknown>, key),
       config,
     }))
-    .filter(({ value }) => value !== undefined && value !== null && value !== '');
+    .filter(({ value }) => value !== undefined && value !== null && value !== ''));
 
   // Properties with values using getValueByPath
-  $: propertiesWithValues = cardClassification.properties
+  let propertiesWithValues = $derived(cardClassification.properties
     .map(([key, config]) => ({
       key,
       value: getValueByPath(dataSource as Record<string, unknown>, key),
       config,
     }))
-    .filter(({ value }) => value !== undefined && value !== null && value !== '');
+    .filter(({ value }) => value !== undefined && value !== null && value !== ''));
 
   // Detail-only fields (not shown in cards) using getValueByPath
-  $: detailOnlyFields = getDetailOnlyFields(displayConfig);
-  $: detailOnlyWithValues = detailOnlyFields
+  let detailOnlyFields = $derived(getDetailOnlyFields(displayConfig));
+  let detailOnlyWithValues = $derived(detailOnlyFields
     .map(([key, config]) => ({
       key,
       value: getValueByPath(dataSource as Record<string, unknown>, key),
       config,
     }))
-    .filter(({ value }) => value !== undefined && value !== null && value !== '' && value !== '-');
+    .filter(({ value }) => value !== undefined && value !== null && value !== '' && value !== '-'));
 
   // Separate special field types for custom rendering
-  $: markdownFields = detailOnlyWithValues.filter(({ config }) => config.type === 'markdown');
-  $: codeFields = detailOnlyWithValues.filter(({ config }) => config.type === 'code');
-  $: keyValueFields = detailOnlyWithValues.filter(({ config }) => config.type === 'key-value');
-  $: regularDetailFields = detailOnlyWithValues.filter(({ config }) =>
+  let markdownFields = $derived(detailOnlyWithValues.filter(({ config }) => config.type === 'markdown'));
+  let codeFields = $derived(detailOnlyWithValues.filter(({ config }) => config.type === 'code'));
+  let keyValueFields = $derived(detailOnlyWithValues.filter(({ config }) => config.type === 'key-value'));
+  let regularDetailFields = $derived(detailOnlyWithValues.filter(({ config }) =>
     config.type !== 'markdown' && config.type !== 'code' && config.type !== 'key-value'
-  );
+  ));
 
   // Configured field keys to exclude from fallback/additional data
-  $: configuredKeys = new Set(Object.keys(displayConfig.fields));
+  let configuredKeys = $derived(new Set(Object.keys(displayConfig.fields)));
 
   // Fallback: unconfigured simple fields from content (shown as PropertyRows)
-  $: unconfiguredSimpleFields = Object.entries(data as Record<string, unknown>)
+  let unconfiguredSimpleFields = $derived(Object.entries(data as Record<string, unknown>)
     .filter(([key, value]) => {
       if (value === undefined || value === null) return false;
       if (['id', 'type', 'nodeType', 'shape', 'x', 'y', 'functionName'].includes(key)) return false;
@@ -80,10 +80,10 @@
       return true;
     })
     .map(([key, value]) => ({ key, value }))
-    .sort((a, b) => a.key.localeCompare(b.key));
+    .sort((a, b) => a.key.localeCompare(b.key)));
 
   // Additional data: only complex objects (arrays, nested objects) from content
-  $: additionalData = Object.entries(data as Record<string, unknown>)
+  let additionalData = $derived(Object.entries(data as Record<string, unknown>)
     .filter(([key, value]) => {
       if (value === undefined || value === null) return false;
       if (['id', 'type', 'nodeType', 'shape', 'x', 'y', 'functionName'].includes(key)) return false;
@@ -91,11 +91,11 @@
       if (typeof value !== 'object') return false;
       return true;
     })
-    .sort(([a], [b]) => a.localeCompare(b));
+    .sort(([a], [b]) => a.localeCompare(b)));
 
-  $: hasCardData = metricsWithValues.length > 0 || propertiesWithValues.length > 0;
-  $: hasDetailData = regularDetailFields.length > 0;
-  $: hasUnconfiguredFields = unconfiguredSimpleFields.length > 0;
+  let hasCardData = $derived(metricsWithValues.length > 0 || propertiesWithValues.length > 0);
+  let hasDetailData = $derived(regularDetailFields.length > 0);
+  let hasUnconfiguredFields = $derived(unconfiguredSimpleFields.length > 0);
 
   /**
    * Format a key-value item for display.

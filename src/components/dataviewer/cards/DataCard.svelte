@@ -8,23 +8,33 @@
   import type { DataCardType } from '../../../config/cardTypes.js';
   import { getFormatter } from '../../../config/cardTypes.js';
 
-  export let value: unknown;
-  export let label: string;
-  export let type: DataCardType = 'text';
-  export let phase: Phase | undefined = undefined;
-  export let span: 1 | 2 | 3 | 4 = 1;
-  export let unit: string = '';
-  /** Size variant: compact removes min-heights for dense layouts */
-  export let size: 'default' | 'compact' = 'default';
+  let {
+    value,
+    label,
+    type = 'text',
+    phase = undefined,
+    span = 1,
+    unit = '',
+    size = 'default'
+  }: {
+    value: unknown;
+    label: string;
+    type?: DataCardType;
+    phase?: Phase;
+    span?: 1 | 2 | 3 | 4;
+    unit?: string;
+    /** Size variant: compact removes min-heights for dense layouts */
+    size?: 'default' | 'compact';
+  } = $props();
 
-  $: phaseClass = phase ? `phase-${phase.toLowerCase()}` : '';
-  $: spanClass = `span-${span}`;
-  $: sizeClass = size === 'compact' ? 'size-compact' : '';
-  $: formatter = getFormatter(type);
-  $: displayValue = formatter(value);
+  let phaseClass = $derived(phase ? `phase-${phase.toLowerCase()}` : '');
+  let spanClass = $derived(`span-${span}`);
+  let sizeClass = $derived(size === 'compact' ? 'size-compact' : '');
+  let formatter = $derived(getFormatter(type));
+  let displayValue = $derived(formatter(value));
 
   // Scale font size based on content length
-  $: fontSize = calculateFontSize(String(displayValue).length);
+  let fontSize = $derived(calculateFontSize(String(displayValue).length));
 
   function calculateFontSize(length: number): string {
     if (length <= 4) return '28px';

@@ -15,22 +15,21 @@
   hljs.registerLanguage('typescript', typescript);
   hljs.registerLanguage('json', json);
 
-  export let code: string;
-  export let language: string = 'json';
+  let { code, language = 'json' }: {
+    code: string;
+    language?: string;
+  } = $props();
 
-  $: highlighted = hljs.highlight(code, { language, ignoreIllegals: true }).value;
+  let highlighted = $derived(hljs.highlight(code, { language, ignoreIllegals: true }).value);
 
-  const setHighlightedHtml = (node: HTMLElement, html: string) => {
-    node.innerHTML = html;
-    return {
-      update(newHtml: string) {
-        node.innerHTML = newHtml;
-      }
-    };
+  const setHighlightedHtml = (node: HTMLElement, html: () => string) => {
+    $effect(() => {
+      node.innerHTML = html();
+    });
   };
 </script>
 
-<pre class="highlighted-code"><code class="hljs" use:setHighlightedHtml={highlighted}></code></pre>
+<pre class="highlighted-code"><code class="hljs" use:setHighlightedHtml={() => highlighted}></code></pre>
 
 <style>
   .highlighted-code {

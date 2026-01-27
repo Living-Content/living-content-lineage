@@ -12,42 +12,42 @@
   import ImpactSection from './ImpactSection.svelte';
   import PropertyRow from './PropertyRow.svelte';
 
-  export let node: TraceNodeData;
+  let { node }: { node: TraceNodeData } = $props();
 
-  $: assetType = node.assetType;
-  $: phase = node.phase;
-  $: displayConfig = getDisplayConfig(assetType);
-  $: data = node.assetManifest?.data ?? {};
-  $: assertions = extractAssertionData(node.assetManifest?.assertions);
+  let assetType = $derived(node.assetType);
+  let phase = $derived(node.phase);
+  let displayConfig = $derived(getDisplayConfig(assetType));
+  let data = $derived(node.assetManifest?.data ?? {});
+  let assertions = $derived(extractAssertionData(node.assetManifest?.assertions));
 
   // Build merged dataSource for consistent field access
-  $: dataSource = buildDataSource(node);
+  let dataSource = $derived(buildDataSource(node));
 
   // Classify card fields into metrics and properties
-  $: cardClassification = classifyCardFields(displayConfig);
+  let cardClassification = $derived(classifyCardFields(displayConfig));
 
   // Build metrics array with values
-  $: metricsWithValues = cardClassification.metrics
+  let metricsWithValues = $derived(cardClassification.metrics
     .map(([key, config]) => ({
       key,
       value: getValueByPath(dataSource as Record<string, unknown>, key),
       config,
     }))
-    .filter(({ value }) => value !== undefined && value !== null && value !== '');
+    .filter(({ value }) => value !== undefined && value !== null && value !== ''));
 
   // Build properties array with values
-  $: propertiesWithValues = cardClassification.properties
+  let propertiesWithValues = $derived(cardClassification.properties
     .map(([key, config]) => ({
       key,
       value: getValueByPath(dataSource as Record<string, unknown>, key),
       config,
     }))
-    .filter(({ value }) => value !== undefined && value !== null && value !== '');
+    .filter(({ value }) => value !== undefined && value !== null && value !== ''));
 
-  $: hasData = metricsWithValues.length > 0 || propertiesWithValues.length > 0;
+  let hasData = $derived(metricsWithValues.length > 0 || propertiesWithValues.length > 0);
 
   // Fallback for unspecified asset types - show duration and basic content
-  $: fallbackEntries = !hasData ? getFallbackEntries() : [];
+  let fallbackEntries = $derived(!hasData ? getFallbackEntries() : []);
 
   function getFallbackEntries(): Array<{ key: string; value: unknown }> {
     const entries: Array<{ key: string; value: unknown }> = [];

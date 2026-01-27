@@ -3,23 +3,32 @@
    * Collapsible property section with title header.
    * Contains child content (typically PropertyRow elements).
    */
+  import type { Snippet } from 'svelte';
   import Expandable from '../Expandable.svelte';
 
-  export let title: string;
-  export let collapsed: boolean = false;
-  export let collapsible: boolean = true;
+  let {
+    title,
+    collapsed = false,
+    collapsible = true,
+    children
+  }: {
+    title: string;
+    collapsed?: boolean;
+    collapsible?: boolean;
+    children: Snippet;
+  } = $props();
 
-  let expanded = !collapsed;
+  let expanded = $state(!collapsed);
 </script>
 
 <div class="property-group">
   {#if collapsible}
     <Expandable bind:expanded>
-      <svelte:fragment slot="header">
+      {#snippet header()}
         <span class="group-title">{title}</span>
-      </svelte:fragment>
+      {/snippet}
       <div class="group-content">
-        <slot />
+        {@render children()}
       </div>
     </Expandable>
   {:else}
@@ -27,7 +36,7 @@
       <span class="group-title">{title}</span>
     </div>
     <div class="group-content">
-      <slot />
+      {@render children()}
     </div>
   {/if}
 </div>

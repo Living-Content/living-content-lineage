@@ -1,32 +1,41 @@
 <script lang="ts">
   /**
-   * Displays hierarchical context breadcrumbs: Type › Step › Phase.
+   * Displays hierarchical context breadcrumbs: Type > Step > Phase.
    * Clean text style matching node visual language.
    */
   import type { Phase, AssetType, Step } from '../../../config/types.ts';
   import { formatAssetTypeLabel } from '../../../config/labels.js';
 
-  export let phase: Phase | undefined = undefined;
-  export let step: Step | string | undefined = undefined;
-  export let assetType: AssetType | undefined = undefined;
-  export let workflowId: string | undefined = undefined;
+  let {
+    phase = undefined,
+    step = undefined,
+    assetType = undefined,
+    workflowId = undefined
+  }: {
+    phase?: Phase;
+    step?: Step | string;
+    assetType?: AssetType;
+    workflowId?: string;
+  } = $props();
 
-  $: phaseClass = phase ? `phase-${phase.toLowerCase()}` : '';
-  $: typeLabel = assetType ? formatAssetTypeLabel(assetType) : undefined;
+  let phaseClass = $derived(phase ? `phase-${phase.toLowerCase()}` : '');
+  let typeLabel = $derived(assetType ? formatAssetTypeLabel(assetType) : undefined);
 
   // Build hierarchy array for rendering with separators (most specific first)
-  $: items = [
-    typeLabel ? { label: typeLabel, type: 'type' } : null,
-    step ? { label: step, type: 'step' } : null,
-    workflowId ? { label: workflowId, type: 'workflow' } : null,
-    phase ? { label: phase, type: 'phase' } : null,
-  ].filter(Boolean) as Array<{ label: string; type: string }>;
+  let items = $derived(
+    [
+      typeLabel ? { label: typeLabel, type: 'type' } : null,
+      step ? { label: step, type: 'step' } : null,
+      workflowId ? { label: workflowId, type: 'workflow' } : null,
+      phase ? { label: phase, type: 'phase' } : null,
+    ].filter(Boolean) as Array<{ label: string; type: string }>
+  );
 </script>
 
 <div class="context-breadcrumbs {phaseClass}">
   {#each items as item, i (item.type)}
     {#if i > 0}
-      <span class="separator">›</span>
+      <span class="separator">></span>
     {/if}
     <span class="breadcrumb breadcrumb-{item.type}">{item.label}</span>
   {/each}

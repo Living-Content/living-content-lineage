@@ -12,18 +12,20 @@
   import ConversationHistory from './ConversationHistory.svelte';
   import HighlightedCode from './HighlightedCode.svelte';
 
-  export let value: unknown;
+  let { value }: {
+    value: unknown;
+  } = $props();
 
-  $: parsedJson =
-    typeof value === 'string' ? parseJson(value) : null;
-  $: parsedLoose =
+  let parsedJson = $derived(
+    typeof value === 'string' ? parseJson(value) : null);
+  let parsedLoose = $derived(
     typeof value === 'string' && parsedJson === null
       ? parseLooseJson(value)
-      : null;
-  $: fragment =
+      : null);
+  let fragment = $derived(
     typeof value === 'string' && parsedJson === null && parsedLoose === null
       ? tryParseJsonFragment(value)
-      : null;
+      : null);
 
   // Detect if array looks like conversation messages (has role/content structure)
   function isConversationArray(arr: unknown[]): boolean {

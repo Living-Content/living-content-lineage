@@ -7,13 +7,19 @@
   import { getAssetIconPath } from '../../../config/icons.js';
   import { formatAssetTypeLabel } from '../../../config/labels.js';
 
-  export let title: string;
-  export let assetType: AssetType | undefined = undefined;
-  export let phase: Phase | undefined = undefined;
+  let {
+    title,
+    assetType = undefined,
+    phase = undefined
+  }: {
+    title: string;
+    assetType?: AssetType | undefined;
+    phase?: Phase | undefined;
+  } = $props();
 
-  $: iconPath = assetType ? getAssetIconPath(assetType) : null;
-  $: typeLabel = assetType ? formatAssetTypeLabel(assetType) : '';
-  $: phaseClass = phase ? `phase-${phase.toLowerCase()}` : '';
+  let iconPath = $derived(assetType ? getAssetIconPath(assetType) : null);
+  let typeLabel = $derived(assetType ? formatAssetTypeLabel(assetType) : '');
+  let phaseClass = $derived(phase ? `phase-${phase.toLowerCase()}` : '');
 </script>
 
 <div class="node-card {phaseClass}">

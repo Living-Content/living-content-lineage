@@ -9,21 +9,29 @@
     selectionType: 'node' | 'step' | null;
   }
 
-  export let context: PanelHeaderContext | null = null;
-  export let showCloseButton = false;
-  export let isDragging = false;
-  export let onClose: () => void = () => {};
-  export let onStartDrag: (e: MouseEvent) => void = () => {};
+  let {
+    context = null,
+    showCloseButton = false,
+    isDragging = false,
+    onClose = () => {},
+    onStartDrag = () => {}
+  }: {
+    context?: PanelHeaderContext | null;
+    showCloseButton?: boolean;
+    isDragging?: boolean;
+    onClose?: () => void;
+    onStartDrag?: (e: MouseEvent) => void;
+  } = $props();
 
   // Derive values from context
-  $: phase = context?.phase;
-  $: step = context?.step;
-  $: assetType = context?.assetType;
-  $: hasSelection = context?.selectionType !== null;
+  let phase = $derived(context?.phase);
+  let step = $derived(context?.step);
+  let assetType = $derived(context?.assetType);
+  let hasSelection = $derived(context?.selectionType !== null);
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="panel-header" class:dragging={isDragging} on:mousedown={onStartDrag}>
+<div class="panel-header" class:dragging={isDragging} onmousedown={onStartDrag}>
   <div class="panel-header-content">
     {#if hasSelection}
       <ContextBadges {phase} {step} {assetType} />
@@ -32,7 +40,12 @@
     {/if}
   </div>
   {#if showCloseButton}
-    <button class="panel-close-btn" title="Close" on:click|stopPropagation={onClose} on:mousedown|stopPropagation>
+    <button
+      class="panel-close-btn"
+      title="Close"
+      onclick={(e) => { e.stopPropagation(); onClose(); }}
+      onmousedown={(e) => e.stopPropagation()}
+    >
       &times;
     </button>
   {/if}

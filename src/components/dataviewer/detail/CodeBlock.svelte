@@ -6,10 +6,17 @@
   import PropertyGroup from './PropertyGroup.svelte';
   import HighlightedCode from './HighlightedCode.svelte';
 
-  export let code: string;
-  export let title: string = 'Source Code';
-  export let collapsed: boolean = true;
-  export let language: string = 'python';
+  let {
+    code,
+    title = 'Source Code',
+    collapsed = true,
+    language = 'python'
+  }: {
+    code: string;
+    title?: string;
+    collapsed?: boolean;
+    language?: string;
+  } = $props();
 </script>
 
 <PropertyGroup {title} {collapsed}>

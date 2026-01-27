@@ -1,11 +1,19 @@
 <script lang="ts">
   // Wrapper for a titled detail section.
-  export let title: string;
+  import type { Snippet } from 'svelte';
+
+  let {
+    title,
+    children
+  }: {
+    title: string;
+    children: Snippet;
+  } = $props();
 </script>
 
 <div class="detail-section">
   <div class="content-header">{title}</div>
-  <slot />
+  {@render children()}
 </div>
 
 <style>

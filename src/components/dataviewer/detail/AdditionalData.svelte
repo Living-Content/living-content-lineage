@@ -10,19 +10,21 @@
   import { formatKeyLabel } from '../../../services/dataviewer/parsing/contentKeys.js';
 
   /** Array of [key, value] pairs to display */
-  export let data: Array<[string, unknown]> = [];
+  let { data = [] }: {
+    data?: Array<[string, unknown]>;
+  } = $props();
 
-  let expanded = false;
+  let expanded = $state(false);
 
-  $: sortedData = [...data].sort(([a], [b]) => a.localeCompare(b));
+  let sortedData = $derived([...data].sort(([a], [b]) => a.localeCompare(b)));
 </script>
 
 {#if data.length > 0}
   <div class="additional-data">
     <Expandable bind:expanded>
-      <svelte:fragment slot="header">
+      {#snippet header()}
         <span class="section-title">Additional Data ({data.length})</span>
-      </svelte:fragment>
+      {/snippet}
       <div class="data-list">
         {#each sortedData as [key, value] (key)}
           <div class="data-item">

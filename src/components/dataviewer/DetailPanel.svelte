@@ -8,6 +8,7 @@
   import gsap from 'gsap';
   import { traceState } from '../../stores/traceState.svelte.js';
   import { uiState } from '../../stores/uiState.svelte.js';
+  import { commentState } from '../../stores/commentState.svelte.js';
   import { hasDetailContent } from '../../services/dataviewer/parsing/detailContent.js';
   import { ANIMATION_TIMINGS, GEOMETRY } from '../../config/animationConstants.js';
   import { DETAIL_PANEL_WIDTH } from '../../config/constants.js';
@@ -74,6 +75,13 @@
         visualMode = 'compact';
         uiState.closeDetailPanel();
       }
+    }
+  });
+
+  // Load comments (and count) when node is selected
+  $effect(() => {
+    if (currentNode?.id) {
+      commentState.loadComments(currentNode.id);
     }
   });
 

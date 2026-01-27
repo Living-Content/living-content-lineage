@@ -3,11 +3,19 @@
    * Flexible grid container for MetricCards.
    * Default is 4 columns; cards use `span` prop to control width.
    */
-  export let columns: 1 | 2 | 3 | 4 = 4;
+  import type { Snippet } from 'svelte';
+
+  let {
+    columns = 4,
+    children
+  }: {
+    columns?: 1 | 2 | 3 | 4;
+    children?: Snippet;
+  } = $props();
 </script>
 
 <div class="card-grid columns-{columns}">
-  <slot />
+  {@render children?.()}
 </div>
 
 <style>

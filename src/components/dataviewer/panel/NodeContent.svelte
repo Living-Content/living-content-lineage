@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { fade } from 'svelte/transition';
   import type { TraceNodeData } from '../../../config/types.js';
   import { commentState } from '../../../stores/commentState.svelte.js';
   import SummaryView from '../SummaryView.svelte';
@@ -36,19 +37,6 @@
   <DetailView {node} />
 {:else}
   <SummaryView {node} />
-  <div class="action-links">
-    {#if detailAvailable}
-      <button class="action-link" onclick={onOpenDetails}>
-        DETAILS
-      </button>
-    {/if}
-    <button class="action-link comments-link" class:open={commentsOpen} onclick={onOpenComments}>
-      {#if commentCount > 0}
-        <span class="count-badge">{commentCount > 99 ? '99+' : commentCount}</span>
-      {/if}
-      COMMENTS
-    </button>
-  </div>
 {/if}
 
 <style>

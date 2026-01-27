@@ -6,19 +6,29 @@
    */
   import type { Phase } from '../../../config/types.js';
 
-  export let value: string | number;
-  export let label: string;
-  export let description: string = '';
-  export let unit: string = '';
-  export let phase: Phase | undefined = undefined;
-  /** Number of grid columns to span (1-4) */
-  export let span: 1 | 2 | 3 | 4 = 1;
-  /** Size variant: compact for dense layouts, default for standard */
-  export let size: 'compact' | 'default' = 'default';
+  let {
+    value,
+    label,
+    description = '',
+    unit = '',
+    phase = undefined,
+    span = 1,
+    size = 'default'
+  }: {
+    value: string | number;
+    label: string;
+    description?: string;
+    unit?: string;
+    phase?: Phase | undefined;
+    /** Number of grid columns to span (1-4) */
+    span?: 1 | 2 | 3 | 4;
+    /** Size variant: compact for dense layouts, default for standard */
+    size?: 'compact' | 'default';
+  } = $props();
 
-  $: phaseClass = phase ? `phase-${phase.toLowerCase()}` : '';
-  $: spanClass = `span-${span}`;
-  $: sizeClass = size === 'compact' ? 'size-compact' : '';
+  let phaseClass = $derived(phase ? `phase-${phase.toLowerCase()}` : '');
+  let spanClass = $derived(`span-${span}`);
+  let sizeClass = $derived(size === 'compact' ? 'size-compact' : '');
 </script>
 
 <div class="metric-card {phaseClass} {spanClass} {sizeClass}">

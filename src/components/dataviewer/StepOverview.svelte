@@ -9,11 +9,10 @@
   import DataCard from './cards/DataCard.svelte';
   import NodeCard from './detail/NodeCard.svelte';
 
-  export let nodes: TraceNodeData[];
-  export let edges: TraceEdgeData[];
+  let { nodes, edges }: { nodes: TraceNodeData[]; edges: TraceEdgeData[] } = $props();
 
   // Derive phase from the first node (all nodes in a step share the same phase)
-  $: phase = nodes[0]?.phase as Phase | undefined;
+  let phase = $derived(nodes[0]?.phase as Phase | undefined);
 
   // Get total duration from process nodes
   function getTotalDurationMs(processNodes: TraceNodeData[]): number {
@@ -26,22 +25,22 @@
     return totalMs;
   }
 
-  $: nodeIds = new Set(nodes.map((n) => n.id));
+  let nodeIds = $derived(new Set(nodes.map((n) => n.id)));
 
   // Input nodes: nodes that receive edges from outside this step
-  $: incomingEdges = edges.filter((e) => !nodeIds.has(e.source) && nodeIds.has(e.target));
-  $: inputNodeIds = new Set(incomingEdges.map((e) => e.target));
-  $: inputNodes = nodes.filter((n) => inputNodeIds.has(n.id));
+  let incomingEdges = $derived(edges.filter((e) => !nodeIds.has(e.source) && nodeIds.has(e.target)));
+  let inputNodeIds = $derived(new Set(incomingEdges.map((e) => e.target)));
+  let inputNodes = $derived(nodes.filter((n) => inputNodeIds.has(n.id)));
 
   // Output nodes: nodes that send edges outside this step
-  $: outgoingEdges = edges.filter((e) => nodeIds.has(e.source) && !nodeIds.has(e.target));
-  $: outputNodeIds = new Set(outgoingEdges.map((e) => e.source));
-  $: outputNodes = nodes.filter((n) => outputNodeIds.has(n.id));
+  let outgoingEdges = $derived(edges.filter((e) => nodeIds.has(e.source) && !nodeIds.has(e.target)));
+  let outputNodeIds = $derived(new Set(outgoingEdges.map((e) => e.source)));
+  let outputNodes = $derived(nodes.filter((n) => outputNodeIds.has(n.id)));
 
   // Process nodes
-  $: processNodes = nodes.filter((n) => n.nodeType === 'process');
-  $: totalDurationMs = getTotalDurationMs(processNodes);
-  $: totalDuration = totalDurationMs > 0 ? formatDuration(totalDurationMs) : undefined;
+  let processNodes = $derived(nodes.filter((n) => n.nodeType === 'process'));
+  let totalDurationMs = $derived(getTotalDurationMs(processNodes));
+  let totalDuration = $derived(totalDurationMs > 0 ? formatDuration(totalDurationMs) : undefined);
 </script>
 
 <div class="step-overview">

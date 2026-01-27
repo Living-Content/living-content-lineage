@@ -7,12 +7,17 @@
   import { formatTimestamp } from '../../services/dataviewer/parsing/dateFormat.js';
   import Expandable from './Expandable.svelte';
 
-  export let attestation: Attestation | undefined;
-  export let expanded = false;
+  let {
+    attestation,
+    expanded = $bindable(false)
+  }: {
+    attestation: Attestation | undefined;
+    expanded?: boolean;
+  } = $props();
 
-  $: timeDisplay = attestation?.time ? formatTimestamp(attestation.time) : '';
-  $: attestationType = attestation?.type ?? 'certificate';
-  $: provider = attestation?.provider;
+  let timeDisplay = $derived(attestation?.time ? formatTimestamp(attestation.time) : '');
+  let attestationType = $derived(attestation?.type ?? 'certificate');
+  let provider = $derived(attestation?.provider);
 
   const typeLabels: Record<string, string> = {
     merkle: 'Merkle',
@@ -24,7 +29,7 @@
 {#if attestation}
   <div class="attestation-panel">
     <Expandable bind:expanded>
-      <svelte:fragment slot="header">
+      {#snippet header()}
         <span class="attestation-header">
           <span class="attestation-label">signed</span>
           {#if provider}
@@ -32,7 +37,7 @@
         {/if}
           <span class="attestation-time">{timeDisplay}</span>
         </span>
-      </svelte:fragment>
+      {/snippet}
 
       <div class="attestation-details">
         <div class="attestation-row">

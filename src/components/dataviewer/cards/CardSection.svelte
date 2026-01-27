@@ -9,28 +9,32 @@
   import DataCard from './DataCard.svelte';
   import PropertyRow from '../PropertyRow.svelte';
 
-  /** Metric fields to render as cards */
-  export let metrics: Array<{
-    key: string;
-    value: unknown;
-    config: FieldDisplayConfig;
-  }> = [];
-
-  /** Property fields to render as key-value rows */
-  export let properties: Array<{
-    key: string;
-    value: unknown;
-    config: FieldDisplayConfig;
-  }> = [];
-
-  /** Phase for color accent */
-  export let phase: Phase | undefined = undefined;
-
-  /** Number of columns for the metric grid */
-  export let columns: 2 | 3 | 4 = 4;
-
-  /** View mode - affects which span to use */
-  export let viewMode: 'summary' | 'detail' = 'detail';
+  let {
+    metrics = [],
+    properties = [],
+    phase = undefined,
+    columns = 4,
+    viewMode = 'detail'
+  }: {
+    /** Metric fields to render as cards */
+    metrics?: Array<{
+      key: string;
+      value: unknown;
+      config: FieldDisplayConfig;
+    }>;
+    /** Property fields to render as key-value rows */
+    properties?: Array<{
+      key: string;
+      value: unknown;
+      config: FieldDisplayConfig;
+    }>;
+    /** Phase for color accent */
+    phase?: Phase;
+    /** Number of columns for the metric grid */
+    columns?: 2 | 3 | 4;
+    /** View mode - affects which span to use */
+    viewMode?: 'summary' | 'detail';
+  } = $props();
 
   /** Get effective span based on view mode */
   function getSpan(config: FieldDisplayConfig): 1 | 2 | 3 | 4 {
@@ -40,8 +44,8 @@
     return config.detailSpan ?? 2;
   }
 
-  $: hasMetrics = metrics.length > 0;
-  $: hasProperties = properties.length > 0;
+  let hasMetrics = $derived(metrics.length > 0);
+  let hasProperties = $derived(properties.length > 0);
 </script>
 
 <div class="card-section">

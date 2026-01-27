@@ -3,10 +3,10 @@
   import DOMPurify from 'dompurify';
   import { marked } from 'marked';
 
-  export let value: string;
+  let { value }: { value: string } = $props();
 
-  let showRaw = false;
-  let rendered = '';
+  let showRaw = $state(false);
+  let rendered = $state('');
 
   async function updateRendered(input: string): Promise<void> {
     try {
@@ -20,14 +20,16 @@
     }
   }
 
-  $: updateRendered(value);
+  $effect(() => {
+    updateRendered(value);
+  });
 </script>
 
 <div class={`detail-field-value detail-value-markdown${showRaw ? ' show-raw' : ''}`}>
   <button
     type="button"
     class="markdown-toggle"
-    on:click={() => (showRaw = !showRaw)}
+    onclick={() => (showRaw = !showRaw)}
   >
     {showRaw ? 'View rendered' : 'View raw'}
   </button>

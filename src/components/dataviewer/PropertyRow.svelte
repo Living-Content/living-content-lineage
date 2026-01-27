@@ -13,8 +13,7 @@
   import { isRecord } from '../../config/utils.js';
   import { parseJson } from '../../services/dataviewer/parsing/valueParsing.js';
 
-  export let label: string;
-  export let value: unknown;
+  let { label, value }: { label: string; value: unknown } = $props();
 
   // Convert camelCase to spaced words: "inputTokens" → "Input Tokens"
   function formatLabel(key: string): string {
@@ -40,27 +39,27 @@
     );
   }
 
-  $: displayLabel = formatLabel(label);
-  $: isEmpty = value === null || value === undefined;
+  let displayLabel = $derived(formatLabel(label));
+  let isEmpty = $derived(value === null || value === undefined);
 
   // Detect conversation arrays first
-  $: isConversation = Array.isArray(value) && isConversationArray(value);
+  let isConversation = $derived(Array.isArray(value) && isConversationArray(value));
 
   // Detect if value should render as a code block (but not conversations)
-  $: isJsonString = typeof value === 'string' && looksLikeJson(value);
-  $: isObject = (isRecord(value) || Array.isArray(value)) && !isConversation;
-  $: isCodeBlock = isJsonString || isObject;
+  let isJsonString = $derived(typeof value === 'string' && looksLikeJson(value));
+  let isObject = $derived((isRecord(value) || Array.isArray(value)) && !isConversation);
+  let isCodeBlock = $derived(isJsonString || isObject);
 
   // Parse JSON string for display
-  $: jsonCode = isJsonString
+  let jsonCode = $derived(isJsonString
     ? JSON.stringify(parseJson(value as string) ?? value, null, 2)
     : isObject
       ? JSON.stringify(value, null, 2)
-      : '';
+      : '');
 
   // Simple values are non-string primitives OR short strings that don't look like JSON
-  $: isSimpleValue = typeof value === 'number' || typeof value === 'boolean' ||
-    (typeof value === 'string' && !looksLikeJson(value) && value.length <= 120 && !value.includes('\n'));
+  let isSimpleValue = $derived(typeof value === 'number' || typeof value === 'boolean' ||
+    (typeof value === 'string' && !looksLikeJson(value) && value.length <= 120 && !value.includes('\n')));
 </script>
 
 {#if isEmpty}
