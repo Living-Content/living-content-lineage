@@ -30,6 +30,8 @@ interface NodeCreatorDeps {
   callbacks: NodeCreatorCallbacks;
   getSelectedNodeId: () => string | null;
   setNodeAlpha: (nodeId: string, alpha: number) => void;
+  yOffset?: number;
+  stepWidths?: Map<number, number>;
 }
 
 /**
@@ -53,6 +55,7 @@ const buildElementConfig = (
     ticker: deps.ticker,
     hoverConfig,
     nodeMap,
+    stepWidths: deps.stepWidths,
   };
 };
 
@@ -66,20 +69,28 @@ export const createNodes = async (
 ): Promise<void> => {
   const config = buildElementConfig(deps, nodeMap);
   const { hoverConfig } = config;
+  const yOffset = deps.yOffset ?? 0;
 
   const elements = await Promise.all(
-    nodes.map((node) => createNode({
-      id: node.id,
-      data: node,
-      type: 'node',
-      onClick: () => {
-        if (hoverConfig.onNodeClick) {
-          hoverConfig.onNodeClick(node);
-        } else {
-          traceState.selectNode(node);
-        }
-      },
-    }, config))
+    nodes.map((node) => {
+      // Apply Y offset for workflow positioning
+      const positionedNode = yOffset !== 0
+        ? { ...node, y: (node.y ?? 0.5) + yOffset }
+        : node;
+
+      return createNode({
+        id: node.id,
+        data: positionedNode,
+        type: 'node',
+        onClick: () => {
+          if (hoverConfig.onNodeClick) {
+            hoverConfig.onNodeClick(node);
+          } else {
+            traceState.selectNode(node);
+          }
+        },
+      }, config);
+    })
   );
 
   addElementsToLayer(elements, deps.nodeLayer);

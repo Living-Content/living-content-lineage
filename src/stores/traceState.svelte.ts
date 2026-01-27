@@ -58,7 +58,6 @@ let overlayNode = $state<OverlayNodeInfo | null>(null);
 let viewportState = $state<ViewportState>({ x: 0, y: 0, scale: 1, width: 0, height: 0 });
 let currentSelectionKey: string | null = null;
 let collapseCallback: (() => void) | null = null;
-let nodeWidths = $state<Map<number, number>>(new Map());
 let isCollapsed = $state(false);
 
 const selectedNode = $derived(selection?.type === 'node' ? selection.data : null);
@@ -88,9 +87,6 @@ export const traceState = {
   get overlayNode() { return overlayNode; },
   get viewportState() { return viewportState; },
   get nodeExecutionOrder() { return nodeExecutionOrder(); },
-  getNodeWidth(groupX: number): number | undefined {
-    return nodeWidths.get(groupX);
-  },
 
   /**
    * Sets the LOD collapsed state. Called by lodController during transitions.
@@ -103,10 +99,6 @@ export const traceState = {
 
   setTrace(data: Trace): void {
     trace = data;
-  },
-
-  setNodeWidths(widths: Map<number, number>): void {
-    nodeWidths = widths;
   },
 
   select(target: SelectionTarget): void {

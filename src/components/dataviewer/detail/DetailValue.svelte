@@ -1,5 +1,8 @@
 <script lang="ts">
-  // Recursive renderer for detail values.
+  /**
+   * Recursive renderer for detail values.
+   * Handles arrays, objects, JSON strings, markdown, URLs, and plain text.
+   */
   import {
     isHttpUrl,
     looksLikeMarkdown,
@@ -11,6 +14,7 @@
   import MarkdownValue from './MarkdownValue.svelte';
   import ConversationHistory from './ConversationHistory.svelte';
   import HighlightedCode from './HighlightedCode.svelte';
+  import DetailValue from './DetailValue.svelte';
 
   let { value }: {
     value: unknown;
@@ -44,7 +48,7 @@
     <ul class="detail-field-value detail-value-list">
       {#each value as item, index (index)}
         <li>
-          <svelte:self value={item} />
+          <DetailValue value={item} />
         </li>
       {/each}
     </ul>

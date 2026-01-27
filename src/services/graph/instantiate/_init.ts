@@ -7,11 +7,10 @@
 import { loadManifest } from '../../manifest/registry.js';
 import { ManifestLoadError } from '../../manifest/errors.js';
 import type { Trace } from '../../../config/types.js';
-import { GRAPH_SCALE_FACTOR, GROUP_KEY_PRECISION } from '../../../config/constants.js';
+import { GRAPH_SCALE_FACTOR } from '../../../config/constants.js';
 import { logger } from '../../../lib/logger.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import { createViewportState, type ViewportState } from '../interaction/viewport.js';
-import { preCalculateNodeWidth } from '../rendering/nodeTextMeasurement.js';
 import { initializePixi, type PixiContext } from '../layout/pixiSetup.js';
 import { createNodeAnimationController } from '../interaction/nodeAnimationController.js';
 import { buildGraphIndices, type GraphIndices } from '../engine/indices.js';
@@ -26,7 +25,6 @@ export interface AssetInitResult {
   nodeMap: Map<string, GraphNode>;
   stepNodeMap: Map<string, GraphNode>;
   animationController: ReturnType<typeof createNodeAnimationController>;
-  nodeWidths: Map<number, number>;
   state: EngineState;
   graphScale: number;
 }
@@ -88,15 +86,6 @@ export async function initGraphAssets(
   // Create animation controller (maps are populated later, but passed by reference)
   const animationController = createNodeAnimationController(nodeMap, stepNodeMap);
 
-  // Calculate max node width per group (grouped by node.x position)
-  const nodeWidths = new Map<number, number>();
-  traceData.nodes.forEach((node) => {
-    const groupKey = Math.round((node.x ?? 0.5) * GROUP_KEY_PRECISION);
-    const w = preCalculateNodeWidth(node, 1);
-    const current = nodeWidths.get(groupKey) ?? 0;
-    if (w > current) nodeWidths.set(groupKey, w);
-  });
-
   // Create engine state from initial inputs
   const state: EngineState = {
     selection: initial.selection as SelectionTarget,
@@ -115,7 +104,6 @@ export async function initGraphAssets(
       nodeMap,
       stepNodeMap,
       animationController,
-      nodeWidths,
       state,
       graphScale,
     },

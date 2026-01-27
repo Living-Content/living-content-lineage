@@ -140,7 +140,7 @@
       width: 100%;
     }
 
-    .btn {
+    .actions .button {
       flex: 1;
       justify-content: center;
     }

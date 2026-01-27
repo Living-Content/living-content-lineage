@@ -1,11 +1,10 @@
 <script lang="ts">
   /**
-   * Header with menu toggle, title, branch history, and LOD indicator.
+   * Header with menu toggle, title, and LOD indicator.
    */
   import { uiState } from '../stores/uiState.svelte.js';
   import { menuStore } from '../stores/menuStore.svelte.js';
   import { traceState } from '../stores/traceState.svelte.js';
-  import BranchHistory from './branches/BranchHistory.svelte';
   import HeaderFilter from './HeaderFilter.svelte';
 
   let isMenuOpen = $derived(menuStore.isOpen);
@@ -37,8 +36,6 @@
   {:else if !uiState.isSimpleView}
     <span class="title-text">{title}</span>
   {/if}
-
-  <BranchHistory />
 
   <div class="spacer"></div>
 

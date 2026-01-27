@@ -4,7 +4,7 @@
  *
  * This is system composition: creating the relationships between parts.
  */
-import type { Trace, StepUI } from '../../../config/types.js';
+import type { Trace, StepUI, TraceNodeData } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import type { ViewportState } from '../interaction/viewport.js';
 import { createViewportHandlers } from '../interaction/viewport.js';
@@ -13,18 +13,24 @@ import type { GraphIndices } from '../engine/indices.js';
 import type { EngineState } from '../engine/state.js';
 import { createGraphEngine } from '../engine/state.js';
 import type { GraphEngine, BootstrapCallbacks } from '../engine/interface.js';
-import { renderStepEdges, renderEdges } from '../rendering/edgeRenderer.js';
-import { createStepLabels } from '../rendering/workflowLabelRenderer.js';
+import { renderStepEdges } from '../rendering/edgeRenderer.js';
+import { createWorkflowLabels, type WorkflowLabelData } from '../rendering/workflowLabelRenderer.js';
 import { createLODController, type LODLayers, type LODRenderCallbacks } from '../layout/lodController.js';
 import { createTitleOverlay } from '../rendering/titleOverlay.js';
 import { LOD_THRESHOLD, TEXT_SIMPLIFY_THRESHOLD, VIEWPORT_TOP_MARGIN, VIEWPORT_BOTTOM_MARGIN } from '../../../config/constants.js';
-import { createNodes, repositionNodesWithGaps, repositionStepNodesWithGaps } from '../layout/nodeCreator.js';
-import { recalculateStepBounds, createStepNodes, calculateTopNodeInfo, calculateBottomNodeInfo } from '../layout/workflowCreator.js';
+import { repositionStepNodesWithGaps } from '../layout/nodeCreator.js';
+import { recalculateStepBounds, createStepNodes } from '../layout/workflowCreator.js';
 import { createViewportManager, createResizeHandler } from '../layout/viewportManager.js';
 import { createSelectionController } from '../interaction/selectionController.js';
 import { createKeyboardNavigation } from '../interaction/keyboardNavigation.js';
 import { createNodeAccessor } from '../layout/nodeAccessor.js';
 import { Culler } from 'pixi.js';
+import { createWorkflowManager } from '../workflowManager.js';
+import { createWorkflowRenderer } from '../workflowRenderer.js';
+import { createNodesForAllWorkflows, type NodeCreationDeps } from '../workflowNodeFactory.js';
+import { getStepColumnPositions, alignNodesToStepColumns } from '../workflowAlignment.js';
+import { fetchRelatedWorkflows } from '../workflowLoader.js';
+import { getCssVarFloat } from '../../../themes/index.js';
 
 export interface CompositionInputs {
   container: HTMLElement;
@@ -67,14 +73,17 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
     workflowId: traceData.workflowId ?? '',
   });
 
+  // Create workflow manager
+  const workflowManager = createWorkflowManager();
+
   // Create nodeAccessor - reads isCollapsed from traceState store
   const nodeAccessor = createNodeAccessor({ nodeMap, stepNodeMap });
 
   // Create selection controller - centerOnNode bound later via bindCenterOnNode
   const selectionController = createSelectionController({ nodeAccessor });
 
-  // Create nodes with callbacks
-  await createNodes(traceData.nodes, nodeMap, {
+  // Node creation dependencies (shared for all workflows)
+  const nodeCreationDeps: NodeCreationDeps = {
     container,
     nodeLayer: layers.nodeLayer,
     graphScale,
@@ -82,14 +91,54 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
     callbacks: {
       onHover: callbacks.onHover,
       onHoverEnd: callbacks.onHoverEnd,
-      onNodeClick: (node) => selectionController.expand(node),
+      onNodeClick: (node: TraceNodeData) => selectionController.expand(node),
     },
     getSelectedNodeId: () => selectionController.getSelectedElementId(),
     setNodeAlpha: animationController.setNodeAlpha,
+  };
+
+  // 1. Register main workflow
+  const mainWorkflowId = traceData.workflowId ?? 'main';
+  workflowManager.register(mainWorkflowId, traceData, {
+    yOffset: 0.5,
+    opacity: 1.0,
+    relationship: 'main',
   });
 
-  repositionNodesWithGaps(nodeMap);
+  // 2. Fetch and register related workflows
+  const fadedAlpha = getCssVarFloat('--node-faded-alpha');
+  await fetchRelatedWorkflows(workflowManager, mainWorkflowId, fadedAlpha);
+
+  // 3. Create nodes for all workflows with shared widths
+  await createNodesForAllWorkflows(workflowManager, nodeCreationDeps);
+
+  // 4. Get step positions from main workflow and align others
+  const mainWorkflow = workflowManager.get(mainWorkflowId);
+  if (mainWorkflow) {
+    const stepPositions = getStepColumnPositions(mainWorkflow.nodeMap);
+
+    // Align child/ancestor workflows to main workflow's step columns
+    for (const wf of workflowManager.getAll()) {
+      if (wf.workflowId !== mainWorkflowId) {
+        alignNodesToStepColumns(wf.nodeMap, stepPositions);
+      }
+    }
+  }
+
+  // 5. Merge ALL workflow nodes into shared nodeMap (enables selection of all nodes)
+  for (const wf of workflowManager.getAll()) {
+    wf.nodeMap.forEach((node, id) => nodeMap.set(id, node));
+  }
+
   recalculateStepBounds(traceData.steps, nodeMap, graphScale);
+
+  // 6. Create workflow renderer (handles edges and connector)
+  const workflowRenderer = createWorkflowRenderer({
+    layers,
+    workflowManager,
+    mainWorkflowId,
+  });
+  workflowRenderer.initialize();
 
   // Create step nodes
   await createStepNodes(traceData.steps, traceData.nodes, traceData.edges, stepNodeMap, {
@@ -117,12 +166,17 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
   repositionStepNodesWithGaps(stepNodeMap);
   renderStepEdges(layers.stepEdgeLayer, traceData.steps, stepNodeMap, null);
 
-  // Create dynamic getters for bounds (always fresh)
-  const getTopNodeInfo = () => calculateTopNodeInfo(nodeMap);
-  const getBottomNodeInfo = () => calculateBottomNodeInfo(nodeMap);
+  // Dynamic getters for bounds (always fresh, includes all workflows)
+  const getTopNodeInfo = () => workflowManager.getTopNodeInfo();
+  const getBottomNodeInfo = () => workflowManager.getBottomNodeInfo();
 
-  // Create step labels with initial bounds (world space - add to viewport)
-  const stepLabels = createStepLabels(traceData.steps, nodeMap, stepNodeMap, getTopNodeInfo());
+  // Create step labels for each workflow independently
+  const workflowLabelData: WorkflowLabelData[] = workflowManager.getAll().map((wf) => ({
+    workflowId: wf.workflowId,
+    steps: wf.trace.steps,
+    nodeMap: wf.nodeMap,
+  }));
+  const stepLabels = createWorkflowLabels(workflowLabelData);
   viewport.addChild(stepLabels.container);
   stepLabels.update(viewportState);
 
@@ -144,8 +198,9 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
       },
       workflow: () => {
         Culler.shared.cull(layers.nodeLayer, app.screen);
+        // Edges are redrawn via renderer (reuses Graphics objects)
         const nodeId = state.selection?.type === 'node' ? state.selection.nodeId : null;
-        renderEdges(layers.edgeLayer, traceData.edges, nodeMap, { view: 'workflow', selectedId: nodeId });
+        workflowRenderer.setRenderState({ selectedNodeId: nodeId });
       },
       step: (vs) => {
         const firstStep = stepNodeMap.get(traceData.steps[0]?.id);
@@ -238,9 +293,19 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
       const topInfo = getTopNodeInfo();
       const bottomInfo = getBottomNodeInfo();
       if (!topInfo || !bottomInfo) return null;
+
+      // Content bounds
+      const contentTop = topInfo.worldY - topInfo.halfHeight;
+      const contentBottom = bottomInfo.worldY + bottomInfo.halfHeight;
+      const contentHeight = contentBottom - contentTop;
+      const contentCenter = (contentTop + contentBottom) / 2;
+
+      // Worldspace is 2x content height plus 200px buffer all around
+      const worldspaceHalf = contentHeight + 200;
+
       return {
-        topWorldY: topInfo.worldY - topInfo.halfHeight,
-        bottomWorldY: bottomInfo.worldY + bottomInfo.halfHeight,
+        topWorldY: contentCenter - worldspaceHalf,
+        bottomWorldY: contentCenter + worldspaceHalf,
         topMargin: VIEWPORT_TOP_MARGIN,
         bottomMargin: VIEWPORT_BOTTOM_MARGIN,
       };
@@ -279,6 +344,7 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
     titleOverlay,
     resizeHandler,
     viewportHandlers,
+    workflowRenderer,
     state,
   });
 }

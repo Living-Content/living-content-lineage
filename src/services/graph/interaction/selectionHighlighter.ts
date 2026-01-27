@@ -1,13 +1,13 @@
 /**
- * Unified selection highlighting for graph nodes and edges.
- * Manages visual state based on selection changes.
- * Uses blur filters for non-highlighted nodes in detail view.
+ * Unified selection highlighting for graph nodes.
+ * Manages visual state (alpha, blur) based on selection changes.
+ * Edge rendering is handled by workflowRenderer (decoupled).
  */
 import { BlurFilter, type Container } from 'pixi.js';
-import type { TraceEdgeData, StepUI, Phase } from '../../../config/types.js';
+import type { StepUI, Phase } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import type { SelectionTarget } from '../../../stores/traceState.svelte.js';
-import { renderEdges, renderStepEdges } from '../rendering/edgeRenderer.js';
+import { renderStepEdges } from '../rendering/edgeRenderer.js';
 import { getCssVarFloat, getCssVarInt } from '../../../themes/index.js';
 
 // Cache blur filters to avoid creating new ones on every update
@@ -68,9 +68,7 @@ const applyNodeBlur = (
 export interface SelectionHighlighterDeps {
   nodeMap: Map<string, GraphNode>;
   stepNodeMap: Map<string, GraphNode>;
-  edgeLayer: Container;
   stepEdgeLayer: Container;
-  edges: TraceEdgeData[];
   steps: StepUI[];
   setNodeAlpha: (nodeId: string, alpha: number) => void;
   useBlur?: boolean;
@@ -121,13 +119,13 @@ export const applySelectionHighlight = (
 
 /**
  * Applies selection highlighting to a specific node.
- * Fades all other nodes.
+ * Fades all other nodes. Edge rendering handled by workflowRenderer.
  */
 const highlightNode = (
   selectedId: string,
   deps: SelectionHighlighterDeps
 ): void => {
-  const { nodeMap, stepNodeMap, edgeLayer, stepEdgeLayer, edges, steps, setNodeAlpha, useBlur = false } = deps;
+  const { nodeMap, stepNodeMap, stepEdgeLayer, steps, setNodeAlpha, useBlur = false } = deps;
   const styles = getFadeStyles();
   const defaultAlpha = getCssVarFloat('--node-alpha');
 
@@ -148,10 +146,7 @@ const highlightNode = (
     node.setSelected(false);
   });
 
-  renderEdges(edgeLayer, edges, nodeMap, {
-    view: 'workflow',
-    selectedId,
-  });
+  // Step edges still rendered here (separate from workflow edges)
   renderStepEdges(stepEdgeLayer, steps, stepNodeMap, '');
 };
 
@@ -189,9 +184,10 @@ const highlightStep = (
 
 /**
  * Clears all selection visuals, restoring default state (no blur).
+ * Workflow edge rendering handled by workflowRenderer.
  */
 export const clearSelection = (deps: SelectionHighlighterDeps): void => {
-  const { nodeMap, stepNodeMap, edgeLayer, stepEdgeLayer, edges, steps, setNodeAlpha } = deps;
+  const { nodeMap, stepNodeMap, stepEdgeLayer, steps, setNodeAlpha } = deps;
 
   const nodeAlpha = getCssVarFloat('--node-alpha');
   nodeMap.forEach((node, nodeId) => {
@@ -206,10 +202,7 @@ export const clearSelection = (deps: SelectionHighlighterDeps): void => {
     node.setSelected(false);
   });
 
-  renderEdges(edgeLayer, edges, nodeMap, {
-    view: 'workflow',
-    selectedId: null,
-  });
+  // Step edges still rendered here (separate from workflow edges)
   renderStepEdges(stepEdgeLayer, steps, stepNodeMap, null);
 };
 

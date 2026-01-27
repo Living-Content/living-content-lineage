@@ -19,7 +19,6 @@ import {
   getScaledDimensions,
 } from './nodeTextMeasurement.js';
 import { createNodeTexture, createIconOnlyTexture } from './nodeTextureRenderer.js';
-import { traceState } from '../../../stores/traceState.svelte.js';
 
 
 export interface GraphNode extends Container {
@@ -46,6 +45,7 @@ export interface NodeRenderOptions {
 interface CreateNodeOptions {
   scale?: number;
   renderOptions?: NodeRenderOptions;
+  stepWidths?: Map<number, number>;
 }
 
 const getAssetTypeLabel = (assetType?: AssetType): string => {
@@ -160,9 +160,9 @@ export function createGraphNode(
 
     const renderOptions = createRenderOptions(currentMode);
     const nodeHeight = (currentMode === 'detailed' ? BASE_NODE_HEIGHT_DETAILED : BASE_NODE_HEIGHT_SIMPLE) * nodeScale;
-    // Use shared width from store so all nodes in same group have same width
+    // Use workflow-specific width so all nodes in same step column have consistent width
     const groupKey = Math.round((node.x ?? 0.5) * GROUP_KEY_PRECISION);
-    const groupWidth = traceState.getNodeWidth(groupKey);
+    const groupWidth = options.stepWidths?.get(groupKey);
     const nodeWidth = (groupWidth ?? calculateNodeWidth(renderOptions, dims, nodeScale)) * nodeScale;
 
     // Create placeholder first, then update with icon

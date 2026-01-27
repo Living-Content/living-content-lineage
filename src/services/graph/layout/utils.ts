@@ -61,6 +61,7 @@ export interface CreateElementConfig {
   ticker: Ticker;
   hoverConfig: HoverCallbackConfig;
   nodeMap: Map<string, GraphNode>;
+  stepWidths?: Map<number, number>;
 }
 
 /**
@@ -128,7 +129,7 @@ export const createNode = async (
   deps: CreateElementConfig
 ): Promise<GraphElement> => {
   const { id, data, type, onClick, scale, renderOptions } = config;
-  const { graphScale, ticker, hoverConfig, nodeMap } = deps;
+  const { graphScale, ticker, hoverConfig, nodeMap, stepWidths } = deps;
 
   const iconConfig = getIconNodeConfig(data.nodeType);
   const getIconSize = () => iconConfig?.size ?? 28;
@@ -147,7 +148,7 @@ export const createNode = async (
         iconPath: iconConfig.iconPath,
         size: iconConfig.size,
       })
-    : createGraphNode(data, graphScale, ticker, callbacks, { scale, renderOptions });
+    : createGraphNode(data, graphScale, ticker, callbacks, { scale, renderOptions, stepWidths });
 
   return createGraphElement(id, type, data, graphNode);
 };

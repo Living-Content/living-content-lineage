@@ -16,13 +16,13 @@ import type { LODController } from '../layout/lodController.js';
 import type { NodeAccessor } from '../layout/nodeAccessor.js';
 import type { PixiContext } from '../layout/pixiSetup.js';
 import type { GraphEngine, SelectionTarget } from './interface.js';
+import type { WorkflowRenderer } from '../workflowRenderer.js';
 import {
   applySelectionHighlight,
   applyPhaseFilter,
   clearSelection,
   type SelectionHighlighterDeps,
 } from '../interaction/selectionHighlighter.js';
-import { renderEdges } from '../rendering/edgeRenderer.js';
 
 /**
  * Internal engine state.
@@ -65,11 +65,13 @@ export interface EngineDeps {
   titleOverlay: { destroy: () => void; setSecondaryVisible: (visible: boolean) => void };
   resizeHandler: { destroy: () => void };
   viewportHandlers: { destroy: () => void };
+  workflowRenderer: WorkflowRenderer;
   state: EngineState;
 }
 
 /**
  * Creates the highlighter dependencies for selection/phase operations.
+ * Note: Edge rendering is handled by workflowRenderer, not here.
  */
 const createHighlighterDeps = (
   deps: EngineDeps,
@@ -77,9 +79,7 @@ const createHighlighterDeps = (
 ): SelectionHighlighterDeps => ({
   nodeMap: deps.nodeMap,
   stepNodeMap: deps.stepNodeMap,
-  edgeLayer: deps.pixi.layers.edgeLayer,
   stepEdgeLayer: deps.pixi.layers.stepEdgeLayer,
-  edges: deps.edges,
   steps: deps.steps,
   setNodeAlpha: deps.animationController.setNodeAlpha,
   useBlur,
@@ -120,14 +120,12 @@ export const createGraphEngine = (deps: EngineDeps): GraphEngine => {
         deps.viewportManager.centerOnNode(next.nodeId, { zoom: true });
       }
 
-      if (next.type === 'step') {
-        renderEdges(deps.pixi.layers.edgeLayer, deps.edges, deps.nodeMap, {
-          view: 'workflow',
-          selectedId: null,
-        });
-      }
+      // Update renderer with selection state (handles edge highlighting)
+      const nodeId = next.type === 'node' ? next.nodeId : null;
+      deps.workflowRenderer.setRenderState({ selectedNodeId: nodeId });
     } else {
       clearSelection(createHighlighterDeps(deps, false));
+      deps.workflowRenderer.setRenderState({ selectedNodeId: null });
     }
   };
 
@@ -209,6 +207,7 @@ export const createGraphEngine = (deps: EngineDeps): GraphEngine => {
       deps.viewportManager.destroy();
       deps.animationController.cleanup();
       deps.titleOverlay.destroy();
+      deps.workflowRenderer.destroy();
       deps.nodeMap.forEach((node) => node.destroy());
       deps.pixi.app.destroy(true, { children: true });
     },

@@ -13,6 +13,7 @@ export type ViewMode = 'trace' | 'workflow';
 export interface EdgeRenderOptions {
   view: ViewMode;
   selectedId: string | null;
+  append?: boolean;  // If true, don't clear the layer first
 }
 
 /**
@@ -26,7 +27,9 @@ export const renderEdges = (
   nodeMap: Map<string, GraphNode>,
   options: EdgeRenderOptions
 ): void => {
-  edgeLayer.removeChildren();
+  if (!options.append) {
+    edgeLayer.removeChildren();
+  }
 
   const { view, selectedId } = options;
   const edgeWidth = getCssVarInt(view === 'trace' ? '--workflow-edge-width' : '--edge-width');

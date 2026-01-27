@@ -90,19 +90,22 @@ export const createStepLabelEntry = (
 };
 
 /**
- * Finds the action node x position for a step, or falls back to step node position.
+ * Finds the action node x position for a step across multiple nodeMaps.
+ * Falls back to step node position if no action found.
  */
 const findActionPositionForStep = (
   stepId: string,
-  nodeMap: Map<string, GraphNode>,
+  allNodeMaps: Map<string, GraphNode>[],
   stepNodeMap: Map<string, GraphNode>
 ): number => {
-  // Find action node for this step (nodeType === 'process' && assetType === 'Action')
-  for (const node of nodeMap.values()) {
-    if (node.nodeData.step === stepId &&
-        node.nodeData.nodeType === 'process' &&
-        node.nodeData.assetType === 'Action') {
-      return node.position.x;
+  // Search through all node maps for action node
+  for (const nodeMap of allNodeMaps) {
+    for (const node of nodeMap.values()) {
+      if (node.nodeData.step === stepId &&
+          node.nodeData.nodeType === 'process' &&
+          node.nodeData.assetType === 'Action') {
+        return node.position.x;
+      }
     }
   }
   // Fallback to step node position (for steps without actions, like source steps)
@@ -111,16 +114,84 @@ const findActionPositionForStep = (
 };
 
 /**
+ * Finds the topmost node Y position across workflows for a given step.
+ */
+export const findGlobalTopForStep = (
+  stepId: string,
+  allNodeMaps: Map<string, GraphNode>[]
+): { worldY: number; halfHeight: number } | null => {
+  let minWorldY = Infinity;
+  let halfHeight = 0;
+
+  for (const nodeMap of allNodeMaps) {
+    for (const node of nodeMap.values()) {
+      if (node.nodeData.step === stepId && node.position.y < minWorldY) {
+        minWorldY = node.position.y;
+        halfHeight = node.nodeHeight / 2;
+      }
+    }
+  }
+
+  return minWorldY === Infinity ? null : { worldY: minWorldY, halfHeight };
+};
+
+/**
+ * Finds the topmost node in a single workflow's nodeMap.
+ */
+export const findTopNodeForWorkflow = (
+  nodeMap: Map<string, GraphNode>
+): TopNodeInfo | null => {
+  let minWorldY = Infinity;
+  let halfHeight = 0;
+
+  for (const node of nodeMap.values()) {
+    if (node.position.y < minWorldY) {
+      minWorldY = node.position.y;
+      halfHeight = node.nodeHeight / 2;
+    }
+  }
+
+  return minWorldY === Infinity ? null : { worldY: minWorldY, halfHeight };
+};
+
+/**
+ * Finds the action node x position for a step within a single nodeMap.
+ * Falls back to finding any node in that step.
+ */
+const findActionPositionForStepInWorkflow = (
+  stepId: string,
+  nodeMap: Map<string, GraphNode>
+): number | null => {
+  // First try to find an action node
+  for (const node of nodeMap.values()) {
+    if (node.nodeData.step === stepId &&
+        node.nodeData.nodeType === 'process' &&
+        node.nodeData.assetType === 'Action') {
+      return node.position.x;
+    }
+  }
+
+  // Fall back to any node in that step
+  for (const node of nodeMap.values()) {
+    if (node.nodeData.step === stepId) {
+      return node.position.x;
+    }
+  }
+
+  return null;
+};
+
+/**
  * Batch creation of label entries from steps (no container attachment).
  * Labels are positioned at action nodes, falling back to step nodes for source steps.
  */
 export const createLabelEntries = (
   steps: StepUI[],
-  nodeMap: Map<string, GraphNode>,
+  allNodeMaps: Map<string, GraphNode>[],
   stepNodeMap: Map<string, GraphNode>
 ): StepLabelEntry[] => {
   return steps.map((step) => {
-    const actionX = findActionPositionForStep(step.id, nodeMap, stepNodeMap);
+    const actionX = findActionPositionForStep(step.id, allNodeMaps, stepNodeMap);
     return createStepLabelEntry(step, actionX);
   });
 };
@@ -186,17 +257,19 @@ const updateLabelEntryPosition = (
  * Creates step labels in world space. Call update() on viewport changes.
  * Labels align with action nodes, falling back to step nodes for source steps.
  * Container should be added to the viewport (world space), not stage (screen space).
+ *
+ * Accepts multiple nodeMaps for visualization across workflows.
  */
 export function createStepLabels(
   steps: StepUI[],
-  nodeMap: Map<string, GraphNode>,
+  allNodeMaps: Map<string, GraphNode>[],
   stepNodeMap: Map<string, GraphNode>,
   topNodeInfo: TopNodeInfo | null
 ): StepLabels {
   const container = new Container();
 
   // Create and attach entries
-  const entries = createLabelEntries(steps, nodeMap, stepNodeMap);
+  const entries = createLabelEntries(steps, allNodeMaps, stepNodeMap);
   attachLabelEntriesToContainer(container, entries);
 
   // Store top node info for updates
@@ -231,3 +304,103 @@ export function createStepLabels(
 
   return { update, setPhaseFilter: setPhaseFilterVisibility, setVisible, container };
 }
+
+/**
+ * Creates step labels for a SINGLE workflow using its own steps and node positions.
+ * Each workflow gets independent labels positioned above ITS nodes.
+ */
+export const createWorkflowStepLabels = (
+  steps: StepUI[],
+  nodeMap: Map<string, GraphNode>,
+  getTopNodeInfo: () => TopNodeInfo | null
+): StepLabels => {
+  const container = new Container();
+  const entries: StepLabelEntry[] = [];
+
+  // Create labels only for steps that have nodes in this workflow
+  for (const step of steps) {
+    const actionX = findActionPositionForStepInWorkflow(step.id, nodeMap);
+    if (actionX !== null) {
+      const entry = createStepLabelEntry(step, actionX);
+      entries.push(entry);
+      container.addChild(entry.labelContainer);
+      container.addChild(entry.line);
+    }
+  }
+
+  const update = (viewportState: ViewportState): void => {
+    const topInfo = getTopNodeInfo();
+    if (!topInfo) return;
+
+    for (const entry of entries) {
+      updateLabelEntryPosition(
+        entry,
+        viewportState,
+        topInfo.worldY,
+        topInfo.halfHeight
+      );
+    }
+  };
+
+  const setPhaseFilterVisibility = (activePhase: Phase | null): void => {
+    const fadedAlpha = getCssVarFloat('--node-faded-alpha');
+    for (const entry of entries) {
+      const isVisible = activePhase === null || entry.phase === activePhase;
+      const alpha = isVisible ? 1 : fadedAlpha;
+      entry.labelContainer.alpha = alpha;
+      entry.line.alpha = alpha;
+    }
+  };
+
+  const setVisible = (visible: boolean): void => {
+    container.visible = visible;
+  };
+
+  return { update, setPhaseFilter: setPhaseFilterVisibility, setVisible, container };
+};
+
+/**
+ * Workflow data needed for label creation.
+ */
+export interface WorkflowLabelData {
+  workflowId: string;
+  steps: StepUI[];
+  nodeMap: Map<string, GraphNode>;
+}
+
+/**
+ * Creates step labels for all workflows, each positioned above its own nodes.
+ * Returns a composite StepLabels that manages all workflow labels together.
+ */
+export const createWorkflowLabels = (
+  workflows: WorkflowLabelData[]
+): StepLabels => {
+  const container = new Container();
+  const allLabelSets: StepLabels[] = [];
+
+  for (const wf of workflows) {
+    // Create labels for this workflow using its own top node info
+    const getTopInfo = () => findTopNodeForWorkflow(wf.nodeMap);
+    const labels = createWorkflowStepLabels(wf.steps, wf.nodeMap, getTopInfo);
+    container.addChild(labels.container);
+    allLabelSets.push(labels);
+  }
+
+  const update = (viewportState: ViewportState): void => {
+    for (const labels of allLabelSets) {
+      labels.update(viewportState);
+    }
+  };
+
+  const setPhaseFilter = (activePhase: Phase | null): void => {
+    for (const labels of allLabelSets) {
+      labels.setPhaseFilter(activePhase);
+    }
+  };
+
+  const setVisible = (visible: boolean): void => {
+    container.visible = visible;
+  };
+
+  return { update, setPhaseFilter, setVisible, container };
+};

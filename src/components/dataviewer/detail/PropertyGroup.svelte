@@ -18,12 +18,11 @@
     children: Snippet;
   } = $props();
 
-  let expanded = $state(!collapsed);
 </script>
 
 <div class="property-group">
   {#if collapsible}
-    <Expandable bind:expanded>
+    <Expandable expanded={!collapsed}>
       {#snippet header()}
         <span class="group-title">{title}</span>
       {/snippet}

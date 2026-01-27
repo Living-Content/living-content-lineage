@@ -9,7 +9,6 @@ import type { GraphIndices } from '../engine/indices.js';
 import type { GraphEngine, BootstrapCallbacks, InitialInputs } from '../engine/interface.js';
 import { initGraphAssets } from './_init.js';
 import { composeGraphRuntime } from './_compose.js';
-import { traceState } from '../../../stores/traceState.svelte.js';
 
 export interface GraphActivationResult {
   engine: GraphEngine;
@@ -37,9 +36,6 @@ export async function activateGraph(
 
   const assets = initOutcome.result;
   callbacks.onLoaded(assets.traceData);
-
-  // Set node widths before composing (nodes read from store during creation)
-  traceState.setNodeWidths(assets.nodeWidths);
 
   // Phase 2: Compose runtime
   const engine = await composeGraphRuntime({
