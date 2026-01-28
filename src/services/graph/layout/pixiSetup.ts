@@ -7,7 +7,7 @@ import { Application, Container } from 'pixi.js';
 export interface LayerGroup {
   nodeLayer: Container;
   edgeLayer: Container;
-  branchLineLayer: Container;
+  connectorLayer: Container;
   stepNodeLayer: Container;
   stepEdgeLayer: Container;
 }
@@ -42,16 +42,16 @@ export async function initializePixi(container: HTMLElement): Promise<PixiContex
 
 /**
  * Create the layer hierarchy for rendering order.
- * Order: edges → nodes → branchLine → step nodes → step edges
+ * Order: edges → nodes → connector → step nodes → step edges
  */
 export function createLayerHierarchy(viewport: Container): LayerGroup {
   const edgeLayer = new Container();
   const nodeLayer = new Container();
-  const branchLineLayer = new Container();
+  const connectorLayer = new Container();
   const stepNodeLayer = new Container();
   const stepEdgeLayer = new Container();
 
-  viewport.addChild(edgeLayer, nodeLayer, branchLineLayer, stepNodeLayer, stepEdgeLayer);
+  viewport.addChild(edgeLayer, nodeLayer, connectorLayer, stepNodeLayer, stepEdgeLayer);
 
   // Step layers start hidden (shown during LOD collapse to step view)
   stepNodeLayer.visible = false;
@@ -60,7 +60,7 @@ export function createLayerHierarchy(viewport: Container): LayerGroup {
   return {
     nodeLayer,
     edgeLayer,
-    branchLineLayer,
+    connectorLayer,
     stepNodeLayer,
     stepEdgeLayer,
   };

@@ -94,8 +94,8 @@ const getWorkflowTopY = (nodeMap: Map<string, GraphNode>): number | null => {
 
   if (minY === Infinity) return null;
 
-  // Account for step label space above workflow (label offset + label height + padding)
-  const LABEL_SPACE = 120;
+  // Account for step label space above workflow
+  const LABEL_SPACE = 60;
   return minY - halfHeight - LABEL_SPACE;
 };
 

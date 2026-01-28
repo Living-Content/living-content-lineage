@@ -52,15 +52,17 @@
 <style>
   .header {
     position: fixed;
-    top: var(--panel-margin);
+    top: 0;
     left: 0;
     right: 0;
-    height: var(--header-height);
+    height: auto;
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: 0 var(--panel-margin);
+    padding: var(--panel-margin);
     z-index: var(--z-menu-toggle);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 
   /* Menu toggle button */

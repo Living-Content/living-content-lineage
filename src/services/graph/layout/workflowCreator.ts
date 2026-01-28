@@ -30,6 +30,9 @@ interface StepCreatorDeps {
   ticker: Ticker;
   callbacks: StepCreatorCallbacks;
   setNodeAlpha: (nodeId: string, alpha: number) => void;
+  yOffset?: number;
+  workflowId?: string;
+  stepPositions?: Map<string, number>;
 }
 
 /**
@@ -97,19 +100,25 @@ export const createStepNodes = async (
 ): Promise<void> => {
   const config = buildElementConfig(deps, stepNodeMap);
   const { hoverConfig, nodeMap } = config;
+  const yOffset = deps.yOffset ?? 0;
+  const workflowPrefix = deps.workflowId ? `${deps.workflowId}-` : '';
+  const { stepPositions } = deps;
 
   const elements = await Promise.all(
     steps.map((step) => {
       const stepNodes = nodes.filter((n) => n.step === step.id);
+      const nodeId = `${workflowPrefix}step-${step.id}`;
+      // Use shared step positions for alignment, fallback to local bounds
+      const stepX = stepPositions?.get(step.id) ?? (step.xStart + step.xEnd) / 2;
       const stepNodeData: TraceNodeData = {
-        id: `step-${step.id}`,
+        id: nodeId,
         label: step.label,
         nodeType: 'workflow',
         shape: 'circle',
         step: step.id,
         phase: step.phase,
-        x: (step.xStart + step.xEnd) / 2,
-        y: 0.5,
+        x: stepX,
+        y: 0.5 + yOffset,
       };
 
       const stepSelectionPayload: StepSelectionPayload = {
@@ -123,11 +132,11 @@ export const createStepNodes = async (
       };
 
       return createNode({
-        id: step.id,
+        id: nodeId,
         data: stepNodeData,
         type: 'step',
         onClick: () => {
-          const graphNode = nodeMap.get(step.id);
+          const graphNode = nodeMap.get(nodeId);
           if (graphNode && hoverConfig.onStepSelect) {
             hoverConfig.onStepSelect(step.id, graphNode, stepSelectionPayload);
           }

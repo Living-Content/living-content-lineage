@@ -56,6 +56,9 @@ export const baseTokens = {
   'step-label-dot-gap': '4px',
   'phase-badge-top': '160px',
 
+  // Workflow connector (between parent/child workflows)
+  'connector-text-size': '32px',
+
   // Node sizing and layout
   'node-vertical-gap': '2px',
   'default-node-size': '14px',

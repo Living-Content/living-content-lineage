@@ -100,19 +100,20 @@ export const renderStepEdges = (
   layer: Container,
   steps: StepUI[],
   stepNodeMap: Map<string, GraphNode>,
-  selectedStepId: string | null
+  selectedStepId: string | null,
+  workflowId?: string
 ): void => {
-  layer.removeChildren();
   const graphics = new Graphics();
   const stepOrder = steps.map((s) => s.id);
   const color = getCssVarColorHex('--color-edge');
   const workflowEdgeWidth = getCssVarInt('--workflow-edge-width');
   const fadedAlpha = getCssVarFloat('--node-faded-alpha');
+  const prefix = workflowId ? `${workflowId}-` : '';
 
   for (let i = 0; i < stepOrder.length - 1; i++) {
     const nextStepId = stepOrder[i + 1];
-    const sourceNode = stepNodeMap.get(stepOrder[i]);
-    const targetNode = stepNodeMap.get(nextStepId);
+    const sourceNode = stepNodeMap.get(`${prefix}step-${stepOrder[i]}`);
+    const targetNode = stepNodeMap.get(`${prefix}step-${nextStepId}`);
     if (!sourceNode || !targetNode) continue;
 
     const isConnected = selectedStepId === null ||

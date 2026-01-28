@@ -18,7 +18,6 @@ import { createWorkflowLabels, type WorkflowLabelData } from '../rendering/workf
 import { createLODController, type LODLayers, type LODRenderCallbacks } from '../layout/lodController.js';
 import { createTitleOverlay } from '../rendering/titleOverlay.js';
 import { LOD_THRESHOLD, TEXT_SIMPLIFY_THRESHOLD, VIEWPORT_TOP_MARGIN, VIEWPORT_BOTTOM_MARGIN } from '../../../config/constants.js';
-import { repositionStepNodesWithGaps } from '../layout/nodeCreator.js';
 import { recalculateStepBounds, createStepNodes } from '../layout/workflowCreator.js';
 import { createViewportManager, createResizeHandler } from '../layout/viewportManager.js';
 import { createSelectionController } from '../interaction/selectionController.js';
@@ -132,39 +131,55 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
 
   recalculateStepBounds(traceData.steps, nodeMap, graphScale);
 
-  // 6. Create workflow renderer (handles edges and connector)
+  // Build step position map from main workflow for alignment
+  const mainStepPositions = new Map<string, number>();
+  for (const step of traceData.steps) {
+    mainStepPositions.set(step.id, (step.xStart + step.xEnd) / 2);
+  }
+
+  // Create step nodes for ALL workflows using main workflow's X positions
+  for (const wf of workflowManager.getAll()) {
+    await createStepNodes(wf.trace.steps, wf.trace.nodes, wf.trace.edges, stepNodeMap, {
+      container,
+      stepNodeLayer: layers.stepNodeLayer,
+      graphScale,
+      ticker: app.ticker,
+      callbacks: {
+        onHover: callbacks.onHover,
+        onHoverEnd: callbacks.onHoverEnd,
+        onStepSelect: (stepId, graphNode, payload) => {
+          selectionController.selectStep(graphNode, {
+            stepId: payload.stepId,
+            label: payload.label,
+            phase: payload.phase,
+            nodes: indices.nodesByStep.get(stepId) ?? [],
+            edges: indices.edgesByStep.get(stepId) ?? [],
+          });
+        },
+        getSelectedElementId: () => selectionController.getSelectedElementId(),
+      },
+      setNodeAlpha: animationController.setNodeAlpha,
+      yOffset: wf.yOffset - 0.5,
+      workflowId: wf.workflowId,
+      stepPositions: mainStepPositions,
+    });
+  }
+
+  // Render step edges for all workflows (clear layer first, then add all)
+  layers.stepEdgeLayer.removeChildren();
+  for (const wf of workflowManager.getAll()) {
+    renderStepEdges(layers.stepEdgeLayer, wf.trace.steps, stepNodeMap, null, wf.workflowId);
+  }
+
+  // Create workflow renderer (handles edges and connector)
+  // Must be after step nodes exist so connector can use step node positions
   const workflowRenderer = createWorkflowRenderer({
     layers,
     workflowManager,
     mainWorkflowId,
+    stepNodeMap,
   });
   workflowRenderer.initialize();
-
-  // Create step nodes
-  await createStepNodes(traceData.steps, traceData.nodes, traceData.edges, stepNodeMap, {
-    container,
-    stepNodeLayer: layers.stepNodeLayer,
-    graphScale,
-    ticker: app.ticker,
-    callbacks: {
-      onHover: callbacks.onHover,
-      onHoverEnd: callbacks.onHoverEnd,
-      onStepSelect: (stepId, graphNode, payload) => {
-        selectionController.selectStep(graphNode, {
-          stepId: payload.stepId,
-          label: payload.label,
-          phase: payload.phase,
-          nodes: indices.nodesByStep.get(stepId) ?? [],
-          edges: indices.edgesByStep.get(stepId) ?? [],
-        });
-      },
-      getSelectedElementId: () => selectionController.getSelectedElementId(),
-    },
-    setNodeAlpha: animationController.setNodeAlpha,
-  });
-
-  repositionStepNodesWithGaps(stepNodeMap);
-  renderStepEdges(layers.stepEdgeLayer, traceData.steps, stepNodeMap, null);
 
   // Dynamic getters for bounds (always fresh, includes all workflows)
   const getTopNodeInfo = () => workflowManager.getTopNodeInfo();
@@ -203,7 +218,8 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
         workflowRenderer.setRenderState({ selectedNodeId: nodeId });
       },
       step: (vs) => {
-        const firstStep = stepNodeMap.get(traceData.steps[0]?.id);
+        const firstStepId = `${mainWorkflowId}-step-${traceData.steps[0]?.id}`;
+        const firstStep = stepNodeMap.get(firstStepId);
         if (firstStep) titleOverlay.updatePosition(firstStep, vs);
       },
     },
@@ -212,9 +228,9 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
   // Create LOD controller
   const lodController = createLODController(lodLayers, {
     onCollapseStart: () => { callbacks.onLODCollapse(); titleOverlay.setMode('relative'); },
-    onCollapseEnd: () => lodController.updateViewport(viewportState),
+    onCollapseEnd: () => { lodController.updateViewport(viewportState); workflowRenderer.redrawConnector(); },
     onExpandStart: () => { callbacks.onLODExpand(); titleOverlay.setMode('fixed'); },
-    onExpandEnd: () => lodController.updateViewport(viewportState),
+    onExpandEnd: () => { lodController.updateViewport(viewportState); workflowRenderer.redrawConnector(); },
   }, renderCallbacks);
 
   // Create viewportManager with dynamic bounds getters

@@ -12,6 +12,7 @@ import type { GraphNode } from './rendering/nodeRenderer.js';
 import type { WorkflowManager } from './workflowManager.js';
 import type { LayerGroup } from './layout/pixiSetup.js';
 import { getCssVarColorHex, getCssVarInt, getCssVarFloat, getCssVar, type CssVar } from '../../themes/index.js';
+import { traceState } from '../../stores/traceState.svelte.js';
 
 export interface RenderState {
   selectedNodeId: string | null;
@@ -23,6 +24,7 @@ export interface WorkflowRendererDeps {
   layers: LayerGroup;
   workflowManager: WorkflowManager;
   mainWorkflowId: string;
+  stepNodeMap: Map<string, GraphNode>;
 }
 
 export interface WorkflowRenderer {
@@ -150,21 +152,65 @@ const drawConnectorLine = (
 /**
  * Create text style for connector metadata.
  */
-const createConnectorTextStyle = (color: number): TextStyle => {
+const createConnectorTextStyle = (): TextStyle => {
   return new TextStyle({
     fontFamily: getCssVar('--font-sans'),
-    fontSize: 12,
-    fontWeight: '500',
-    fill: color,
+    fontSize: getCssVarInt('--connector-text-size'),
+    fontWeight: '600',
+    fill: getCssVarColorHex('--color-node-text'),
     letterSpacing: 0.5,
   });
 };
 
 /**
- * Create a workflow renderer.
+ * Find the action node bottom Y for a step in a workflow.
  */
+const findActionBottomY = (
+  nodeMap: Map<string, GraphNode>,
+  stepId: string
+): number | null => {
+  for (const node of nodeMap.values()) {
+    if (node.nodeData.step === stepId &&
+        node.nodeData.nodeType === 'process' &&
+        node.nodeData.assetType === 'Action') {
+      return node.position.y + node.nodeHeight / 2;
+    }
+  }
+  return null;
+};
+
+/**
+ * Get step node bounds for a workflow.
+ */
+const getStepNodeBounds = (
+  stepNodeMap: Map<string, GraphNode>,
+  workflowId: string
+): { topY: number; bottomY: number } | null => {
+  let minY = Infinity;
+  let maxY = -Infinity;
+  let halfHeight = 0;
+
+  for (const [nodeId, node] of stepNodeMap) {
+    if (nodeId.startsWith(`${workflowId}-step-`)) {
+      if (node.position.y < minY) {
+        minY = node.position.y;
+        halfHeight = node.nodeHeight / 2;
+      }
+      if (node.position.y > maxY) {
+        maxY = node.position.y;
+      }
+    }
+  }
+
+  if (minY === Infinity) return null;
+  return {
+    topY: minY - halfHeight,
+    bottomY: maxY + halfHeight,
+  };
+};
+
 export const createWorkflowRenderer = (deps: WorkflowRendererDeps): WorkflowRenderer => {
-  const { layers, workflowManager, mainWorkflowId } = deps;
+  const { layers, workflowManager, mainWorkflowId, stepNodeMap } = deps;
 
   // === REUSABLE Graphics objects (never recreated) ===
   const edgeGraphics = {
@@ -223,7 +269,7 @@ export const createWorkflowRenderer = (deps: WorkflowRendererDeps): WorkflowRend
       connectorContainer = new Container();
       connectorGraphics = new Graphics();
       connectorContainer.addChild(connectorGraphics);
-      layers.branchLineLayer.addChild(connectorContainer);
+      layers.connectorLayer.addChild(connectorContainer);
     }
 
     connectorGraphics!.clear();
@@ -242,19 +288,41 @@ export const createWorkflowRenderer = (deps: WorkflowRendererDeps): WorkflowRend
     const color = getPhaseColor(context.phase);
     const width = 2;
 
-    drawConnectorLine(connectorGraphics!, context.x, context.topY, context.bottomY, color, width);
+    // Adjust positions based on view mode
+    let topY = context.topY;
+    let bottomY = context.bottomY;
 
-    // Add metadata text to the right of the connector
-    const midY = (context.topY + context.bottomY) / 2;
+    if (!traceState.isCollapsed && context.childWorkflowId && context.sourceNodeId) {
+      // In workflow view, use action node for topY and step nodes for bottomY
+      const mainWorkflow = workflowManager.get(mainWorkflowId);
+      const childBounds = getStepNodeBounds(stepNodeMap, context.childWorkflowId);
+
+      if (mainWorkflow && childBounds) {
+        // Find the source node's step, then get the action node's bottom Y
+        const sourceNode = mainWorkflow.nodeMap.get(context.sourceNodeId);
+        if (sourceNode?.nodeData.step) {
+          const actionBottomY = findActionBottomY(mainWorkflow.nodeMap, sourceNode.nodeData.step);
+          if (actionBottomY !== null) {
+            topY = actionBottomY;
+          }
+        }
+        const LABEL_SPACE = 120;
+        bottomY = childBounds.topY - LABEL_SPACE;
+      }
+    }
+
+    drawConnectorLine(connectorGraphics!, context.x, topY, bottomY, color, width);
+
+    // Add metadata text at end of connector line (before child workflow)
     const labelText = context.childWorkflowTitle ?? '';
 
     if (labelText) {
       connectorText = new Text({
         text: labelText,
-        style: createConnectorTextStyle(color),
+        style: createConnectorTextStyle(),
       });
-      connectorText.anchor.set(0, 0.5);
-      connectorText.position.set(context.x + 12, midY);
+      connectorText.anchor.set(0, 1);
+      connectorText.position.set(context.x + 16, bottomY);
       connectorContainer.addChild(connectorText);
     }
   };
