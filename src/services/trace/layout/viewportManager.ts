@@ -4,7 +4,7 @@
  */
 import { Container } from 'pixi.js';
 import gsap from 'gsap';
-import { getCssVarInt } from '../../../themes/index.js';
+import { getCssVarInt } from '../../../themes/theme.js';
 import { uiState } from '../../../stores/uiState.svelte.js';
 import { ZOOM_MAX, ZOOM_DEFAULT, VIEWPORT_TOP_MARGIN, VIEWPORT_BOTTOM_MARGIN } from '../../../config/viewport.js';
 import { ANIMATION_TIMINGS } from '../../../config/animation.js';
@@ -42,7 +42,7 @@ export interface ViewportManager {
 export function createViewportManager(deps: ViewportManagerDeps): ViewportManager {
   const { nodeAccessor, viewport, viewportState, onUpdate, getTopNodeInfo, getBottomNodeInfo } = deps;
 
-  function centerOnNode(nodeId: string, options: CenterOptions = {}): void {
+  const centerOnNode = (nodeId: string, options: CenterOptions = {}): void => {
     const node = nodeAccessor.getAny(nodeId);
     if (!node) {
       options.onComplete?.();
@@ -83,13 +83,13 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
       },
       onComplete,
     });
-  }
+  };
 
   /**
    * Zooms out to fit content within viewport bounds, centered on a node.
    * Used when exiting detail view.
    */
-  function zoomToBounds(nodeId?: string, options: ZoomToBoundsOptions = {}): void {
+  const zoomToBounds = (nodeId?: string, options: ZoomToBoundsOptions = {}): void => {
     const topNodeInfo = getTopNodeInfo();
     const bottomNodeInfo = getBottomNodeInfo();
 
@@ -147,11 +147,11 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
       },
       onComplete: options.onComplete,
     });
-  }
+  };
 
-  function destroy(): void {
+  const destroy = (): void => {
     gsap.killTweensOf(viewportState);
-  }
+  };
 
   return {
     centerOnNode,

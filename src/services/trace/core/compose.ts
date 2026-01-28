@@ -29,7 +29,7 @@ import { createWorkflowRenderer } from '../rendering/edgeRenderer.js';
 import { createNodesForAllWorkflows, type NodeCreationDeps } from '../workflow/nodeFactory.js';
 import { getStepColumnPositions, alignNodesToStepColumns } from '../workflow/alignment.js';
 import { fetchRelatedWorkflows } from '../workflow/loader.js';
-import { getCssVarFloat } from '../../../themes/index.js';
+import { getCssVarFloat } from '../../../themes/theme.js';
 import { viewLevel } from '../../../stores/viewLevel.svelte.js';
 import { createWorkflowCard, type WorkflowCardData } from '../rendering/cards/workflowCard.js';
 import { createWorkflowCardConnectorRenderer, type WorkflowConnection } from '../rendering/cards/cardConnector.js';

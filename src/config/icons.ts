@@ -2,7 +2,7 @@
  * Icon path utilities for assets and phases.
  */
 import type { AssetType, NodeType, Phase } from './types.js';
-import { getCssVarInt } from '../themes/index.js';
+import { getCssVarInt } from '../themes/theme.js';
 
 export function getAssetIconPath(assetType: AssetType): string {
   return `/icons/assets/${assetType.toLowerCase()}.svg`;

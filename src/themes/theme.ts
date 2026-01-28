@@ -1,7 +1,7 @@
 /**
  * Theme utilities with typed CSS variable access
  */
-import type { CssVar } from './definitions/index.js';
+import type { CssVar } from './types.generated.js';
 
 /**
  * Get a CSS variable value by name.
@@ -46,7 +46,7 @@ export function getCssVarFloat(name: CssVar): number {
   return parsed;
 }
 
-function colorStringToValue(colorString: string): number {
+const colorStringToValue = (colorString: string): number => {
   // Support rgb() format
   const rgbMatch = colorString.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
   if (rgbMatch) {
@@ -64,7 +64,7 @@ function colorStringToValue(colorString: string): number {
     return (r << 16) | (g << 8) | b;
   }
   throw new Error(`Unsupported color format: ${colorString}`);
-}
+};
 
 /**
  * Get a color value from CSS variable by name.

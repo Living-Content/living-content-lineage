@@ -9,7 +9,7 @@
  * └───────────────────────────────────────┘
  */
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
-import { getCssVar, getCssVarColorHex } from '../../../../themes/index.js';
+import { getCssVar, getCssVarColorHex } from '../../../../themes/theme.js';
 import {
   SESSION_CARD_WIDTH,
   SESSION_CARD_HEIGHT,

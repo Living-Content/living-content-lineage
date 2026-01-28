@@ -17,7 +17,7 @@ let config = $state<AppConfig>({
 
 let isLoaded = $state(false);
 
-function parseLcoManifest(): { gaimId: string; workflowId: string } | null {
+const parseLcoManifest = (): { gaimId: string; workflowId: string } | null => {
   const params = new URLSearchParams(window.location.search);
   const lcoManifest = params.get('lco_manifest');
 
@@ -34,14 +34,14 @@ function parseLcoManifest(): { gaimId: string; workflowId: string } | null {
     gaimId: parts[0],
     workflowId: parts.slice(1).join('_'),
   };
-}
+};
 
-function buildApiUrl(gaimId: string): string {
+const buildApiUrl = (gaimId: string): string => {
   const isLocalhost = window.location.hostname === 'localhost';
   return isLocalhost
     ? 'https://localhost:8000'
     : `https://${gaimId}.api.livingcontent.co`;
-}
+};
 
 export const configStore = {
   get gaimId(): string {

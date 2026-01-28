@@ -1,7 +1,7 @@
 /**
  * Text measurement utilities for node layout.
  */
-import { getCssVar } from '../../../themes/index.js';
+import { getCssVar } from '../../../themes/theme.js';
 import { GEOMETRY } from '../../../config/animation.js';
 import {
   BASE_TYPE_LABEL_FONT_SIZE,

@@ -11,7 +11,7 @@ import { validatePhase } from '../../../../config/utils.js';
 import { assetTypeToNodeType } from '../../../../config/types.js';
 import type { Manifest, SignedManifest } from './traceTypes.js';
 import { computeLayout } from './traceLayout.js';
-import { getCssVar } from '../../../../themes/index.js';
+import { getCssVar } from '../../../../themes/theme.js';
 
 const buildManifestSummary = (
   record?: SignedManifest

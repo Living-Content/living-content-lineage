@@ -13,7 +13,8 @@
  */
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import type { Phase, StepUI, Trace } from '../../../../config/types.js';
-import { getCssVar, getCssVarColorHex, type CssVar } from '../../../../themes/index.js';
+import { getCssVar, getCssVarColorHex } from '../../../../themes/theme.js';
+import type { CssVar } from '../../../../themes/types.generated.js';
 import {
   WORKFLOW_CARD_WIDTH,
   WORKFLOW_CARD_HEIGHT,

@@ -176,9 +176,9 @@ export const login = {
   },
 };
 
-function cleanUrl(): void {
+const cleanUrl = (): void => {
   const url = new URL(window.location.href);
   url.searchParams.delete('code');
   url.searchParams.delete('auth_state');
   window.history.replaceState({}, document.title, url.toString());
-}
+};

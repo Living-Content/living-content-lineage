@@ -13,20 +13,20 @@
 import { logger } from '../lib/logger.js';
 import { configStore } from './configStore.svelte.js';
 
-function getTokenKey(key: 'anon-token' | 'refresh-token'): string {
+const getTokenKey = (key: 'anon-token' | 'refresh-token'): string => {
   const gaimId = configStore.gaimId;
   if (!gaimId) {
     throw new Error('TokenStore: gaimId required but not available');
   }
   return `gaim-${gaimId}-${key}`;
-}
+};
 
 let accessToken = $state<string | null>(null);
 let refreshToken = $state<string | null>(null);
 let anonToken = $state<string | null>(null);
 let expiresAt = $state<number | null>(null);
 
-function loadAnonToken(): string | null {
+const loadAnonToken = (): string | null => {
   try {
     const gaimId = configStore.gaimId;
     if (!gaimId) return null;
@@ -34,9 +34,9 @@ function loadAnonToken(): string | null {
   } catch {
     return null;
   }
-}
+};
 
-function saveAnonToken(token: string | null): void {
+const saveAnonToken = (token: string | null): void => {
   try {
     const key = getTokenKey('anon-token');
     if (token) {
@@ -47,9 +47,9 @@ function saveAnonToken(token: string | null): void {
   } catch {
     // Ignore storage errors
   }
-}
+};
 
-function loadRefreshToken(): string | null {
+const loadRefreshToken = (): string | null => {
   try {
     const gaimId = configStore.gaimId;
     if (!gaimId) return null;
@@ -57,9 +57,9 @@ function loadRefreshToken(): string | null {
   } catch {
     return null;
   }
-}
+};
 
-function saveRefreshToken(token: string | null): void {
+const saveRefreshToken = (token: string | null): void => {
   try {
     const key = getTokenKey('refresh-token');
     if (token) {
@@ -70,7 +70,7 @@ function saveRefreshToken(token: string | null): void {
   } catch {
     // Ignore storage errors
   }
-}
+};
 
 export const tokenStore = {
   init(): void {

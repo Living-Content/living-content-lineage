@@ -13,9 +13,26 @@ const rootDir = path.resolve(__dirname, '..');
 const themesDir = path.join(rootDir, 'src', 'themes');
 const generatedDir = path.join(themesDir, 'generated');
 
-// Import token definitions
-import { allTokens, type CssVarName } from '../src/themes/definitions/index.js';
+// Import token definitions directly
+import { baseTokens } from '../src/themes/definitions/base.js';
+import { typographyTokens } from '../src/themes/definitions/typography.js';
+import { colorTokens } from '../src/themes/definitions/colors.js';
+import { phaseTokens } from '../src/themes/definitions/phases.js';
+import { graphTokens } from '../src/themes/definitions/graph.js';
+import { componentTokens } from '../src/themes/definitions/components.js';
 import { darkOverrides } from '../src/themes/variants/dark.js';
+
+// Aggregate all tokens
+const allTokens = {
+  ...baseTokens,
+  ...typographyTokens,
+  ...colorTokens,
+  ...phaseTokens,
+  ...graphTokens,
+  ...componentTokens,
+} as const;
+
+type CssVarName = keyof typeof allTokens;
 
 function ensureDir(dir: string): void {
   if (!fs.existsSync(dir)) {

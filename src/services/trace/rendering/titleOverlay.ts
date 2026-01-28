@@ -5,7 +5,7 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import type { GraphNode } from './nodeRenderer.js';
 import type { ViewportState } from '../interaction/viewport.js';
-import { getCssVarColorHex, getCssVar, getCssVarInt, getCssVarFloat } from '../../../themes/index.js';
+import { getCssVarColorHex, getCssVar, getCssVarInt, getCssVarFloat } from '../../../themes/theme.js';
 import { ANIMATION_TIMINGS, GEOMETRY } from '../../../config/animation.js';
 
 export interface TitleOverlay {

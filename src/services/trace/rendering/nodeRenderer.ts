@@ -4,7 +4,8 @@
  */
 import { Container, Graphics, Sprite, Ticker } from 'pixi.js';
 import gsap from 'gsap';
-import { getCssVar, getCssVarFloat, type CssVar } from '../../../themes/index.js';
+import { getCssVar, getCssVarFloat } from '../../../themes/theme.js';
+import type { CssVar } from '../../../themes/types.generated.js';
 import { getAssetIconPath } from '../../../config/icons.js';
 import type { AssetType, TraceNodeData } from '../../../config/types.js';
 import { ASSET_TYPE_LABELS } from '../../../config/labels.js';

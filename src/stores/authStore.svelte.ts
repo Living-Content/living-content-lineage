@@ -31,10 +31,10 @@ type AuthEventHandler = (data: AuthStoreState) => void;
 const stateChangeHandlers = new SvelteSet<AuthEventHandler>();
 const readyHandlers = new SvelteSet<AuthEventHandler>();
 
-function transition(
+const transition = (
   newState: AuthState,
   data: { userId?: string | null; claims?: UserClaims | null } = {}
-): boolean {
+): boolean => {
   const previousState = currentState;
 
   if (!validTransitions[previousState]?.includes(newState)) {

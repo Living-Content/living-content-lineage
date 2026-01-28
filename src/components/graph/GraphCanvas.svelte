@@ -84,12 +84,10 @@ import type { StepData } from '../../stores/traceState.svelte.js';
             const trace = data as Trace;
             traceState.setTrace(trace);
 
-            // Load comment counts and connect real-time updates if config is available
+            // Connect comment system (checks auth internally)
             if (configStore.hasValidConfig() && trace.nodes) {
               const nodeIds = trace.nodes.map((n) => n.id);
-              commentState.loadCounts(nodeIds);
-              // Connect WebSocket for real-time comment updates
-              commentState.connectRealtime(configStore.workflowId);
+              commentState.connect(configStore.workflowId, nodeIds);
             }
           },
           onError: (error) => {

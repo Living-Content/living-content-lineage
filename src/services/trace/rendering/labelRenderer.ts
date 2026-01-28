@@ -18,8 +18,8 @@ import {
   getCssVar,
   getCssVarInt,
   getCssVarFloat,
-  type CssVar,
-} from '../../../themes/index.js';
+} from '../../../themes/theme.js';
+import type { CssVar } from '../../../themes/types.generated.js';
 import { uiState } from '../../../stores/uiState.svelte.js';
 import { LABEL_WORLD_OFFSET_Y, LABEL_LINE_START_OFFSET } from '../../../config/layout.js';
 

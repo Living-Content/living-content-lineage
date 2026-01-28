@@ -15,7 +15,7 @@ interface ManifestParams {
  * Parses the lco_manifest query parameter value.
  * Format: {gaim_id}_{workflow_id}
  */
-function parseLcoManifestParam(value: string): ManifestParams | null {
+const parseLcoManifestParam = (value: string): ManifestParams | null => {
   const parts = value.split('_');
   if (parts.length < 2) {
     return null;
@@ -25,19 +25,19 @@ function parseLcoManifestParam(value: string): ManifestParams | null {
   const workflowId = parts.slice(1).join('_');
 
   return { gaimId, workflowId };
-}
+};
 
 /**
  * Builds the API URL for fetching a manifest.
  */
-function buildApiUrl(gaimId: string, workflowId: string): string {
+const buildApiUrl = (gaimId: string, workflowId: string): string => {
   const isLocalhost = window.location.hostname === 'localhost';
   const apiBaseUrl = isLocalhost
     ? 'https://localhost:8000'
     : `https://${gaimId}.api.livingcontent.co`;
 
   return `${apiBaseUrl}/trace/${workflowId}/manifest`;
-}
+};
 
 /**
  * Resolves the manifest URL from the current page URL.

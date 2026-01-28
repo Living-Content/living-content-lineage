@@ -4,7 +4,7 @@
  * Uses texture caching for performance.
  */
 import { Container, Sprite, Texture, Ticker } from 'pixi.js';
-import { getCssVar, getCssVarInt, getCssVarFloat } from '../../../themes/index.js';
+import { getCssVar, getCssVarInt, getCssVarFloat } from '../../../themes/theme.js';
 import type { TraceNodeData } from '../../../config/types.js';
 import type { GraphNode } from './nodeRenderer.js';
 import { attachNodeInteraction, type NodeCallbacks } from '../interaction/nodeInteraction.js';

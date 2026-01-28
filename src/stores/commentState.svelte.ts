@@ -14,6 +14,7 @@ import {
   fetchCommentCounts,
 } from '../services/comments/commentService.js';
 import { commentWebSocket } from '../services/comments/commentWebSocket.js';
+import { tokenStore } from './tokenStore.svelte.js';
 
 const comments = new SvelteMap<string, Comment[]>();
 let counts = $state<CommentCounts>({});
@@ -208,6 +209,19 @@ export const commentState = {
    */
   get isWsConnected(): boolean {
     return wsConnected;
+  },
+
+  /**
+   * Single entry point for comment system connection.
+   * Checks auth before connecting WebSocket and loading counts.
+   */
+  async connect(traceId: string, nodeIds: string[]): Promise<void> {
+    if (!tokenStore.hasTokens) {
+      logger.debug('CommentState: No auth tokens, skipping comment system');
+      return;
+    }
+    await this.connectRealtime(traceId);
+    await this.loadCounts(nodeIds);
   },
 
   /**

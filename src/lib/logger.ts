@@ -29,7 +29,7 @@ let callSiteLevel: LogLevel = isDev ? LEVELS.DEBUG : LEVELS.WARN;
 /**
  * Get the call site (file:line) of the log call
  */
-function getCallSite(): string {
+const getCallSite = (): string => {
   try {
     const err = new Error();
     const stack = err.stack?.split('\n');
@@ -62,12 +62,12 @@ function getCallSite(): string {
     // Ignore errors in call site extraction
   }
   return '';
-}
+};
 
 /**
  * Core logging function
  */
-function log(message: string, level: LogLevel, ...args: unknown[]): void {
+const log = (message: string, level: LogLevel, ...args: unknown[]): void => {
   if (!isLogging || level < outputLevel) return;
 
   const levelName =
@@ -107,7 +107,7 @@ function log(message: string, level: LogLevel, ...args: unknown[]): void {
       consoleFn(`[${levelName}]`, message);
     }
   }
-}
+};
 
 export const logger = {
   /** Log a debug message (level 0) */

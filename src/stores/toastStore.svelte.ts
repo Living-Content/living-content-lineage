@@ -18,9 +18,9 @@ interface Toast {
 let toasts = $state<Toast[]>([]);
 let idCounter = 0;
 
-function generateId(): string {
+const generateId = (): string => {
   return `toast-${++idCounter}-${Date.now()}`;
-}
+};
 
 /**
  * Toast store for notifications.

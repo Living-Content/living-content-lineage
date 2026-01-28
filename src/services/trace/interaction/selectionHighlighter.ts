@@ -7,7 +7,7 @@ import { BlurFilter } from 'pixi.js';
 import type { Phase } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import type { SelectionTarget } from '../../../stores/traceState.svelte.js';
-import { getCssVarFloat, getCssVarInt } from '../../../themes/index.js';
+import { getCssVarFloat, getCssVarInt } from '../../../themes/theme.js';
 
 // Cache blur filters to avoid creating new ones on every update
 const nodeBlurFilters = new Map<string, BlurFilter>();
@@ -77,13 +77,13 @@ export interface SelectionHighlighterDeps {
  * Helper to set visibility state for a map of nodes.
  * Uses alpha for dimming in normal view, blur when useBlur is true.
  */
-function setNodeMapVisibility(
+const setNodeMapVisibility = (
   nodeMap: Map<string, GraphNode>,
   setNodeAlpha: (nodeId: string, alpha: number) => void,
   isHighlighted: (id: string) => boolean,
   isSelected: (id: string) => boolean,
   useBlur: boolean = false
-): void {
+): void => {
   const styles = getFadeStyles();
   const defaultAlpha = getCssVarFloat('--node-alpha');
 
@@ -94,7 +94,7 @@ function setNodeMapVisibility(
     setNodeAlpha(nodeId, alpha);
     node.setSelected(isSelected(nodeId));
   });
-}
+};
 
 /**
  * Unified selection highlighting.

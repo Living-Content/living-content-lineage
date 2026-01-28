@@ -12,12 +12,12 @@ export interface DataSource {
 /**
  * Format dimensions from width/height fields.
  */
-function formatDimensions(data: Record<string, unknown>): string | undefined {
+const formatDimensions = (data: Record<string, unknown>): string | undefined => {
   const width = data.width as number | undefined;
   const height = data.height as number | undefined;
   if (width && height) return `${width}×${height}`;
   return undefined;
-}
+};
 
 /**
  * Build a merged dataSource for a node.

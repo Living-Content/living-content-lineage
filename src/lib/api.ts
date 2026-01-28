@@ -26,7 +26,7 @@ export function isTokenMode(): boolean {
 /**
  * Add auth headers/credentials to request options.
  */
-function applyAuth(options: RequestInit): RequestInit {
+const applyAuth = (options: RequestInit): RequestInit => {
   const headers = new Headers(options.headers);
 
   if (isTokenMode()) {
@@ -46,7 +46,7 @@ function applyAuth(options: RequestInit): RequestInit {
   }
 
   return { ...options, headers };
-}
+};
 
 export const api = {
   isTokenMode,

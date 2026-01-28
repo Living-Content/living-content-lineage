@@ -4,7 +4,8 @@
  */
 import { Graphics, Container } from 'pixi.js';
 import type { Phase } from '../../../../config/types.js';
-import { getCssVarColorHex, type CssVar } from '../../../../themes/index.js';
+import { getCssVarColorHex } from '../../../../themes/theme.js';
+import type { CssVar } from '../../../../themes/types.generated.js';
 import { CONNECTOR_WIDTH, CONNECTOR_ALPHA, DASH_LENGTH, GAP_LENGTH } from '../../../../config/edges.js';
 
 export interface WorkflowConnection {

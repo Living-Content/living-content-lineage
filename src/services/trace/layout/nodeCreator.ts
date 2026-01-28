@@ -5,7 +5,7 @@
 import type { Ticker, Container } from 'pixi.js';
 import type { TraceNodeData } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
-import { getCssVarInt } from '../../../themes/index.js';
+import { getCssVarInt } from '../../../themes/theme.js';
 import { traceState } from '../../../stores/traceState.svelte.js';
 import {
   createNode,

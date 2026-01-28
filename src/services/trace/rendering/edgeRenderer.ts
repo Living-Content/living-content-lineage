@@ -10,7 +10,8 @@ import { Graphics, Text, TextStyle, Container } from 'pixi.js';
 import type { Phase } from '../../../config/types.js';
 import type { GraphNode } from './nodeRenderer.js';
 import type { WorkflowManager } from '../workflow/manager.js';
-import { getCssVarColorHex, getCssVarInt, getCssVarFloat, getCssVar, type CssVar } from '../../../themes/index.js';
+import { getCssVarColorHex, getCssVarInt, getCssVarFloat, getCssVar } from '../../../themes/theme.js';
+import type { CssVar } from '../../../themes/types.generated.js';
 import { EDGE_ALPHA, DASH_LENGTH, GAP_LENGTH } from '../../../config/edges.js';
 
 export interface RenderState {

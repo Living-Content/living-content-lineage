@@ -2,7 +2,7 @@
  * Dark theme variant - partial overrides only
  * Applied when [data-theme="dark"] is set on the document root.
  */
-import type { CssVarName } from '../definitions';
+import type { CssVarName } from '../types.generated.js';
 
 export const darkOverrides: Partial<Record<CssVarName, string>> = {
   // Text colors - inverted for dark backgrounds

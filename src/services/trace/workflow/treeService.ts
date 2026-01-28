@@ -160,10 +160,10 @@ export function computeDisplayWorkflows(
  * Walk up the parent chain to collect all ancestors.
  * Returns array ordered from oldest ancestor to direct parent.
  */
-function collectAncestors(
+const collectAncestors = (
   flatList: FlatWorkflow[],
   current: FlatWorkflow
-): FlatWorkflow[] {
+): FlatWorkflow[] => {
   const ancestors: FlatWorkflow[] = [];
   let parentId = current.parentWorkflowId;
 
@@ -178,7 +178,7 @@ function collectAncestors(
   }
 
   return ancestors;
-}
+};
 
 /**
  * Fetch trace data for each display workflow in parallel.

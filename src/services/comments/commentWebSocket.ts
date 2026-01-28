@@ -57,7 +57,7 @@ interface CommentEventHandlers {
   onConnectionChange?: (state: ConnectionState) => void;
 }
 
-function transformComment(event: CommentCreatedEvent['comment']): Comment {
+const transformComment = (event: CommentCreatedEvent['comment']): Comment => {
   return {
     id: event.id,
     trace_id: event.traceId,
@@ -69,7 +69,7 @@ function transformComment(event: CommentCreatedEvent['comment']): Comment {
     content: event.content,
     created_at: event.createdAt,
   };
-}
+};
 
 class CommentWebSocket {
   private ws: WebSocket | null = null;
@@ -227,6 +227,8 @@ class CommentWebSocket {
 
       case 'auth_error':
         logger.warn('CommentWebSocket: Auth failed', data.message);
+        // Stop reconnection attempts - auth won't succeed without valid credentials
+        this.subscribedTraceId = null;
         if (connectResolve) connectResolve(false);
         break;
 

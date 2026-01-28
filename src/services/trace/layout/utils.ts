@@ -7,7 +7,7 @@ import type { TraceNodeData, TraceEdgeData, Phase } from '../../../config/types.
 import { createGraphNode, type GraphNode, type NodeRenderOptions } from '../rendering/nodeRenderer.js';
 import { createIconNode } from '../rendering/iconNodeRenderer.js';
 import { getIconNodeConfig } from '../../../config/icons.js';
-import { getCssVarFloat } from '../../../themes/index.js';
+import { getCssVarFloat } from '../../../themes/theme.js';
 
 export type ElementType = 'step' | 'node';
 

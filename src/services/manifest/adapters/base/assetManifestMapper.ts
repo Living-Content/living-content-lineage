@@ -1,7 +1,7 @@
 import type { AssetManifest, Attestation, AttestationType, AttestationProvider } from '../../../../config/types.js';
 import { isRecord } from '../../../../config/utils.js';
 
-function normalizeAttestation(raw: Record<string, unknown>): Attestation | undefined {
+const normalizeAttestation = (raw: Record<string, unknown>): Attestation | undefined => {
   // Read from 'attestation' with fallback to 'signature_info' for backwards compatibility
   const source = isRecord(raw.attestation) ? raw.attestation : (isRecord(raw.signature_info) ? raw.signature_info : undefined);
   if (!source) return undefined;
@@ -13,9 +13,9 @@ function normalizeAttestation(raw: Record<string, unknown>): Attestation | undef
     type: source.type as AttestationType | undefined,
     provider: source.provider as AttestationProvider | undefined,
   };
-}
+};
 
-function normalizeIngredients(raw: unknown): AssetManifest['ingredients'] {
+const normalizeIngredients = (raw: unknown): AssetManifest['ingredients'] => {
   if (!Array.isArray(raw)) return undefined;
   return raw
     .filter((ingredient) => isRecord(ingredient))
@@ -26,7 +26,7 @@ function normalizeIngredients(raw: unknown): AssetManifest['ingredients'] {
       format: ingredient.format ? String(ingredient.format) : undefined,
     }))
     .filter((ingredient) => ingredient.title && ingredient.instanceId);
-}
+};
 
 /**
  * Normalizes inline asset data from bundled manifests.

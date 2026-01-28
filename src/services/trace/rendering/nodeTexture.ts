@@ -2,7 +2,7 @@
  * Canvas texture rendering for graph nodes.
  */
 import { Texture } from 'pixi.js';
-import { getCssVar } from '../../../themes/index.js';
+import { getCssVar } from '../../../themes/theme.js';
 import { GEOMETRY } from '../../../config/animation.js';
 import { createRetinaCanvas } from './utils.js';
 import { getNodeFontFamily, truncateText, type ScaledDimensions } from './nodeMeasurement.js';
