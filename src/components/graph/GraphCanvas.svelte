@@ -12,15 +12,16 @@
    * - Calls engine commands when state changes
    */
   import { onMount } from 'svelte';
-  import { activateGraph, type GraphActivationResult } from '../../services/graph/instantiate/activate.js';
-  import type { GraphEngine, HoverPayload, SelectionTarget } from '../../services/graph/engine/interface.js';
+  import { activateGraph, type GraphActivationResult } from '../../services/trace/core/activate.js';
+  import type { GraphEngine, HoverPayload, SelectionTarget } from '../../services/trace/core/interface.js';
   import { traceState } from '../../stores/traceState.svelte.js';
   import { uiState } from '../../stores/uiState.svelte.js';
   import { commentState } from '../../stores/commentState.svelte.js';
   import { configStore } from '../../stores/configStore.svelte.js';
   import { menuStore } from '../../stores/menuStore.svelte.js';
   import { viewLevel, type ViewLevel } from '../../stores/viewLevel.svelte.js';
-  import type { Trace, Phase } from '../../config/types.js';
+  import type { Trace, Phase, TraceNodeData } from '../../config/types.js';
+import type { StepData } from '../../stores/traceState.svelte.js';
   import { resolveManifestUrl } from '../../services/manifest/urlResolver.js';
 
   interface Props {
@@ -97,6 +98,24 @@
           },
           onHover: onHover ?? (() => {}),
           onHoverEnd: onHoverEnd ?? (() => {}),
+          // Selection callbacks - wire Pixi to traceState
+          selection: {
+            getSelection: () => {
+              const sel = traceState.selection;
+              if (!sel) return null;
+              return sel.type === 'node'
+                ? { type: 'node', nodeId: sel.nodeId, data: sel.data }
+                : { type: 'step', stepId: sel.stepId, data: sel.data };
+            },
+            getIsExpanded: () => traceState.isExpanded,
+            onExpandNode: (node) => traceState.expandNode(node as TraceNodeData),
+            onCollapseNode: () => traceState.collapseNode(),
+            onSelectStep: (stepData) => traceState.selectStep(stepData as StepData),
+            onClearSelection: () => traceState.clearSelection(),
+            onSetOverlayNode: (info) => traceState.setOverlayNode(info),
+            onSetExpansionProgress: (progress) => traceState.setExpansionProgress(progress),
+            onCollapseRequest: (callback) => traceState.onCollapseRequest(callback),
+          },
         },
         {
           // Initial state from stores

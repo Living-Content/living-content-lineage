@@ -6,18 +6,20 @@ standard.
 
 ## Overview
 
-Visualizes data provenance pipelines as interactive directed graphs. Each node
-represents a data asset, computation, or attestation, with edges showing data
-flow and transformations.
+Visualizes data workflows as interactive directed graphs. Each node represents a
+data asset, process, or claim.
 
 **Features:**
 
 - **Node types** — Data, Process, Attestation, with visual distinction by color
-- **Hierarchical organization** — Trace → Content Session → Workflow → Phase → Step → Nodes
+- **Hierarchical organization** — Trace → Content Session → Workflow (Phase →
+  Step → Nodes)
 - **C2PA metadata** — Nodes carry manifest data including claims and assertions
-- **Level-of-detail** — Zoom out to see collapsed step view, zoom in for full workflow detail
+- **Level-of-detail** — Zoom out to see collapsed step view, zoom in for full
+  workflow detail
 - **Environmental impact** — Displays CO2 and energy metrics when available
-- **Attestation edges** — Green "gate" connectors show cryptographic verification
+- **Attestation edges** — Green "gate" connectors show cryptographic
+  verification
 
 ## Getting Started
 
@@ -86,11 +88,13 @@ src/
 ├── components/
 │   ├── GraphCanvas.svelte     # Canvas container (owner)
 │   ├── Header.svelte          # Top navigation
-│   └── dataviewer/
-│       ├── DataViewPanel.svelte
-│       ├── StepOverview.svelte
-│       ├── SummaryView.svelte
-│       └── DetailView.svelte
+│   └── inspector/
+│       ├── InspectorPanel.svelte
+│       ├── StepInspector.svelte
+│       ├── views/
+│       │   ├── SummaryView.svelte
+│       │   └── DetailView.svelte
+│       └── ...
 └── themes/                    # Theme system
 ```
 
@@ -112,7 +116,8 @@ The visualization consumes manifest JSON files with:
 - **attestations** — Cryptographic verification records
 - **manifests** — C2PA metadata (claims, assertions)
 
-See `public/data/manifest.json` for an example and `documentation/trace-hierarchy.md` for the complete type hierarchy.
+See `public/data/manifest.json` for an example and
+`documentation/trace-hierarchy.md` for the complete type hierarchy.
 
 ## License
 

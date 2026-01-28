@@ -131,7 +131,7 @@ Content metadata for documents.
 Use the `assertionParsers.ts` service to extract typed data:
 
 ```typescript
-import { extractAssertionData } from "../../services/dataviewer/parsing/assertionParsers.js";
+import { extractAssertionData } from "../../services/inspector/assertions.js";
 
 const assertions = extractAssertionData(manifest.assertions);
 

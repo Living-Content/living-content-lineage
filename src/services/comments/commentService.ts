@@ -6,7 +6,7 @@ import { logger } from '../../lib/logger.js';
 import { api } from '../../lib/api.js';
 import { configStore } from '../../stores/configStore.svelte.js';
 import type { Comment, CommentCounts, CommentCreateRequest } from '../../config/commentTypes.js';
-import { type Result, ok, err } from '../../lib/types/result.js';
+import { type Result, ok, err } from '../../lib/result.js';
 
 /**
  * Fetch comments for a specific node.

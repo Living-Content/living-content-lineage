@@ -218,8 +218,8 @@ src/
 ├── components/
 │   ├── replay/
 │   │   └── ReplayActionBar.svelte
-│   └── dataviewer/
-│       ├── detail/
+│   └── inspector/
+│       ├── fields/
 │       │   └── EditableValue.svelte
 │       └── cards/
 │           └── EditableDataCard.svelte

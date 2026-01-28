@@ -9,7 +9,7 @@ import { authStore } from '../../stores/authStore.svelte.js';
 import { tokenStore } from '../../stores/tokenStore.svelte.js';
 import { configStore } from '../../stores/configStore.svelte.js';
 import { fetchUserProfile } from './sessionRestore.js';
-import { type Result, ok, err } from '../types/result.js';
+import { type Result, ok, err } from '../result.js';
 
 let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 

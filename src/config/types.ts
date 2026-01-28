@@ -1,6 +1,6 @@
 // Re-export display config types for convenience
 export type { DataCardType } from './cardTypes.js';
-export type { FieldDisplayConfig, AssetDisplayConfig } from './displayConfig.js';
+export type { FieldDisplayConfig, AssetDisplayConfig } from './display.js';
 
 /**
  * High-level phase categorizing groups of workflows.
@@ -67,6 +67,14 @@ export type NodeType =
   | "workflow";
 
 export type NodeRole = "source" | "sink" | "intermediate" | "process";
+
+/**
+ * View level for 3-tier zoom hierarchy.
+ * - content-session: Highest zoom out (scale < 0.15), shows session cards
+ * - workflow-overview: Middle (scale 0.15 - 0.35), shows workflow cards
+ * - workflow-detail: Zoomed in (scale > 0.35), shows full node/edge graph
+ */
+export type ViewLevel = 'content-session' | 'workflow-overview' | 'workflow-detail';
 
 export type NodeShape = "circle" | "square" | "dashed-circle" | "connector";
 

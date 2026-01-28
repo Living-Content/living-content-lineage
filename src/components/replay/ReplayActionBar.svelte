@@ -21,7 +21,7 @@
     const result = await replayState.submitReplay();
     if (result.ok) {
       replayState.clearModifications();
-      onReplayComplete?.(result.value.workflowId);
+      onReplayComplete?.(result.data.workflowId);
     }
   }
 

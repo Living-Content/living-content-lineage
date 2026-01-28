@@ -1,12 +1,16 @@
 import type { StepUI } from '../../../../config/types.js';
 import { validatePhase } from '../../../../config/utils.js';
 import type { Asset, Manifest } from './traceTypes.js';
+import {
+  TRACE_HORIZONTAL_GAP,
+  TRACE_VERTICAL_GAP,
+  TRACE_STEP_PADDING,
+} from '../../../../config/layout.js';
 
-// Initial layout spacing - actual spacing is controlled by --edge-gap CSS variable
-// via repositionNodesWithGaps() which overrides these positions
-const HORIZONTAL_GAP = 0.15;
-const VERTICAL_GAP = 0.05;
-const STEP_PADDING = 0.04;
+// Local aliases for convenience
+const HORIZONTAL_GAP = TRACE_HORIZONTAL_GAP;
+const VERTICAL_GAP = TRACE_VERTICAL_GAP;
+const STEP_PADDING = TRACE_STEP_PADDING;
 
 export interface LayoutResult {
   positions: Map<string, { x: number; y: number; step: string }>;

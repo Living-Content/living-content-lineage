@@ -5,28 +5,38 @@ Asset-specific detail views are driven by configuration in `displayConfig.ts`.
 ## Architecture
 
 ```plaintext
-src/components/dataviewer/
-  DataViewPanel.svelte           # Main panel container
-  StepOverview.svelte            # Aggregate view for selected step
-  SummaryView.svelte             # Node summary with cards (config-driven)
-  DetailView.svelte              # Full details view (config-driven)
-  AttestationPanel.svelte        # Footer panel for attestation info
-  PropertyRow.svelte             # Label/value row for details
-  panel/
-    PanelHeader.svelte           # Header with context badges
-    NodeContent.svelte           # Node content wrapper
-  detail/
+src/components/inspector/
+  InspectorPanel.svelte          # Main panel container
+  InspectorHeader.svelte         # Header with context badges
+  StepInspector.svelte           # Aggregate view for selected step
+  views/
+    SummaryView.svelte           # Node summary with cards (config-driven)
+    DetailView.svelte            # Full details view (config-driven)
+    ContentRouter.svelte         # View switcher
+  sections/
+    AttestationSection.svelte    # Footer panel for attestation info
+    ImpactSection.svelte         # Environmental impact display
     PropertyGroup.svelte         # Collapsible section
-    ActionsList.svelte           # Reusable C2PA actions display
-    CodeBlock.svelte             # Reusable source code display
+    DetailSection.svelte         # Generic titled section
+  fields/
+    PropertyRow.svelte           # Label/value row for details
+    EditablePropertyRow.svelte   # Editable property row
+    EditableValue.svelte         # Editable value component
     DetailValue.svelte           # Dynamic value renderer
-    DetailDataSection.svelte     # Section for additional data
-    NodeCard.svelte              # Node display card (pill shape)
-    ContextBadges.svelte         # Phase/step breadcrumb badges
     AdditionalData.svelte        # Displays non-configured fields
+  renderers/
+    CodeBlock.svelte             # Reusable source code display
+    HighlightedCode.svelte       # Syntax highlighting
+    MarkdownValue.svelte         # Markdown rendering
+    ConversationHistory.svelte   # Chat-style display
+    ContextBadges.svelte         # Phase/step breadcrumb badges
   cards/
     DataCard.svelte              # Metric display card
+    EditableDataCard.svelte      # Editable metric card
     CardSection.svelte           # Combined metrics and properties
+  shared/
+    Expandable.svelte            # Collapse/expand toggle
+    NodeCard.svelte              # Node display card (pill shape)
 ```
 
 The system uses a **config-driven approach** rather than per-asset-type view components. Field display is controlled by `src/config/displayConfig.ts`.
@@ -234,4 +244,4 @@ Example paths:
 
 - Display configuration: `src/config/displayConfig.ts`
 - Card types: `src/config/cardTypes.ts`
-- Assertion parsing: `src/services/dataviewer/parsing/assertionParsers.ts`
+- Assertion parsing: `src/services/inspector/assertions.ts`

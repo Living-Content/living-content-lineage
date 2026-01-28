@@ -1,16 +1,12 @@
 /**
  * View level state store using Svelte 5 runes.
  * Single source of truth for the 3-level zoom hierarchy.
- *
- * View Levels:
- * - content-session: Highest zoom out (scale < 0.15), shows session cards
- * - workflow-overview: Middle (scale 0.15 - 0.35), shows workflow cards
- * - workflow-detail: Zoomed in (scale > 0.35), shows full node/edge graph
  */
+import { OVERVIEW_THRESHOLD, SESSION_THRESHOLD } from '../config/layout.js';
+import type { ViewLevel } from '../config/types.js';
 
-export type ViewLevel = 'content-session' | 'workflow-overview' | 'workflow-detail';
-
-import { OVERVIEW_THRESHOLD, SESSION_THRESHOLD } from '../config/constants.js';
+// Re-export for backwards compatibility
+export type { ViewLevel } from '../config/types.js';
 
 let level = $state<ViewLevel>('workflow-detail');
 let isTransitioning = $state(false);

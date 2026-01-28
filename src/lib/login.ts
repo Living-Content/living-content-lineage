@@ -11,7 +11,7 @@ import { logger } from './logger.js';
 import { isTokenMode } from './api.js';
 import { tokenStore } from '../stores/tokenStore.svelte.js';
 import { configStore } from '../stores/configStore.svelte.js';
-import { type Result, ok, err } from './types/result.js';
+import { type Result, ok, err } from './result.js';
 
 const AUTH_SERVICE_URL = 'https://auth.service.livingcontent.co';
 
@@ -26,7 +26,10 @@ export const login = {
   /**
    * Redirect to central auth service.
    */
-  async redirectToAuth(method: 'google' | 'email', email?: string): Promise<Result<void>> {
+  async redirectToAuth(
+    method: 'google' | 'email',
+    email?: string,
+  ): Promise<Result<void>> {
     if (method === 'email' && (!email || !email.includes('@'))) {
       return err('Invalid email address');
     }
@@ -80,7 +83,7 @@ export const login = {
    * Handle auth callback when returning from central auth with code.
    */
   async handleAuthCallback(
-    onLoginSuccess: () => Promise<Result<{ user_id: string }>>
+    onLoginSuccess: () => Promise<Result<{ user_id: string }>>,
   ): Promise<boolean> {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
@@ -102,7 +105,11 @@ export const login = {
       authStateData = null;
     }
 
-    if (!returnedAuthState || !authStateData || returnedAuthState !== authStateData.state) {
+    if (
+      !returnedAuthState ||
+      !authStateData ||
+      returnedAuthState !== authStateData.state
+    ) {
       logger.error('Login: auth_state mismatch');
       cleanUrl();
       return false;
@@ -115,7 +122,9 @@ export const login = {
     }
 
     try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
       if (isTokenMode()) {
         headers['X-Auth-Mode'] = 'token';
       }
@@ -134,7 +143,9 @@ export const login = {
       const response = await fetch(`${apiUrl}/auth/exchange`, fetchOptions);
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        const error = await response
+          .json()
+          .catch(() => ({ detail: 'Unknown error' }));
         throw new Error(error.detail || 'Failed to exchange auth code');
       }
 
@@ -144,7 +155,7 @@ export const login = {
         tokenStore.setTokens(
           exchangeData.access_token,
           exchangeData.refresh_token,
-          exchangeData.expires_in
+          exchangeData.expires_in,
         );
       }
 

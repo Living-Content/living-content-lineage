@@ -12,7 +12,7 @@
 
 import { SvelteSet } from 'svelte/reactivity';
 import { logger } from '../lib/logger.js';
-import type { AuthState, UserClaims, AuthStoreState } from '../lib/types/auth.js';
+import type { AuthState, UserClaims, AuthStoreState } from '../lib/auth/types.js';
 
 const validTransitions: Record<AuthState, AuthState[]> = {
   INITIALIZING: ['ANONYMOUS', 'AUTHENTICATED', 'SESSION_ENDED'],

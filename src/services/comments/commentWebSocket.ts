@@ -9,7 +9,7 @@ import { logger } from '../../lib/logger.js';
 import { configStore } from '../../stores/configStore.svelte.js';
 import { tokenStore } from '../../stores/tokenStore.svelte.js';
 import { replayState } from '../../stores/replayState.svelte.js';
-import { toastStore } from '../../lib/toast.svelte.js';
+import { toastStore } from '../../stores/toastStore.svelte.js';
 import type { Comment } from '../../config/commentTypes.js';
 
 type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting';

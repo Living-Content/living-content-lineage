@@ -1,0 +1,108 @@
+/**
+ * Graph asset initialization.
+ * Loads data and creates inert resources - no behavior, no wiring.
+ *
+ * This is true bootstrapping: minimal setup to make the system exist.
+ */
+import { loadManifest } from '../../manifest/registry.js';
+import { ManifestLoadError } from '../../manifest/errors.js';
+import type { Trace } from '../../../config/types.js';
+import { GRAPH_SCALE_FACTOR } from '../../../config/viewport.js';
+import { logger } from '../../../lib/logger.js';
+import type { GraphNode } from '../rendering/nodeRenderer.js';
+import { createViewportState, type ViewportState } from '../interaction/viewport.js';
+import { initializePixi, type PixiContext } from '../layout/pixiSetup.js';
+import { createNodeAnimationController } from '../interaction/animationController.js';
+import { buildGraphIndices, type GraphIndices } from './indices.js';
+import type { EngineState } from './engine.js';
+import type { InitialInputs, SelectionTarget } from './interface.js';
+
+export interface AssetInitResult {
+  traceData: Trace;
+  indices: GraphIndices;
+  pixi: PixiContext;
+  viewportState: ViewportState;
+  nodeMap: Map<string, GraphNode>;
+  animationController: ReturnType<typeof createNodeAnimationController>;
+  state: EngineState;
+  graphScale: number;
+}
+
+export interface AssetInitError {
+  message: string;
+  details?: string;
+}
+
+export type AssetInitOutcome =
+  | { ok: true; result: AssetInitResult }
+  | { ok: false; error: AssetInitError };
+
+/**
+ * Initialize graph assets: load data, create Pixi context, build indices.
+ * Returns inert resources ready for composition.
+ */
+export async function initGraphAssets(
+  container: HTMLElement,
+  manifestUrl: string,
+  initial: InitialInputs
+): Promise<AssetInitOutcome> {
+  // Load manifest
+  let traceData: Trace;
+  try {
+    traceData = await loadManifest(manifestUrl);
+  } catch (error) {
+    logger.error('Failed to load trace manifest', error);
+    return {
+      ok: false,
+      error: {
+        message: 'Failed to load manifest',
+        details: error instanceof ManifestLoadError ? error.message : String(error),
+      },
+    };
+  }
+
+  // Build lookup indices
+  const indices = buildGraphIndices(traceData.nodes, traceData.edges);
+
+  // Initialize Pixi
+  const pixi = await initializePixi(container);
+  const { viewport } = pixi;
+
+  // Viewport dimensions and scale
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+  const graphScale = Math.min(width, height) * GRAPH_SCALE_FACTOR;
+
+  // Initialize viewport state
+  const viewportState = createViewportState(width, height);
+  viewport.scale.set(viewportState.scale);
+  viewport.position.set(viewportState.x, viewportState.y);
+
+  // Create empty node map (populated during composition)
+  const nodeMap = new Map<string, GraphNode>();
+
+  // Create animation controller (map is populated later, but passed by reference)
+  const animationController = createNodeAnimationController(nodeMap);
+
+  // Create engine state from initial inputs
+  const state: EngineState = {
+    selection: initial.selection as SelectionTarget,
+    detailPanelOpen: initial.detailPanelOpen,
+    phaseFilter: initial.phaseFilter,
+    isExpanded: initial.isExpanded,
+  };
+
+  return {
+    ok: true,
+    result: {
+      traceData,
+      indices,
+      pixi,
+      viewportState,
+      nodeMap,
+      animationController,
+      state,
+      graphScale,
+    },
+  };
+}

@@ -8,7 +8,7 @@ import { api, isTokenMode } from '../api.js';
 import { authStore } from '../../stores/authStore.svelte.js';
 import { tokenStore } from '../../stores/tokenStore.svelte.js';
 import { configStore } from '../../stores/configStore.svelte.js';
-import { type Result, ok, err } from '../types/result.js';
+import { type Result, ok, err } from '../result.js';
 import { refreshAccessToken, scheduleTokenRefresh } from './tokenRefresh.js';
 
 export interface AuthCheckResponse {

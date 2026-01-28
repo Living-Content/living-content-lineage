@@ -6,8 +6,8 @@
 import { logger } from '../lib/logger.js';
 import { api } from '../lib/api.js';
 import { configStore } from './configStore.svelte.js';
-import { type Result, ok, err } from '../lib/types/result.js';
-import { toastStore } from '../lib/toast.svelte.js';
+import { type Result, ok, err } from '../lib/result.js';
+import { toastStore } from './toastStore.svelte.js';
 
 /**
  * A modification to a node field for replay.

@@ -6,7 +6,7 @@
   import { authService } from './lib/auth/authService.js';
   import Header from './components/Header.svelte';
   import GraphCanvas from './components/graph/GraphCanvas.svelte';
-  import DetailPanel from './components/dataviewer/DetailPanel.svelte';
+  import InspectorPanel from './components/inspector/InspectorPanel.svelte';
   import Menu from './components/menu/Menu.svelte';
   import ReplayActionBar from './components/replay/ReplayActionBar.svelte';
 
@@ -37,7 +37,7 @@
 
 <div class="app-shell" class:loading={uiState.isLoading}>
   <Header />
-  <DetailPanel />
+  <InspectorPanel />
   {#if authReady}
     <GraphCanvas />
   {/if}

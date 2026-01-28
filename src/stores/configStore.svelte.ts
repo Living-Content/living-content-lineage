@@ -7,7 +7,7 @@
  */
 
 import { logger } from '../lib/logger.js';
-import type { AppConfig } from '../lib/types/auth.js';
+import type { AppConfig } from '../lib/auth/types.js';
 
 let config = $state<AppConfig>({
   apiUrl: '',
