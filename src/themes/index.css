@@ -1,5 +1,6 @@
 @import './generated/index.css';
 @import './base.css';
+@import './components/panels.css';
 
 /* Import gaim/fe shared styles */
 @import '../../../living-content-gaim/fe/src/styles/buttons.css';

@@ -3,25 +3,38 @@
   import { uiState } from './stores/uiState.svelte.js';
   import { menuStore } from './stores/menuStore.svelte.js';
   import { configStore } from './stores/configStore.svelte.js';
+  import { authStore } from './stores/authStore.svelte.js';
   import { authService } from './lib/auth/authService.js';
+  import { hideStaticLoader, setLoaderStatus } from './lib/staticLoader.js';
   import Header from './components/Header.svelte';
   import GraphCanvas from './components/graph/GraphCanvas.svelte';
   import InspectorPanel from './components/inspector/InspectorPanel.svelte';
   import Menu from './components/menu/Menu.svelte';
   import ReplayActionBar from './components/replay/ReplayActionBar.svelte';
+  import SessionExpiredModal from './components/SessionExpiredModal.svelte';
 
   let authReady = $state(false);
+  let showSessionModal = $state(false);
+
+  function handleSessionRecovered() {
+    showSessionModal = false;
+    authReady = true;
+    setLoaderStatus('Content');
+  }
 
   onMount(async () => {
-    // Initialize config from URL params
     configStore.init();
 
-    // Initialize auth after config (must complete before graph loads)
     if (configStore.hasValidConfig()) {
       await authService.init();
     }
 
-    authReady = true;
+    if (authStore.isSessionEnded) {
+      showSessionModal = true;
+    } else {
+      authReady = true;
+      setLoaderStatus('Content');
+    }
   });
 
   function handleReplayComplete(workflowId: string): void {
@@ -44,6 +57,10 @@
 
   {#if menuStore.isOpen}
     <Menu />
+  {/if}
+
+  {#if showSessionModal}
+    <SessionExpiredModal onRecovered={handleSessionRecovered} />
   {/if}
 
   <ReplayActionBar onReplayComplete={handleReplayComplete} />

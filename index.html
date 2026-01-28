@@ -4,8 +4,51 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tracer</title>
+    <style>
+      body { margin: 0; background-color: #050505; }
+      #static-loader {
+        position: fixed;
+        inset: 0;
+        background-color: #050505;
+        z-index: 10000;
+        transition: opacity 0.3s ease-out;
+      }
+      #static-loader.fade-out {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #static-loader .loader-line {
+        position: absolute;
+        height: 4px;
+        left: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.8);
+        animation: loader-progress 3s infinite ease-in-out;
+      }
+      #static-loader .loader-status {
+        position: absolute;
+        bottom: 24px;
+        left: 24px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.6);
+      }
+      #static-loader .loader-stage {
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.8);
+      }
+      @keyframes loader-progress {
+        0% { width: 0%; left: 0; }
+        50% { width: 100%; left: 0; }
+        100% { width: 0%; left: 100%; }
+      }
+    </style>
   </head>
   <body>
+    <div id="static-loader">
+      <div class="loader-status">Loading: <span class="loader-stage">UI</span></div>
+      <div class="loader-line"></div>
+    </div>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

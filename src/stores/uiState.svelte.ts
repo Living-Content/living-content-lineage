@@ -3,7 +3,7 @@
  */
 import type { Phase } from '../config/types.js';
 
-let isLoading = $state(true);
+let isLoading = $state(false);
 let isDetailOpen = $state(false);
 let isSimpleView = $state(false);
 let loadError = $state<string | null>(null);

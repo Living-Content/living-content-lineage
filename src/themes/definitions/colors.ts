@@ -5,6 +5,8 @@ export const colorTokens = {
   // Core colors (RGB triplets for rgba() usage)
   'color-foreground': '255, 255, 255',
   'color-background': '5, 5, 5',
+  'color-accent': '255, 215, 0',
+  'color-danger': '255, 0, 0',
 
   // Base colors
   'color-white': 'rgb(255, 255, 255)',

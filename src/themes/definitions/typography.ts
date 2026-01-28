@@ -4,10 +4,13 @@
 export const typographyTokens = {
   // Font size scale
   'font-size-hero': '48px',
+  'font-size-xl': '40px',
   'font-size-display': '36px',
   'font-size-large': '32px',
   'font-size-title': '24px',
+  'font-size-lg': '20px',
   'font-size-heading': '18px',
+  'font-size-md': '16px',
   'font-size-body': '14px',
   'font-size-small': '12px',
   'font-size-tiny': '10px',

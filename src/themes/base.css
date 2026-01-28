@@ -26,15 +26,9 @@ body {
   height: 100%;
 }
 
-.app-shell.loading {
-  opacity: 0;
-  pointer-events: none;
-}
-
 .app-shell {
   width: 100%;
   height: 100%;
-  transition: opacity 0.25s ease;
 }
 
 /* Animation keyframes for node expansion */

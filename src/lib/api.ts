@@ -52,11 +52,22 @@ export const api = {
   isTokenMode,
 
   /**
-   * Fetch with auth support.
+   * Fetch with auth support and timeout.
    */
-  async fetch(url: string, options: RequestInit = {}): Promise<Response> {
-    const authOptions = applyAuth(options);
-    return fetch(url, authOptions);
+  async fetch(url: string, options: RequestInit = {}, timeoutMs = 10000): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const authOptions = applyAuth(options);
+      const response = await fetch(url, {
+        ...authOptions,
+        signal: controller.signal,
+      });
+      return response;
+    } finally {
+      clearTimeout(timeoutId);
+    }
   },
 
   /**

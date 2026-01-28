@@ -23,6 +23,7 @@
   import type { Trace, Phase, TraceNodeData } from '../../config/types.js';
 import type { StepData } from '../../stores/traceState.svelte.js';
   import { resolveManifestUrl } from '../../services/manifest/urlResolver.js';
+  import { hideStaticLoader } from '../../lib/staticLoader.js';
 
   interface Props {
     onHover?: (payload: HoverPayload) => void;
@@ -89,10 +90,13 @@ import type { StepData } from '../../stores/traceState.svelte.js';
               const nodeIds = trace.nodes.map((n) => n.id);
               commentState.connect(configStore.workflowId, nodeIds);
             }
+
+            hideStaticLoader();
           },
           onError: (error) => {
             uiState.setLoadError(error.message + (error.details ? `: ${error.details}` : ''));
             traceState.clearSelection();
+            hideStaticLoader();
           },
           onHover: onHover ?? (() => {}),
           onHoverEnd: onHoverEnd ?? (() => {}),

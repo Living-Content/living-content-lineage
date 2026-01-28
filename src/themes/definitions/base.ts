@@ -106,6 +106,14 @@ export const baseTokens = {
   'z-modal': '400',
   'z-tooltip': '500',
 
+  // Overlay z-index layers (for embedded widget UI)
+  'z-container': '9400',
+  'z-controller': '9500',
+  'z-menu': '9600',
+  'z-menu-toggle': '9700',
+  'z-loader': '9800',
+  'z-toast': '9900',
+
 } as const;
 
 export type BaseTokenName = keyof typeof baseTokens;
