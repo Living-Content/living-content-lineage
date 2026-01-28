@@ -1,27 +1,23 @@
 /**
- * View-aware node accessor. Returns active nodes based on LOD state.
- * Reads isCollapsed directly from traceState store.
+ * Node accessor for graph operations.
+ * Provides access to the active node map for the detail view.
  */
 import type { GraphNode } from '../rendering/nodeRenderer.js';
-import { traceState } from '../../../stores/traceState.svelte.js';
 
 export interface NodeAccessor {
   getActiveMap: () => Map<string, GraphNode>;
   getAny: (id: string) => GraphNode | undefined;
-  isCollapsed: () => boolean;
 }
 
 export interface NodeAccessorDeps {
   nodeMap: Map<string, GraphNode>;
-  stepNodeMap: Map<string, GraphNode>;
 }
 
 export const createNodeAccessor = (deps: NodeAccessorDeps): NodeAccessor => {
-  const { nodeMap, stepNodeMap } = deps;
+  const { nodeMap } = deps;
 
   return {
-    getActiveMap: () => traceState.isCollapsed ? stepNodeMap : nodeMap,
-    getAny: (id) => nodeMap.get(id) ?? stepNodeMap.get(id),
-    isCollapsed: () => traceState.isCollapsed,
+    getActiveMap: () => nodeMap,
+    getAny: (id) => nodeMap.get(id),
   };
 };

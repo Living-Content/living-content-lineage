@@ -85,47 +85,10 @@ const findNearestNode = (
  * Creates a keyboard navigation controller for graph nodes.
  */
 export const createKeyboardNavigation = (deps: KeyboardNavigationDeps): KeyboardNavigationController => {
-  const { nodeAccessor, nodes, steps, onExpand, onCollapse, onStepSelect, centerOnNode, updateOverlayNode } = deps;
+  const { nodes, onExpand, onCollapse, centerOnNode, updateOverlayNode } = deps;
 
   const selectableNodes = nodes.filter(n => n.assetType !== 'Action');
   const sortedNodes = sortNodesByPosition(selectableNodes);
-
-  // Sort steps by x position for left/right navigation
-  const sortedSteps = [...steps].sort((a, b) => a.xStart - b.xStart);
-
-  /**
-   * Get current step index from selection.
-   */
-  const getCurrentStepIndex = (): number => {
-    const selection = traceState.selection;
-    if (selection?.type === 'step') {
-      return sortedSteps.findIndex(s => s.id === selection.stepId);
-    }
-    return -1;
-  };
-
-  /**
-   * Handle step navigation (left/right only).
-   */
-  const handleStepNavigation = (direction: 'left' | 'right'): boolean => {
-    const currentIndex = getCurrentStepIndex();
-    let nextIndex: number;
-
-    if (currentIndex === -1) {
-      // No step selected, select first or last based on direction
-      nextIndex = direction === 'right' ? 0 : sortedSteps.length - 1;
-    } else {
-      nextIndex = direction === 'right' ? currentIndex + 1 : currentIndex - 1;
-    }
-
-    if (nextIndex >= 0 && nextIndex < sortedSteps.length) {
-      const step = sortedSteps[nextIndex];
-      onStepSelect(step);
-      centerOnNode(step.id, { onComplete: updateOverlayNode });
-      return true;
-    }
-    return false;
-  };
 
   const handleKeyDown = (event: KeyboardEvent): void => {
     if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
@@ -134,7 +97,6 @@ export const createKeyboardNavigation = (deps: KeyboardNavigationDeps): Keyboard
 
     const selection = traceState.selection;
     const isExpanded = traceState.isExpanded;
-    const inStepView = nodeAccessor.isCollapsed();
 
     switch (event.key) {
       case 'Escape':
@@ -151,13 +113,6 @@ export const createKeyboardNavigation = (deps: KeyboardNavigationDeps): Keyboard
         if (selection?.type === 'node' && !isExpanded) {
           event.preventDefault();
           onExpand(selection.data);
-        } else if (selection?.type === 'step' && inStepView) {
-          // In step view, Enter on step opens the step detail
-          event.preventDefault();
-          const step = sortedSteps.find(s => s.id === selection.stepId);
-          if (step) {
-            onStepSelect(step);
-          }
         }
         break;
 
@@ -167,17 +122,6 @@ export const createKeyboardNavigation = (deps: KeyboardNavigationDeps): Keyboard
       case 'ArrowRight': {
         event.preventDefault();
 
-        // In step view, only handle left/right for step navigation
-        if (inStepView) {
-          const direction = event.key.replace('Arrow', '').toLowerCase() as 'up' | 'down' | 'left' | 'right';
-          if (direction === 'left' || direction === 'right') {
-            handleStepNavigation(direction);
-          }
-          // Ignore up/down in step view
-          break;
-        }
-
-        // Workflow view: standard node navigation
         // Get current node - use expanded node if overlay open, otherwise selection
         const currentNode = isExpanded
           ? traceState.expandedNode
@@ -188,7 +132,6 @@ export const createKeyboardNavigation = (deps: KeyboardNavigationDeps): Keyboard
           const nextNode = findNearestNode(currentNode, selectableNodes, direction);
           if (nextNode) {
             // If overlay is open, expand handles both selection and centering
-            // Don't call selectNode first - expand derives state from store
             if (isExpanded) {
               onExpand(nextNode);
             } else {

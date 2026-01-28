@@ -19,9 +19,10 @@
   import { commentState } from '../../stores/commentState.svelte.js';
   import { configStore } from '../../stores/configStore.svelte.js';
   import { menuStore } from '../../stores/menuStore.svelte.js';
+  import { viewLevel, type ViewLevel } from '../../stores/viewLevel.svelte.js';
   import type { Trace, Phase } from '../../config/types.js';
   import { resolveManifestUrl } from '../../services/manifest/urlResolver.js';
-  
+
   interface Props {
     onHover?: (payload: HoverPayload) => void;
     onHoverEnd?: () => void;
@@ -47,6 +48,7 @@
   let prevPhaseFilter: Phase | null = $state(null);
   let prevIsExpanded = $state(false);
   let prevMenuOpen = $state(false);
+  let prevViewLevel: ViewLevel = $state('workflow-detail');
 
   onMount(() => {
     let isCancelled = false;
@@ -70,12 +72,11 @@
           // Engine callbacks - Pixi reports events, Svelte decides policy
           onSimpleViewChange: (simple) => uiState.setSimpleView(simple),
           onViewportChange: (vs) => traceState.updateViewport(vs),
-          onLODCollapse: () => {
-            traceState.collapseNode();
-          },
-          onLODExpand: () => {
-            traceState.collapseNode();
-            uiState.clearPhaseFilter();
+          onViewLevelChange: (level) => {
+            // View level changed - collapse expanded node when leaving detail view
+            if (level !== 'workflow-detail') {
+              traceState.collapseNode();
+            }
           },
           onLoaded: (data: unknown) => {
             uiState.setLoadError(null);
@@ -114,6 +115,7 @@
         prevDetailOpen = uiState.isDetailOpen;
         prevPhaseFilter = uiState.phaseFilter;
         prevIsExpanded = traceState.isExpanded;
+        prevViewLevel = viewLevel.current;
       }
 
       uiState.setLoading(false);
@@ -139,6 +141,7 @@
     const nextDetailOpen = uiState.isDetailOpen;
     const nextPhaseFilter = uiState.phaseFilter;
     const nextIsExpanded = traceState.isExpanded;
+    const nextViewLevel = viewLevel.current;
 
     // Selection changed?
     if (nextSelectionKey !== prevSelectionKey) {
@@ -162,6 +165,12 @@
     if (nextIsExpanded !== prevIsExpanded) {
       engine.setExpanded(nextIsExpanded);
       prevIsExpanded = nextIsExpanded;
+    }
+
+    // View level changed?
+    if (nextViewLevel !== prevViewLevel) {
+      engine.transitionToLevel(nextViewLevel);
+      prevViewLevel = nextViewLevel;
     }
 
     // Menu open state changed? Hide secondary title elements when menu opens

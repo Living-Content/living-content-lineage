@@ -47,11 +47,20 @@ export function getCssVarFloat(name: CssVar): number {
 }
 
 function colorStringToValue(colorString: string): number {
+  // Support rgb() format
   const rgbMatch = colorString.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
   if (rgbMatch) {
     const r = parseInt(rgbMatch[1]);
     const g = parseInt(rgbMatch[2]);
     const b = parseInt(rgbMatch[3]);
+    return (r << 16) | (g << 8) | b;
+  }
+  // Support rgba() format (ignoring alpha for hex conversion)
+  const rgbaMatch = colorString.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*[\d.]+\)/);
+  if (rgbaMatch) {
+    const r = parseInt(rgbaMatch[1]);
+    const g = parseInt(rgbaMatch[2]);
+    const b = parseInt(rgbaMatch[3]);
     return (r << 16) | (g << 8) | b;
   }
   throw new Error(`Unsupported color format: ${colorString}`);

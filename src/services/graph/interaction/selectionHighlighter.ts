@@ -3,11 +3,10 @@
  * Manages visual state (alpha, blur) based on selection changes.
  * Edge rendering is handled by workflowRenderer (decoupled).
  */
-import { BlurFilter, type Container } from 'pixi.js';
-import type { StepUI, Phase } from '../../../config/types.js';
+import { BlurFilter } from 'pixi.js';
+import type { Phase } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import type { SelectionTarget } from '../../../stores/traceState.svelte.js';
-import { renderStepEdges } from '../rendering/edgeRenderer.js';
 import { getCssVarFloat, getCssVarInt } from '../../../themes/index.js';
 
 // Cache blur filters to avoid creating new ones on every update
@@ -68,8 +67,8 @@ const applyNodeBlur = (
 export interface SelectionHighlighterDeps {
   nodeMap: Map<string, GraphNode>;
   stepNodeMap: Map<string, GraphNode>;
-  stepEdgeLayer: Container;
-  steps: StepUI[];
+  stepEdgeLayer: unknown;
+  steps: unknown[];
   setNodeAlpha: (nodeId: string, alpha: number) => void;
   useBlur?: boolean;
 }
@@ -110,9 +109,7 @@ export const applySelectionHighlight = (
     return;
   }
 
-  if (selection.type === 'step') {
-    highlightStep(selection.stepId, deps);
-  } else {
+  if (selection.type === 'node') {
     highlightNode(selection.nodeId, deps);
   }
 };
@@ -125,9 +122,7 @@ const highlightNode = (
   selectedId: string,
   deps: SelectionHighlighterDeps
 ): void => {
-  const { nodeMap, stepNodeMap, stepEdgeLayer, steps, setNodeAlpha, useBlur = false } = deps;
-  const styles = getFadeStyles();
-  const defaultAlpha = getCssVarFloat('--node-alpha');
+  const { nodeMap, setNodeAlpha, useBlur = false } = deps;
 
   // Highlight only the selected node
   setNodeMapVisibility(
@@ -137,49 +132,6 @@ const highlightNode = (
     (id) => id === selectedId,
     useBlur
   );
-
-  // Dim all step nodes (for collapsed view consistency)
-  stepNodeMap.forEach((node, nodeId) => {
-    applyNodeBlur(node, false, useBlur, styles);
-    const alpha = useBlur ? styles.fadedAlpha : defaultAlpha;
-    setNodeAlpha(nodeId, alpha);
-    node.setSelected(false);
-  });
-
-  // Step edges still rendered here (separate from workflow edges)
-  renderStepEdges(stepEdgeLayer, steps, stepNodeMap, '');
-};
-
-/**
- * Applies selection highlighting to a step node.
- */
-const highlightStep = (
-  stepId: string,
-  deps: SelectionHighlighterDeps
-): void => {
-  const { nodeMap, stepNodeMap, stepEdgeLayer, steps, setNodeAlpha, useBlur = false } = deps;
-  const styles = getFadeStyles();
-  const defaultAlpha = getCssVarFloat('--node-alpha');
-
-  // Highlight only selected step node
-  stepNodeMap.forEach((node, nodeId) => {
-    const highlighted = nodeId === stepId;
-    applyNodeBlur(node, highlighted, useBlur, styles);
-    const alpha = highlighted ? 1 : (useBlur ? styles.fadedAlpha : defaultAlpha);
-    setNodeAlpha(nodeId, alpha);
-    node.setSelected(highlighted);
-  });
-
-  // Dim all expanded nodes for consistency
-  setNodeMapVisibility(
-    nodeMap,
-    setNodeAlpha,
-    () => false,
-    () => false,
-    useBlur
-  );
-
-  renderStepEdges(stepEdgeLayer, steps, stepNodeMap, stepId);
 };
 
 /**
@@ -187,7 +139,7 @@ const highlightStep = (
  * Workflow edge rendering handled by workflowRenderer.
  */
 export const clearSelection = (deps: SelectionHighlighterDeps): void => {
-  const { nodeMap, stepNodeMap, stepEdgeLayer, steps, setNodeAlpha } = deps;
+  const { nodeMap, setNodeAlpha } = deps;
 
   const nodeAlpha = getCssVarFloat('--node-alpha');
   nodeMap.forEach((node, nodeId) => {
@@ -195,15 +147,6 @@ export const clearSelection = (deps: SelectionHighlighterDeps): void => {
     setNodeBlur(node, 0);
     node.setSelected(false);
   });
-
-  stepNodeMap.forEach((node, nodeId) => {
-    setNodeAlpha(nodeId, nodeAlpha);
-    setNodeBlur(node, 0);
-    node.setSelected(false);
-  });
-
-  // Step edges still rendered here (separate from workflow edges)
-  renderStepEdges(stepEdgeLayer, steps, stepNodeMap, null);
 };
 
 /**
@@ -213,30 +156,18 @@ export const applyPhaseFilter = (
   phase: Phase | null,
   deps: SelectionHighlighterDeps
 ): void => {
-  const { nodeMap, stepNodeMap, steps } = deps;
+  const { nodeMap } = deps;
   const { blurStrength } = getFadeStyles();
 
   if (!phase) {
     // Clear filter - remove blur from all nodes
     nodeMap.forEach((node) => setNodeBlur(node, 0));
-    stepNodeMap.forEach((node) => setNodeBlur(node, 0));
     return;
   }
-
-  // Build set of step IDs that match the phase
-  const matchingStepIds = new Set(
-    steps.filter((s) => s.phase === phase).map((s) => s.id)
-  );
 
   // Blur nodes that don't match the phase
   nodeMap.forEach((node) => {
     const matches = node.nodeData.phase === phase;
-    setNodeBlur(node, matches ? 0 : blurStrength);
-  });
-
-  // Blur step nodes that don't match
-  stepNodeMap.forEach((node, stepId) => {
-    const matches = matchingStepIds.has(stepId);
     setNodeBlur(node, matches ? 0 : blurStrength);
   });
 };

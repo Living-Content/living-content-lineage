@@ -1,15 +1,20 @@
 /**
  * Pixi.js application initialization and layer hierarchy setup.
- * Extracts WebGL initialization from graphController for better modularity.
+ * Implements 3-level view hierarchy: session, overview, detail.
  */
 import { Application, Container } from 'pixi.js';
 
 export interface LayerGroup {
-  nodeLayer: Container;
-  edgeLayer: Container;
+  // Content Session view (zoom < 0.15)
+  sessionLayer: Container;
+
+  // Workflow Overview view (zoom 0.15 - 0.35)
+  overviewLayer: Container;
   connectorLayer: Container;
-  stepNodeLayer: Container;
-  stepEdgeLayer: Container;
+
+  // Workflow Detail view (zoom > 0.35)
+  detailEdgeLayer: Container;
+  detailNodeLayer: Container;
 }
 
 export interface PixiContext {
@@ -41,27 +46,39 @@ export async function initializePixi(container: HTMLElement): Promise<PixiContex
 }
 
 /**
- * Create the layer hierarchy for rendering order.
- * Order: edges → nodes → connector → step nodes → step edges
+ * Create the layer hierarchy for the 3-level view system.
+ * Order (back to front): session → overview/connectors → detail edges → detail nodes
  */
 export function createLayerHierarchy(viewport: Container): LayerGroup {
-  const edgeLayer = new Container();
-  const nodeLayer = new Container();
+  // Session view layer (zoomed way out)
+  const sessionLayer = new Container();
+
+  // Overview layers (middle zoom)
+  const overviewLayer = new Container();
   const connectorLayer = new Container();
-  const stepNodeLayer = new Container();
-  const stepEdgeLayer = new Container();
 
-  viewport.addChild(edgeLayer, nodeLayer, connectorLayer, stepNodeLayer, stepEdgeLayer);
+  // Detail layers (zoomed in)
+  const detailEdgeLayer = new Container();
+  const detailNodeLayer = new Container();
 
-  // Step layers start hidden (shown during LOD collapse to step view)
-  stepNodeLayer.visible = false;
-  stepEdgeLayer.visible = false;
+  viewport.addChild(
+    sessionLayer,
+    overviewLayer,
+    connectorLayer,
+    detailEdgeLayer,
+    detailNodeLayer
+  );
+
+  // Session and overview layers start hidden (detail view is default)
+  sessionLayer.visible = false;
+  overviewLayer.visible = false;
+  connectorLayer.visible = false;
 
   return {
-    nodeLayer,
-    edgeLayer,
+    sessionLayer,
+    overviewLayer,
     connectorLayer,
-    stepNodeLayer,
-    stepEdgeLayer,
+    detailEdgeLayer,
+    detailNodeLayer,
   };
 }

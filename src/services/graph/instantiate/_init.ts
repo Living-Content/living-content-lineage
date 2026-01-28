@@ -23,7 +23,6 @@ export interface AssetInitResult {
   pixi: PixiContext;
   viewportState: ViewportState;
   nodeMap: Map<string, GraphNode>;
-  stepNodeMap: Map<string, GraphNode>;
   animationController: ReturnType<typeof createNodeAnimationController>;
   state: EngineState;
   graphScale: number;
@@ -79,12 +78,11 @@ export async function initGraphAssets(
   viewport.scale.set(viewportState.scale);
   viewport.position.set(viewportState.x, viewportState.y);
 
-  // Create empty node maps (populated during composition)
+  // Create empty node map (populated during composition)
   const nodeMap = new Map<string, GraphNode>();
-  const stepNodeMap = new Map<string, GraphNode>();
 
-  // Create animation controller (maps are populated later, but passed by reference)
-  const animationController = createNodeAnimationController(nodeMap, stepNodeMap);
+  // Create animation controller (map is populated later, but passed by reference)
+  const animationController = createNodeAnimationController(nodeMap);
 
   // Create engine state from initial inputs
   const state: EngineState = {
@@ -102,7 +100,6 @@ export async function initGraphAssets(
       pixi,
       viewportState,
       nodeMap,
-      stepNodeMap,
       animationController,
       state,
       graphScale,

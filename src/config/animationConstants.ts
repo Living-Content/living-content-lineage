@@ -8,14 +8,8 @@ export const ANIMATION_TIMINGS = {
   SELECTION_DRAW_DURATION: 0.5,
   /** Duration for selection ring fade out (seconds) */
   SELECTION_FADE_DURATION: 0.15,
-  /** Base duration for LOD transitions (seconds) */
-  LOD_DURATION: 0.5,
-  /** Factor for outgoing layer fade during LOD */
-  LOD_FADE_OUT_FACTOR: 0.5,
-  /** Delay factor for incoming layer during LOD */
-  LOD_FADE_IN_DELAY_FACTOR: 0.3,
-  /** Duration factor for incoming layer during LOD */
-  LOD_FADE_IN_DURATION_FACTOR: 0.6,
+  /** View level transition fade duration (seconds) */
+  VIEW_LEVEL_FADE_DURATION: 0.3,
   /** Panel entrance animation duration (seconds) */
   PANEL_ENTRANCE_DURATION: 0.3,
   /** Panel detail view transition duration (seconds) */

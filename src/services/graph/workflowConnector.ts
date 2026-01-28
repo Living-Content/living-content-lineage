@@ -5,6 +5,7 @@
 import type { ManagedWorkflow } from './workflowManager.js';
 import type { GraphNode } from './rendering/nodeRenderer.js';
 import type { Phase } from '../../config/types.js';
+import { CONNECTOR_GAP } from '../../config/constants.js';
 
 /**
  * Minimal interface for accessing workflows.
@@ -61,20 +62,21 @@ const findPhaseForStep = (
 };
 
 /**
- * Get the bottom Y of a workflow (lowest node bottom edge).
+ * Find the action node bottom Y for a step in a workflow.
+ * This is where the connector should START (at the branch point).
  */
-const getWorkflowBottomY = (nodeMap: Map<string, GraphNode>): number | null => {
-  let maxY = -Infinity;
-  let halfHeight = 0;
-
+const findActionBottomY = (
+  nodeMap: Map<string, GraphNode>,
+  stepId: string
+): number | null => {
   for (const node of nodeMap.values()) {
-    if (node.position.y > maxY) {
-      maxY = node.position.y;
-      halfHeight = node.nodeHeight / 2;
+    if (node.nodeData.step === stepId &&
+        node.nodeData.nodeType === 'process' &&
+        node.nodeData.assetType === 'Action') {
+      return node.position.y + node.nodeHeight / 2;
     }
   }
-
-  return maxY === -Infinity ? null : maxY + halfHeight;
+  return null;
 };
 
 /**
@@ -94,9 +96,7 @@ const getWorkflowTopY = (nodeMap: Map<string, GraphNode>): number | null => {
 
   if (minY === Infinity) return null;
 
-  // Account for step label space above workflow
-  const LABEL_SPACE = 60;
-  return minY - halfHeight - LABEL_SPACE;
+  return minY - halfHeight - CONNECTOR_GAP;
 };
 
 /**
@@ -155,17 +155,17 @@ export const getConnectorContext = (
   // Get phase color
   const phase = findPhaseForStep(stepId, mainWorkflow.nodeMap);
 
-  // Calculate Y range: between bottom of main workflow and top of child workflow
-  const mainBottomY = getWorkflowBottomY(mainWorkflow.nodeMap);
+  // Calculate Y range: from branch point action node to top of child workflow
+  const actionBottomY = findActionBottomY(mainWorkflow.nodeMap, stepId);
   const childTopY = getWorkflowTopY(childWorkflow.nodeMap);
 
-  if (mainBottomY === null || childTopY === null) {
+  if (actionBottomY === null || childTopY === null) {
     return nullResult;
   }
 
   return {
     x: actionX,
-    topY: mainBottomY,
+    topY: actionBottomY,
     bottomY: childTopY,
     phase,
     sourceNodeId,

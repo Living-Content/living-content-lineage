@@ -12,7 +12,8 @@ import type { ViewportState } from '../interaction/viewport.js';
 import type { ViewportManager } from '../layout/viewportManager.js';
 import type { SelectionController } from '../interaction/selectionController.js';
 import type { KeyboardNavigationController } from '../interaction/keyboardNavigation.js';
-import type { LODController } from '../layout/lodController.js';
+import type { ViewLayerController } from '../layout/viewLayerController.js';
+import type { ViewLevel } from '../../../stores/viewLevel.svelte.js';
 import type { NodeAccessor } from '../layout/nodeAccessor.js';
 import type { PixiContext } from '../layout/pixiSetup.js';
 import type { GraphEngine, SelectionTarget } from './interface.js';
@@ -51,14 +52,13 @@ interface PendingUpdates {
 export interface EngineDeps {
   pixi: PixiContext;
   nodeMap: Map<string, GraphNode>;
-  stepNodeMap: Map<string, GraphNode>;
   edges: TraceEdgeData[];
   steps: StepUI[];
   nodeAccessor: NodeAccessor;
   viewportManager: ViewportManager;
   selectionController: SelectionController;
   keyboardNavigation: KeyboardNavigationController;
-  lodController: LODController;
+  viewLayerController: ViewLayerController;
   viewportState: ViewportState;
   animationController: { setNodeAlpha: (nodeId: string, alpha: number) => void; cleanup: () => void };
   stepLabels: { setPhaseFilter: (phase: Phase | null) => void; setVisible: (visible: boolean) => void };
@@ -67,6 +67,7 @@ export interface EngineDeps {
   viewportHandlers: { destroy: () => void };
   workflowRenderer: WorkflowRenderer;
   state: EngineState;
+  onViewportUpdate: () => void;
 }
 
 /**
@@ -78,8 +79,8 @@ const createHighlighterDeps = (
   useBlur: boolean
 ): SelectionHighlighterDeps => ({
   nodeMap: deps.nodeMap,
-  stepNodeMap: deps.stepNodeMap,
-  stepEdgeLayer: deps.pixi.layers.stepEdgeLayer,
+  stepNodeMap: new Map(), // Step nodes removed in view level refactor
+  stepEdgeLayer: deps.pixi.layers.detailEdgeLayer, // Not used for step edges anymore
   steps: deps.steps,
   setNodeAlpha: deps.animationController.setNodeAlpha,
   useBlur,
@@ -235,7 +236,7 @@ export const createGraphEngine = (deps: EngineDeps): GraphEngine => {
       deps.viewportState.width = width;
       deps.viewportState.height = height;
       deps.pixi.app.resize();
-      deps.lodController.updateViewport(deps.viewportState);
+      deps.onViewportUpdate();
 
       const nodeId = deps.state.selection?.type === 'node' ? deps.state.selection.nodeId : null;
       if (deps.state.detailPanelOpen && nodeId) {
@@ -253,6 +254,10 @@ export const createGraphEngine = (deps: EngineDeps): GraphEngine => {
 
     setTitleSecondaryVisible: (visible: boolean): void => {
       deps.titleOverlay.setSecondaryVisible(visible);
+    },
+
+    transitionToLevel: (level: ViewLevel): void => {
+      deps.viewLayerController.transitionTo(level);
     },
   };
 };

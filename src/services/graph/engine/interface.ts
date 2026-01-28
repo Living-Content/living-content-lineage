@@ -74,6 +74,11 @@ export interface GraphEngine {
    * Show/hide title overlay secondary elements (UUID, date, divider).
    */
   setTitleSecondaryVisible(visible: boolean): void;
+
+  /**
+   * Transition to a new view level (with fade animation).
+   */
+  transitionToLevel(level: 'content-session' | 'workflow-overview' | 'workflow-detail'): void;
 }
 
 /**
@@ -94,8 +99,7 @@ export interface InitialInputs {
 export interface EngineCallbacks {
   onSimpleViewChange: (simple: boolean) => void;
   onViewportChange: (state: ViewportChangeEvent) => void;
-  onLODCollapse: () => void;
-  onLODExpand: () => void;
+  onViewLevelChange: (level: 'content-session' | 'workflow-overview' | 'workflow-detail') => void;
 }
 
 export interface ViewportChangeEvent {

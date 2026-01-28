@@ -45,7 +45,6 @@ export async function activateGraph(
     pixi: assets.pixi,
     viewportState: assets.viewportState,
     nodeMap: assets.nodeMap,
-    stepNodeMap: assets.stepNodeMap,
     animationController: assets.animationController,
     state: assets.state,
     graphScale: assets.graphScale,

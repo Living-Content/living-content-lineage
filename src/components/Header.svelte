@@ -1,19 +1,25 @@
 <script lang="ts">
   /**
-   * Header with menu toggle, title, and LOD indicator.
+   * Header with menu toggle, title, and view level indicator.
    */
   import { uiState } from '../stores/uiState.svelte.js';
   import { menuStore } from '../stores/menuStore.svelte.js';
   import { traceState } from '../stores/traceState.svelte.js';
+  import { viewLevel } from '../stores/viewLevel.svelte.js';
   import HeaderFilter from './HeaderFilter.svelte';
 
   let isMenuOpen = $derived(menuStore.isOpen);
   let isSubPanel = $derived(menuStore.isSubPanel);
   let panelTitle = $derived(menuStore.panelTitle);
   let title = $derived(traceState.trace?.title ?? 'Trace');
+  let isViewLocked = $derived(viewLevel.isLocked);
 
   function handleMenuToggle() {
     menuStore.handleToggle();
+  }
+
+  function handleViewLockToggle() {
+    viewLevel.toggleLock();
   }
 </script>
 
@@ -41,12 +47,20 @@
 
   <HeaderFilter />
 
-  <img
-    src={uiState.isSimpleView ? '/icons/simple.svg' : '/icons/detail.svg'}
-    alt={uiState.isSimpleView ? 'Simple view' : 'Detailed view'}
-    id="lod-icon"
-    class="lod-indicator"
-  />
+  <button
+    class="view-lock-toggle"
+    class:locked={isViewLocked}
+    onclick={handleViewLockToggle}
+    aria-label={isViewLocked ? 'Unlock view' : 'Lock to current view'}
+    title={isViewLocked ? 'View locked - click to unlock' : 'Click to lock current view'}
+  >
+    <img
+      src={uiState.isSimpleView ? '/icons/simple.svg' : '/icons/detail.svg'}
+      alt={uiState.isSimpleView ? 'Simple view' : 'Detailed view'}
+      id="lod-icon"
+      class="lod-indicator"
+    />
+  </button>
 </header>
 
 <style>
@@ -135,11 +149,45 @@
     flex: 1;
   }
 
+  .view-lock-toggle {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .view-lock-toggle:focus {
+    outline: none;
+  }
+
   .lod-indicator {
     width: 28px;
     height: 28px;
     filter: invert(1);
     mix-blend-mode: difference;
+    opacity: 0.4;
     transition: opacity 0.2s ease;
+  }
+
+  .view-lock-toggle:hover .lod-indicator {
+    opacity: 1;
+  }
+
+  .view-lock-toggle.locked .lod-indicator {
+    animation: pulse-white 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse-white {
+    0%, 100% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
   }
 </style>
