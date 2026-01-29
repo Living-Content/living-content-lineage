@@ -1,13 +1,13 @@
 /**
- * Card dimension constants for workflow and session cards.
- * Used in overview and session view levels.
+ * Card dimension constants for workflow and content session cards.
+ * Used in overview and content session view levels.
  */
 
-// Session card (highest zoom-out level)
-export const SESSION_CARD_WIDTH = 480;
-export const SESSION_CARD_HEIGHT = 160;
-export const SESSION_CARD_RADIUS = 16;
-export const SESSION_CARD_PADDING = 28;
+// Content session card (highest zoom-out level)
+export const CONTENT_SESSION_CARD_WIDTH = 480;
+export const CONTENT_SESSION_CARD_HEIGHT = 160;
+export const CONTENT_SESSION_CARD_RADIUS = 16;
+export const CONTENT_SESSION_CARD_PADDING = 28;
 
 // Workflow card (overview level)
 export const WORKFLOW_CARD_WIDTH = 600;

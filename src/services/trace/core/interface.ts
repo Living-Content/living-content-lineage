@@ -71,6 +71,12 @@ export interface GraphEngine {
   zoomToBounds(nodeId?: string, options?: ZoomToBoundsOptions): void;
 
   /**
+   * Set viewport position for current view level (no animation).
+   * Positions on the first node of the view.
+   */
+  setPositionForCurrentView(): void;
+
+  /**
    * Show/hide title overlay secondary elements (UUID, date, divider).
    */
   setTitleSecondaryVisible(visible: boolean): void;
@@ -160,6 +166,7 @@ export interface SelectionCallbacks {
  */
 export interface BootstrapCallbacks extends EngineCallbacks {
   onLoaded: (data: unknown) => void;
+  onReady: () => void;  // Called when graph is fully ready (viewport positioned, initial render complete)
   onError: (error: { message: string; details?: string }) => void;
   onHover: (payload: HoverPayload) => void;
   onHoverEnd: () => void;

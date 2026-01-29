@@ -21,7 +21,7 @@
   import { menuStore } from '../../stores/menuStore.svelte.js';
   import { viewLevel, type ViewLevel } from '../../stores/viewLevel.svelte.js';
   import type { Trace, Phase, TraceNodeData } from '../../config/types.js';
-import type { StepData } from '../../stores/traceState.svelte.js';
+  import type { StepData } from '../../stores/traceState.svelte.js';
   import { resolveManifestUrl } from '../../services/manifest/urlResolver.js';
   import { hideStaticLoader } from '../../lib/staticLoader.js';
 
@@ -51,6 +51,7 @@ import type { StepData } from '../../stores/traceState.svelte.js';
   let prevIsExpanded = $state(false);
   let prevMenuOpen = $state(false);
   let prevViewLevel: ViewLevel = $state('workflow-detail');
+  let prevRecenterTrigger = $state(0);
 
   onMount(() => {
     let isCancelled = false;
@@ -90,7 +91,9 @@ import type { StepData } from '../../stores/traceState.svelte.js';
               const nodeIds = trace.nodes.map((n) => n.id);
               commentState.connect(configStore.workflowId, nodeIds);
             }
-
+          },
+          onReady: () => {
+            // Graph is fully ready - viewport positioned, initial render complete
             hideStaticLoader();
           },
           onError: (error) => {
@@ -192,6 +195,13 @@ import type { StepData } from '../../stores/traceState.svelte.js';
     if (nextViewLevel !== prevViewLevel) {
       engine.transitionToLevel(nextViewLevel);
       prevViewLevel = nextViewLevel;
+    }
+
+    // Recenter triggered (clicking same view level)?
+    const nextRecenterTrigger = viewLevel.recenterTrigger;
+    if (nextRecenterTrigger !== prevRecenterTrigger) {
+      engine.zoomToBounds();
+      prevRecenterTrigger = nextRecenterTrigger;
     }
 
     // Menu open state changed? Hide secondary title elements when menu opens

@@ -4,28 +4,8 @@
  */
 
 export const ANIMATION_TIMINGS = {
-  /** Duration for selection ring draw animation (seconds) */
-  SELECTION_DRAW_DURATION: 0.5,
-  /** Duration for selection ring fade out (seconds) */
-  SELECTION_FADE_DURATION: 0.15,
-  /** View level transition fade duration (seconds) */
-  VIEW_LEVEL_FADE_DURATION: 0.3,
-  /** Panel entrance animation duration (seconds) */
-  PANEL_ENTRANCE_DURATION: 0.3,
-  /** Panel detail view transition duration (seconds) */
-  PANEL_DETAIL_DURATION: 0.2,
-  /** Viewport pan animation duration (seconds) */
-  VIEWPORT_PAN_DURATION: 0.3,
-  /** Text mode transition duration (seconds) */
-  TEXT_MODE_DURATION: 0.25,
-  /** Node expansion scale animation duration (seconds) */
-  NODE_EXPANSION_DURATION: 0.3,
-  /** Node fade to background opacity duration (seconds) */
-  NODE_FADE_DURATION: 0.2,
-  /** Overlay fade in duration after node expansion (seconds) */
-  OVERLAY_FADE_DURATION: 0.2,
-  /** Hover pulse animation duration (seconds) */
-  HOVER_PULSE_DURATION: 0.15,
+  /** View level transition fade duration per phase (seconds) - total is 2x for sequential fade */
+  VIEW_LEVEL_FADE_DURATION: 0.2,
   /** Node crossfade in duration for mode transitions (seconds) */
   NODE_CROSSFADE_IN_DURATION: 0.25,
   /** Node crossfade out duration for mode transitions (seconds) */

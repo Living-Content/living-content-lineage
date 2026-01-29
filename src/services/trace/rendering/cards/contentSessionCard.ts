@@ -4,33 +4,33 @@
  *
  * Layout:
  * ┌───────────────────────────────────────┐
- * │  Session abc123                       │
+ * │  Content Session abc123               │
  * │  3 workflows                          │
  * └───────────────────────────────────────┘
  */
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { getCssVar, getCssVarColorHex } from '../../../../themes/theme.js';
 import {
-  SESSION_CARD_WIDTH,
-  SESSION_CARD_HEIGHT,
-  SESSION_CARD_RADIUS,
-  SESSION_CARD_PADDING,
+  CONTENT_SESSION_CARD_WIDTH,
+  CONTENT_SESSION_CARD_HEIGHT,
+  CONTENT_SESSION_CARD_RADIUS,
+  CONTENT_SESSION_CARD_PADDING,
 } from '../../../../config/cards.js';
 
-const CARD_WIDTH = SESSION_CARD_WIDTH;
-const CARD_HEIGHT = SESSION_CARD_HEIGHT;
-const CARD_RADIUS = SESSION_CARD_RADIUS;
-const CARD_PADDING = SESSION_CARD_PADDING;
+const CARD_WIDTH = CONTENT_SESSION_CARD_WIDTH;
+const CARD_HEIGHT = CONTENT_SESSION_CARD_HEIGHT;
+const CARD_RADIUS = CONTENT_SESSION_CARD_RADIUS;
+const CARD_PADDING = CONTENT_SESSION_CARD_PADDING;
 
-export interface SessionCardData {
+export interface ContentSessionCardData {
   sessionId: string;
   workflowCount: number;
   x: number;
   y: number;
 }
 
-export interface SessionCard extends Container {
-  cardData: SessionCardData;
+export interface ContentSessionCard extends Container {
+  cardData: ContentSessionCardData;
   setSelected: (selected: boolean) => void;
   setHovered: (hovered: boolean) => void;
 }
@@ -43,18 +43,18 @@ const getShortId = (sessionId: string): string => {
 };
 
 /**
- * Creates a session card Pixi container.
+ * Creates a content session card Pixi container.
  */
-export const createSessionCard = (
-  data: SessionCardData,
+export const createContentSessionCard = (
+  data: ContentSessionCardData,
   callbacks?: {
     onClick?: (sessionId: string) => void;
     onHover?: (sessionId: string) => void;
     onHoverEnd?: () => void;
   }
-): SessionCard => {
-  const container = new Container() as SessionCard;
-  container.label = `session-card-${data.sessionId}`;
+): ContentSessionCard => {
+  const container = new Container() as ContentSessionCard;
+  container.label = `content-session-card-${data.sessionId}`;
   container.cardData = data;
 
   // Theme colors
@@ -71,7 +71,7 @@ export const createSessionCard = (
   background.stroke({ width: 1, color: borderColor, alpha: 1 });
   container.addChild(background);
 
-  // Session title
+  // Content session title
   const titleStyle = new TextStyle({
     fontFamily: getCssVar('--font-sans'),
     fontSize: 28,
@@ -80,7 +80,7 @@ export const createSessionCard = (
     letterSpacing: -0.3,
   });
   const title = new Text({
-    text: `Session ${getShortId(data.sessionId)}`,
+    text: `Content Session ${getShortId(data.sessionId)}`,
     style: titleStyle,
   });
   title.position.set(CARD_PADDING, CARD_PADDING + 8);

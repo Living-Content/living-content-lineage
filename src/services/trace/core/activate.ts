@@ -51,7 +51,8 @@ export async function activateGraph(
     callbacks,
   });
 
-  // Phase 3: Activate with initial state
+  // Phase 3: Activate with initial state - fit content to viewport first
+  // Apply initial state before zoom so everything is positioned correctly
   if (initial.selection) {
     engine.setSelection(initial.selection);
   }
@@ -61,6 +62,10 @@ export async function activateGraph(
   if (initial.detailPanelOpen) {
     engine.setDetailPanelOpen(true, false);
   }
+
+  // Position viewport for current view and signal ready
+  engine.setPositionForCurrentView();
+  callbacks.onReady();
 
   return {
     engine,

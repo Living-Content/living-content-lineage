@@ -1,25 +1,40 @@
 <script lang="ts">
   /**
-   * Header with menu toggle, title, and view level indicator.
+   * Header with menu toggle, title, and view level selector.
    */
   import { uiState } from '../stores/uiState.svelte.js';
   import { menuStore } from '../stores/menuStore.svelte.js';
   import { traceState } from '../stores/traceState.svelte.js';
-  import { viewLevel } from '../stores/viewLevel.svelte.js';
+  import { viewLevel, type ViewLevel } from '../stores/viewLevel.svelte.js';
   import HeaderFilter from './HeaderFilter.svelte';
 
   let isMenuOpen = $derived(menuStore.isOpen);
   let isSubPanel = $derived(menuStore.isSubPanel);
   let panelTitle = $derived(menuStore.panelTitle);
   let title = $derived(traceState.trace?.title ?? 'Trace');
-  let isViewLocked = $derived(viewLevel.isLocked);
+  let currentLevel = $derived(viewLevel.current);
+
+  const levels: { id: ViewLevel; icon: string; label: string }[] = [
+    { id: 'content-session', icon: '/icons/content-session.svg', label: 'Content Session' },
+    { id: 'workflow-overview', icon: '/icons/workflow-overview.svg', label: 'Workflow Overview' },
+    { id: 'workflow-detail', icon: '/icons/workflow-detail.svg', label: 'Workflow Detail' },
+  ];
 
   function handleMenuToggle() {
     menuStore.handleToggle();
   }
 
-  function handleViewLockToggle() {
-    viewLevel.toggleLock();
+  function handleLevelSelect(level: ViewLevel) {
+    // Close detail panel when switching levels
+    if (level !== currentLevel) {
+      uiState.closeDetailPanel();
+      // Clear selection when leaving detail view
+      if (level !== 'workflow-detail') {
+        traceState.clearSelection();
+      }
+    }
+    // Always set level (triggers zoom to bounds even for same level)
+    viewLevel.setLevel(level);
   }
 </script>
 
@@ -47,20 +62,23 @@
 
   <HeaderFilter />
 
-  <button
-    class="view-lock-toggle"
-    class:locked={isViewLocked}
-    onclick={handleViewLockToggle}
-    aria-label={isViewLocked ? 'Unlock view' : 'Lock to current view'}
-    title={isViewLocked ? 'View locked - click to unlock' : 'Click to lock current view'}
-  >
-    <img
-      src={uiState.isSimpleView ? '/icons/simple.svg' : '/icons/detail.svg'}
-      alt={uiState.isSimpleView ? 'Simple view' : 'Detailed view'}
-      id="lod-icon"
-      class="lod-indicator"
-    />
-  </button>
+  <div class="view-level-selector">
+    {#each levels as level}
+      <button
+        class="view-level-button"
+        class:selected={currentLevel === level.id}
+        onclick={() => handleLevelSelect(level.id)}
+        aria-label={level.label}
+        title={level.label}
+      >
+        <img
+          src={level.icon}
+          alt={level.label}
+          class="view-level-icon"
+        />
+      </button>
+    {/each}
+  </div>
 </header>
 
 <style>
@@ -149,45 +167,40 @@
     flex: 1;
   }
 
-  .view-lock-toggle {
-    position: relative;
+  .view-level-selector {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .view-level-button {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
+    padding: 6px;
     border: none;
-    background: none;
+    background: transparent;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
 
-  .view-lock-toggle:focus {
+  .view-level-button:focus {
     outline: none;
   }
 
-  .lod-indicator {
-    width: 28px;
-    height: 28px;
+  .view-level-icon {
+    width: 24px;
+    height: 24px;
     filter: invert(1);
-    mix-blend-mode: difference;
     opacity: 0.4;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.15s ease;
   }
 
-  .view-lock-toggle:hover .lod-indicator {
+  .view-level-button:hover .view-level-icon {
     opacity: 1;
   }
 
-  .view-lock-toggle.locked .lod-indicator {
-    animation: pulse-white 1.5s ease-in-out infinite;
-  }
-
-  @keyframes pulse-white {
-    0%, 100% {
-      opacity: 0.6;
-    }
-    50% {
-      opacity: 1;
-    }
+  .view-level-button.selected .view-level-icon {
+    opacity: 1;
   }
 </style>

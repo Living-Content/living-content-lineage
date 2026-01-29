@@ -20,7 +20,7 @@ export interface ViewportBounds {
 }
 
 export interface ViewportCallbacks {
-  onZoom: (scale: number) => { actualScale: number; transitioned: boolean };
+  onZoom: (scale: number) => { actualScale: number };
   onPan: () => void;
   onPanStart: () => void;
   onPanEnd: () => void;
@@ -100,10 +100,10 @@ export const createViewportHandlers = (
   const handleWheel = (e: WheelEvent): void => {
     e.preventDefault();
 
-    // Block zoom during LOD animation or when interaction is blocked (detail view)
+    // Block zoom during view transition or when interaction is blocked (detail view)
     if (callbacks.isZoomBlocked?.() || callbacks.isInteractionBlocked?.()) return;
 
-    // Use sensitivity constant: 3% per scroll (smoother than 5%)
+    // Use sensitivity constant for smooth zoom
     const zoomFactor = e.deltaY > 0 ? (1 - ZOOM_SENSITIVITY) : (1 + ZOOM_SENSITIVITY);
     const newScale = state.scale * zoomFactor;
 
@@ -116,26 +116,14 @@ export const createViewportHandlers = (
     const worldX = (mouseX - state.x) / state.scale;
     const worldY = (mouseY - state.y) / state.scale;
 
-    // Callback handles containers, returns actual scale and whether level changed
-    const { actualScale, transitioned } = callbacks.onZoom(newScale);
+    // Callback handles containers and clamping, returns actual scale
+    const { actualScale } = callbacks.onZoom(newScale);
 
-    if (transitioned) {
-      // Keep screen center at same world point
-      const centerX = state.width / 2;
-      const centerY = state.height / 2;
-      const worldCenterX = (centerX - state.x) / state.scale;
-      const worldCenterY = (centerY - state.y) / state.scale;
-      state.scale = actualScale;
-      state.x = centerX - worldCenterX * actualScale;
-      state.y = centerY - worldCenterY * actualScale;
-      viewport.position.set(state.x, state.y);
-    } else {
-      // Normal zoom: keep mouse point stationary
-      state.scale = actualScale;
-      state.x = mouseX - worldX * actualScale;
-      state.y = mouseY - worldY * actualScale;
-      viewport.position.set(state.x, state.y);
-    }
+    // Keep mouse point stationary during zoom
+    state.scale = actualScale;
+    state.x = mouseX - worldX * actualScale;
+    state.y = mouseY - worldY * actualScale;
+    viewport.position.set(state.x, state.y);
   };
 
   const handlePointerDown = (e: PointerEvent): void => {

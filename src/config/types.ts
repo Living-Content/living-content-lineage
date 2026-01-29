@@ -81,7 +81,7 @@ export type NodeRole = "source" | "sink" | "intermediate" | "process";
 
 /**
  * View level for 3-tier zoom hierarchy.
- * - content-session: Highest zoom out (scale < 0.15), shows session cards
+ * - content-session: Highest zoom out (scale < 0.15), shows content session cards
  * - workflow-overview: Middle (scale 0.15 - 0.35), shows workflow cards
  * - workflow-detail: Zoomed in (scale > 0.35), shows full node/edge graph
  */

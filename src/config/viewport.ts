@@ -1,20 +1,21 @@
 /**
  * Viewport and zoom constants.
- * Controls zoom behavior, margins, and graph scaling.
  */
 
 // Zoom limits and defaults
 export const ZOOM_MIN = 0.3;
 export const ZOOM_MAX = 1.3;
 export const ZOOM_DEFAULT = 0.8;
-export const ZOOM_FACTOR = 0.85;
 
-// Zoom sensitivity: 0.03 = 3% per scroll (smoother than 5%)
+// View-level-specific initial zoom minimums (prevents starting too zoomed out)
+export const VIEW_INITIAL_ZOOM_MIN = {
+  'content-session': 0.8,
+  'workflow-overview': 0.8,
+  'workflow-detail': 0.9,
+} as const;
+
+// Zoom sensitivity
 export const ZOOM_SENSITIVITY = 0.02;
-
-// Viewport bounds (pixels)
-export const VIEWPORT_TOP_MARGIN = 80;
-export const VIEWPORT_BOTTOM_MARGIN = 100;
 
 // Graph scaling
 export const GRAPH_SCALE_FACTOR = 1.5;

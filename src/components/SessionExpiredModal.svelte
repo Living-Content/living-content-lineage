@@ -31,7 +31,8 @@
   async function handleOpenLogin() {
     await authService.continueAsGuest();
     onRecovered();
-    menuStore.open('login');
+    menuStore.open();
+    menuStore.navigateTo('login');
   }
 </script>
 

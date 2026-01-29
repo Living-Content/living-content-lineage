@@ -6,7 +6,7 @@
  * All state enters through explicit engine commands.
  * All events exit through explicit callbacks.
  */
-import type { Phase, TraceEdgeData, StepUI, ViewLevel } from '../../../config/types.js';
+import type { Phase, TraceEdgeData, ViewLevel } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import type { ViewportState } from '../interaction/viewport.js';
 import type { ViewportManager } from '../layout/viewportManager.js';
@@ -52,7 +52,6 @@ export interface EngineDeps {
   pixi: PixiContext;
   nodeMap: Map<string, GraphNode>;
   edges: TraceEdgeData[];
-  steps: StepUI[];
   nodeAccessor: NodeAccessor;
   viewportManager: ViewportManager;
   selectionController: SelectionController;
@@ -78,9 +77,6 @@ const createHighlighterDeps = (
   useBlur: boolean
 ): SelectionHighlighterDeps => ({
   nodeMap: deps.nodeMap,
-  stepNodeMap: new Map(), // Step nodes removed in view level refactor
-  stepEdgeContainer: deps.pixi.containers.workflowDetail, // Not used for step edges anymore
-  steps: deps.steps,
   setNodeAlpha: deps.animationController.setNodeAlpha,
   useBlur,
 });
@@ -249,6 +245,10 @@ export const createGraphEngine = (deps: EngineDeps): GraphEngine => {
 
     zoomToBounds: (nodeId?: string, options = {}): void => {
       deps.viewportManager.zoomToBounds(nodeId, options);
+    },
+
+    setPositionForCurrentView: (): void => {
+      deps.viewportManager.setPositionForCurrentView();
     },
 
     setTitleSecondaryVisible: (visible: boolean): void => {

@@ -2,13 +2,18 @@
  * View container controller with simple fade transitions.
  * Manages visibility of 3-level view hierarchy containers.
  */
-import { Container } from 'pixi.js';
 import gsap from 'gsap';
 import type { ViewLevel } from '../../../config/types.js';
 import type { ViewContainers } from './pixiSetup.js';
 import { getContainerForLevel } from './pixiSetup.js';
 import { ANIMATION_TIMINGS } from '../../../config/animation.js';
 import { viewLevel } from '../../../stores/viewLevel.svelte.js';
+
+export interface ViewContainerControllerDeps {
+  containers: ViewContainers;
+  setPositionForCurrentView: () => void;
+  render: () => void;
+}
 
 export interface ViewContainerController {
   transitionTo: (newLevel: ViewLevel) => void;
@@ -18,7 +23,10 @@ export interface ViewContainerController {
 /**
  * Creates a view container controller for managing 3-level view transitions.
  */
-export const createViewContainerController = (containers: ViewContainers): ViewContainerController => {
+export const createViewContainerController = (
+  deps: ViewContainerControllerDeps
+): ViewContainerController => {
+  const { containers, setPositionForCurrentView, render } = deps;
   let currentLevel: ViewLevel = 'workflow-detail';
 
   const transitionTo = (newLevel: ViewLevel): void => {
@@ -28,28 +36,32 @@ export const createViewContainerController = (containers: ViewContainers): ViewC
     const incoming = getContainerForLevel(containers, newLevel);
     const duration = ANIMATION_TIMINGS.VIEW_LEVEL_FADE_DURATION;
 
-    // Block further zoom during transition
+    // Block further interactions during transition
     viewLevel.setTransitioning(true);
+    currentLevel = newLevel;
 
-    // Fade out outgoing container
+    // Sequential fade: out first, then in
     gsap.to(outgoing, {
       alpha: 0,
       duration,
       ease: 'power2.in',
-      onComplete: () => { outgoing.visible = false; },
+      onComplete: () => {
+        outgoing.visible = false;
+        // Position viewport for new view (nothing visible, no jump)
+        setPositionForCurrentView();
+        // Force render to defeat Pixi culling before fade-in
+        render();
+        // Fade in incoming
+        incoming.visible = true;
+        incoming.alpha = 0;
+        gsap.to(incoming, {
+          alpha: 1,
+          duration,
+          ease: 'power2.out',
+          onComplete: () => viewLevel.setTransitioning(false),
+        });
+      },
     });
-
-    // Fade in incoming container
-    incoming.visible = true;
-    incoming.alpha = 0;
-    gsap.to(incoming, {
-      alpha: 1,
-      duration,
-      ease: 'power2.out',
-      onComplete: () => { viewLevel.setTransitioning(false); },
-    });
-
-    currentLevel = newLevel;
   };
 
   const getCurrentLevel = (): ViewLevel => currentLevel;
