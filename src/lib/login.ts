@@ -8,7 +8,7 @@
  */
 
 import { logger } from './logger.js';
-import { isTokenMode } from './api.js';
+import { isTokenMode } from './authMode.js';
 import { tokenStore } from '../stores/tokenStore.svelte.js';
 import { configStore } from '../stores/configStore.svelte.js';
 import { type Result, ok, err } from './result.js';

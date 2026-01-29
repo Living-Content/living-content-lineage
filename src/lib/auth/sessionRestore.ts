@@ -4,7 +4,8 @@
  */
 
 import { logger } from '../logger.js';
-import { api, isTokenMode } from '../api.js';
+import { api } from '../api.js';
+import { isTokenMode } from '../authMode.js';
 import { authStore } from '../../stores/authStore.svelte.js';
 import { tokenStore } from '../../stores/tokenStore.svelte.js';
 import { configStore } from '../../stores/configStore.svelte.js';

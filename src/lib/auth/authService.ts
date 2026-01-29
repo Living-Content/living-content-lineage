@@ -5,7 +5,7 @@
 
 import { logger } from '../logger.js';
 import { login } from '../login.js';
-import { isTokenMode } from '../api.js';
+import { isTokenMode } from '../authMode.js';
 import { authStore } from '../../stores/authStore.svelte.js';
 import { tokenStore } from '../../stores/tokenStore.svelte.js';
 import { configStore } from '../../stores/configStore.svelte.js';
@@ -15,6 +15,7 @@ import {
   refreshAccessToken,
   scheduleTokenRefresh,
   clearTokenRefreshTimer,
+  setupVisibilityRefresh,
 } from './tokenRefresh.js';
 
 import {
@@ -42,6 +43,9 @@ export const authService = {
 
     // Initialize token store to load persisted tokens
     tokenStore.init();
+
+    // Set up visibility listener to catch token refresh after laptop sleep, etc.
+    setupVisibilityRefresh();
 
     // 1. Check for OAuth callback
     const handled = await login.handleAuthCallback(handleLoginSuccess);

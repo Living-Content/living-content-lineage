@@ -4,12 +4,32 @@
  */
 
 import { logger } from '../logger.js';
-import { isTokenMode } from '../api.js';
+import { isTokenMode } from '../authMode.js';
 import { authStore } from '../../stores/authStore.svelte.js';
 import { tokenStore } from '../../stores/tokenStore.svelte.js';
 import { configStore } from '../../stores/configStore.svelte.js';
 import { fetchUserProfile } from './sessionRestore.js';
 import { type Result, ok, err } from '../result.js';
+import { withRetry, API_RETRY } from '../utils/retry.js';
+
+/** Error with status code for retry logic */
+class HttpError extends Error {
+  constructor(
+    message: string,
+    public status: number
+  ) {
+    super(message);
+    this.name = 'HttpError';
+  }
+}
+
+/** Check if error is retryable (5xx or network errors) */
+function isRetryableError(error: unknown): boolean {
+  if (error instanceof HttpError) {
+    return error.status >= 500;
+  }
+  return error instanceof TypeError;
+}
 
 let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -42,12 +62,25 @@ export async function refreshAccessToken(): Promise<Result<{ expiresIn: number }
       fetchOptions.credentials = 'include';
     }
 
-    const response = await fetch(
-      `${configStore.apiUrl}/auth/refresh`,
-      fetchOptions
+    // Wrap fetch with retry for 5xx and network errors
+    const response = await withRetry(
+      async () => {
+        const res = await fetch(
+          `${configStore.apiUrl}/auth/refresh`,
+          fetchOptions
+        );
+        // Throw on 5xx to trigger retry
+        if (res.status >= 500) {
+          throw new HttpError(`Server error: ${res.status}`, res.status);
+        }
+        return res;
+      },
+      API_RETRY,
+      isRetryableError
     );
 
     if (!response.ok) {
+      // 4xx errors - not retryable
       logger.error('Auth: Refresh failed with status', response.status);
       return err(`Refresh failed with status ${response.status}`);
     }
@@ -122,4 +155,59 @@ export function clearTokenRefreshTimer(): void {
     clearTimeout(refreshTimer);
     refreshTimer = null;
   }
+}
+
+let visibilityListenerActive = false;
+
+/**
+ * Set up visibility change listener to refresh token when user returns to tab.
+ * This catches cases where the scheduled refresh didn't fire (laptop sleep, etc.)
+ */
+export function setupVisibilityRefresh(): void {
+  if (visibilityListenerActive || typeof document === 'undefined') {
+    return;
+  }
+
+  visibilityListenerActive = true;
+
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState !== 'visible') {
+      return;
+    }
+
+    // Only refresh if authenticated and token is expired or near-expiry
+    if (!authStore.isAuthenticated) {
+      return;
+    }
+
+    const needsRefresh = tokenStore.isExpired || tokenStore.expiresIn < 120;
+    if (!needsRefresh) {
+      return;
+    }
+
+    logger.debug('Auth: Tab became visible, token needs refresh');
+
+    authStore.setRefreshing();
+    const result = await refreshAccessToken();
+
+    if (result.ok) {
+      const profile = await fetchUserProfile();
+      if (profile.ok) {
+        authStore.setAuthenticated(profile.data.uid, {
+          email: profile.data.email ?? undefined,
+          name: profile.data.name ?? undefined,
+          picture: profile.data.picture ?? undefined,
+          isAdmin: profile.data.role === 'admin',
+          gaimRole: profile.data.role ?? undefined,
+          isGaimMember: profile.data.role !== null,
+        });
+      }
+      scheduleTokenRefresh(result.data.expiresIn);
+    } else {
+      logger.error('Auth: Visibility refresh failed');
+      authStore.endSession();
+    }
+  });
+
+  logger.debug('Auth: Visibility refresh listener active');
 }

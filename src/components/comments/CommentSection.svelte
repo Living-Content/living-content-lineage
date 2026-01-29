@@ -5,6 +5,7 @@
    */
   import { authStore } from '../../stores/authStore.svelte.js';
   import { commentState } from '../../stores/commentState.svelte.js';
+  import { toastStore } from '../../stores/toastStore.svelte.js';
   import CommentList from './CommentList.svelte';
   import CommentInput from './CommentInput.svelte';
   import AuthPrompt from './AuthPrompt.svelte';
@@ -28,11 +29,17 @@
   });
 
   async function handleSubmit(content: string) {
-    await commentState.submitComment(nodeId, content);
+    const success = await commentState.submitComment(nodeId, content);
+    if (!success) {
+      toastStore.error('Failed to post comment');
+    }
   }
 
   async function handleDelete(commentId: string) {
-    await commentState.removeComment(nodeId, commentId);
+    const success = await commentState.removeComment(nodeId, commentId);
+    if (!success) {
+      toastStore.error('Failed to delete comment');
+    }
   }
 </script>
 
