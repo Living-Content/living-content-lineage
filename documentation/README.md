@@ -20,6 +20,10 @@ Technical documentation for the Living Content Tracer visualization system.
 - [Detail Views](./components/detail-views.md) - Asset-specific detail view components
 - [Comments](./comments.md) - Real-time commenting system for trace nodes
 
+### Rendering & Performance
+
+- [Spatial Culling](./rendering/spatial-culling.md) - Efficient viewport culling for thousands of nodes
+
 ### Theming Documentation
 
 - [Guidelines](./theming/guidelines.md) - Theme system architecture and rules

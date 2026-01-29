@@ -24,7 +24,7 @@ import { createViewportManager, createResizeHandler } from '../layout/viewportMa
 import { createSelectionController } from '../interaction/selectionController.js';
 import { createKeyboardNavigation } from '../interaction/keyboardNavigation.js';
 import { createNodeAccessor } from '../layout/nodeAccessor.js';
-import { Culler } from 'pixi.js';
+import { createSpatialCuller } from '../layout/spatialCuller.js';
 import { createWorkflowManager, type ManagedWorkflow } from '../workflow/manager.js';
 import { createWorkflowRenderer } from '../rendering/edgeRenderer.js';
 import { createNodesForAllWorkflows, type NodeCreationDeps } from '../workflow/nodeFactory.js';
@@ -222,6 +222,10 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
     wf.nodeMap.forEach((node, id) => nodeMap.set(id, node));
   }
 
+  // Create spatial culler for efficient viewport culling (O(visible) vs O(all))
+  const spatialCuller = createSpatialCuller();
+  nodeMap.forEach((node) => spatialCuller.add(node));
+
   // Dynamic getters for bounds (always fresh, includes all workflows)
   const getTopNodeInfo = () => workflowManager.getTopNodeInfo();
   const getBottomNodeInfo = () => workflowManager.getBottomNodeInfo();
@@ -327,24 +331,18 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
     };
   };
 
-  // For user pan/zoom - no culling (PixiJS handles it naturally)
-  const onUnculledViewportUpdate = (): void => {
-    stepLabels.update(viewportState);
-    callbacks.onViewportChange(viewportState);
-    workflowRenderer.redrawEdges();
-    const nodeId = state.selection?.type === 'node' ? state.selection.nodeId : null;
-    workflowRenderer.setRenderState({ selectedNodeId: nodeId });
-  };
-
-  // For programmatic jumps - forces transform update before culling
+  // Viewport update with spatial hash culling - O(visible) instead of O(all)
   const onViewportUpdate = (): void => {
+    // Cull FIRST so edge renderer can skip edges where both nodes are off-screen.
+    // Must happen before redrawEdges() which checks node.culled state.
+    if (viewLevel.current === 'workflow-detail') {
+      spatialCuller.cull(viewportState, containers.workflowDetail);
+    }
     stepLabels.update(viewportState);
     callbacks.onViewportChange(viewportState);
     workflowRenderer.redrawEdges();
     const nodeId = state.selection?.type === 'node' ? state.selection.nodeId : null;
     workflowRenderer.setRenderState({ selectedNodeId: nodeId });
-    const currentContainer = getContainerForLevel(containers, viewLevel.current);
-    Culler.shared.cull(currentContainer, app.screen, false);
   };
 
   // Create viewportManager with view-level-aware bounds
@@ -415,10 +413,10 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
       const currentContainer = getContainerForLevel(containers, viewLevel.current);
       currentContainer.scale.set(actualScale);
       checkTextSimplifyThreshold(actualScale);
-      onUnculledViewportUpdate();
+      onViewportUpdate();
       return { actualScale };
     },
-    onPan: onViewportUpdate,
+    onPan: onViewportUpdate, // Spatial hash makes per-frame culling fast
     onPanStart: () => {},
     onPanEnd: () => {},
     isZoomBlocked: () => viewLevel.isTransitioning,
@@ -471,8 +469,8 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
     getSelectedNodeId: () => state.selection?.type === 'node' ? state.selection.nodeId : null,
   });
 
-  // Initial viewport update
-  onUnculledViewportUpdate();
+  // Initial viewport update (with culling to set initial visibility)
+  onViewportUpdate();
 
   // Create and return engine
   return createGraphEngine({
