@@ -12,6 +12,7 @@
   import Menu from './components/menu/Menu.svelte';
   import ReplayActionBar from './components/replay/ReplayActionBar.svelte';
   import SessionExpiredModal from './components/SessionExpiredModal.svelte';
+  import Toast from './components/Toast.svelte';
 
   let authReady = $state(false);
   let showSessionModal = $state(false);
@@ -64,4 +65,6 @@
   {/if}
 
   <ReplayActionBar onReplayComplete={handleReplayComplete} />
+
+  <Toast />
 </div>

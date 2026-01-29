@@ -3,5 +3,7 @@
 @import './components/panels.css';
 
 /* Import gaim/fe shared styles */
+@import '../../../living-content-gaim/fe/src/styles/variables.css';
 @import '../../../living-content-gaim/fe/src/styles/buttons.css';
 @import '../../../living-content-gaim/fe/src/styles/inputs.css';
+@import '../../../living-content-gaim/fe/src/styles/toast.css';

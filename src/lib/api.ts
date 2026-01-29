@@ -1,13 +1,34 @@
 /**
  * API Service
  * HTTP client with dual auth modes for cross-origin support.
+ * Includes automatic retry for 5xx errors and token refresh for 401/403.
  */
 
 import { logger } from './logger.js';
 import { isTokenMode } from './authMode.js';
 import { tokenStore } from '../stores/tokenStore.svelte.js';
 import { refreshAccessToken } from './auth/tokenRefresh.js';
+import { withRetry, API_RETRY } from './utils/retry.js';
 
+
+/** Error with HTTP status for retry logic */
+class HttpError extends Error {
+  constructor(
+    message: string,
+    public status: number
+  ) {
+    super(message);
+    this.name = 'HttpError';
+  }
+}
+
+/** Check if error is retryable (5xx or network errors) */
+const isRetryableError = (error: unknown): boolean => {
+  if (error instanceof HttpError) {
+    return error.status >= 500;
+  }
+  return error instanceof TypeError; // Network errors
+};
 
 // Track ongoing refresh to avoid concurrent refreshes
 let refreshPromise: Promise<boolean> | null = null;
@@ -85,7 +106,7 @@ const applyAuth = (options: RequestInit): RequestInit => {
 export const api = {
 
   /**
-   * Fetch with auth support, automatic token refresh, and retry on 401/403.
+   * Fetch with auth support, automatic retry for 5xx, and token refresh for 401/403.
    */
   async fetch(url: string, options: RequestInit = {}, timeoutMs = 10000): Promise<Response> {
     // Pre-request: refresh token if needed
@@ -93,45 +114,45 @@ export const api = {
       await tryRefreshToken();
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    const makeRequest = async (): Promise<Response> => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-    try {
-      const authOptions = applyAuth(options);
-      const response = await fetch(url, {
-        ...authOptions,
-        signal: controller.signal,
-      });
+      try {
+        const authOptions = applyAuth(options);
+        const response = await fetch(url, {
+          ...authOptions,
+          signal: controller.signal,
+        });
 
-      // If 401/403, try to refresh and retry once
-      if (
-        (response.status === 401 || response.status === 403) &&
-        canRefreshToken()
-      ) {
-        logger.debug(`API: Got ${response.status}, attempting refresh and retry`);
-        const refreshed = await tryRefreshToken();
-
-        if (refreshed) {
-          // Retry with fresh token
-          const retryController = new AbortController();
-          const retryTimeoutId = setTimeout(() => retryController.abort(), timeoutMs);
-
-          try {
-            const retryOptions = applyAuth(options);
-            return await fetch(url, {
-              ...retryOptions,
-              signal: retryController.signal,
-            });
-          } finally {
-            clearTimeout(retryTimeoutId);
-          }
+        // Throw on 5xx to trigger retry
+        if (response.status >= 500) {
+          throw new HttpError(`Server error: ${response.status}`, response.status);
         }
-      }
 
-      return response;
-    } finally {
-      clearTimeout(timeoutId);
+        return response;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    };
+
+    // Wrap with retry for 5xx errors
+    const response = await withRetry(makeRequest, API_RETRY, isRetryableError);
+
+    // If 401/403, try to refresh and retry once
+    if (
+      (response.status === 401 || response.status === 403) &&
+      canRefreshToken()
+    ) {
+      logger.debug(`API: Got ${response.status}, attempting refresh and retry`);
+      const refreshed = await tryRefreshToken();
+
+      if (refreshed) {
+        return withRetry(makeRequest, API_RETRY, isRetryableError);
+      }
     }
+
+    return response;
   },
 
   /**
