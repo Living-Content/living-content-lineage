@@ -1,18 +1,61 @@
 // Re-export display config types for convenience
 export type { DataCardType } from './cardTypes.js';
-export type { FieldDisplayConfig, AssetDisplayConfig } from './display.js';
 
-/**
- * High-level phase categorizing groups of workflows.
- * Phases represent logical pipeline segments from input to output.
- */
-export type Phase =
-  | "Acquisition"
-  | "Preparation"
-  | "Retrieval"
-  | "Reasoning"
-  | "Generation"
-  | "Persistence";
+// Import types from generated catalog for local use
+import type {
+  AssetType as GeneratedAssetType,
+  AssetCategory as GeneratedAssetCategory,
+  NodeType as GeneratedNodeType,
+  Phase as GeneratedPhase,
+  FieldDefinition as GeneratedFieldDefinition,
+  AssetTypeFields as GeneratedAssetTypeFields,
+  AssetTypeConfig as GeneratedAssetTypeConfig,
+  StepDefinition as GeneratedStepDefinition,
+  NodeDefinition as GeneratedNodeDefinition,
+  WorkflowCatalog as GeneratedWorkflowCatalog,
+  FieldCatalog as GeneratedFieldCatalog,
+  DisplayType as GeneratedDisplayType,
+  EditCapability as GeneratedEditCapability,
+  FieldType as GeneratedFieldType,
+} from './field_catalog.generated.js';
+
+// Re-export types from generated catalog
+export type AssetType = GeneratedAssetType;
+export type AssetCategory = GeneratedAssetCategory;
+export type NodeType = GeneratedNodeType;
+export type Phase = GeneratedPhase;
+export type FieldDefinition = GeneratedFieldDefinition;
+export type AssetTypeFields = GeneratedAssetTypeFields;
+export type AssetTypeConfig = GeneratedAssetTypeConfig;
+export type StepDefinition = GeneratedStepDefinition;
+export type NodeDefinition = GeneratedNodeDefinition;
+export type WorkflowCatalog = GeneratedWorkflowCatalog;
+export type FieldCatalog = GeneratedFieldCatalog;
+export type DisplayType = GeneratedDisplayType;
+export type EditCapability = GeneratedEditCapability;
+export type FieldType = GeneratedFieldType;
+
+// Re-export helper functions from generated catalog
+export {
+  isValidAssetType,
+  getAssetTypeNodeType as assetTypeToNodeType,
+  getAssetTypeCategory as assetTypeToCategory,
+  getAssetTypeLabel,
+  getAssetTypeIconName,
+  getAllAssetTypes,
+  stepToPhase,
+  ASSET_TYPE_CONFIG,
+  FIELD_CATALOG,
+  WORKFLOW_CATALOG,
+  getFieldsByAssetType,
+  getFieldByName,
+  getCardColumns,
+  getEditableFields,
+  getAllSteps,
+  getStepByName,
+  getStepsByPhase,
+  getPhases,
+} from './field_catalog.generated.js';
 
 /**
  * Specific step operation type within a workflow.
@@ -33,38 +76,6 @@ export type Step =
   // Persistence - Storing/publishing results
   | "store"     // internal persistence
   | "publish";  // external distribution
-
-/**
- * High-level category grouping related asset types.
- */
-export type AssetCategory = "Content" | "Process" | "Verification";
-
-/**
- * Specific asset content or process type.
- * - Content: Data flowing through the pipeline (Media, Document, Data)
- * - Process: Transformations/computations (Code, Model, Action)
- * - Verification: Trust/claims (Claim)
- *
- * Note: Result and Dataset are removed. Use Document, Data, or Media instead.
- */
-export type AssetType =
-  // Content
-  | "Media" | "Document" | "Data"
-  // Process
-  | "Code" | "Model" | "Action"
-  // Verification
-  | "Claim";
-
-/**
- * Visual node category for rendering in the trace graph.
- */
-export type NodeType =
-  | "data"
-  | "process"
-  | "claim"
-  | "store"
-  | "media"
-  | "workflow";
 
 export type NodeRole = "source" | "sink" | "intermediate" | "process";
 
@@ -152,11 +163,11 @@ export interface TraceNodeData {
   id: string;
   label: string;
   title?: string;
-  nodeType: NodeType;
-  assetType?: AssetType;
+  nodeType: GeneratedNodeType;
+  assetType?: GeneratedAssetType;
   shape: NodeShape;
   step?: string;
-  phase: Phase;
+  phase: GeneratedPhase;
   manifest?: TraceManifestSummary;
   assetManifest?: AssetManifest;
   claimManifest?: unknown;
@@ -178,13 +189,13 @@ export interface TraceEdgeData {
   target: string;
   color?: string;
   isSimple?: boolean;
-  isGate?: boolean;
+  isClaim?: boolean;
 }
 
 export interface StepUI {
   id: string;
   label: string;
-  phase: Phase;
+  phase: GeneratedPhase;
   xStart: number;
   xEnd: number;
 }
@@ -197,67 +208,3 @@ export interface Trace {
   edges: TraceEdgeData[];
   steps: StepUI[];
 }
-
-/**
- * Maps an asset type to its corresponding node type for rendering.
- */
-export const assetTypeToNodeType = (assetType: AssetType): NodeType => {
-  switch (assetType) {
-    case "Model":
-    case "Code":
-    case "Action":
-      return "process";
-    case "Document":
-      return "data";
-    case "Data":
-      return "store";
-    case "Media":
-      return "media";
-    case "Claim":
-      return "claim";
-  }
-};
-
-/**
- * Maps a step to its parent phase.
- */
-export const stepToPhase = (step: Step): Phase => {
-  switch (step) {
-    case "ingest":
-      return "Acquisition";
-    case "select":
-    case "transform":
-    case "validate":
-      return "Preparation";
-    case "retrieve":
-    case "search":
-      return "Retrieval";
-    case "reflect":
-    case "plan":
-    case "evaluate":
-      return "Reasoning";
-    case "generate":
-      return "Generation";
-    case "store":
-    case "publish":
-      return "Persistence";
-  }
-};
-
-/**
- * Maps an asset type to its category.
- */
-export const assetTypeToCategory = (assetType: AssetType): AssetCategory => {
-  switch (assetType) {
-    case "Media":
-    case "Document":
-    case "Data":
-      return "Content";
-    case "Code":
-    case "Model":
-    case "Action":
-      return "Process";
-    case "Claim":
-      return "Verification";
-  }
-};

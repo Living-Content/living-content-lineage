@@ -19,14 +19,8 @@ export interface RenderState {
   phaseFilter: Phase | null;
 }
 
-export interface WorkflowRendererLayers {
-  nodeLayer: Container;
-  edgeLayer: Container;
-  connectorLayer: Container;
-}
-
 export interface WorkflowRendererDeps {
-  layers: WorkflowRendererLayers;
+  container: Container;
   workflowManager: WorkflowManager;
   mainWorkflowId: string;
 }
@@ -162,19 +156,20 @@ const createConnectorTextStyle = (): TextStyle => {
 };
 
 export const createWorkflowRenderer = (deps: WorkflowRendererDeps): WorkflowRenderer => {
-  const { layers, workflowManager, mainWorkflowId } = deps;
+  const { container, workflowManager, mainWorkflowId } = deps;
 
   // === REUSABLE Graphics objects (never recreated) ===
+  // Add edges first so they render behind nodes
   const edgeGraphics = {
     highlighted: new Graphics(),
     faded: new Graphics(),
   };
-  layers.edgeLayer.addChild(edgeGraphics.faded);
-  layers.edgeLayer.addChild(edgeGraphics.highlighted);
+  container.addChildAt(edgeGraphics.faded, 0);
+  container.addChildAt(edgeGraphics.highlighted, 1);
 
   let connectorContainer: Container | null = null;
   let connectorGraphics: Graphics | null = null;
-  let connectorText: Text | null = null;
+  const connectorTexts: Text[] = [];
 
   // === Render state ===
   let renderState: RenderState = {
@@ -197,7 +192,9 @@ export const createWorkflowRenderer = (deps: WorkflowRendererDeps): WorkflowRend
       for (const edge of workflow.edges) {
         const sourceNode = workflow.nodeMap.get(edge.source);
         const targetNode = workflow.nodeMap.get(edge.target);
-        if (!sourceNode || !targetNode) continue;
+        if (!sourceNode || !targetNode) {
+          continue;
+        }
 
         // Skip if both nodes are culled
         if (sourceNode.culled && targetNode.culled) continue;
@@ -215,51 +212,61 @@ export const createWorkflowRenderer = (deps: WorkflowRendererDeps): WorkflowRend
   };
 
   const redrawConnector = (): void => {
-    // Create container on first use
+    // Create connector container on first use (add after edges, before nodes)
     if (!connectorContainer) {
       connectorContainer = new Container();
       connectorGraphics = new Graphics();
       connectorContainer.addChild(connectorGraphics);
-      layers.connectorLayer.addChild(connectorContainer);
+      container.addChildAt(connectorContainer, 2);
     }
 
     connectorGraphics!.clear();
 
-    // Remove old text if exists
-    if (connectorText) {
-      connectorContainer.removeChild(connectorText);
-      connectorText.destroy();
-      connectorText = null;
+    // Remove old texts
+    for (const text of connectorTexts) {
+      connectorContainer.removeChild(text);
+      text.destroy();
     }
+    connectorTexts.length = 0;
 
-    // Get connector context (calculated in workflowConnector.ts)
-    const context = workflowManager.getConnectorContext(mainWorkflowId);
-    if (context.x === null || context.topY === null || context.bottomY === null) return;
+    // Get ALL connector contexts for all child workflows
+    const contexts = workflowManager.getAllConnectorContexts(mainWorkflowId);
+    if (contexts.length === 0) return;
 
-    const color = getPhaseColor(context.phase);
     const width = 2;
 
-    // Use the Y values from context directly - they're already calculated correctly
-    drawConnectorLine(connectorGraphics!, context.x, context.topY, context.bottomY, color, width);
+    for (const context of contexts) {
+      if (context.x === null || context.topY === null || context.bottomY === null) continue;
 
-    // Add metadata text at end of connector line (before child workflow)
-    const labelText = context.childWorkflowTitle ?? '';
+      const color = getPhaseColor(context.phase);
 
-    if (labelText) {
-      connectorText = new Text({
-        text: labelText,
-        style: createConnectorTextStyle(),
-      });
-      connectorText.anchor.set(0, 1);
-      connectorText.position.set(context.x + 16, context.bottomY);
-      connectorContainer.addChild(connectorText);
+      // Draw connector line
+      drawConnectorLine(connectorGraphics!, context.x, context.topY, context.bottomY, color, width);
+
+      // Add metadata text at end of connector line (before child workflow)
+      const labelText = context.childWorkflowTitle ?? '';
+
+      if (labelText) {
+        const text = new Text({
+          text: labelText,
+          style: createConnectorTextStyle(),
+        });
+        text.anchor.set(0, 1);
+        text.position.set(context.x + 16, context.bottomY);
+        connectorContainer.addChild(text);
+        connectorTexts.push(text);
+      }
     }
   };
 
   return {
     setRenderState(partial) {
+      const prevSelectedNodeId = renderState.selectedNodeId;
       renderState = { ...renderState, ...partial };
-      this.redrawEdges(); // Redraw on state change
+      // Only redraw if selection actually changed
+      if (renderState.selectedNodeId !== prevSelectedNodeId) {
+        this.redrawEdges();
+      }
     },
 
     getRenderState() {
@@ -291,7 +298,9 @@ export const createWorkflowRenderer = (deps: WorkflowRendererDeps): WorkflowRend
     destroy() {
       edgeGraphics.highlighted.destroy();
       edgeGraphics.faded.destroy();
-      connectorText?.destroy();
+      for (const text of connectorTexts) {
+        text.destroy();
+      }
       connectorGraphics?.destroy();
       connectorContainer?.destroy();
     },

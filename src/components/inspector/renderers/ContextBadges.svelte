@@ -3,8 +3,8 @@
    * Displays hierarchical context breadcrumbs: Type > Step > Phase.
    * Clean text style matching node visual language.
    */
-  import type { Phase, AssetType, Step } from '../../../config/types.ts';
-  import { formatAssetTypeLabel } from '../../../config/labels.js';
+  import type { Phase, AssetType, Step } from '../../../config/types.js';
+  import { getAssetTypeLabel } from '../../../config/types.js';
 
   let {
     phase = undefined,
@@ -19,7 +19,7 @@
   } = $props();
 
   let phaseClass = $derived(phase ? `phase-${phase.toLowerCase()}` : '');
-  let typeLabel = $derived(assetType ? formatAssetTypeLabel(assetType) : undefined);
+  let typeLabel = $derived(assetType ? getAssetTypeLabel(assetType) : undefined);
 
   // Build hierarchy array for rendering with separators (most specific first)
   let items = $derived(

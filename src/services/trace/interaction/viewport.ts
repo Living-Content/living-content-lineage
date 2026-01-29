@@ -2,7 +2,7 @@
  * Viewport controller for zoom/pan with coordinate transforms.
  */
 import { Container } from 'pixi.js';
-import { ZOOM_MIN, ZOOM_MAX, ZOOM_DEFAULT } from '../../../config/viewport.js';
+import { ZOOM_DEFAULT, ZOOM_SENSITIVITY } from '../../../config/viewport.js';
 
 export interface ViewportState {
   x: number;
@@ -20,7 +20,7 @@ export interface ViewportBounds {
 }
 
 export interface ViewportCallbacks {
-  onZoom: (scale: number) => void;
+  onZoom: (scale: number) => { actualScale: number; transitioned: boolean };
   onPan: () => void;
   onPanStart: () => void;
   onPanEnd: () => void;
@@ -103,28 +103,39 @@ export const createViewportHandlers = (
     // Block zoom during LOD animation or when interaction is blocked (detail view)
     if (callbacks.isZoomBlocked?.() || callbacks.isInteractionBlocked?.()) return;
 
-    const zoomFactor = e.deltaY > 0 ? 0.95 : 1.05;
-    const newScale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, state.scale * zoomFactor));
+    // Use sensitivity constant: 3% per scroll (smoother than 5%)
+    const zoomFactor = e.deltaY > 0 ? (1 - ZOOM_SENSITIVITY) : (1 + ZOOM_SENSITIVITY);
+    const newScale = state.scale * zoomFactor;
 
-    if (newScale === state.scale) return;
-
+    // Get mouse position
     const rect = container.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
 
+    // World point under mouse (before scale change)
     const worldX = (mouseX - state.x) / state.scale;
     const worldY = (mouseY - state.y) / state.scale;
 
-    state.scale = newScale;
-    state.x = mouseX - worldX * newScale;
-    state.y = mouseY - worldY * newScale;
+    // Callback handles containers, returns actual scale and whether level changed
+    const { actualScale, transitioned } = callbacks.onZoom(newScale);
 
-    clampPosition();
-
-    viewport.scale.set(state.scale);
-    viewport.position.set(state.x, state.y);
-
-    callbacks.onZoom(state.scale);
+    if (transitioned) {
+      // Keep screen center at same world point
+      const centerX = state.width / 2;
+      const centerY = state.height / 2;
+      const worldCenterX = (centerX - state.x) / state.scale;
+      const worldCenterY = (centerY - state.y) / state.scale;
+      state.scale = actualScale;
+      state.x = centerX - worldCenterX * actualScale;
+      state.y = centerY - worldCenterY * actualScale;
+      viewport.position.set(state.x, state.y);
+    } else {
+      // Normal zoom: keep mouse point stationary
+      state.scale = actualScale;
+      state.x = mouseX - worldX * actualScale;
+      state.y = mouseY - worldY * actualScale;
+      viewport.position.set(state.x, state.y);
+    }
   };
 
   const handlePointerDown = (e: PointerEvent): void => {
@@ -180,3 +191,4 @@ export const createViewportHandlers = (
     },
   };
 };
+

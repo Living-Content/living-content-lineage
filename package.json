@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "theme:generate": "tsx scripts/generate-theme.ts",
-    "dev": "npm run theme:generate && vite",
-    "build": "npm run theme:generate && tsc && vite build",
+    "catalog:generate": "tsx scripts/generate-catalog.ts",
+    "generate": "npm run theme:generate && npm run catalog:generate",
+    "dev": "npm run generate && vite",
+    "build": "npm run generate && tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier . --write",

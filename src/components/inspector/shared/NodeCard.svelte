@@ -4,8 +4,8 @@
    * Pill-shaped container with phase-colored accent, icon, and labels.
    */
   import type { AssetType, Phase } from '../../../config/types.js';
+  import { getAssetTypeLabel } from '../../../config/types.js';
   import { getAssetIconPath } from '../../../config/icons.js';
-  import { formatAssetTypeLabel } from '../../../config/labels.js';
 
   let {
     title,
@@ -18,7 +18,7 @@
   } = $props();
 
   let iconPath = $derived(assetType ? getAssetIconPath(assetType) : null);
-  let typeLabel = $derived(assetType ? formatAssetTypeLabel(assetType) : '');
+  let typeLabel = $derived(assetType ? getAssetTypeLabel(assetType) : '');
   let phaseClass = $derived(phase ? `phase-${phase.toLowerCase()}` : '');
 </script>
 

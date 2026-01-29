@@ -11,7 +11,7 @@ export const baseTokens = {
   // Layout dimensions
   'panel-margin': '25px',
   'panel-margin-mobile': '25px',
-  'header-height': '48px',
+  'header-height': '86px',
   'panel-max-width': '800px',
   'header-controls-width': '80px', // Width of header controls (menu + LOD icons + gaps)
 

@@ -1,25 +1,23 @@
 /**
  * View level state store using Svelte 5 runes.
  * Single source of truth for the 3-level zoom hierarchy.
+ *
+ * Each level has its own zoom space. Transitions happen at boundaries:
+ * - ZOOM_MIN: transition to more zoomed-out level
+ * - ZOOM_MAX: transition to more zoomed-in level
  */
-import { OVERVIEW_THRESHOLD, SESSION_THRESHOLD } from '../config/layout.js';
+import { ZOOM_MIN, ZOOM_MAX } from '../config/viewport.js';
 import type { ViewLevel } from '../config/types.js';
 
 // Re-export for backwards compatibility
 export type { ViewLevel } from '../config/types.js';
 
+// Level order for navigation (most zoomed out → most zoomed in)
+const LEVEL_ORDER: ViewLevel[] = ['content-session', 'workflow-overview', 'workflow-detail'];
+
 let level = $state<ViewLevel>('workflow-detail');
 let isTransitioning = $state(false);
 let isLocked = $state(false);
-
-/**
- * Determines the view level based on zoom scale.
- */
-const scaleToLevel = (scale: number): ViewLevel => {
-  if (scale < SESSION_THRESHOLD) return 'content-session';
-  if (scale < OVERVIEW_THRESHOLD) return 'workflow-overview';
-  return 'workflow-detail';
-};
 
 export const viewLevel = {
   get current(): ViewLevel {
@@ -35,20 +33,29 @@ export const viewLevel = {
   },
 
   /**
-   * Called on every zoom - checks thresholds and updates level.
-   * Returns the new level if it changed, null otherwise.
-   * When locked, always returns null (no view changes).
+   * Check if zooming has crossed a level boundary.
+   * Returns the new level if transitioning, null otherwise.
+   *
+   * - Zoom out past ZOOM_MIN → go to more zoomed-out level
+   * - Zoom in past ZOOM_MAX → go to more zoomed-in level
    */
   checkScale(scale: number): ViewLevel | null {
-    // When locked, don't change view level based on zoom
-    if (isLocked) return null;
+    if (isLocked || isTransitioning) return null;
 
-    const newLevel = scaleToLevel(scale);
+    const currentIndex = LEVEL_ORDER.indexOf(level);
 
-    if (newLevel !== level) {
-      level = newLevel;
-      return newLevel;
+    // Zoomed out past minimum → go to more zoomed-out level
+    if (scale <= ZOOM_MIN && currentIndex > 0) {
+      level = LEVEL_ORDER[currentIndex - 1];
+      return level;
     }
+
+    // Zoomed in past maximum → go to more zoomed-in level
+    if (scale >= ZOOM_MAX && currentIndex < LEVEL_ORDER.length - 1) {
+      level = LEVEL_ORDER[currentIndex + 1];
+      return level;
+    }
+
     return null;
   },
 

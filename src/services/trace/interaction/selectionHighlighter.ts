@@ -67,7 +67,7 @@ const applyNodeBlur = (
 export interface SelectionHighlighterDeps {
   nodeMap: Map<string, GraphNode>;
   stepNodeMap: Map<string, GraphNode>;
-  stepEdgeLayer: unknown;
+  stepEdgeContainer: unknown;
   steps: unknown[];
   setNodeAlpha: (nodeId: string, alpha: number) => void;
   useBlur?: boolean;

@@ -12,7 +12,7 @@ import type { ViewportState } from '../interaction/viewport.js';
 import type { ViewportManager } from '../layout/viewportManager.js';
 import type { SelectionController } from '../interaction/selectionController.js';
 import type { KeyboardNavigationController } from '../interaction/keyboardNavigation.js';
-import type { ViewLayerController } from '../layout/viewLayerController.js';
+import type { ViewContainerController } from '../layout/viewLayerController.js';
 import type { NodeAccessor } from '../layout/nodeAccessor.js';
 import type { PixiContext } from '../layout/pixiSetup.js';
 import type { GraphEngine, SelectionTarget } from './interface.js';
@@ -57,7 +57,7 @@ export interface EngineDeps {
   viewportManager: ViewportManager;
   selectionController: SelectionController;
   keyboardNavigation: KeyboardNavigationController;
-  viewLayerController: ViewLayerController;
+  viewContainerController: ViewContainerController;
   viewportState: ViewportState;
   animationController: { setNodeAlpha: (nodeId: string, alpha: number) => void; cleanup: () => void };
   stepLabels: { setPhaseFilter: (phase: Phase | null) => void; setVisible: (visible: boolean) => void };
@@ -79,7 +79,7 @@ const createHighlighterDeps = (
 ): SelectionHighlighterDeps => ({
   nodeMap: deps.nodeMap,
   stepNodeMap: new Map(), // Step nodes removed in view level refactor
-  stepEdgeLayer: deps.pixi.layers.detailEdgeLayer, // Not used for step edges anymore
+  stepEdgeContainer: deps.pixi.containers.workflowDetail, // Not used for step edges anymore
   steps: deps.steps,
   setNodeAlpha: deps.animationController.setNodeAlpha,
   useBlur,
@@ -256,7 +256,7 @@ export const createGraphEngine = (deps: EngineDeps): GraphEngine => {
     },
 
     transitionToLevel: (level: ViewLevel): void => {
-      deps.viewLayerController.transitionTo(level);
+      deps.viewContainerController.transitionTo(level);
     },
   };
 };

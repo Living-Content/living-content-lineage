@@ -12,6 +12,8 @@ import type { ViewportState } from '../interaction/viewport.js';
 import type { TopNodeInfo } from '../rendering/labelRenderer.js';
 import type { NodeAccessor } from './nodeAccessor.js';
 
+export type SetContainerScaleFn = (scale: number) => void;
+
 export interface ViewportManagerDeps {
   nodeAccessor: NodeAccessor;
   viewport: Container;
@@ -19,6 +21,7 @@ export interface ViewportManagerDeps {
   onUpdate: () => void;  // Single callback - coordinator handles view-specific logic
   getTopNodeInfo: () => TopNodeInfo | null;
   getBottomNodeInfo: () => TopNodeInfo | null;
+  setContainerScale: SetContainerScaleFn;  // Sets scale on active level container
 }
 
 export interface CenterOptions {
@@ -40,7 +43,7 @@ export interface ViewportManager {
  * Creates a viewport manager with node centering capabilities.
  */
 export function createViewportManager(deps: ViewportManagerDeps): ViewportManager {
-  const { nodeAccessor, viewport, viewportState, onUpdate, getTopNodeInfo, getBottomNodeInfo } = deps;
+  const { nodeAccessor, viewport, viewportState, onUpdate, getTopNodeInfo, getBottomNodeInfo, setContainerScale } = deps;
 
   const centerOnNode = (nodeId: string, options: CenterOptions = {}): void => {
     const node = nodeAccessor.getAny(nodeId);
@@ -78,7 +81,7 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
       ease: 'power2.out',
       onUpdate: () => {
         viewport.position.set(viewportState.x, viewportState.y);
-        viewport.scale.set(viewportState.scale);
+        setContainerScale(viewportState.scale);
         onUpdate();
       },
       onComplete,
@@ -142,7 +145,7 @@ export function createViewportManager(deps: ViewportManagerDeps): ViewportManage
       ease: 'power2.out',
       onUpdate: () => {
         viewport.position.set(viewportState.x, viewportState.y);
-        viewport.scale.set(viewportState.scale);
+        setContainerScale(viewportState.scale);
         onUpdate();
       },
       onComplete: options.onComplete,

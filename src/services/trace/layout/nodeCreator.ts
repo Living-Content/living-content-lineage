@@ -9,7 +9,7 @@ import { getCssVarInt } from '../../../themes/theme.js';
 import { traceState } from '../../../stores/traceState.svelte.js';
 import {
   createNode,
-  addElementsToLayer,
+  addElementsToContainer,
   populateElementMap,
   type HoverPayload,
   type CreateElementConfig,
@@ -23,8 +23,8 @@ interface NodeCreatorCallbacks {
 }
 
 interface NodeCreatorDeps {
-  container: HTMLElement;
-  nodeLayer: Container;
+  htmlContainer: HTMLElement;
+  pixiContainer: Container;
   graphScale: number;
   ticker: Ticker;
   callbacks: NodeCreatorCallbacks;
@@ -42,7 +42,7 @@ const buildElementConfig = (
   nodeMap: Map<string, GraphNode>
 ): CreateElementConfig => {
   const hoverConfig: HoverCallbackConfig = {
-    container: deps.container,
+    container: deps.htmlContainer,
     getSelectedNodeId: deps.getSelectedNodeId,
     setNodeAlpha: deps.setNodeAlpha,
     onHover: deps.callbacks.onHover,
@@ -60,7 +60,7 @@ const buildElementConfig = (
 };
 
 /**
- * Creates all nodes from trace data and adds them to the node layer.
+ * Creates all nodes from trace data and adds them to the container.
  */
 export const createNodes = async (
   nodes: TraceNodeData[],
@@ -93,32 +93,63 @@ export const createNodes = async (
     })
   );
 
-  addElementsToLayer(elements, deps.nodeLayer);
+  addElementsToContainer(elements, deps.pixiContainer);
   populateElementMap(elements, nodeMap);
 };
 
 /**
  * Repositions nodes: left-aligned within each step column, stacked vertically.
- * Claims and Actions keep their original Y positions - only regular asset nodes stack.
+ * Actions keep their original Y positions - only regular asset nodes stack.
+ * Claims are excluded here and repositioned separately to follow their verified nodes.
  * Used for expanded view nodes.
  */
 export const repositionNodesWithGaps = (nodeMap: Map<string, GraphNode>): void => {
-  // Separate nodes into stackable (regular assets) and non-stackable (claims, actions)
+  // Separate nodes: stackable assets, actions, and claims (handled separately)
   const isStackable = (node: GraphNode): boolean => {
     const data = node.nodeData;
     return data.nodeType !== 'claim' && data.assetType !== 'Action';
   };
+  const isAction = (node: GraphNode): boolean => node.nodeData.assetType === 'Action';
+  const isClaim = (node: GraphNode): boolean => node.nodeData.nodeType === 'claim';
+
+  // Collect claims separately - they'll be repositioned after their verified nodes
+  const claimNodes: GraphNode[] = [];
+
+  // Build a map of original X positions to nodes (BEFORE any repositioning)
+  // Claims have same X as their verified node in traceLayout
+  const originalXToNodes = new Map<number, GraphNode[]>();
+  nodeMap.forEach((node) => {
+    if (isClaim(node)) return;
+    const x = Math.round(node.position.x);
+    if (!originalXToNodes.has(x)) originalXToNodes.set(x, []);
+    originalXToNodes.get(x)!.push(node);
+  });
+
+  // Map claims to their verified nodes using original X position
+  const claimToVerifiedNode = new Map<GraphNode, GraphNode>();
 
   // Group nodes by their original X position (step column)
-  const nodesByX = new Map<number, { stackable: GraphNode[]; fixed: GraphNode[] }>();
+  const nodesByX = new Map<number, { stackable: GraphNode[]; actions: GraphNode[] }>();
   nodeMap.forEach((node) => {
+    if (isClaim(node)) {
+      claimNodes.push(node);
+      // Find the verified node at same original X
+      const claimX = Math.round(node.position.x);
+      const candidates = originalXToNodes.get(claimX) ?? [];
+      // Pick the first non-action candidate (the asset being verified)
+      const verified = candidates.find((n) => n.nodeData.assetType !== 'Action');
+      if (verified) {
+        claimToVerifiedNode.set(node, verified);
+      }
+      return;
+    }
     const x = Math.round(node.position.x);
-    if (!nodesByX.has(x)) nodesByX.set(x, { stackable: [], fixed: [] });
+    if (!nodesByX.has(x)) nodesByX.set(x, { stackable: [], actions: [] });
     const group = nodesByX.get(x)!;
     if (isStackable(node)) {
       group.stackable.push(node);
-    } else {
-      group.fixed.push(node);
+    } else if (isAction(node)) {
+      group.actions.push(node);
     }
   });
 
@@ -136,14 +167,14 @@ export const repositionNodesWithGaps = (nodeMap: Map<string, GraphNode>): void =
   let rightEdge = -Infinity;
 
   for (const group of sortedGroups) {
-    const allNodes = [...group.stackable, ...group.fixed];
+    const allNodes = [...group.stackable, ...group.actions];
     if (allNodes.length === 0) continue;
 
     // All nodes in the same group have the same width (per-group max from traceState)
-    const maxWidth = group.stackable[0]?.nodeWidth ?? group.fixed[0]?.nodeWidth ?? 0;
+    const maxWidth = group.stackable[0]?.nodeWidth ?? group.actions[0]?.nodeWidth ?? 0;
 
     // Calculate new X position (left edge of column)
-    const firstNode = group.stackable[0] ?? group.fixed[0];
+    const firstNode = group.stackable[0] ?? group.actions[0];
     const columnLeftX = rightEdge === -Infinity
       ? firstNode.position.x - maxWidth / 2
       : rightEdge + getCssVarInt('--expanded-edge-gap');
@@ -163,14 +194,23 @@ export const repositionNodesWithGaps = (nodeMap: Map<string, GraphNode>): void =
       }
     }
 
-    // Fixed nodes (claims, actions) only get X repositioned, keep original Y
-    for (const node of group.fixed) {
+    // Actions only get X repositioned, keep original Y
+    for (const node of group.actions) {
       const newX = columnLeftX + maxWidth / 2; // Center in column
       node.position.x = newX;
     }
 
     // Update right edge for next column
     rightEdge = columnLeftX + maxWidth;
+  }
+
+  // Reposition claims to follow their verified nodes
+  // Use the mapping we built before repositioning
+  for (const claim of claimNodes) {
+    const verifiedNode = claimToVerifiedNode.get(claim);
+    if (verifiedNode) {
+      claim.position.x = verifiedNode.position.x;
+    }
   }
 };
 

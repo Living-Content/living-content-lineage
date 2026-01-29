@@ -7,7 +7,7 @@
  */
 import type { Trace, TraceEdgeData, Phase } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
-import { getConnectorContext } from './connector.js';
+import { getAllConnectorContexts } from './connector.js';
 
 export type WorkflowRelationship = 'main' | 'ancestor' | 'child' | 'replay';
 
@@ -100,8 +100,8 @@ export interface WorkflowManager {
   /** Get edge data for rendering (read-only). */
   getEdgeData(): readonly WorkflowEdgeData[];
 
-  /** Get connector context for rendering (read-only). */
-  getConnectorContext(mainWorkflowId: string): WorkflowConnectorContext;
+  /** Get connector contexts for rendering (one per child workflow). */
+  getAllConnectorContexts(mainWorkflowId: string): WorkflowConnectorContext[];
 }
 
 /**
@@ -223,8 +223,8 @@ export const createWorkflowManager = (): WorkflowManager => {
     return result;
   };
 
-  const getConnectorCtx = (mainWorkflowId: string): WorkflowConnectorContext => {
-    return getConnectorContext({ getAll, get }, mainWorkflowId);
+  const getAllConnectorCtxs = (mainWorkflowId: string): WorkflowConnectorContext[] => {
+    return getAllConnectorContexts({ getAll, get }, mainWorkflowId);
   };
 
   return {
@@ -239,6 +239,6 @@ export const createWorkflowManager = (): WorkflowManager => {
     getTopNodeInfo,
     getBottomNodeInfo,
     getEdgeData,
-    getConnectorContext: getConnectorCtx,
+    getAllConnectorContexts: getAllConnectorCtxs,
   };
 };

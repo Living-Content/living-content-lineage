@@ -1,84 +1,81 @@
 /**
- * Pixi.js application initialization and layer hierarchy setup.
+ * Pixi.js application initialization and container hierarchy setup.
  * Implements 3-level view hierarchy: session, overview, detail.
+ * Each level has its own container with independent zoom.
  */
 import { Application, Container } from 'pixi.js';
+import type { ViewLevel } from '../../../config/types.js';
+import { ZOOM_DEFAULT } from '../../../config/viewport.js';
 
-export interface LayerGroup {
-  // Content Session view (zoom < 0.15)
-  sessionLayer: Container;
-
-  // Workflow Overview view (zoom 0.15 - 0.35)
-  overviewLayer: Container;
-  connectorLayer: Container;
-
-  // Workflow Detail view (zoom > 0.35)
-  detailEdgeLayer: Container;
-  detailNodeLayer: Container;
+export interface ViewContainers {
+  contentSession: Container;
+  workflowOverview: Container;
+  workflowDetail: Container;
 }
 
 export interface PixiContext {
   app: Application;
   viewport: Container;
-  layers: LayerGroup;
+  containers: ViewContainers;
 }
 
 /**
  * Initialize Pixi.js application with WebGL renderer.
  */
-export async function initializePixi(container: HTMLElement): Promise<PixiContext> {
+export async function initializePixi(htmlContainer: HTMLElement): Promise<PixiContext> {
   const app = new Application();
   await app.init({
-    resizeTo: container,
+    resizeTo: htmlContainer,
     backgroundAlpha: 0,
     antialias: true,
     resolution: window.devicePixelRatio || 1,
     autoDensity: true,
   });
-  container.appendChild(app.canvas);
+  htmlContainer.appendChild(app.canvas);
 
   const viewport = new Container();
   app.stage.addChild(viewport);
 
-  const layers = createLayerHierarchy(viewport);
+  const containers = createViewContainers(viewport);
 
-  return { app, viewport, layers };
+  return { app, viewport, containers };
 }
 
 /**
- * Create the layer hierarchy for the 3-level view system.
- * Order (back to front): session → overview/connectors → detail edges → detail nodes
+ * Create the container hierarchy for the 3-level view system.
+ * Each level gets its own container with independent zoom.
  */
-export function createLayerHierarchy(viewport: Container): LayerGroup {
-  // Session view layer (zoomed way out)
-  const sessionLayer = new Container();
+export function createViewContainers(viewport: Container): ViewContainers {
+  const contentSession = new Container();
+  const workflowOverview = new Container();
+  const workflowDetail = new Container();
 
-  // Overview layers (middle zoom)
-  const overviewLayer = new Container();
-  const connectorLayer = new Container();
+  viewport.addChild(workflowDetail, workflowOverview, contentSession);
 
-  // Detail layers (zoomed in)
-  const detailEdgeLayer = new Container();
-  const detailNodeLayer = new Container();
+  // contentSession and workflowOverview start hidden (detail view is default)
+  contentSession.visible = false;
+  workflowOverview.visible = false;
 
-  viewport.addChild(
-    sessionLayer,
-    overviewLayer,
-    connectorLayer,
-    detailEdgeLayer,
-    detailNodeLayer
-  );
+  // Initialize all containers to default zoom scale
+  contentSession.scale.set(ZOOM_DEFAULT);
+  workflowOverview.scale.set(ZOOM_DEFAULT);
+  workflowDetail.scale.set(ZOOM_DEFAULT);
 
-  // Session and overview layers start hidden (detail view is default)
-  sessionLayer.visible = false;
-  overviewLayer.visible = false;
-  connectorLayer.visible = false;
+  return { contentSession, workflowOverview, workflowDetail };
+}
 
-  return {
-    sessionLayer,
-    overviewLayer,
-    connectorLayer,
-    detailEdgeLayer,
-    detailNodeLayer,
-  };
+/**
+ * Map ViewLevel to container key.
+ */
+const LEVEL_TO_KEY: Record<ViewLevel, keyof ViewContainers> = {
+  'content-session': 'contentSession',
+  'workflow-overview': 'workflowOverview',
+  'workflow-detail': 'workflowDetail',
+};
+
+/**
+ * Get the container for a given view level.
+ */
+export function getContainerForLevel(containers: ViewContainers, level: ViewLevel): Container {
+  return containers[LEVEL_TO_KEY[level]];
 }

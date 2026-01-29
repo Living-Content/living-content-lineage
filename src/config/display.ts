@@ -1,9 +1,10 @@
 /**
- * Display configuration for each asset type.
- * Defines which fields appear in card views vs detail views.
+ * Display configuration utilities for asset types.
+ * Bridge between generated catalog and rendering components.
  */
 import type { DataCardType } from './cardTypes.js';
-import type { AssetType } from './types.js';
+import type { AssetType, FieldDefinition, DisplayType, EditCapability } from './types.js';
+import { FIELD_CATALOG, getFieldsByAssetType, getCardColumns } from './types.js';
 
 // Content parsing
 export const SUMMARY_VALUE_MAX_LENGTH = 100;
@@ -15,6 +16,7 @@ export type EditType = 'text' | 'json' | 'select' | 'number' | 'textarea';
 
 /**
  * Configuration for how a single field should be displayed.
+ * Bridge interface between generated FieldDefinition and component expectations.
  */
 export interface FieldDisplayConfig {
   /** The rendering type for this field */
@@ -57,129 +59,94 @@ export interface AssetDisplayConfig {
 }
 
 /**
- * Default display configs keyed by AssetType.
- *
- * isCard: true  → shows as a card in summary view, compact card in detail view
- * isCard: false → shows only in detail view (not as card)
+ * Convert generated FieldDefinition to FieldDisplayConfig
  */
-export const DISPLAY_CONFIGS: Record<AssetType, AssetDisplayConfig> = {
-  // Process Types
-  Model: {
-    cardColumns: 4,
-    fields: {
-      // Note: model name is already shown as title, don't duplicate
-      'inputTokens': { type: 'metric', isCard: true, label: 'Input Tokens', source: 'data.inputTokens', span: 2 },
-      'outputTokens': { type: 'metric', isCard: true, label: 'Output Tokens', source: 'data.outputTokens', span: 2 },
-      'totalDurationMs': { type: 'duration', isCard: true, label: 'Duration', source: 'data.totalDurationMs', span: 2 },
-      'temperature': { type: 'number', isCard: true, label: 'Temperature', source: 'data.temperature', span: 2, isEditable: true, editType: 'number' },
-      'tokenLimit': { type: 'metric', isCard: false, label: 'Token Limit', source: 'data.tokenLimit', isEditable: true, editType: 'number' },
-    }
-  },
+function fieldDefinitionToDisplayConfig(field: FieldDefinition): FieldDisplayConfig {
+  // Map DisplayType to DataCardType (they're compatible strings)
+  const displayTypeToCardType: Record<DisplayType, DataCardType> = {
+    'metric': 'metric',
+    'text': 'text',
+    'text-preview': 'text-preview',
+    'badge': 'badge',
+    'status': 'status',
+    'duration': 'duration',
+    'datetime': 'datetime',
+    'percentage': 'percentage',
+    'dimensions': 'dimensions',
+    'filesize': 'filesize',
+    'hash': 'hash',
+    'number': 'number',
+    'code': 'code',
+    'markdown': 'markdown',
+    'list': 'list',
+    'link-pair': 'link-pair',
+    'asset-list': 'asset-list',
+    'chunk-list': 'chunk-list',
+    'key-value': 'key-value',
+  };
 
-  Code: {
-    cardColumns: 4,
-    fields: {
-      'durationMs': { type: 'duration', isCard: true, label: 'Duration', source: 'data.durationMs', span: 2 },
-      'module': { type: 'text', isCard: true, label: 'Module', source: 'data.module', span: 2 },
-      'arguments': { type: 'key-value', isCard: false, label: 'Arguments', source: 'data.arguments', isEditable: true, editType: 'json' },
-      'sourceCode': { type: 'code', isCard: false, label: 'Source Code', source: 'data.sourceCode' },
-    }
-  },
+  // Map EditCapability to EditType
+  const editCapabilityToType: Record<EditCapability, EditType | undefined> = {
+    'none': undefined,
+    'text': 'text',
+    'textarea': 'textarea',
+    'number': 'number',
+    'json': 'json',
+    'select': 'select',
+  };
 
-  Action: {
-    // Action is now a pure connector node with no data payload
-    // Just displays title and description, connects inputs to outputs
-    cardColumns: 4,
-    fields: {}
-  },
+  const editType = editCapabilityToType[field.editCapability];
 
-  // Content Types
-  Document: {
-    cardColumns: 4,
-    fields: {
-      // === INGEST (user query arriving) - query moved to detail-only (can be long) ===
-      'query': { type: 'text-preview', isCard: false, label: 'Query', source: 'data.query', truncateAt: 500, isEditable: true, editType: 'textarea' },
-      'messageCount': { type: 'metric', isCard: true, label: 'Messages', source: 'data.messageCount', span: 2 },
-      'value': { type: 'text-preview', isCard: true, label: 'Content', source: 'data.value', span: 4, truncateAt: 100, isEditable: true, editType: 'textarea' },
+  return {
+    type: displayTypeToCardType[field.displayType],
+    isCard: field.isCard,
+    label: field.label,
+    span: field.span as 1 | 2 | 3 | 4 | undefined,
+    truncateAt: field.truncateAt,
+    unit: field.unit,
+    source: field.sourcePath,
+    isEditable: field.editCapability !== 'none',
+    editType,
+  };
+}
 
-      // === SELECT (tool selection - model metrics shown on MODEL node, not here) ===
-      'toolId': { type: 'badge', isCard: true, label: 'Tool', source: 'data.toolId', span: 2 },
-      'candidates': { type: 'list', isCard: false, label: 'Candidates', source: 'data.candidates' },
-      'llmResponse': { type: 'text-preview', isCard: false, label: 'Selection', source: 'data.llmResponse', truncateAt: 100 },
+/**
+ * Build AssetDisplayConfig from generated catalog for an asset type.
+ */
+function buildDisplayConfig(assetType: string): AssetDisplayConfig {
+  const fields = getFieldsByAssetType(assetType);
+  const cardColumns = getCardColumns(assetType);
 
-      // === REFLECT (gap analysis) ===
-      'gaps': { type: 'list', isCard: true, label: 'Knowledge Gaps', source: 'data.gaps', span: 4 },
-      'requirements': { type: 'list', isCard: false, label: 'Requirements', source: 'data.requirements' },
-      'reasoningTrace': { type: 'text-preview', isCard: false, label: 'Reasoning', source: 'data.reasoningTrace', truncateAt: 500 },
-      'dataQualityAssessment': { type: 'text-preview', isCard: true, label: 'Data Quality', source: 'data.dataQualityAssessment', span: 4, truncateAt: 200 },
+  const fieldsRecord: Record<string, FieldDisplayConfig> = {};
+  for (const field of fields) {
+    fieldsRecord[field.name] = fieldDefinitionToDisplayConfig(field);
+  }
 
-      // === PLAN (query planning) ===
-      'queries': { type: 'list', isCard: true, label: 'Planned Queries', source: 'data.queries', span: 4 },
-      'executionPlan': { type: 'key-value', isCard: false, label: 'Execution Plan', source: 'data.executionPlan' },
+  return {
+    fields: fieldsRecord,
+    cardColumns: cardColumns as 2 | 3 | 4,
+  };
+}
 
-      // === EVALUATE (sufficiency check) ===
-      'isSufficient': { type: 'status', isCard: true, label: 'Data Sufficient', source: 'data.isSufficient', span: 2 },
-      'iteration': { type: 'metric', isCard: true, label: 'Iteration', source: 'data.iteration', span: 2 },
-      'shouldContinue': { type: 'status', isCard: true, label: 'Continue?', source: 'data.shouldContinue', span: 2 },
-
-      // === GENERATE (response generation - model metrics shown on MODEL node) ===
-      'responseLength': { type: 'metric', isCard: true, label: 'Response Length', source: 'data.responseLength', span: 2 },
-      'response': { type: 'markdown', isCard: false, label: 'Response', source: 'data.response' },
-
-      // === STORE (persistence) ===
-      'requestMessageId': { type: 'text', isCard: false, label: 'Request ID', source: 'data.requestMessageId' },
-      'responseMessageId': { type: 'text', isCard: false, label: 'Response ID', source: 'data.responseMessageId' },
-    }
-  },
-
-  Data: {
-    cardColumns: 4,
-    fields: {
-      // === HISTORY (conversation) ===
-      'messageCount': { type: 'metric', isCard: true, label: 'Messages', source: 'data.messageCount', span: 2 },
-      'conversationHistory': { type: 'list', isCard: false, label: 'Conversation History', source: 'data.conversationHistory' },
-
-      // === RETRIEVE (search results) ===
-      'count': { type: 'metric', isCard: true, label: 'Results Found', source: 'data.count', span: 2 },
-      'totalChunks': { type: 'metric', isCard: true, label: 'Chunks', source: 'data.totalChunks', span: 2 },
-      'success': { type: 'status', isCard: true, label: 'Status', source: 'data.success', span: 2 },
-      'evaluationSummary': { type: 'text-preview', isCard: true, label: 'Summary', source: 'data.evaluationSummary', span: 4, truncateAt: 200 },
-      'chunks': { type: 'list', isCard: false, label: 'Retrieved Chunks', source: 'data.chunks' },
-    }
-  },
-
-  Media: {
-    cardColumns: 4,
-    fields: {
-      'format': { type: 'badge', isCard: true, label: 'Format', source: 'manifest.format', span: 2 },
-      'dimensions': { type: 'dimensions', isCard: true, label: 'Dimensions', source: 'computed.dimensions', span: 2 },
-      'fileSize': { type: 'filesize', isCard: true, label: 'File Size', source: 'data.size', span: 4 },
-      'mimeType': { type: 'text', isCard: false, label: 'MIME Type', source: 'manifest.format' },
-      'duration': { type: 'duration', isCard: false, label: 'Duration', source: 'data.duration' },
-    }
-  },
-
-  // Verification Types
-  Claim: {
-    cardColumns: 4,
-    fields: {
-      'status': { type: 'status', isCard: true, label: 'Status', source: 'computed.status', span: 2 },
-      'algorithm': { type: 'badge', isCard: true, label: 'Algorithm', source: 'manifest.attestation.alg', span: 2 },
-      'issuer': { type: 'text', isCard: false, label: 'Issuer', source: 'manifest.attestation.issuer' },
-    }
-  },
-
-};
+// Cache for display configs
+const displayConfigCache = new Map<string, AssetDisplayConfig>();
 
 /**
  * Get display config for an asset type.
  * Returns the config if found, or a default empty config.
  */
-export const getDisplayConfig = (assetType: AssetType | undefined): AssetDisplayConfig => {
-  if (!assetType || !(assetType in DISPLAY_CONFIGS)) {
+export const getDisplayConfig = (assetType: AssetType | string | undefined): AssetDisplayConfig => {
+  if (!assetType) {
     return { fields: {}, cardColumns: 4 };
   }
-  return DISPLAY_CONFIGS[assetType];
+
+  // Check cache first
+  let config = displayConfigCache.get(assetType);
+  if (!config) {
+    config = buildDisplayConfig(assetType);
+    displayConfigCache.set(assetType, config);
+  }
+  return config;
 };
 
 /**
@@ -314,7 +281,7 @@ export const classifyCardFields = (
 /**
  * Get editable fields from a config.
  */
-export const getEditableFields = (config: AssetDisplayConfig): [string, FieldDisplayConfig][] => {
+export const getEditableFieldsFromConfig = (config: AssetDisplayConfig): [string, FieldDisplayConfig][] => {
   return Object.entries(config.fields).filter(([, field]) => field.isEditable);
 };
 

@@ -14,6 +14,7 @@ export const GAP_BETWEEN_BANDS = 0.1;
 // Trace layout (normalized 0-1 space)
 export const TRACE_HORIZONTAL_GAP = 0.15;
 export const TRACE_VERTICAL_GAP = 0.05;
+export const TRACE_CLAIM_GAP = 0.10;
 export const TRACE_STEP_PADDING = 0.04;
 
 // Step label positioning (world space pixels)

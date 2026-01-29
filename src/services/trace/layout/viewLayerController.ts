@@ -1,76 +1,52 @@
 /**
- * View layer controller with simple fade transitions.
- * Manages visibility of 3-level view hierarchy layers.
+ * View container controller with simple fade transitions.
+ * Manages visibility of 3-level view hierarchy containers.
  */
 import { Container } from 'pixi.js';
 import gsap from 'gsap';
 import type { ViewLevel } from '../../../config/types.js';
-import type { LayerGroup } from './pixiSetup.js';
+import type { ViewContainers } from './pixiSetup.js';
+import { getContainerForLevel } from './pixiSetup.js';
 import { ANIMATION_TIMINGS } from '../../../config/animation.js';
+import { viewLevel } from '../../../stores/viewLevel.svelte.js';
 
-export interface ViewLayerController {
+export interface ViewContainerController {
   transitionTo: (newLevel: ViewLevel) => void;
   getCurrentLevel: () => ViewLevel;
 }
 
-interface LayerSet {
-  primary: Container;
-  secondary?: Container;
-}
-
 /**
- * Creates a view layer controller for managing 3-level view transitions.
+ * Creates a view container controller for managing 3-level view transitions.
  */
-export const createViewLayerController = (layers: LayerGroup): ViewLayerController => {
+export const createViewContainerController = (containers: ViewContainers): ViewContainerController => {
   let currentLevel: ViewLevel = 'workflow-detail';
-
-  const getLayerSet = (level: ViewLevel): LayerSet => {
-    switch (level) {
-      case 'content-session':
-        return { primary: layers.sessionLayer };
-      case 'workflow-overview':
-        return { primary: layers.overviewLayer, secondary: layers.connectorLayer };
-      case 'workflow-detail':
-        return { primary: layers.detailNodeLayer, secondary: layers.detailEdgeLayer };
-    }
-  };
-
-  const setLayerVisible = (layerSet: LayerSet, visible: boolean): void => {
-    layerSet.primary.visible = visible;
-    if (layerSet.secondary) {
-      layerSet.secondary.visible = visible;
-    }
-  };
-
-  const setLayerAlpha = (layerSet: LayerSet, alpha: number): void => {
-    layerSet.primary.alpha = alpha;
-    if (layerSet.secondary) {
-      layerSet.secondary.alpha = alpha;
-    }
-  };
 
   const transitionTo = (newLevel: ViewLevel): void => {
     if (newLevel === currentLevel) return;
 
-    const outgoing = getLayerSet(currentLevel);
-    const incoming = getLayerSet(newLevel);
+    const outgoing = getContainerForLevel(containers, currentLevel);
+    const incoming = getContainerForLevel(containers, newLevel);
     const duration = ANIMATION_TIMINGS.VIEW_LEVEL_FADE_DURATION;
 
-    // Fade out outgoing layers
-    gsap.to([outgoing.primary, outgoing.secondary].filter(Boolean), {
+    // Block further zoom during transition
+    viewLevel.setTransitioning(true);
+
+    // Fade out outgoing container
+    gsap.to(outgoing, {
       alpha: 0,
       duration,
       ease: 'power2.in',
-      onComplete: () => setLayerVisible(outgoing, false),
+      onComplete: () => { outgoing.visible = false; },
     });
 
-    // Fade in incoming layers
-    setLayerVisible(incoming, true);
-    setLayerAlpha(incoming, 0);
-    gsap.to([incoming.primary, incoming.secondary].filter(Boolean), {
+    // Fade in incoming container
+    incoming.visible = true;
+    incoming.alpha = 0;
+    gsap.to(incoming, {
       alpha: 1,
       duration,
       ease: 'power2.out',
+      onComplete: () => { viewLevel.setTransitioning(false); },
     });
 
     currentLevel = newLevel;

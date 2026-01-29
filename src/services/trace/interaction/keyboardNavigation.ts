@@ -8,7 +8,6 @@ import type { NodeAccessor } from '../layout/nodeAccessor.js';
 
 export interface KeyboardNavigationDeps {
   nodeAccessor: NodeAccessor;
-  nodes: TraceNodeData[];
   steps: StepUI[];
   onExpand: (node: TraceNodeData) => void;
   onCollapse: () => void;
@@ -85,10 +84,21 @@ const findNearestNode = (
  * Creates a keyboard navigation controller for graph nodes.
  */
 export const createKeyboardNavigation = (deps: KeyboardNavigationDeps): KeyboardNavigationController => {
-  const { nodes, onExpand, onCollapse, centerOnNode, updateOverlayNode } = deps;
+  const { nodeAccessor, onExpand, onCollapse, centerOnNode, updateOverlayNode } = deps;
 
-  const selectableNodes = nodes.filter(n => n.assetType !== 'Action');
-  const sortedNodes = sortNodesByPosition(selectableNodes);
+  /**
+   * Get all selectable nodes from all workflows (dynamically).
+   */
+  const getSelectableNodes = (): TraceNodeData[] => {
+    const nodeMap = nodeAccessor.getActiveMap();
+    const nodes: TraceNodeData[] = [];
+    for (const graphNode of nodeMap.values()) {
+      if (graphNode.nodeData.assetType !== 'Action') {
+        nodes.push(graphNode.nodeData);
+      }
+    }
+    return nodes;
+  };
 
   const handleKeyDown = (event: KeyboardEvent): void => {
     if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
@@ -122,6 +132,9 @@ export const createKeyboardNavigation = (deps: KeyboardNavigationDeps): Keyboard
       case 'ArrowRight': {
         event.preventDefault();
 
+        // Get all selectable nodes from all workflows
+        const selectableNodes = getSelectableNodes();
+
         // Get current node - use expanded node if overlay open, otherwise selection
         const currentNode = isExpanded
           ? traceState.expandedNode
@@ -140,7 +153,8 @@ export const createKeyboardNavigation = (deps: KeyboardNavigationDeps): Keyboard
               centerOnNode(nextNode.id, { onComplete: updateOverlayNode });
             }
           }
-        } else if (sortedNodes.length > 0) {
+        } else if (selectableNodes.length > 0) {
+          const sortedNodes = sortNodesByPosition(selectableNodes);
           traceState.selectNode(sortedNodes[0]);
           if (!isExpanded) {
             centerOnNode(sortedNodes[0].id, { onComplete: updateOverlayNode });

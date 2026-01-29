@@ -4,10 +4,13 @@
  */
 
 // Zoom limits and defaults
-export const ZOOM_MIN = 0.15;
+export const ZOOM_MIN = 0.3;
 export const ZOOM_MAX = 1.3;
 export const ZOOM_DEFAULT = 0.8;
-export const ZOOM_FACTOR = 0.95;
+export const ZOOM_FACTOR = 0.85;
+
+// Zoom sensitivity: 0.03 = 3% per scroll (smoother than 5%)
+export const ZOOM_SENSITIVITY = 0.02;
 
 // Viewport bounds (pixels)
 export const VIEWPORT_TOP_MARGIN = 80;

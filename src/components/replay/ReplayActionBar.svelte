@@ -1,8 +1,7 @@
 <script lang="ts">
   /**
    * Action bar for submitting or resetting replay modifications.
-   * Appears when modifications exist, provides replay submission controls.
-   * Uses toastStore for feedback notifications.
+   * Appears when modifications exist, styled to match the header bar.
    */
   import { slide } from 'svelte/transition';
   import { replayState } from '../../stores/replayState.svelte.js';
@@ -34,30 +33,31 @@
   <div class="replay-bar" transition:slide={{ duration: 200 }}>
     <div class="bar-content">
       <div class="info">
+        <span class="modified-indicator"></span>
         <span class="count">{modificationCount}</span>
         <span class="label">
-          {modificationCount === 1 ? 'modification' : 'modifications'}
+          {modificationCount === 1 ? 'edit' : 'edits'}
         </span>
       </div>
 
       <div class="actions">
         <button
-          class="button button--secondary"
+          class="action-btn"
           onclick={handleReset}
           disabled={isSubmitting}
         >
-          Reset
+          RESET
         </button>
         <button
-          class="button button--primary"
+          class="action-btn primary"
           onclick={handleSubmit}
           disabled={isSubmitting}
         >
           {#if isSubmitting}
             <span class="spinner"></span>
-            Submitting...
+            SUBMITTING...
           {:else}
-            Replay from here
+            START REPLAY
           {/if}
         </button>
       </div>
@@ -71,10 +71,9 @@
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: var(--z-modal, 1000);
-    background: var(--color-surface);
-    border-top: 1px solid var(--color-border);
-    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+    z-index: var(--z-menu-toggle);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 
   .bar-content {
@@ -82,42 +81,76 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--space-lg);
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: var(--space-md) var(--space-xl);
+    padding: var(--panel-margin);
   }
 
   .info {
     display: flex;
-    align-items: baseline;
-    gap: var(--space-xs);
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .modified-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--color-warning, #f59e0b);
+    border-radius: 50%;
   }
 
   .count {
-    font-size: var(--font-size-large);
+    font-size: 18px;
     font-weight: 600;
-    color: var(--color-primary);
+    color: rgb(var(--color-foreground));
   }
 
   .label {
     font-size: var(--font-size-small);
-    color: var(--color-text-secondary);
+    color: rgba(var(--color-foreground), 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   .actions {
     display: flex;
-    gap: var(--space-sm);
+    gap: var(--space-md);
+    align-items: center;
   }
 
-  /* Button overrides for replay bar context */
-  .actions .button {
-    padding: var(--space-sm) var(--space-lg);
+  .action-btn {
+    padding: var(--space-xs) var(--space-md);
     font-size: var(--font-size-small);
+    font-weight: 600;
+    font-family: inherit;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    color: rgba(var(--color-foreground), 0.5);
+    cursor: pointer;
+    transition: color 0.15s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  .action-btn:hover:not(:disabled) {
+    color: rgb(var(--color-foreground));
+  }
+
+  .action-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .action-btn.primary {
+    color: rgb(var(--color-foreground));
   }
 
   .spinner {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     border: 2px solid transparent;
     border-top-color: currentColor;
     border-radius: 50%;
@@ -138,11 +171,7 @@
 
     .actions {
       width: 100%;
-    }
-
-    .actions .button {
-      flex: 1;
-      justify-content: center;
+      justify-content: flex-end;
     }
   }
 </style>

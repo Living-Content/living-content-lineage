@@ -4,19 +4,20 @@
  *
  * This is system composition: creating the relationships between parts.
  */
-import type { Trace, TraceNodeData, Phase } from '../../../config/types.js';
+import type { Trace, TraceNodeData, Phase, ViewLevel } from '../../../config/types.js';
 import type { GraphNode } from '../rendering/nodeRenderer.js';
 import type { ViewportState } from '../interaction/viewport.js';
 import { createViewportHandlers } from '../interaction/viewport.js';
 import type { PixiContext } from '../layout/pixiSetup.js';
+import { getContainerForLevel } from '../layout/pixiSetup.js';
 import type { GraphIndices } from './indices.js';
 import type { EngineState } from './engine.js';
 import { createGraphEngine } from './engine.js';
 import type { GraphEngine, BootstrapCallbacks } from './interface.js';
 import { createWorkflowLabels, type WorkflowLabelData } from '../rendering/labelRenderer.js';
-import { createViewLayerController } from '../layout/viewLayerController.js';
+import { createViewContainerController } from '../layout/viewLayerController.js';
 import { createTitleOverlay } from '../rendering/titleOverlay.js';
-import { OVERVIEW_THRESHOLD } from '../../../config/layout.js';
+import { ZOOM_MIN, ZOOM_MAX } from '../../../config/viewport.js';
 import { TEXT_SIMPLIFY_THRESHOLD } from '../../../config/nodes.js';
 import { VIEWPORT_TOP_MARGIN, VIEWPORT_BOTTOM_MARGIN } from '../../../config/viewport.js';
 import { createViewportManager, createResizeHandler } from '../layout/viewportManager.js';
@@ -32,7 +33,7 @@ import { fetchRelatedWorkflows } from '../workflow/loader.js';
 import { getCssVarFloat } from '../../../themes/theme.js';
 import { viewLevel } from '../../../stores/viewLevel.svelte.js';
 import { createWorkflowCard, type WorkflowCardData } from '../rendering/cards/workflowCard.js';
-import { createWorkflowCardConnectorRenderer, type WorkflowConnection } from '../rendering/cards/cardConnector.js';
+import { createWorkflowCardConnectorRenderer, type WorkflowConnection, type CardObstacle } from '../rendering/cards/cardConnector.js';
 import { createSessionCard } from '../rendering/cards/sessionCard.js';
 import { WORKFLOW_CARD_WIDTH, WORKFLOW_CARD_HEIGHT } from '../../../config/cards.js';
 
@@ -110,16 +111,15 @@ const buildWorkflowConnections = (
           }
         }
 
-        // Connect from parent card bottom-center to child card top-center
-        // Cards have top-left origin, so center X is at x + CARD_WIDTH/2
-        // Connect directly to card edges (no gap for overview cards)
+        // Connect from parent card bottom-center to child card left-center
+        // Cards have top-left origin
         connections.push({
           parentWorkflowId: mainWorkflowId,
           childWorkflowId: wf.workflowId,
           parentX: parentPos.x + WORKFLOW_CARD_WIDTH / 2,
           parentY: parentPos.y + WORKFLOW_CARD_HEIGHT,
-          childX: childPos.x + WORKFLOW_CARD_WIDTH / 2,
-          childY: childPos.y,
+          childX: childPos.x,
+          childY: childPos.y + WORKFLOW_CARD_HEIGHT / 2,
           phase,
         });
       }
@@ -146,7 +146,7 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
     callbacks,
   } = inputs;
 
-  const { app, viewport, layers } = pixi;
+  const { app, viewport, containers } = pixi;
 
   // Create title overlay
   const titleOverlay = createTitleOverlay(app.stage, {
@@ -176,8 +176,8 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
 
   // Node creation dependencies (shared for all workflows)
   const nodeCreationDeps: NodeCreationDeps = {
-    container,
-    nodeLayer: layers.detailNodeLayer,
+    htmlContainer: container,
+    pixiContainer: containers.workflowDetail,
     graphScale,
     ticker: app.ticker,
     callbacks: {
@@ -227,30 +227,26 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
   const getBottomNodeInfo = () => workflowManager.getBottomNodeInfo();
 
   // Create step labels for each workflow independently
-  // Step labels belong to DETAIL view, so add to detailNodeLayer
+  // Step labels belong to DETAIL view
   const workflowLabelData: WorkflowLabelData[] = workflowManager.getAll().map((wf) => ({
     workflowId: wf.workflowId,
     steps: wf.trace.steps,
     nodeMap: wf.nodeMap,
   }));
   const stepLabels = createWorkflowLabels(workflowLabelData);
-  layers.detailNodeLayer.addChild(stepLabels.container);
+  containers.workflowDetail.addChild(stepLabels.container);
   stepLabels.update(viewportState);
 
   // Create workflow renderer (handles edges and detail connector)
   const workflowRenderer = createWorkflowRenderer({
-    layers: {
-      nodeLayer: layers.detailNodeLayer,
-      edgeLayer: layers.detailEdgeLayer,
-      connectorLayer: layers.detailEdgeLayer, // Detail connector goes in detail layer
-    },
+    container: containers.workflowDetail,
     workflowManager,
     mainWorkflowId,
   });
   workflowRenderer.initialize();
 
-  // Create view layer controller for 3-level zoom hierarchy
-  const viewLayerController = createViewLayerController(layers);
+  // Create view container controller for 3-level zoom hierarchy
+  const viewContainerController = createViewContainerController(containers);
 
   // Calculate card positions from workflow node positions
   // Cards align with LEFT edge of workflow and are VERTICALLY CENTERED
@@ -263,6 +259,24 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
     // Card origin is top-left, so subtract half card height to center it
     cardPositions.set(wf.workflowId, { x: leftX, y: centerY - WORKFLOW_CARD_HEIGHT / 2 });
   }
+
+  // Create workflow card connectors for overview mode (add first for z-order)
+  const cardConnectorRenderer = createWorkflowCardConnectorRenderer(containers.workflowOverview);
+  const cardConnections = buildWorkflowConnections(workflows, mainWorkflowId, cardPositions);
+
+  // Build obstacles from card positions for A* pathfinding
+  const cardObstacles: CardObstacle[] = workflows.map((wf) => {
+    const pos = cardPositions.get(wf.workflowId)!;
+    return {
+      id: wf.workflowId,
+      x: pos.x,
+      y: pos.y,
+      width: WORKFLOW_CARD_WIDTH,
+      height: WORKFLOW_CARD_HEIGHT,
+    };
+  });
+
+  cardConnectorRenderer.render(cardConnections, cardObstacles);
 
   // Create workflow cards for overview mode
   const workflowCards = workflows.map((wf) => {
@@ -277,27 +291,22 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
     };
     return createWorkflowCard(cardData);
   });
-  workflowCards.forEach((card) => layers.overviewLayer.addChild(card));
+  workflowCards.forEach((card) => containers.workflowOverview.addChild(card));
 
-  // Create workflow card connectors for overview mode
-  const cardConnectorRenderer = createWorkflowCardConnectorRenderer(layers.overviewLayer);
-  const cardConnections = buildWorkflowConnections(workflows, mainWorkflowId, cardPositions);
-  cardConnectorRenderer.render(cardConnections);
-
-  // Create session card for session view
+  // Create session card for content session view
   const sessionCard = createSessionCard({
     sessionId: traceData.contentSessionId ?? 'session',
     workflowCount: workflows.length,
     x: cardPositions.get(mainWorkflowId)?.x ?? 0,
     y: cardPositions.get(mainWorkflowId)?.y ?? 0,
   });
-  layers.sessionLayer.addChild(sessionCard);
+  containers.contentSession.addChild(sessionCard);
 
   // Viewport update handler
   const onViewportUpdate = (): void => {
     stepLabels.update(viewportState);
     callbacks.onViewportChange(viewportState);
-    Culler.shared.cull(layers.detailNodeLayer, app.screen);
+    Culler.shared.cull(containers.workflowDetail, app.screen);
     const nodeId = state.selection?.type === 'node' ? state.selection.nodeId : null;
     workflowRenderer.setRenderState({ selectedNodeId: nodeId });
   };
@@ -310,15 +319,18 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
     onUpdate: onViewportUpdate,
     getTopNodeInfo,
     getBottomNodeInfo,
+    setContainerScale: (scale: number) => {
+      const currentContainer = getContainerForLevel(containers, viewLevel.current);
+      currentContainer.scale.set(scale);
+    },
   });
 
   // Wire up late binding for centerOnNode
   selectionController.bindCenterOnNode((nodeId, opts) => viewportManager.centerOnNode(nodeId, opts));
 
-  // Create keyboard navigation
+  // Create keyboard navigation (uses nodeAccessor for all workflows)
   const keyboardNavigation = createKeyboardNavigation({
     nodeAccessor,
-    nodes: traceData.nodes,
     steps: traceData.steps,
     onExpand: (node) => selectionController.expand(node),
     onCollapse: () => selectionController.collapse(),
@@ -351,20 +363,38 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
   // Create viewport handlers
   const viewportHandlers = createViewportHandlers(app.canvas, viewport, container, viewportState, {
     onZoom: (scale) => {
-      // Check view level thresholds (respects lock internally)
+      // Check if we've crossed a level boundary
       const newLevel = viewLevel.checkScale(scale);
+
+      let actualScale: number;
+      let transitioned = false;
+
       if (newLevel) {
-        viewLayerController.transitionTo(newLevel);
+        // Entry scale: opposite boundary
+        actualScale = scale <= ZOOM_MIN ? ZOOM_MAX : ZOOM_MIN;
+        viewportState.scale = actualScale;
+        const newContainer = getContainerForLevel(containers, newLevel);
+        newContainer.scale.set(actualScale);
+        viewContainerController.transitionTo(newLevel);
         callbacks.onViewLevelChange(newLevel);
+        transitioned = true;
+      } else {
+        // Apply bounds at outer levels
+        actualScale = scale;
+        if (viewLevel.current === 'content-session') {
+          actualScale = Math.max(ZOOM_MIN, scale);
+        } else if (viewLevel.current === 'workflow-detail') {
+          actualScale = Math.min(ZOOM_MAX, scale);
+        }
+
+        viewportState.scale = actualScale;
+        const currentContainer = getContainerForLevel(containers, viewLevel.current);
+        currentContainer.scale.set(actualScale);
       }
 
-      checkTextSimplifyThreshold(scale);
+      checkTextSimplifyThreshold(viewportState.scale);
       onViewportUpdate();
-
-      // Only update simple view state if not locked
-      if (!viewLevel.isLocked) {
-        callbacks.onSimpleViewChange(scale < OVERVIEW_THRESHOLD);
-      }
+      return { actualScale, transitioned };
     },
     onPan: onViewportUpdate,
     onPanStart: () => {},
@@ -418,7 +448,7 @@ export async function composeGraphRuntime(inputs: CompositionInputs): Promise<Gr
     viewportManager,
     selectionController,
     keyboardNavigation,
-    viewLayerController,
+    viewContainerController,
     viewportState,
     animationController,
     stepLabels,

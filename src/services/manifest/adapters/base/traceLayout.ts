@@ -4,6 +4,7 @@ import type { Asset, Manifest } from './traceTypes.js';
 import {
   TRACE_HORIZONTAL_GAP,
   TRACE_VERTICAL_GAP,
+  TRACE_CLAIM_GAP,
   TRACE_STEP_PADDING,
 } from '../../../../config/layout.js';
 
@@ -168,7 +169,7 @@ export const computeLayout = (manifest: Manifest): LayoutResult => {
     if (verifiedPos) {
       positions.set(claim.id, {
         x: verifiedPos.x,
-        y: verifiedPos.y - VERTICAL_GAP,
+        y: verifiedPos.y - TRACE_CLAIM_GAP,
         step: claim.step,
       });
     }

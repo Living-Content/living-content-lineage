@@ -232,7 +232,7 @@
     transform: translateY(-50%);
     pointer-events: auto;
     width: 360px;
-    max-height: calc(100vh - 100px);
+    max-height: calc(100vh - var(--header-height) - var(--panel-margin) - 60px);
     min-height: 100px;
     display: flex;
     flex-direction: column;
@@ -249,12 +249,12 @@
   }
 
   .panel.detail-open {
-    left: var(--space-xl);
-    top: calc(var(--header-height) + var(--space-xl));
+    left: var(--panel-margin);
+    top: calc(var(--header-height) + var(--panel-margin));
     transform: none;
-    width: calc(50vw - var(--space-xl) * 2);
+    width: calc(50vw - var(--panel-margin) * 2);
     max-width: 700px;
-    height: calc(100vh - var(--header-height) - var(--space-xl) * 2);
+    height: calc(100vh - var(--header-height) - var(--panel-margin) * 2);
     max-height: none;
   }
 

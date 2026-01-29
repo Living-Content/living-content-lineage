@@ -150,14 +150,14 @@ export const buildTrace = (
 
   // Build edges from asset inputs/outputs
   const edgeSet = new Set<string>();
-  const edgeList: Array<{ source: string; target: string; isGate?: boolean }> = [];
+  const edgeList: Array<{ source: string; target: string; isClaim?: boolean }> = [];
   const actionSet = new Set<string>();
 
-  const addEdge = (source: string, target: string, isGate?: boolean) => {
+  const addEdge = (source: string, target: string, isClaim?: boolean) => {
     const key = `${source}->${target}`;
     if (!edgeSet.has(key)) {
       edgeSet.add(key);
-      edgeList.push({ source, target, isGate });
+      edgeList.push({ source, target, isClaim });
     }
   };
 
@@ -196,10 +196,10 @@ export const buildTrace = (
   nodes.forEach((node) => {
     if (node.nodeType === 'claim' || actionSet.has(node.id)) return;
     const hasIncoming = edgeList.some(
-      (edge) => edge.target === node.id && !edge.isGate
+      (edge) => edge.target === node.id && !edge.isClaim
     );
     const hasOutgoing = edgeList.some(
-      (edge) => edge.source === node.id && !edge.isGate
+      (edge) => edge.source === node.id && !edge.isClaim
     );
     if (!hasIncoming && hasOutgoing) node.role = 'source';
     else if (hasIncoming && !hasOutgoing) node.role = 'sink';
@@ -213,7 +213,7 @@ export const buildTrace = (
     target: edge.target,
     color: edgeColor,
     isSimple: true,
-    isGate: edge.isGate ?? false,
+    isClaim: edge.isClaim ?? false,
   }));
 
   return {

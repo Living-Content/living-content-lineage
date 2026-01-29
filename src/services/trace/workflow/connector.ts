@@ -100,56 +100,32 @@ const getWorkflowTopY = (nodeMap: Map<string, GraphNode>): number | null => {
 };
 
 /**
- * Calculate connector context between workflows.
- * The connector appears BETWEEN workflows, not through them.
+ * Calculate connector context for a single child workflow.
  */
-export const getConnectorContext = (
-  accessor: WorkflowAccessor,
-  mainWorkflowId: string
-): ConnectorContext => {
-  const workflows = accessor.getAll();
-  const mainWorkflow = accessor.get(mainWorkflowId);
-
-  const nullResult: ConnectorContext = {
-    x: null,
-    topY: null,
-    bottomY: null,
-    phase: null,
-    sourceNodeId: null,
-    relationship: null,
-    childWorkflowId: null,
-    childWorkflowTitle: null,
-  };
-
-  if (!mainWorkflow || workflows.length <= 1) {
-    return nullResult;
-  }
-
-  // Find the first child workflow of main
-  const childWorkflow = workflows.find(wf =>
-    wf.parentWorkflowId === mainWorkflowId && wf.branchPointNodeId
-  );
-
-  if (!childWorkflow || !childWorkflow.branchPointNodeId) {
-    return nullResult;
+const getConnectorForChild = (
+  mainWorkflow: ManagedWorkflow,
+  childWorkflow: ManagedWorkflow
+): ConnectorContext | null => {
+  if (!childWorkflow.branchPointNodeId) {
+    return null;
   }
 
   // Find the source node to get its step
   const sourceNodeId = childWorkflow.branchPointNodeId;
   const sourceNode = mainWorkflow.nodeMap.get(sourceNodeId);
   if (!sourceNode) {
-    return nullResult;
+    return null;
   }
 
   const stepId = sourceNode.nodeData.step;
   if (!stepId) {
-    return nullResult;
+    return null;
   }
 
   // Get X from the action node at this step (matches label position)
   const actionX = findActionXForStep(stepId, mainWorkflow.nodeMap);
   if (actionX === null) {
-    return nullResult;
+    return null;
   }
 
   // Get phase color
@@ -160,7 +136,7 @@ export const getConnectorContext = (
   const childTopY = getWorkflowTopY(childWorkflow.nodeMap);
 
   if (actionBottomY === null || childTopY === null) {
-    return nullResult;
+    return null;
   }
 
   return {
@@ -173,4 +149,34 @@ export const getConnectorContext = (
     childWorkflowId: childWorkflow.workflowId,
     childWorkflowTitle: childWorkflow.trace.title ?? null,
   };
+};
+
+/**
+ * Calculate connector contexts for all child workflows.
+ */
+export const getAllConnectorContexts = (
+  accessor: WorkflowAccessor,
+  mainWorkflowId: string
+): ConnectorContext[] => {
+  const workflows = accessor.getAll();
+  const mainWorkflow = accessor.get(mainWorkflowId);
+
+  if (!mainWorkflow || workflows.length <= 1) {
+    return [];
+  }
+
+  // Find ALL child workflows of main
+  const childWorkflows = workflows.filter(wf =>
+    wf.parentWorkflowId === mainWorkflowId && wf.branchPointNodeId
+  );
+
+  const contexts: ConnectorContext[] = [];
+  for (const child of childWorkflows) {
+    const ctx = getConnectorForChild(mainWorkflow, child);
+    if (ctx) {
+      contexts.push(ctx);
+    }
+  }
+
+  return contexts;
 };

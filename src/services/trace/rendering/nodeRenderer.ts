@@ -8,7 +8,7 @@ import { getCssVar, getCssVarFloat } from '../../../themes/theme.js';
 import type { CssVar } from '../../../themes/types.generated.js';
 import { getAssetIconPath } from '../../../config/icons.js';
 import type { AssetType, TraceNodeData } from '../../../config/types.js';
-import { ASSET_TYPE_LABELS } from '../../../config/labels.js';
+import { getAssetTypeLabel as getLabel } from '../../../config/types.js';
 import { ANIMATION_TIMINGS, GEOMETRY } from '../../../config/animation.js';
 import { GROUP_KEY_PRECISION } from '../../../config/nodes.js';
 import { attachNodeInteraction, type NodeCallbacks } from '../interaction/nodeInteraction.js';
@@ -47,11 +47,12 @@ interface CreateNodeOptions {
 
 const getAssetTypeLabel = (assetType?: AssetType): string => {
   if (!assetType) return 'DATA';
-  return (ASSET_TYPE_LABELS[assetType] ?? assetType).toUpperCase();
+  return getLabel(assetType).toUpperCase();
 };
 
 const getIconPath = (assetType?: AssetType): string => {
-  return getAssetIconPath(assetType ?? 'Data');
+  // Default to UserQuery for data-type nodes without explicit asset type
+  return getAssetIconPath(assetType ?? 'UserQuery');
 };
 
 /**

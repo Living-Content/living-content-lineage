@@ -16,8 +16,8 @@ import { createNodes, repositionNodesWithGaps } from '../layout/nodeCreator.js';
  * Dependencies for node creation.
  */
 export interface NodeCreationDeps {
-  container: HTMLElement;
-  nodeLayer: Container;
+  htmlContainer: HTMLElement;
+  pixiContainer: Container;
   graphScale: number;
   ticker: Ticker;
   callbacks: {
@@ -62,8 +62,8 @@ const createWorkflowNodes = async (
   const stepWidths = calculateStepWidths(workflow.trace.nodes);
 
   await createNodes(workflow.trace.nodes, nodeMap, {
-    container: deps.container,
-    nodeLayer: deps.nodeLayer,
+    htmlContainer: deps.htmlContainer,
+    pixiContainer: deps.pixiContainer,
     graphScale: deps.graphScale,
     ticker: deps.ticker,
     callbacks: deps.callbacks,
@@ -74,12 +74,6 @@ const createWorkflowNodes = async (
   });
 
   repositionNodesWithGaps(nodeMap);
-
-  if (workflow.opacity !== 1.0) {
-    for (const node of nodeMap.values()) {
-      node.alpha = workflow.opacity;
-    }
-  }
 
   return nodeMap;
 };

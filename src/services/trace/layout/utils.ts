@@ -157,7 +157,7 @@ export const createNode = async (
  * Adds graph elements to a layer container.
  * This is an atomic operation that only adds children to the layer.
  */
-export const addElementsToLayer = (
+export const addElementsToContainer = (
   elements: GraphElement[],
   layer: Container
 ): void => {

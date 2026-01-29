@@ -5,7 +5,7 @@
   import { configStore } from './stores/configStore.svelte.js';
   import { authStore } from './stores/authStore.svelte.js';
   import { authService } from './lib/auth/authService.js';
-  import { hideStaticLoader, setLoaderStatus } from './lib/staticLoader.js';
+  import { setLoaderStatus } from './lib/staticLoader.js';
   import Header from './components/Header.svelte';
   import GraphCanvas from './components/graph/GraphCanvas.svelte';
   import InspectorPanel from './components/inspector/InspectorPanel.svelte';

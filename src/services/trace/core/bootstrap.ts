@@ -74,8 +74,9 @@ export async function initGraphAssets(
   const graphScale = Math.min(width, height) * GRAPH_SCALE_FACTOR;
 
   // Initialize viewport state
+  // Note: viewport (parent container) stays at scale 1
+  // Each level container (detail, overview, session) has its own scale
   const viewportState = createViewportState(width, height);
-  viewport.scale.set(viewportState.scale);
   viewport.position.set(viewportState.x, viewportState.y);
 
   // Create empty node map (populated during composition)
